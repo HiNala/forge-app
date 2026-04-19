@@ -8,7 +8,6 @@ import * as React from "react";
 import { toast } from "sonner";
 import { Loader2, ExternalLink } from "lucide-react";
 import { differenceInCalendarDays, format } from "date-fns";
-import { PageHeader } from "@/components/chrome/page-header";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -100,25 +99,27 @@ export default function BillingSettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
-      <PageHeader
-        title="Billing"
-        description="Plans, usage, and Stripe-managed payment details. Cancelling a subscription is done in the customer portal."
-      />
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-text">Billing</h1>
+        <p className="mt-1.5 font-body text-sm text-text-muted">
+          Plans, usage, and Stripe-managed payment details. Cancelling is done in the customer portal.
+        </p>
+      </div>
 
       {paymentFailed ? (
         <div
-          className="rounded-lg border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger"
+          className="rounded-2xl border border-danger/40 bg-danger/10 px-5 py-4 text-sm text-danger"
           role="alert"
         >
-          <p className="font-semibold">Payment failed — update your payment method to keep your pages live.</p>
-          <Button type="button" size="sm" variant="secondary" className="mt-2" onClick={() => void openPortal()}>
+          <p className="font-body font-semibold">Payment failed — update your payment method to keep your pages live.</p>
+          <Button type="button" size="sm" variant="secondary" className="mt-3" onClick={() => void openPortal()}>
             Open billing portal
           </Button>
         </div>
       ) : null}
 
       {trialDays !== null ? (
-        <div className="rounded-lg border border-accent/30 bg-accent-light/50 px-4 py-3 text-sm text-text">
+        <div className="rounded-2xl border border-accent/30 bg-accent-light/50 px-5 py-4 font-body text-sm text-text">
           <strong>{trialDays} days left</strong> in your trial. Add a payment method anytime.
           <Button type="button" size="sm" variant="primary" className="ml-3" onClick={() => void openPortal()}>
             Add payment method
@@ -127,20 +128,20 @@ export default function BillingSettingsPage() {
       ) : null}
 
       {planQ.isLoading ? (
-        <p className="text-sm text-text-muted flex items-center gap-2">
+        <div className="flex items-center gap-2 font-body text-sm text-text-muted">
           <Loader2 className="size-4 animate-spin" /> Loading plan…
-        </p>
+        </div>
       ) : plan ? (
-        <section className="rounded-[12px] border border-border bg-surface p-5 shadow-sm">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted">Current plan</p>
-          <p className="mt-1 font-display text-2xl font-semibold capitalize text-text">{plan.plan}</p>
-          <p className="mt-2 text-sm text-text-muted font-body">
-            Status: {plan.status ?? "—"}
+        <section className="rounded-2xl border border-border bg-surface p-6">
+          <span className="section-label">Current plan</span>
+          <p className="mt-2 font-display text-3xl font-bold capitalize text-text">{plan.plan}</p>
+          <p className="mt-1.5 font-body text-sm text-text-muted">
+            {plan.status ?? "—"}
             {plan.payment_method_last4
               ? ` · Card ending in ${plan.payment_method_last4}`
               : " · No card on file"}
           </p>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-wrap gap-2">
             <Button
               type="button"
               variant="primary"
@@ -157,13 +158,15 @@ export default function BillingSettingsPage() {
       ) : null}
 
       {usageQ.isLoading ? (
-        <p className="text-sm text-text-muted">Loading usage…</p>
+        <div className="h-32 animate-pulse rounded-2xl bg-bg-elevated" />
       ) : usage ? (
-        <section className="space-y-4 rounded-[12px] border border-border bg-surface p-5 shadow-sm">
-          <h2 className="font-display text-lg font-semibold text-text">Usage this period</h2>
-          <p className="text-xs text-text-muted font-body">
-            {format(new Date(usage.period_start), "MMM d")} – {format(new Date(usage.period_end), "MMM d, yyyy")}
-          </p>
+        <section className="space-y-5 rounded-2xl border border-border bg-surface p-6">
+          <div>
+            <h2 className="font-display text-base font-bold text-text">Usage this period</h2>
+            <p className="mt-0.5 font-body text-xs text-text-subtle">
+              {format(new Date(usage.period_start), "MMM d")} – {format(new Date(usage.period_end), "MMM d, yyyy")}
+            </p>
+          </div>
           <UsageBar
             label="Pages generated"
             used={usage.pages_generated}
@@ -177,38 +180,37 @@ export default function BillingSettingsPage() {
             tone={barTone}
           />
           <div>
-            <p className="text-xs font-medium text-text-muted font-body">AI tokens (prompt + completion)</p>
-            <p className="mt-1 font-mono text-sm text-text">
-              {(usage.tokens_prompt + usage.tokens_completion).toLocaleString()} tokens this period
-            </p>
-            <p className="mt-1 text-[11px] text-text-muted font-body">
-              Detailed token caps follow your plan — see usage in the API response for admins.
-            </p>
+            <div className="flex justify-between font-body text-xs font-medium text-text-muted">
+              <span>AI tokens (prompt + completion)</span>
+              <span className="font-mono tabular-nums">
+                {(usage.tokens_prompt + usage.tokens_completion).toLocaleString()}
+              </span>
+            </div>
           </div>
         </section>
       ) : null}
 
       <section>
-        <h2 className="font-display text-lg font-semibold text-text">Invoices</h2>
+        <h2 className="font-display text-base font-bold text-text">Invoices</h2>
         {invQ.isLoading ? (
-          <p className="mt-2 text-sm text-text-muted">Loading invoices…</p>
+          <div className="mt-3 h-24 animate-pulse rounded-2xl bg-bg-elevated" />
         ) : !invQ.data?.items?.length ? (
-          <p className="mt-2 text-sm text-text-muted font-body">No invoices yet (or Stripe not linked).</p>
+          <p className="mt-2 font-body text-sm text-text-muted">No invoices yet.</p>
         ) : (
-          <ul className="mt-3 divide-y divide-border rounded-[10px] border border-border">
+          <ul className="mt-3 divide-y divide-border overflow-hidden rounded-2xl border border-border">
             {invQ.data.items.map((inv) => (
-              <li key={inv.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+              <li key={inv.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 font-body text-sm">
                 <span className="text-text-muted">
-                  {format(new Date(inv.created * 1000), "MMM yyyy")} — {(inv.amount_due / 100).toFixed(2)}{" "}
+                  {format(new Date(inv.created * 1000), "MMM yyyy")} · {(inv.amount_due / 100).toFixed(2)}{" "}
                   {inv.currency.toUpperCase()}
                 </span>
-                <span className="capitalize text-text-muted">{inv.status}</span>
+                <span className="capitalize text-text-subtle">{inv.status}</span>
                 {inv.hosted_invoice_url ? (
                   <a
                     href={inv.hosted_invoice_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-accent hover:underline"
+                    className="inline-flex items-center gap-1 text-accent underline-offset-4 hover:underline"
                   >
                     View <ExternalLink className="size-3.5" />
                   </a>
@@ -233,11 +235,11 @@ export default function BillingSettingsPage() {
             <DialogDescription>Checkout opens on Stripe’s secure page.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-border p-4">
-              <p className="font-display font-semibold">Starter</p>
-              <p className="mt-1 text-sm text-text-muted">Core publishing and forms.</p>
+            <div className="rounded-2xl border border-border p-5">
+              <p className="font-display text-lg font-bold text-text">Starter</p>
+              <p className="mt-1 font-body text-sm text-text-muted">Core publishing and forms.</p>
               <Button
-                className="mt-4 w-full"
+                className="mt-5 w-full"
                 variant="secondary"
                 loading={busy === "checkout-starter"}
                 onClick={() => void startCheckout("starter")}
@@ -245,12 +247,11 @@ export default function BillingSettingsPage() {
                 Select Starter
               </Button>
             </div>
-            <div className="rounded-lg border border-accent p-4">
-              <p className="font-display font-semibold">Pro</p>
-              <p className="mt-1 text-sm text-text-muted">Higher limits, automations, analytics retention.</p>
+            <div className="rounded-2xl border border-text bg-text p-5">
+              <p className="font-display text-lg font-bold text-bg">Pro</p>
+              <p className="mt-1 font-body text-sm text-bg/70">Higher limits, automations, analytics retention.</p>
               <Button
-                className="mt-4 w-full"
-                variant="primary"
+                className="mt-5 w-full bg-bg text-text hover:opacity-90"
                 loading={busy === "checkout-pro"}
                 onClick={() => void startCheckout("pro")}
               >
@@ -283,15 +284,16 @@ function UsageBar({
   const pct = cap > 0 ? Math.min(100, Math.round((used / cap) * 100)) : 0;
   return (
     <div>
-      <div className="flex justify-between text-xs font-medium text-text-muted font-body">
+      <div className="flex justify-between font-body text-xs font-medium text-text-muted">
         <span>{label}</span>
-        <span>
-          {used} / {cap}
+        <span className="tabular-nums">
+          {used.toLocaleString()} / {cap.toLocaleString()}
         </span>
       </div>
-      <div className="mt-1 h-2 overflow-hidden rounded-full bg-bg-elevated">
-        <div className={cn("h-full rounded-full transition-all", tone(pct))} style={{ width: `${pct}%` }} />
+      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-bg-elevated">
+        <div className={cn("h-full rounded-full transition-all duration-500", tone(pct))} style={{ width: `${pct}%` }} />
       </div>
+      <p className="mt-0.5 font-body text-[11px] text-text-subtle">{pct}% used</p>
     </div>
   );
 }
