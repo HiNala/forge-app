@@ -377,3 +377,35 @@
   border-color: var(--accent) !important;
   box-shadow: 0 0 0 4px var(--accent-light), var(--shadow-md);
 }
+
+/* ── One-shot entrance animations ────────────────────────────────────── */
+.animate-fade-up    { animation: fade-up 0.65s cubic-bezier(0.22,1,0.36,1) both; }
+.animate-fade-up-d1 { animation: fade-up 0.65s cubic-bezier(0.22,1,0.36,1) 0.12s both; }
+.animate-fade-up-d2 { animation: fade-up 0.65s cubic-bezier(0.22,1,0.36,1) 0.24s both; }
+.animate-fade-up-d3 { animation: fade-up 0.65s cubic-bezier(0.22,1,0.36,1) 0.38s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up, .animate-fade-up-d1, .animate-fade-up-d2, .animate-fade-up-d3 {
+    animation: none;
+  }
+}
+
+/* ── Section label (replaces pill/badge above headings) ──────────────── */
+.section-label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+
+/* ── Marketing divider rule ──────────────────────────────────────────── */
+.rule-accent {
+  display: block;
+  width: 32px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}

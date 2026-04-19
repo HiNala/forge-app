@@ -24,7 +24,7 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section id="how" className="border-t border-border py-20 sm:py-24">
+    <section id="how" className="scroll-mt-20 border-t border-border py-20 sm:py-24">
       <Container max="xl">
         <div className="mb-14">
           <p className="font-body text-[11px] font-bold uppercase tracking-[0.12em] text-accent">

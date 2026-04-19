@@ -1,23 +1,25 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { FaqAccordion } from "@/components/marketing/faq-accordion";
 import { FinalCta } from "@/components/marketing/final-cta";
 import { GallerySection } from "@/components/marketing/gallery-section";
 import { HeroDemoLazy } from "@/components/marketing/hero-demo-lazy";
 import { HowItWorks } from "@/components/marketing/how-it-works";
 import { MarketingJsonLd } from "@/components/marketing/json-ld";
+import { StatsSection } from "@/components/marketing/stats-section";
+import { TestimonialsSection } from "@/components/marketing/testimonials-section";
+import { TickerSection } from "@/components/marketing/ticker-section";
 import { Container } from "@/components/ui/container";
 import { LANDING_FAQ, SITE_URL } from "@/lib/marketing-content";
 
 export const metadata: Metadata = {
-  title: "Pages from a sentence",
+  title: "Type a sentence. Get a live page.",
   description:
-    "Describe what you need in plain English. Forge builds a branded, hosted page — forms, RSVPs, menus, proposals, and more.",
+    "Describe what you need — booking form, RSVP, daily menu, sales proposal — and Forge builds and hosts it in seconds.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Forge — Pages from a sentence",
+    title: "Forge — Type a sentence. Get a live page.",
     description:
-      "AI-powered mini-pages for teams. Describe a page, publish a link, collect responses.",
+      "AI-powered mini-pages. Describe a page, get a hosted link, collect responses.",
     url: SITE_URL,
     siteName: "Forge",
     type: "website",
@@ -28,71 +30,55 @@ export default function MarketingHomePage() {
   return (
     <>
       <MarketingJsonLd />
-      <section className="relative">
-        <Container max="xl">
-          <div className="mx-auto max-w-[65ch] px-0 pt-16 text-center sm:pt-24">
-            <h1 className="font-display text-4xl font-semibold leading-tight tracking-tight text-text sm:text-5xl md:text-6xl">
-              Describe what you need.
+
+      {/* HERO */}
+      <section className="relative overflow-hidden pb-0 pt-20 sm:pt-28 lg:pt-32">
+        <div className="hero-orb" aria-hidden />
+        <div className="relative z-10 text-center">
+          <Container max="xl">
+            <h1 className="animate-fade-up font-display text-[clamp(52px,8vw,96px)] font-bold leading-[0.93] tracking-tight text-text">
+              Type a sentence.
               <br />
-              <span className="text-accent">Get a page.</span>
+              <span className="text-accent">Get a live page.</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-[65ch] text-lg leading-relaxed text-text-muted sm:text-xl">
-              Forge turns a sentence into a hosted, branded mini-page — forms, RSVPs, menus,
-              proposals, and more.
+            <p className="animate-fade-up-d1 mx-auto mt-6 max-w-[50ch] font-body text-lg font-light leading-relaxed text-text-muted">
+              Booking forms, RSVPs, daily menus, sales proposals — describe it once
+              and Forge builds, hosts, and tracks it. No code, no designer.
             </p>
-          </div>
-        </Container>
-        <HeroDemoLazy />
+          </Container>
+          <HeroDemoLazy />
+        </div>
       </section>
-      <section className="border-t border-border py-12 sm:py-16">
-        <Container max="xl">
-          <h2 className="text-center font-display text-2xl font-semibold text-text sm:text-3xl">
-            Three workflows, one Studio
-          </h2>
-          <p className="mx-auto mt-3 max-w-[60ch] text-center text-text-muted font-body">
-            Pick a path — each page is a live link, analytics, and exports in one place.
-          </p>
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            <Link
-              href="/workflows/contact-form"
-              className="rounded-2xl border border-border bg-surface p-6 shadow-sm transition hover:border-accent/40"
-            >
-              <span className="text-sm font-medium text-accent font-body">Contact &amp; booking</span>
-              <span className="mt-2 block font-display text-lg font-semibold text-text">Forms that work</span>
-              <span className="mt-2 block text-sm text-text-muted font-body">See how it works →</span>
-            </Link>
-            <Link
-              href="/workflows/proposal"
-              className="rounded-2xl border border-border bg-surface p-6 shadow-sm transition hover:border-accent/40"
-            >
-              <span className="text-sm font-medium text-accent font-body">Proposals</span>
-              <span className="mt-2 block font-display text-lg font-semibold text-text">Quotes that close</span>
-              <span className="mt-2 block text-sm text-text-muted font-body">See how it works →</span>
-            </Link>
-            <Link
-              href="/workflows/pitch-deck"
-              className="rounded-2xl border border-border bg-surface p-6 shadow-sm transition hover:border-accent/40"
-            >
-              <span className="text-sm font-medium text-accent font-body">Pitch decks</span>
-              <span className="mt-2 block font-display text-lg font-semibold text-text">Slides that tell a story</span>
-              <span className="mt-2 block text-sm text-text-muted font-body">See how it works →</span>
-            </Link>
-          </div>
-        </Container>
-      </section>
+
+      {/* TICKER */}
+      <TickerSection />
+
+      {/* STATS */}
+      <StatsSection />
+
+      {/* HOW IT WORKS */}
       <HowItWorks />
+
+      {/* GALLERY */}
       <GallerySection />
-      <section className="border-t border-border py-16 sm:py-20">
+
+      {/* TESTIMONIALS */}
+      <TestimonialsSection />
+
+      {/* FAQ */}
+      <section className="border-t border-border py-20 sm:py-24">
         <Container max="xl">
-          <h2 className="text-center font-display text-3xl font-semibold text-text sm:text-4xl">
-            Questions
-          </h2>
-          <p className="mx-auto mt-4 max-w-[65ch] text-center text-lg text-text-muted">
-            Straight answers — no spin.
-          </p>
-          <FaqAccordion items={LANDING_FAQ} className="mx-auto mt-10 max-w-3xl" />
+          <div className="mb-12">
+            <span className="section-label mb-3">Common questions</span>
+            <h2 className="font-display text-[clamp(28px,3.5vw,46px)] font-bold leading-[1] tracking-tight text-text">
+              Straight answers.
+            </h2>
+          </div>
+          <FaqAccordion items={LANDING_FAQ} className="max-w-3xl" />
         </Container>
       </section>
+
+      {/* CTA */}
       <FinalCta />
     </>
   );
