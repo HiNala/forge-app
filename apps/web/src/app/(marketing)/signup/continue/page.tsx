@@ -44,7 +44,14 @@ export default function SignupContinuePage() {
             /* fall through */
           }
         }
-        router.replace("/onboarding");
+        let pendingWf: string | null = null;
+        try {
+          pendingWf = sessionStorage.getItem("forge.pendingWorkflow");
+          if (pendingWf) sessionStorage.removeItem("forge.pendingWorkflow");
+        } catch {
+          pendingWf = null;
+        }
+        router.replace(pendingWf ? `/onboarding?workflow=${encodeURIComponent(pendingWf)}` : "/onboarding");
       } catch {
         router.replace("/dashboard");
       }

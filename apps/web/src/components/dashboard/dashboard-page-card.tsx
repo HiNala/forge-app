@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { patchPage, type PageOut } from "@/lib/api";
+import { getWorkflowSurfaceConfig } from "@/lib/workflow-config";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useForgeSession } from "@/providers/session-provider";
@@ -75,6 +76,8 @@ export function DashboardPageCard({
   const { getToken } = useAuth();
   const { activeOrganizationId, activeOrg } = useForgeSession();
   const [hovered, setHovered] = React.useState(false);
+  const wf = getWorkflowSurfaceConfig(page.page_type);
+  const WfIcon = wf.chipIcon;
 
   const openLive = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -183,8 +186,14 @@ export function DashboardPageCard({
             </p>
             <div className="flex items-center gap-2 text-[11px] text-text-muted font-body">
               <StatusDot status={page.status} />
-              <span className="rounded-md border border-border/80 bg-bg-elevated px-2 py-0.5 capitalize text-text-subtle">
-                {page.page_type.replace(/-/g, " ")}
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] capitalize",
+                  wf.chipClassName,
+                )}
+              >
+                <WfIcon className="size-3 shrink-0 opacity-90" aria-hidden />
+                {wf.chipLabel}
               </span>
               <span>·</span>
               <span>

@@ -7,20 +7,24 @@ import redis.asyncio as redis
 from arq import create_pool
 from arq.connections import RedisSettings
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.caddy_internal import router as caddy_internal_router
 from app.api.public_api import router as public_router
 from app.api.public_proposal import router as public_proposal_router
 from app.api.v1 import api_router
 from app.config import settings
-from app.core.errors import ForgeError
+from app.core.errors import Conflict, ForgeError
 from app.core.logging import configure_logging
+from app.core.sentry import init_sentry
 from app.db.session import AsyncSessionLocal, engine
 from app.middleware import (
     BodySizeLimitMiddleware,
@@ -30,6 +34,7 @@ from app.middleware import (
 )
 
 configure_logging()
+init_sentry()
 logger = logging.getLogger(__name__)
 
 
@@ -115,6 +120,68 @@ async def forge_exception_handler(request: Request, exc: ForgeError) -> JSONResp
             "code": exc.code,
             "message": exc.message,
             "extra": exc.extra,
+            "request_id": rid,
+        },
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    rid = getattr(request.state, "request_id", None)
+    flattened: list[dict[str, str]] = []
+    for err in exc.errors():
+        loc = err.get("loc") or ()
+        field = ".".join(str(x) for x in loc if str(x) != "body")
+        flattened.append({"field": field or "body", "message": err.get("msg", "invalid")})
+    return JSONResponse(
+        status_code=422,
+        content={
+            "code": "validation_error",
+            "message": "Request validation failed",
+            "errors": flattened,
+            "request_id": rid,
+        },
+    )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    rid = getattr(request.state, "request_id", None)
+    body: dict[str, Any] = {"request_id": rid}
+    detail = exc.detail
+    if isinstance(detail, dict):
+        body["detail"] = detail
+    else:
+        body["detail"] = detail
+    return JSONResponse(status_code=exc.status_code, content=body)
+
+
+@app.exception_handler(IntegrityError)
+async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
+    logger.warning("db integrity error: %s", exc)
+    return await forge_exception_handler(request, Conflict("Constraint violation"))
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception("unhandled error", exc_info=exc)
+    rid = getattr(request.state, "request_id", None)
+    if settings.ENVIRONMENT == "production":
+        return JSONResponse(
+            status_code=500,
+            content={
+                "code": "internal_error",
+                "message": "An unexpected error occurred",
+                "request_id": rid,
+            },
+        )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "code": "internal_error",
+            "message": str(exc) or "internal error",
             "request_id": rid,
         },
     )

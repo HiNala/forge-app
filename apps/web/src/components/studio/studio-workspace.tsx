@@ -28,10 +28,14 @@ import {
   DEFAULT_REFINE_CHIPS,
   SECTION_EDIT_QUICK_CHIPS,
   STUDIO_PLACEHOLDERS,
-  STUDIO_STARTER_CHIPS,
+  STUDIO_SECONDARY_CHIPS,
   resolveSurprisePrompt,
-  type StudioStarterChip,
 } from "@/lib/studio-content";
+import {
+  getTopUsedWorkflowId,
+  recordWorkflowPageCreated,
+} from "@/lib/studio-workflow-usage";
+import { StudioWorkflowCards } from "@/components/studio/studio-workflow-cards";
 import { timeOfDayGreeting } from "@/lib/studio-greeting";
 import {
   ensureBridgeInFullDocument,
@@ -78,6 +82,7 @@ export function StudioWorkspace() {
   const searchParams = useSearchParams();
   const pageIdFromUrl = searchParams.get("pageId");
   const promptPrefill = searchParams.get("prompt");
+  const workflowFromUrl = searchParams.get("workflow");
   const { getToken } = useAuth();
   const { user } = useUser();
   const { activeOrganizationId, activeOrg } = useForgeSession();
@@ -105,6 +110,8 @@ export function StudioWorkspace() {
   const [streamBanner, setStreamBanner] = React.useState<string | null>(null);
   const abortRef = React.useRef<AbortController | null>(null);
   const lastStreamRef = React.useRef<{ kind: "generate" | "refine"; payload: Record<string, unknown> } | null>(null);
+  const lastGeneratePromptRef = React.useRef<string>("");
+  const workflowHintRef = React.useRef<string | null>(null);
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
   const [refineChips, setRefineChips] = React.useState<string[]>([...DEFAULT_REFINE_CHIPS]);
@@ -170,6 +177,24 @@ export function StudioWorkspace() {
       setPromptEmpty(promptPrefill);
     }
   }, [promptPrefill]);
+
+  React.useEffect(() => {
+    if (!workflowFromUrl || active) return;
+    const map: Record<string, string> = {
+      contact_form: "A contact form for my business — ",
+      proposal: "A proposal for ",
+      pitch_deck: "A pitch deck for ",
+    };
+    const prime = map[workflowFromUrl];
+    if (prime) setPromptEmpty((prev) => prev || prime);
+  }, [workflowFromUrl, active]);
+
+  const [highlightWorkflow, setHighlightWorkflow] = React.useState<ReturnType<
+    typeof getTopUsedWorkflowId
+  > | null>(null);
+  React.useEffect(() => {
+    setHighlightWorkflow(getTopUsedWorkflowId());
+  }, []);
 
   React.useEffect(() => {
     if (emptyFocused) return;
@@ -378,6 +403,14 @@ export function StudioWorkspace() {
     abortSse();
     const ac = new AbortController();
     abortRef.current = ac;
+    if (kind === "generate") {
+      const wh = workflowHintRef.current;
+      if (wh) {
+        body = { ...body, workflow_hint: wh };
+        workflowHintRef.current = null;
+      }
+      lastGeneratePromptRef.current = userText;
+    }
     lastStreamRef.current = { kind, payload: body };
     setBusy(true);
     setStreamBanner(null);
@@ -400,6 +433,29 @@ export function StudioWorkspace() {
         { getToken, activeOrgId: activeOrganizationId, signal: ac.signal },
         async (event, data) => {
           if (event === "intent") setStreamPhase("intent");
+          if (event === "workflow_clarify" && data && typeof data === "object") {
+            const d = data as {
+              candidates?: { workflow: string; confidence: number; rationale: string }[];
+              default?: string;
+            };
+            if (Array.isArray(d.candidates) && d.candidates.length > 0) {
+              const defaultWorkflow =
+                d.default ?? d.candidates[0]?.workflow ?? "";
+              setMessagesStore(pageId ?? null, (m) => [
+                ...m,
+                {
+                  id: crypto.randomUUID(),
+                  role: "assistant",
+                  kind: "workflow_clarify",
+                  text: "",
+                  clarifyMeta: {
+                    candidates: d.candidates!,
+                    ...(defaultWorkflow ? { default: defaultWorkflow } : {}),
+                  },
+                },
+              ]);
+            }
+          }
           if (event === "html.start") {
             setStreamPhase("building");
             bufferRef.current.reset();
@@ -433,6 +489,11 @@ export function StudioWorkspace() {
               setRefineChips(sug);
               const wasGenerate = lastStreamRef.current?.kind === "generate";
               if (wasGenerate) {
+                const pt = p.page_type;
+                if (pt === "booking-form" || pt === "contact-form")
+                  recordWorkflowPageCreated("contact");
+                else if (pt === "proposal") recordWorkflowPageCreated("proposal");
+                else if (pt === "pitch_deck") recordWorkflowPageCreated("deck");
                 const fromEmpty = useStudioStore.getState().getSession(null).messages;
                 const artifact: StudioChatMsg = {
                   id: crypto.randomUUID(),
@@ -498,11 +559,16 @@ export function StudioWorkspace() {
     setPromptEmpty("");
   }
 
-  function onChip(s: StudioStarterChip) {
-    const prompt = s.id === "surprise" ? resolveSurprisePrompt() : s.prompt;
-    setPromptEmpty(prompt);
-    void runGenerateOrRefine("generate", { prompt, page_id: null, provider: "openai" }, prompt);
-    setPromptEmpty("");
+  function onSecondaryChipPrime(prompt: string) {
+    const p = prompt || resolveSurprisePrompt();
+    setPromptEmpty(p);
+  }
+
+  function onWorkflowClarifyPick(workflow: string) {
+    const p = lastGeneratePromptRef.current.trim();
+    if (!p || busy) return;
+    workflowHintRef.current = workflow;
+    void runGenerateOrRefine("generate", { prompt: p, page_id: null, provider: "openai" }, p);
   }
 
   function onSubmitChat(e?: React.FormEvent) {
@@ -721,13 +787,21 @@ export function StudioWorkspace() {
                 </div>
               </form>
 
+              <StudioWorkflowCards
+                disabled={busy}
+                highlightId={highlightWorkflow}
+                onPrime={(prime: string) => setPromptEmpty(prime)}
+              />
+
               <motion.div layout transition={TRANSITION_PANEL} className="mt-6 flex flex-wrap justify-center gap-2">
-                {STUDIO_STARTER_CHIPS.map((c) => (
+                {STUDIO_SECONDARY_CHIPS.map((c) => (
                   <button
                     key={c.id}
                     type="button"
                     disabled={busy}
-                    onClick={() => onChip(c)}
+                    onClick={() =>
+                      onSecondaryChipPrime(c.id === "surprise2" ? "" : c.prompt)
+                    }
                     className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:border-accent hover:text-accent font-body"
                   >
                     {c.label}
@@ -792,14 +866,23 @@ export function StudioWorkspace() {
                     data={messages}
                     followOutput="smooth"
                     itemContent={(_, msg) => (
-                      <ChatRow msg={msg} orgSlug={activeOrg?.organization_slug ?? ""} />
+                      <ChatRow
+                        msg={msg}
+                        orgSlug={activeOrg?.organization_slug ?? ""}
+                        onWorkflowClarifyPick={onWorkflowClarifyPick}
+                      />
                     )}
                   />
                 ) : (
                   <div className="h-full overflow-y-auto px-4 py-4">
                     <AnimatePresence initial={false}>
                       {messages.map((msg) => (
-                        <ChatRow key={msg.id} msg={msg} orgSlug={activeOrg?.organization_slug ?? ""} />
+                        <ChatRow
+                          key={msg.id}
+                          msg={msg}
+                          orgSlug={activeOrg?.organization_slug ?? ""}
+                          onWorkflowClarifyPick={onWorkflowClarifyPick}
+                        />
                       ))}
                     </AnimatePresence>
                   </div>
@@ -1056,8 +1139,46 @@ export function StudioWorkspace() {
   );
 }
 
-function ChatRow({ msg, orgSlug }: { msg: StudioChatMsg; orgSlug: string }) {
+function ChatRow({
+  msg,
+  orgSlug,
+  onWorkflowClarifyPick,
+}: {
+  msg: StudioChatMsg;
+  orgSlug: string;
+  onWorkflowClarifyPick: (workflow: string) => void;
+}) {
   const router = useRouter();
+
+  if (msg.kind === "workflow_clarify" && msg.clarifyMeta) {
+    const cm = msg.clarifyMeta;
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={MOTION_TRANSITIONS.fadeUp}
+        className="mb-3"
+      >
+        <div className="rounded-lg border border-white/15 bg-white/5 px-3 py-2.5 text-xs text-white/90 font-body">
+          <p className="text-[11px] text-white/60 font-body">
+            We could go a few ways — pick one to steer this generation (optional):
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {cm.candidates.map((c) => (
+              <button
+                key={c.workflow}
+                type="button"
+                className="rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] text-white hover:bg-white/15 font-body"
+                onClick={() => onWorkflowClarifyPick(c.workflow)}
+              >
+                {c.workflow.replace(/-/g, " ")}
+              </button>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   if (msg.kind === "artifact" && msg.artifactMeta) {
     const m = msg.artifactMeta;

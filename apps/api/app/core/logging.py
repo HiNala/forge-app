@@ -9,6 +9,19 @@ from typing import Any
 import structlog
 
 from app.config import settings
+from app.core.context import try_get_request_context
+
+
+def _merge_request_ctx(
+    logger: object, method_name: str, event_dict: dict[str, object]
+) -> dict[str, object]:
+    ctx = try_get_request_context()
+    if ctx is not None:
+        if ctx.user_id is not None:
+            event_dict.setdefault("user_id", str(ctx.user_id))
+        if ctx.organization_id is not None:
+            event_dict.setdefault("organization_id", str(ctx.organization_id))
+    return event_dict
 
 
 def configure_logging() -> None:
@@ -16,6 +29,7 @@ def configure_logging() -> None:
     is_dev = settings.ENVIRONMENT in ("development", "local", "test")
     processors: list[structlog.types.Processor] = [
         structlog.contextvars.merge_contextvars,
+        _merge_request_ctx,
         structlog.processors.add_log_level,
         structlog.processors.StackInfoRenderer(),
     ]

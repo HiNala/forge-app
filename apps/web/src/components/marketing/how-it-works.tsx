@@ -1,61 +1,68 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { FileText, MousePointer2, Share2 } from "lucide-react";
-import { fadeUp } from "@/lib/motion";
 import { Container } from "@/components/ui/container";
+import { cn } from "@/lib/utils";
 
-const steps = [
+const STEPS = [
   {
-    title: "Describe it.",
-    body: "Type what you need. No templates to pick from unless you want one.",
-    icon: FileText,
+    n: "01",
+    title: "Describe it",
+    body: "Type what you need in plain language. A booking page, menu, schedule, contact form — whatever your business requires.",
   },
   {
-    title: "See it built.",
-    body:
-      "Forge generates a branded page in seconds. Refine by clicking any section in Studio.",
-    icon: MousePointer2,
+    n: "02",
+    title: "Forge builds it",
+    body: "In seconds, Forge assembles a complete page — layout, content, form logic, and design — ready for real customers.",
   },
   {
-    title: "Share the link.",
-    body: "Publish, paste the URL into your website or email, done.",
-    icon: Share2,
+    n: "03",
+    title: "Share it live",
+    body: "Get a link the moment it's ready. Share it instantly, embed it, or connect your own domain. No dev work, ever.",
   },
 ] as const;
 
 export function HowItWorks() {
   return (
-    <section className="border-t border-border bg-bg-elevated py-16 sm:py-20">
+    <section id="how" className="border-t border-border py-20 sm:py-24">
       <Container max="xl">
-        <h2 className="text-center font-display text-3xl font-semibold text-text sm:text-4xl">
-          How it works
-        </h2>
-        <ul className="mt-12 grid list-none gap-12 p-0 sm:grid-cols-3 sm:gap-10">
-          {steps.map((step, index) => {
-            const Icon = step.icon;
-            return (
-              <motion.li
-                key={step.title}
-                variants={fadeUp}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, margin: "-12% 0px" }}
-                className="text-center sm:text-left"
-              >
-                <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-accent-light text-accent sm:mx-0">
-                  <Icon className="size-6 stroke-[1.75]" aria-hidden />
-                </div>
-                <span className="mt-4 block font-display text-sm font-semibold text-accent">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h3 className="mt-1 font-display text-xl font-semibold text-text">{step.title}</h3>
-                <p className="mt-2 max-w-[65ch] text-pretty text-sm leading-relaxed text-text-muted sm:mx-0 sm:mr-auto">
-                  {step.body}
-                </p>
-              </motion.li>
-            );
-          })}
+        <div className="mb-14">
+          <p className="font-body text-[11px] font-bold uppercase tracking-[0.12em] text-accent">
+            How it works
+          </p>
+          <h2 className="mt-2.5 font-display text-[clamp(28px,3.5vw,46px)] font-bold leading-[1] tracking-tight text-text">
+            Three steps. One result.
+          </h2>
+        </div>
+
+        {/* Connected numbered cards */}
+        <ul className="list-none p-0 sm:flex">
+          {STEPS.map((step, i) => (
+            <motion.li
+              key={step.n}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-8%" }}
+              transition={{ delay: i * 0.1, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              className={cn(
+                "flex-1 border border-border bg-surface p-8 sm:p-9",
+                i === 0 && "rounded-t-[16px] sm:rounded-l-[16px] sm:rounded-tr-none",
+                i === 1 && "border-t-0 sm:border-t sm:border-l-0",
+                i === 2 && "rounded-b-[16px] border-t-0 sm:rounded-r-[16px] sm:rounded-bl-none sm:border-t sm:border-l-0",
+              )}
+              style={{ marginLeft: i > 0 ? "-1px" : undefined }}
+            >
+              <p className="mb-7 font-display text-[52px] font-bold leading-none tracking-tight text-text/[0.07]">
+                {step.n}
+              </p>
+              <h3 className="mb-2.5 font-display text-[18px] font-bold text-text">
+                {step.title}
+              </h3>
+              <p className="font-body text-sm font-light leading-[1.75] text-text-muted">
+                {step.body}
+              </p>
+            </motion.li>
+          ))}
         </ul>
       </Container>
     </section>

@@ -145,6 +145,7 @@ export async function postSwitchOrg(
 export async function patchUserPreferences(
   getToken: () => Promise<string | null>,
   body: {
+    onboarded_for_workflow?: "contact_form" | "proposal" | "pitch_deck" | "unsure" | null;
     sidebar_collapsed?: boolean;
     dashboard_tip_dismissed?: boolean;
     notification_daily_automation_digest?: boolean;
@@ -1169,6 +1170,20 @@ export async function duplicatePage(
     getToken,
     activeOrgId,
     body: JSON.stringify({}),
+  });
+}
+
+export async function postDeckExport(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+  format: "pptx" | "pdf" | "keynote" | "google_slides",
+): Promise<{ status: string; format: string; message: string }> {
+  return apiRequest(`/pages/${pageId}/deck/export`, {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({ format }),
   });
 }
 

@@ -38,11 +38,14 @@ async def parse_intent(
     provider: str | None,
     db: AsyncSession | None = None,
     organization_id: UUID | None = None,
+    context_block: str | None = None,
 ) -> PageIntent:
     system = load_prompt("intent_system") or "Return JSON only."
     user = f"User request:\n{prompt}\n"
     if brand_hint:
         user += f"\nBrand context (may be empty):\n{json.dumps(brand_hint)}\n"
+    if context_block:
+        user += f"\n{context_block}\n"
     messages = [
         {"role": "system", "content": system},
         {"role": "user", "content": user},

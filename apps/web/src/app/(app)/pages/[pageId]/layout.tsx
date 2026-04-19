@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { LayoutGroup, motion } from "framer-motion";
-import { ExternalLink, MoreHorizontal, Pencil } from "lucide-react";
+import { ExternalLink, MoreHorizontal, Pencil, Presentation, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/chrome/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { duplicatePage, getPage, listPageSubmissions, patchPage } from "@/lib/api";
+import { getWorkflowSurfaceConfig } from "@/lib/workflow-config";
 import { cn } from "@/lib/utils";
 import { PageDetailProvider } from "@/providers/page-detail-provider";
 import { useForgeSession } from "@/providers/session-provider";
@@ -86,10 +87,12 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
   }
 
   const p = q.data;
+  const wf = getWorkflowSurfaceConfig(p.page_type);
   const base = `/pages/${pageId}`;
   const isOverview = pathname === base || pathname === `${base}/`;
   const isSubmissions = pathname.includes("/submissions");
   const isAutomations = pathname.includes("/automations");
+  const isExport = pathname.includes("/export");
   const isAnalytics = pathname.includes("/analytics");
 
   const subLabel = qSubCount.isLoading ? "…" : (qSubCount.data ?? "0");
@@ -103,14 +106,18 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
+  const middlePath = `${base}${wf.middleTab.hrefSuffix}`;
+  const middleActive =
+    wf.middleTab.id === "export" ? isExport : isAutomations && !isExport;
+
   const tabs: { href: string; label: string; active: boolean }[] = [
     { href: base, label: "Overview", active: isOverview },
     {
       href: `${base}/submissions`,
-      label: `Submissions (${subLabel})`,
+      label: `${wf.submissionsTabLabel} (${subLabel})`,
       active: isSubmissions,
     },
-    { href: `${base}/automations`, label: "Automations", active: isAutomations },
+    { href: middlePath, label: wf.middleTab.label, active: middleActive },
     { href: `${base}/analytics`, label: "Analytics", active: isAnalytics },
   ];
 
@@ -133,6 +140,44 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
               <Badge variant={statusVariant(p.status)}>{p.status}</Badge>
               <Button
                 type="button"
+                variant="secondary"
+                className="gap-1.5"
+                onClick={() => {
+                  if (!activeOrg?.organization_slug) return;
+                  void navigator.clipboard.writeText(
+                    `${window.location.origin}/p/${activeOrg.organization_slug}/${p.slug}`,
+                  );
+                  toast.success("Link copied");
+                }}
+              >
+                <Share2 className="size-4" />
+                Share
+              </Button>
+              {wf.headerActions === "deck" ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="gap-1.5"
+                    onClick={() => {
+                      if (!activeOrg?.organization_slug) return;
+                      window.open(
+                        `${window.location.origin}/p/${activeOrg.organization_slug}/${p.slug}?mode=present`,
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                    }}
+                  >
+                    <Presentation className="size-4" />
+                    Present
+                  </Button>
+                  <Button type="button" variant="secondary" asChild>
+                    <Link href={`${base}/export`}>Export</Link>
+                  </Button>
+                </>
+              ) : null}
+              <Button
+                type="button"
                 variant="primary"
                 onClick={() => router.push(`/studio?pageId=${pageId}`)}
                 className="gap-1.5"
@@ -142,7 +187,7 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
               </Button>
               <Button type="button" variant="secondary" onClick={openLive}>
                 <ExternalLink className="size-4" />
-                Open live
+                {wf.headerActions === "proposal" ? "Share link" : "Open live"}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

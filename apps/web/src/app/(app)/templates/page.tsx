@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import { Search } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,11 +26,12 @@ import { cn } from "@/lib/utils";
 
 export default function TemplatesGalleryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { getToken } = useAuth();
   const { activeOrganizationId } = useForgeSession();
   const [allItems, setAllItems] = React.useState<TemplateListItemOut[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [q, setQ] = React.useState("");
+  const [q, setQ] = React.useState(() => searchParams.get("q") ?? "");
   const [category, setCategory] = React.useState<string | null>(null);
   const [detail, setDetail] = React.useState<TemplateListItemOut | null>(null);
   const [detailHtml, setDetailHtml] = React.useState<string | null>(null);
@@ -114,6 +115,33 @@ export default function TemplatesGalleryPage() {
           className="text-sm font-medium text-accent underline-offset-4 hover:underline"
         >
           Back to Studio
+        </Link>
+      </div>
+
+      <div className="mt-10 grid gap-4 sm:grid-cols-3">
+        <Link
+          href="/templates?q=contact"
+          className="rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:border-teal-500/40"
+        >
+          <p className="font-display text-lg font-semibold text-text">Contact forms &amp; bookings</p>
+          <p className="mt-1 text-sm text-text-muted font-body">Lead capture and scheduling templates.</p>
+          <span className="mt-3 inline-block text-sm font-medium text-accent font-body">Browse →</span>
+        </Link>
+        <Link
+          href="/templates?q=proposal"
+          className="rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:border-amber-500/40"
+        >
+          <p className="font-display text-lg font-semibold text-text">Proposals &amp; quotes</p>
+          <p className="mt-1 text-sm text-text-muted font-body">Client-ready bids and estimates.</p>
+          <span className="mt-3 inline-block text-sm font-medium text-accent font-body">Browse →</span>
+        </Link>
+        <Link
+          href="/templates?q=deck"
+          className="rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:border-indigo-500/40"
+        >
+          <p className="font-display text-lg font-semibold text-text">Pitch decks</p>
+          <p className="mt-1 text-sm text-text-muted font-body">Investor and launch narratives.</p>
+          <span className="mt-3 inline-block text-sm font-medium text-accent font-body">Browse →</span>
         </Link>
       </div>
 

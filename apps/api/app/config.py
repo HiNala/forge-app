@@ -1,3 +1,4 @@
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -5,7 +6,10 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Forge API"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
-    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+    BACKEND_CORS_ORIGINS: list[str] = Field(
+        default=["http://localhost:3000", "http://localhost:3001"],
+        validation_alias=AliasChoices("BACKEND_CORS_ORIGINS", "CORS_ORIGINS"),
+    )
     # Comma-separated hosts for TrustedHostMiddleware; "*" allows any (development only).
     TRUSTED_HOSTS: str = "*"
     # Subdomain tenant routing: ``{slug}.{APP_ROOT_DOMAIN}`` → resolve org by slug.
@@ -18,6 +22,10 @@ class Settings(BaseSettings):
     FORGE_CACHE_NS: str = "forge"
     SECRET_KEY: str = "change-me-in-production-use-openssl-rand-hex-32"
     SENTRY_DSN: str | None = None
+    # Run rate limiting during pytest (off by default so integration tests are deterministic).
+    RATE_LIMIT_IN_TESTS: bool = False
+    # Optional async URL for forge_admin (BYPASSRLS). Not wired yet — see BI-02 mission report.
+    FORGE_ADMIN_DATABASE_URL: str | None = None
 
     # Clerk (ADR-002)
     CLERK_JWKS_URL: str = ""

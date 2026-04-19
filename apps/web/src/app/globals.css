@@ -297,3 +297,83 @@
     line-height: var(--leading-relaxed);
   }
 }
+
+/* ── Marketing animations ─────────────────────────────────────────────── */
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes orb-drift {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50%       { transform: translateX(-50%) scale(1.06); }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+@keyframes counter-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Animated tab underline ───────────────────────────────────────────── */
+.tab-underline-track { position: relative; }
+.tab-underline-indicator {
+  position: absolute;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--text);
+  transition: left 200ms var(--ease-out), width 200ms var(--ease-out);
+  pointer-events: none;
+}
+
+/* ── Card hover lift ─────────────────────────────────────────────────── */
+.card-lift {
+  transition: transform 220ms var(--ease-out), box-shadow 220ms var(--ease-out),
+              border-color 220ms var(--ease-out);
+}
+.card-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── Ticker (no-wrap infinite scroll) ────────────────────────────────── */
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker 32s linear infinite;
+}
+.ticker-track:hover { animation-play-state: paused; }
+
+/* ── Hero orb gradient ───────────────────────────────────────────────── */
+.hero-orb {
+  position: absolute;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(900px, 140vw);
+  height: 600px;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    oklch(88% 0.09 55 / 0.5) 0%,
+    oklch(88% 0.07 30 / 0.18) 45%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+  animation: orb-drift 14s ease-in-out infinite;
+}
+
+/* ── Focus-within glow on textarea/input boxes ───────────────────────── */
+.input-focus-ring {
+  transition: box-shadow 180ms var(--ease-out), border-color 180ms var(--ease-out);
+}
+.input-focus-ring:focus-within {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 4px var(--accent-light), var(--shadow-md);
+}

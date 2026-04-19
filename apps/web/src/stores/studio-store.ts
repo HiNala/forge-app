@@ -6,7 +6,7 @@ export type StudioChatMsg = {
   role: "user" | "assistant" | "system";
   text: string;
   /** Assistant card after generation */
-  kind?: "artifact" | "plain";
+  kind?: "artifact" | "plain" | "workflow_clarify";
   artifactMeta?: {
     pageId: string;
     title: string;
@@ -14,6 +14,11 @@ export type StudioChatMsg = {
     slug: string;
     summary: string;
     status: string;
+  };
+  clarifyMeta?: {
+    candidates: { workflow: string; confidence: number; rationale: string }[];
+    /** Preferred workflow when the API sends one; UI lists `candidates` regardless. */
+    default?: string;
   };
 };
 

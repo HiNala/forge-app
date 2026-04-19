@@ -12,6 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { STUDIO_STARTER_CHIPS, resolveSurprisePrompt } from "@/lib/studio-content";
+import {
+  type DashboardWorkflowFilter,
+  pageMatchesWorkflowFilter,
+} from "@/lib/workflow-config";
 import { getPageUnreadCounts, listPages } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
@@ -24,6 +28,11 @@ function parseFilter(s: string | null): Filter {
   return "all";
 }
 
+function parseWorkflowFilter(s: string | null): DashboardWorkflowFilter {
+  if (s === "contact" || s === "proposal" || s === "deck" || s === "other") return s;
+  return "all";
+}
+
 export function DashboardView() {
   const router = useRouter();
   const pathname = usePathname();
@@ -32,6 +41,7 @@ export function DashboardView() {
   const { activeOrganizationId, user } = useForgeSession();
 
   const filter = parseFilter(searchParams.get("filter"));
+  const workflowFilter = parseWorkflowFilter(searchParams.get("workflow"));
   const qUrl = searchParams.get("q") ?? "";
 
   const [qInput, setQInput] = React.useState(qUrl);
@@ -60,6 +70,13 @@ export function DashboardView() {
     router.replace(`/dashboard?${next.toString()}`, { scroll: false });
   };
 
+  const setWorkflowFilter = (f: DashboardWorkflowFilter) => {
+    const next = new URLSearchParams(searchParams.toString());
+    if (f === "all") next.delete("workflow");
+    else next.set("workflow", f);
+    router.replace(`/dashboard?${next.toString()}`, { scroll: false });
+  };
+
   const pagesQ = useQuery({
     queryKey: ["pages", activeOrganizationId],
     queryFn: () => listPages(getToken, activeOrganizationId),
@@ -77,15 +94,29 @@ export function DashboardView() {
 
   const unread = unreadQ.data ?? {};
 
+  const keywordWorkflowHint = React.useMemo(() => {
+    const qt = qUrl.trim().toLowerCase();
+    if (qt.includes("proposal") || qt.includes("quote") || qt.includes("bid"))
+      return "proposal" as const;
+    if (qt.includes("deck") || qt.includes("pitch") || qt.includes("slide"))
+      return "deck" as const;
+    if (qt.includes("contact") || qt.includes("booking") || qt.includes("form"))
+      return "contact" as const;
+    return null;
+  }, [qUrl]);
+
   const filtered = React.useMemo(() => {
     let rows = pagesQ.data ?? [];
     if (filter === "live") rows = rows.filter((p) => p.status === "live");
     else if (filter === "draft") rows = rows.filter((p) => p.status === "draft");
     else if (filter === "archived") rows = rows.filter((p) => p.status === "archived");
+    if (workflowFilter !== "all") {
+      rows = rows.filter((p) => pageMatchesWorkflowFilter(p.page_type, workflowFilter));
+    }
     const qt = qUrl.trim().toLowerCase();
     if (qt) rows = rows.filter((p) => p.title.toLowerCase().includes(qt));
     return rows;
-  }, [pagesQ.data, filter, qUrl]);
+  }, [pagesQ.data, filter, qUrl, workflowFilter]);
 
   const [visibleCount, setVisibleCount] = React.useState(24);
   const [cardFocus, setCardFocus] = React.useState(0);
@@ -94,7 +125,7 @@ export function DashboardView() {
     setVisibleCount(24);
     setCardFocus(0);
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [filter, qUrl]);
+  }, [filter, qUrl, workflowFilter]);
 
   const slice = filtered.slice(0, visibleCount);
   const hasMore = filtered.length > visibleCount;
@@ -234,13 +265,59 @@ export function DashboardView() {
             <p className="font-display text-xl text-text">
               Good to see you, {firstName}. Here&apos;s your workspace.
             </p>
-            <Input
-              className="max-w-sm"
-              placeholder="Search titles…"
-              value={qInput}
-              onChange={(e) => setQInput(e.target.value)}
-              aria-label="Search pages"
-            />
+            <div className="flex w-full max-w-md flex-col gap-2">
+              <Input
+                className="w-full"
+                placeholder="Search titles…"
+                value={qInput}
+                onChange={(e) => setQInput(e.target.value)}
+                aria-label="Search pages"
+              />
+              {keywordWorkflowHint ? (
+                <button
+                  type="button"
+                  className="text-left text-xs font-medium text-accent underline-offset-4 hover:underline font-body"
+                  onClick={() => {
+                    setWorkflowFilter(keywordWorkflowHint === "proposal" ? "proposal" : keywordWorkflowHint);
+                    setQInput("");
+                  }}
+                >
+                  See all{" "}
+                  {keywordWorkflowHint === "contact"
+                    ? "contact & booking pages"
+                    : keywordWorkflowHint === "proposal"
+                      ? "proposals"
+                      : "pitch decks"}{" "}
+                  →
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                { id: "all" as const, label: "All types" },
+                { id: "contact" as const, label: "Contact forms" },
+                { id: "proposal" as const, label: "Proposals" },
+                { id: "deck" as const, label: "Decks" },
+                { id: "other" as const, label: "Other" },
+              ] satisfies { id: DashboardWorkflowFilter; label: string }[]
+            ).map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setWorkflowFilter(c.id)}
+                className={cn(
+                  "rounded-full border px-4 py-2 text-sm font-medium font-body transition-colors",
+                  workflowFilter === c.id
+                    ? "border-accent bg-accent-light text-accent"
+                    : "border-border bg-surface text-text-muted hover:border-accent/50",
+                )}
+              >
+                {c.label}
+              </button>
+            ))}
           </div>
 
           <div className="flex flex-wrap gap-2">

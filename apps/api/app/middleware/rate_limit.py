@@ -155,8 +155,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        # Deterministic integration tests: ASGI client shares in-process limiter state.
-        if settings.ENVIRONMENT == "test":
+        # Deterministic integration tests unless ``RATE_LIMIT_IN_TESTS`` is enabled.
+        if settings.ENVIRONMENT == "test" and not settings.RATE_LIMIT_IN_TESTS:
             return await call_next(request)
 
         submit_keys = _public_submit_keys(request)

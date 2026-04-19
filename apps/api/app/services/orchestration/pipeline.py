@@ -24,6 +24,7 @@ from app.services.orchestration.page_composer import (
     default_assembly_plan,
     render_section,
 )
+from app.services.context.gather import gather_context
 from app.services.proposal_service import finalize_proposal_studio_html
 from app.utils.slug import slugify_page_title, unique_page_slug
 
@@ -90,6 +91,49 @@ async def stream_page_generation(
         if brand_row.secondary_color:
             secondary = brand_row.secondary_color
 
+    org_row = await db.get(Organization, ctx.organization_id)
+    if org_row is None:
+        yield _sse("error", {"code": "not_found", "message": "Organization not found"})
+        return
+
+    yield _sse("context", {"phase": "started"})
+    bundle = await gather_context(db=db, org=org_row, user=user, prompt=prompt, time_budget_seconds=3.0)
+    yield _sse(
+        "context.gathered",
+        {
+            "duration_ms": bundle.gather_duration_ms,
+            "incomplete": bundle.gather_incomplete,
+            "urls": bundle.prompt_urls,
+        },
+    )
+    if bundle.site_brand:
+        yield _sse(
+            "context.brand.extracted",
+            {
+                "url": bundle.site_brand.url,
+                "business_name": bundle.site_brand.business_name,
+                "primary_color": bundle.site_brand.primary_color,
+            },
+        )
+        sb = bundle.site_brand
+        if brand_hint is None:
+            brand_hint = {}
+        if sb.primary_color and not brand_hint.get("primary_color"):
+            brand_hint["primary_color"] = sb.primary_color
+        if sb.secondary_color and not brand_hint.get("secondary_color"):
+            brand_hint["secondary_color"] = sb.secondary_color
+        if sb.display_font and brand_snapshot is not None:
+            brand_snapshot = dict(brand_snapshot)
+            brand_snapshot["display_font"] = brand_snapshot.get("display_font") or sb.display_font
+        if sb.body_font and brand_snapshot is not None:
+            brand_snapshot = dict(brand_snapshot)
+            brand_snapshot["body_font"] = brand_snapshot.get("body_font") or sb.body_font
+    if bundle.site_voice:
+        yield _sse("context.voice.inferred", {"summary": bundle.site_voice.persona_summary[:200]})
+    if bundle.site_products:
+        yield _sse("context.products.found", {"count": len(bundle.site_products)})
+
+    ctx_block = bundle.to_prompt_context().strip()
     try:
         intent = await parse_intent(
             prompt,
@@ -97,6 +141,7 @@ async def stream_page_generation(
             provider=provider,
             db=db,
             organization_id=ctx.organization_id,
+            context_block=ctx_block if ctx_block else None,
         )
     except Exception as e:
         logger.exception("intent_fatal %s", e)
@@ -119,10 +164,6 @@ async def stream_page_generation(
         base_slug = slugify_page_title(title)
         slug = await unique_page_slug(db, ctx.organization_id, base_slug)
 
-    org_row = await db.get(Organization, ctx.organization_id)
-    if org_row is None:
-        yield _sse("error", {"code": "not_found", "message": "Organization not found"})
-        return
     org_slug = org_row.slug
     form_action = f"/p/{org_slug}/{slug}/submit"
 

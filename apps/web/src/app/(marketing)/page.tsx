@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { FaqAccordion } from "@/components/marketing/faq-accordion";
 import { FinalCta } from "@/components/marketing/final-cta";
 import { GallerySection } from "@/components/marketing/gallery-section";
@@ -42,6 +43,42 @@ export default function MarketingHomePage() {
           </div>
         </Container>
         <HeroDemoLazy />
+      </section>
+      <section className="border-t border-border py-12 sm:py-16">
+        <Container max="xl">
+          <h2 className="text-center font-display text-2xl font-semibold text-text sm:text-3xl">
+            Three workflows, one Studio
+          </h2>
+          <p className="mx-auto mt-3 max-w-[60ch] text-center text-text-muted font-body">
+            Pick a path — each page is a live link, analytics, and exports in one place.
+          </p>
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            <Link
+              href="/workflows/contact-form"
+              className="rounded-2xl border border-border bg-surface p-6 shadow-sm transition hover:border-accent/40"
+            >
+              <span className="text-sm font-medium text-accent font-body">Contact &amp; booking</span>
+              <span className="mt-2 block font-display text-lg font-semibold text-text">Forms that work</span>
+              <span className="mt-2 block text-sm text-text-muted font-body">See how it works →</span>
+            </Link>
+            <Link
+              href="/workflows/proposal"
+              className="rounded-2xl border border-border bg-surface p-6 shadow-sm transition hover:border-accent/40"
+            >
+              <span className="text-sm font-medium text-accent font-body">Proposals</span>
+              <span className="mt-2 block font-display text-lg font-semibold text-text">Quotes that close</span>
+              <span className="mt-2 block text-sm text-text-muted font-body">See how it works →</span>
+            </Link>
+            <Link
+              href="/workflows/pitch-deck"
+              className="rounded-2xl border border-border bg-surface p-6 shadow-sm transition hover:border-accent/40"
+            >
+              <span className="text-sm font-medium text-accent font-body">Pitch decks</span>
+              <span className="mt-2 block font-display text-lg font-semibold text-text">Slides that tell a story</span>
+              <span className="mt-2 block text-sm text-text-muted font-body">See how it works →</span>
+            </Link>
+          </div>
+        </Container>
       </section>
       <HowItWorks />
       <GallerySection />

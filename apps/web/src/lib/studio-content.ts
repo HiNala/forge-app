@@ -91,6 +91,16 @@ export function resolveSurprisePrompt(): string {
   return pick.prompt;
 }
 
+/** Smaller chips under flagship workflow cards — prime only, no auto-submit (W-04). */
+export const STUDIO_SECONDARY_CHIPS: { id: string; label: string; prompt: string }[] = [
+  { id: "rsvp2", label: "Event RSVP", prompt: "An RSVP page for my event with meal choice and guest count." },
+  { id: "menu2", label: "Menu", prompt: "A daily specials menu for our restaurant with sections and prices." },
+  { id: "landing2", label: "Landing", prompt: "A one-page landing for my product with hero, features, and CTA." },
+  { id: "promo2", label: "Promotion", prompt: "A short promotion page for a limited-time sale with urgency and CTA." },
+  { id: "gallery2", label: "Gallery", prompt: "A simple image gallery page with captions for my portfolio." },
+  { id: "surprise2", label: "Surprise me", prompt: "" },
+];
+
 /** Default refine chips when `html.complete` does not include `refine_suggestions`. */
 export const DEFAULT_REFINE_CHIPS = [
   "Make it more minimal",

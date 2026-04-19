@@ -7,11 +7,14 @@ import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
 import {
   BarChart3,
+  CalendarClock,
   CreditCard,
+  FileSignature,
   FileText,
   LayoutDashboard,
   LayoutTemplate,
   Plus,
+  Presentation,
   Settings,
   Sparkles,
   Users,
@@ -132,6 +135,42 @@ export function CommandPalette() {
                 {label}
               </Command.Item>
             ))}
+            <Command.Group
+              heading="Workflows"
+              className="mt-2 px-1 py-1 text-xs font-semibold text-text-subtle uppercase tracking-wide"
+            />
+            <Command.Item
+              value="new contact form studio workflow"
+              onSelect={() => run("/studio?workflow=contact_form", "New contact form")}
+              className={itemClass}
+            >
+              <CalendarClock className="size-4 text-teal-600" aria-hidden />
+              New contact form
+            </Command.Item>
+            <Command.Item
+              value="new proposal studio workflow"
+              onSelect={() => run("/studio?workflow=proposal", "New proposal")}
+              className={itemClass}
+            >
+              <FileSignature className="size-4 text-amber-600" aria-hidden />
+              New proposal
+            </Command.Item>
+            <Command.Item
+              value="new pitch deck studio workflow"
+              onSelect={() => run("/studio?workflow=pitch_deck", "New pitch deck")}
+              className={itemClass}
+            >
+              <Presentation className="size-4 text-indigo-600" aria-hidden />
+              New pitch deck
+            </Command.Item>
+            <Command.Item
+              value="find proposals dashboard filter"
+              onSelect={() => run("/dashboard?workflow=proposal", "Proposals — dashboard")}
+              className={itemClass}
+            >
+              <FileText className="size-4 text-accent" aria-hidden />
+              Find my proposals
+            </Command.Item>
             <Command.Item
               value="settings"
               onSelect={() => run("/settings/profile", "Settings")}

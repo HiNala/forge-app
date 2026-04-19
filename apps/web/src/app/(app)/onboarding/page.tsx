@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,38 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { successSpring } from "@/lib/motion";
 import { markOnboardingSeen } from "@/components/chrome/onboarding-gate";
-import { patchOrg, postBrandLogo, putBrand } from "@/lib/api";
+import { patchOrg, patchUserPreferences, postBrandLogo, putBrand } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
+
+type OnboardWorkflow = "contact_form" | "proposal" | "pitch_deck" | "unsure" | null;
+
+const WORKFLOW_CARDS: {
+  id: NonNullable<OnboardWorkflow>;
+  title: string;
+  description: string;
+}[] = [
+  {
+    id: "contact_form",
+    title: "Contact form",
+    description: "Capture leads with booking-ready flows.",
+  },
+  {
+    id: "proposal",
+    title: "Proposal",
+    description: "Send signed quotes clients can accept online.",
+  },
+  {
+    id: "pitch_deck",
+    title: "Pitch deck",
+    description: "Turn your story into a polished slide deck.",
+  },
+  {
+    id: "unsure",
+    title: "I'll figure it out",
+    description: "Start with a blank Studio and explore.",
+  },
+];
 
 const CURATED_SWATCHES = [
   "#2a9d8f",
@@ -44,6 +73,7 @@ export default function OnboardingPage() {
   const { user, activeOrganizationId: activeOrgId } = session;
   const { getToken } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const first = user?.display_name?.split(/\s+/)[0] ?? "there";
   const suggested = React.useMemo(
@@ -58,6 +88,15 @@ export default function OnboardingPage() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [done, setDone] = React.useState(false);
+  const workflowParam = searchParams.get("workflow");
+  const workflowFromUrl = React.useMemo((): OnboardWorkflow | null => {
+    const w = workflowParam;
+    if (w === "contact_form" || w === "proposal" || w === "pitch_deck") return w;
+    return null;
+  }, [workflowParam]);
+
+  const [workflowOverride, setWorkflowOverride] = React.useState<OnboardWorkflow | null>(null);
+  const workflowChoice = workflowOverride ?? workflowFromUrl;
 
   const logoPreviewUrl = React.useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   React.useEffect(() => {
@@ -94,8 +133,31 @@ export default function OnboardingPage() {
         await postBrandLogo(getToken, activeOrgId, file);
       }
       markOnboardingSeen(activeOrgId);
+      const wfPref =
+        workflowChoice && workflowChoice !== "unsure" ? workflowChoice : null;
+      if (wfPref) {
+        try {
+          await patchUserPreferences(getToken, { onboarded_for_workflow: wfPref });
+        } catch {
+          /* non-fatal */
+        }
+      } else if (workflowChoice === "unsure") {
+        try {
+          await patchUserPreferences(getToken, { onboarded_for_workflow: "unsure" });
+        } catch {
+          /* ignore */
+        }
+      }
       setDone(true);
-      setTimeout(() => router.replace("/dashboard"), 700);
+      const studioPath =
+        workflowChoice === "contact_form"
+          ? "/studio?workflow=contact_form"
+          : workflowChoice === "proposal"
+            ? "/studio?workflow=proposal"
+            : workflowChoice === "pitch_deck"
+              ? "/studio?workflow=pitch_deck"
+              : "/dashboard";
+      setTimeout(() => router.replace(studioPath), 700);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
@@ -114,6 +176,35 @@ export default function OnboardingPage() {
         {greeting()}, {first} — name your workspace and set a first-pass brand. You can refine
         everything later in Settings.
       </p>
+
+      <div className="mt-10 space-y-3">
+        <p className="text-sm font-medium text-text font-body">What&apos;s the first thing you want to build?</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {WORKFLOW_CARDS.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setWorkflowOverride(c.id)}
+              className={cn(
+                "rounded-[10px] border px-4 py-3 text-left text-sm transition-colors",
+                workflowChoice === c.id
+                  ? "border-accent bg-accent-light ring-2 ring-accent/25"
+                  : "border-border bg-surface hover:border-accent/40",
+              )}
+            >
+              <span className="font-medium text-text font-body">{c.title}</span>
+              <span className="mt-1 block text-xs text-text-muted font-body">{c.description}</span>
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="text-xs font-medium text-text-muted underline-offset-4 hover:underline font-body"
+          onClick={() => setWorkflowOverride("unsure")}
+        >
+          Skip
+        </button>
+      </div>
 
       <form className="mt-10 space-y-8" onSubmit={onSubmit}>
         {error ? (

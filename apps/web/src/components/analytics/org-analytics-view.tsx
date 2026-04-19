@@ -21,6 +21,7 @@ import {
   listPages,
   type PageOut,
 } from "@/lib/api";
+import { getWorkflowFamily } from "@/lib/workflow-config";
 import { useForgeSession } from "@/providers/session-provider";
 import {
   AnalyticsRangeSelector,
@@ -147,6 +148,20 @@ export function OrgAnalyticsView() {
   const selectedPage = pagesQ.data?.find((p: PageOut) => p.id === selectedPageId);
   const ps = pageSumQ.data as Record<string, unknown> | undefined;
 
+  const workflowMix = React.useMemo(() => {
+    const pages = pagesQ.data ?? [];
+    let contact = 0;
+    let proposal = 0;
+    let deck = 0;
+    for (const pg of pages) {
+      const f = getWorkflowFamily(pg.page_type);
+      if (f === "contact") contact += 1;
+      else if (f === "proposal") proposal += 1;
+      else if (f === "deck") deck += 1;
+    }
+    return { contact, proposal, deck, total: pages.length };
+  }, [pagesQ.data]);
+
   if (orgQ.isLoading) {
     return <p className="text-sm text-text-muted font-body">Loading organization analytics…</p>;
   }
@@ -205,6 +220,50 @@ export function OrgAnalyticsView() {
           hint="Prompt + completion tokens recorded for this workspace in the billing period."
         />
       </div>
+
+      {workflowMix.total > 0 ? (
+        <div>
+          <h2 className="mb-2 font-display text-sm font-semibold text-text">Workflow mix</h2>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Link
+              href="/dashboard?workflow=contact"
+              className="rounded-[12px] border border-border bg-surface p-4 shadow-sm transition hover:border-accent/30"
+            >
+              <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted font-body">
+                Contact &amp; booking
+              </p>
+              <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-text">
+                {workflowMix.contact}
+              </p>
+              <p className="mt-1 text-xs text-text-muted font-body">pages · filtered dashboard →</p>
+            </Link>
+            <Link
+              href="/dashboard?workflow=proposal"
+              className="rounded-[12px] border border-border bg-surface p-4 shadow-sm transition hover:border-accent/30"
+            >
+              <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted font-body">
+                Proposals
+              </p>
+              <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-text">
+                {workflowMix.proposal}
+              </p>
+              <p className="mt-1 text-xs text-text-muted font-body">pages · pipeline in Page Detail →</p>
+            </Link>
+            <Link
+              href="/dashboard?workflow=deck"
+              className="rounded-[12px] border border-border bg-surface p-4 shadow-sm transition hover:border-accent/30"
+            >
+              <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted font-body">
+                Pitch decks
+              </p>
+              <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-text">
+                {workflowMix.deck}
+              </p>
+              <p className="mt-1 text-xs text-text-muted font-body">pages · present &amp; export →</p>
+            </Link>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <KpiCard label="Views (range)" value={totalViews} />
