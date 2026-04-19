@@ -59,6 +59,13 @@ export default function OnboardingPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [done, setDone] = React.useState(false);
 
+  const logoPreviewUrl = React.useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  React.useEffect(() => {
+    return () => {
+      if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+    };
+  }, [logoPreviewUrl]);
+
   const previewStyle = React.useMemo(
     () =>
       ({
@@ -170,9 +177,12 @@ export default function OnboardingPage() {
 
         <div>
           <Label htmlFor="logo">Logo</Label>
+          <p className="mt-1 text-sm text-text-muted font-body">
+            Optional — PNG, JPG, WebP, or SVG. You can replace or remove before finishing.
+          </p>
           <label
             htmlFor="logo"
-            className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-[10px] border border-dashed border-border bg-bg-elevated/50 px-6 py-10 text-center text-sm text-text-muted font-body hover:bg-bg-elevated"
+            className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-[10px] border border-dashed border-border bg-bg-elevated/50 px-6 py-8 text-center text-sm text-text-muted font-body hover:bg-bg-elevated"
           >
             <input
               id="logo"
@@ -181,8 +191,29 @@ export default function OnboardingPage() {
               className="sr-only"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
-            {file ? file.name : "Drop a logo here, or click to browse"}
+            {logoPreviewUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- blob preview before upload
+              <img
+                src={logoPreviewUrl}
+                alt="Logo preview"
+                className="max-h-28 max-w-full rounded-md object-contain"
+              />
+            ) : (
+              <span>Drop a logo here, or click to browse</span>
+            )}
           </label>
+          {file ? (
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <span className="truncate text-xs text-text-subtle font-body">{file.name}</span>
+              <button
+                type="button"
+                className="text-sm font-medium text-accent underline-offset-2 hover:underline font-body"
+                onClick={() => setFile(null)}
+              >
+                Remove
+              </button>
+            </div>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
