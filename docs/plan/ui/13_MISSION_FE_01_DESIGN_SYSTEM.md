@@ -191,4 +191,10 @@ Each primitive below lives in `apps/web/src/components/ui/{name}.tsx`, has a mat
 - Lighthouse ≥ 95 on a primitive-heavy page.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Current depth vs this brief: **[FRONTEND_STATUS.md](./FRONTEND_STATUS.md)** · Index & mission reports: **[00_README.md](./00_README.md)**
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

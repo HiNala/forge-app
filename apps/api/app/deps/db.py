@@ -1,15 +1,17 @@
-"""Async SQLAlchemy session with ``SET LOCAL`` RLS session variables."""
+"""Async SQLAlchemy session with transaction-scoped RLS GUCs (BI-02)."""
 
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 from uuid import UUID
 
+import structlog
 from fastapi import Depends, Request
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.context import try_get_request_context
 from app.db.models import User
+from app.db.rls_context import set_active_organization, set_current_user
 from app.db.session import AsyncSessionLocal
 from app.deps.auth import require_user
 from app.deps.tenant import TenantContext, optional_tenant
@@ -20,20 +22,26 @@ async def get_db(
     user: User = Depends(require_user),
     _tenant: TenantContext | None = Depends(optional_tenant),
 ) -> AsyncGenerator[AsyncSession, None]:
-    """RLS: ``app.current_user_id`` always; ``app.current_tenant_id`` when org header set."""
+    """RLS GUCs on the session transaction; mirrors :class:`RequestContext` for logs."""
     async with AsyncSessionLocal() as session:
-        await session.execute(
-            text("SELECT set_config('app.current_user_id', :u, true)"),
-            {"u": str(user.id)},
-        )
+        await set_current_user(session, user.id)
         tid = getattr(request.state, "tenant_id", None)
-        # RLS casts GUC to uuid — reject non-UUID / empty str (would become ''::uuid).
         if isinstance(tid, UUID):
-            await session.execute(
-                text("SELECT set_config('app.current_tenant_id', :t, true)"),
-                {"t": str(tid)},
-            )
+            await set_active_organization(session, tid)
+        role = getattr(request.state, "membership_role", None)
+        rc = try_get_request_context()
+        if rc:
+            rc.user_id = user.id
+            rc.organization_id = tid if isinstance(tid, UUID) else None
+            rc.user_role = role
+        structlog.contextvars.bind_contextvars(
+            user_id=str(user.id),
+            organization_id=str(tid) if isinstance(tid, UUID) else None,
+        )
         yield session
+
+
+get_tenant_db = get_db
 
 
 async def get_db_no_auth() -> AsyncGenerator[AsyncSession, None]:
@@ -51,8 +59,5 @@ async def get_db_user_only(
 ) -> AsyncGenerator[AsyncSession, None]:
     """Authenticated user only (no tenant header) — e.g. invite accept before org membership."""
     async with AsyncSessionLocal() as session:
-        await session.execute(
-            text("SELECT set_config('app.current_user_id', :u, true)"),
-            {"u": str(user.id)},
-        )
+        await set_current_user(session, user.id)
         yield session

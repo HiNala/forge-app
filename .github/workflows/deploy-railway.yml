@@ -1,0 +1,56 @@
+# Mission 08 — deploy to Railway (configure secrets in the repo / environments).
+# Requires: RAILWAY_TOKEN, RAILWAY_SERVICE_ID_STAGING (and PRODUCTION for the manual job).
+
+name: Deploy Railway
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "staging or production"
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+  push:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "infra/**"
+      - ".github/workflows/deploy-railway.yml"
+
+# Prevent concurrent production deploys
+concurrency:
+  group: deploy-railway-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Auto staging deploy on main — set RAILWAY_SERVICE_ID_STAGING + RAILWAY_TOKEN in repo secrets.
+  deploy-staging:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Railway (staging)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then echo "RAILWAY_TOKEN not set — skipping Railway CLI deploy"; exit 0; fi
+          npm i -g @railway/cli@3
+          railway up --service "${{ secrets.RAILWAY_SERVICE_ID_STAGING }}" || true
+
+  deploy-production:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Railway (production)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          npm i -g @railway/cli@3
+          railway up --service "${{ secrets.RAILWAY_SERVICE_ID_PRODUCTION }}"

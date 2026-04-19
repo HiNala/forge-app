@@ -176,6 +176,12 @@ Commit on each sweep boundary: motion sweep, accessibility sweep, performance sw
 - No ad-hoc values — every color, spacing, radius, shadow, motion pulls from tokens.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Current depth vs this brief: **[FRONTEND_STATUS.md](./FRONTEND_STATUS.md)** · Shipped scope: [MISSION-FE-07-REPORT.md](../MISSION-FE-07-REPORT.md) · Polish checklists: [../../polish/](../../polish/) (Lighthouse, a11y, bundles templates)
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**
 
 ---

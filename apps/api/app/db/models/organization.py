@@ -1,8 +1,10 @@
 """Organization (tenant)."""
 
 from datetime import datetime
+from typing import Any
 
-from sqlalchemy import DateTime, String, Text, func
+from sqlalchemy import DateTime, String, Text, func, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -28,6 +30,12 @@ class Organization(Base, UUIDPrimaryKeyMixin):
     )
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     scheduled_purge_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    payment_failed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    stripe_subscription_status: Mapped[str | None] = mapped_column(Text)
+    org_settings: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    account_status: Mapped[str] = mapped_column(Text, nullable=False, server_default="active")
 
     memberships = relationship("Membership", back_populates="organization")
     brand_kit = relationship("BrandKit", back_populates="organization", uselist=False)

@@ -1,7 +1,10 @@
 """Page — generated site unit."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -28,9 +31,9 @@ class Page(Base, UUIDPrimaryKeyMixin):
         String(16), nullable=False, server_default="draft"
     )  # draft | live | archived
     current_html: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
-    form_schema: Mapped[dict | None] = mapped_column(JSONB)
-    brand_kit_snapshot: Mapped[dict | None] = mapped_column(JSONB)
-    intent_json: Mapped[dict | None] = mapped_column(JSONB)
+    form_schema: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    brand_kit_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    intent_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     published_version_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("page_versions.id", use_alter=True, name="fk_pages_published_version_id"),
@@ -56,4 +59,16 @@ class Page(Base, UUIDPrimaryKeyMixin):
         "PageVersion",
         foreign_keys="Page.published_version_id",
         post_update=True,
+    )
+    proposal = relationship(
+        "Proposal",
+        back_populates="page",
+        uselist=False,
+        passive_deletes=True,
+    )
+    deck = relationship(
+        "Deck",
+        back_populates="page",
+        uselist=False,
+        passive_deletes=True,
     )

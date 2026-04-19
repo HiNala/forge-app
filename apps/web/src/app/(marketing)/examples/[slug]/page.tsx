@@ -2,84 +2,98 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
-import {
-  EXAMPLES_SLUGS,
-  SITE_URL,
-  TEMPLATE_CARDS,
-  type ExampleSlug,
-} from "@/lib/marketing-content";
+import { getPublicTemplateBySlug, listPublicTemplateSlugs } from "@/lib/api";
+import { SITE_URL } from "@/lib/marketing-content";
+
+export const revalidate = 3600;
+
+export async function generateStaticParams(): Promise<{ slug: string }[]> {
+  try {
+    const slugs = await listPublicTemplateSlugs();
+    return slugs.map((slug) => ({ slug }));
+  } catch {
+    return [];
+  }
+}
 
 type Props = { params: Promise<{ slug: string }> };
 
-export async function generateStaticParams() {
-  return EXAMPLES_SLUGS.map((slug) => ({ slug }));
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  if (!EXAMPLES_SLUGS.includes(slug as ExampleSlug)) {
+  try {
+    const t = await getPublicTemplateBySlug(slug);
+    const title = `${t.name} · Example`;
+    const desc =
+      t.description ?? `Preview the ${t.name} template — built with Forge.`;
+    return {
+      title,
+      description: desc,
+      alternates: { canonical: `/examples/${slug}` },
+      openGraph: {
+        title,
+        description: desc,
+        url: `${SITE_URL}/examples/${slug}`,
+        type: "website",
+        images: t.preview_image_url ? [{ url: t.preview_image_url }] : undefined,
+      },
+    };
+  } catch {
     return { title: "Example" };
   }
-  const card = TEMPLATE_CARDS.find((c) => c.slug === slug);
-  return {
-    title: card ? `${card.name} · Example` : "Example",
-    description: card?.description,
-    openGraph: {
-      title: card ? `${card.name} · Forge` : "Example",
-      url: `${SITE_URL}/examples/${slug}`,
-    },
-  };
 }
 
 export default async function ExampleDetailPage({ params }: Props) {
   const { slug } = await params;
-  if (!EXAMPLES_SLUGS.includes(slug as ExampleSlug)) notFound();
-  const card = TEMPLATE_CARDS.find((c) => c.slug === slug)!;
-  const previewSrc = `/examples/previews/${slug}.html`;
+  let t: Awaited<ReturnType<typeof getPublicTemplateBySlug>>;
+  try {
+    t = await getPublicTemplateBySlug(slug);
+  } catch {
+    notFound();
+  }
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: t.name,
+    description: t.description ?? undefined,
+    url: `${SITE_URL}/examples/${slug}`,
+  };
 
   return (
-    <Container max="xl" className="py-12 sm:py-16">
-      <p className="text-sm text-text-muted">
-        <Link href="/examples" className="text-accent hover:underline">
-          ← Examples
-        </Link>
-      </p>
-      <h1 className="mt-4 max-w-[65ch] font-display text-3xl font-semibold text-text">
-        {card.name}
-      </h1>
-      <p className="mt-3 max-w-[65ch] text-text-muted">{card.description}</p>
-      <div className="mt-8 overflow-hidden rounded-xl border border-border bg-surface shadow-md">
-        <div className="flex items-center gap-2 border-b border-border bg-bg-elevated px-3 py-2">
-          <span className="inline-flex gap-1.5" aria-hidden>
-            <span className="h-2.5 w-2.5 rounded-full bg-danger/80" />
-            <span className="h-2.5 w-2.5 rounded-full bg-warning/80" />
-            <span className="h-2.5 w-2.5 rounded-full bg-success/80" />
-          </span>
-          <span className="ml-2 flex-1 truncate rounded-md bg-bg px-2 py-1 text-center text-xs text-text-subtle">
-            forge.app / preview / {slug}
-          </span>
-        </div>
-        <div className="bg-bg p-2">
-          <iframe
-            title={`Preview: ${card.name}`}
-            className="h-[min(480px,70vh)] w-full rounded-md border border-border bg-white"
-            src={previewSrc}
-            loading="lazy"
-          />
-        </div>
+    <Container max="xl" className="py-10 sm:py-14">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-text-muted">{t.category}</p>
+        <h1 className="font-display text-3xl font-semibold tracking-tight text-text sm:text-4xl">
+          {t.name}
+        </h1>
+        {t.description ? (
+          <p className="max-w-[65ch] text-lg text-text-muted">{t.description}</p>
+        ) : null}
       </div>
-      <div className="mt-8 flex flex-wrap gap-3">
+      <div className="mt-8 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        <iframe
+          title={`Preview: ${t.name}`}
+          className="min-h-[560px] w-full border-0 bg-white"
+          sandbox="allow-scripts allow-same-origin"
+          srcDoc={t.html}
+        />
+      </div>
+      <div className="mt-10 flex flex-wrap items-center gap-4">
         <Link
-          href={`/signup?source=example_${slug}`}
-          className="inline-flex min-h-11 items-center rounded-md bg-accent px-5 font-medium text-white shadow-sm hover:brightness-105"
+          href={`/signup?template=${encodeURIComponent(t.id)}`}
+          className="inline-flex min-h-11 items-center rounded-md bg-accent px-5 text-sm font-medium text-white shadow-sm hover:bg-accent/90"
         >
-          Start with this pattern
+          Sign up and use this template
         </Link>
         <Link
-          href="/pricing"
-          className="inline-flex min-h-11 items-center text-sm font-medium text-accent underline-offset-4 hover:underline"
+          href="/templates"
+          className="text-sm font-medium text-accent underline-offset-4 hover:underline"
         >
-          Compare plans
+          Browse all templates →
         </Link>
       </div>
     </Container>

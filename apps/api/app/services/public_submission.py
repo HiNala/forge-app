@@ -18,6 +18,8 @@ def validate_payload_against_form_schema(
     if not isinstance(req, list):
         return True, ""
     for key in req:
+        if isinstance(key, str) and key.startswith("__"):
+            continue
         if key not in payload:
             return False, f"Missing field: {key}"
         val = payload[key]
@@ -48,6 +50,9 @@ def visitor_fingerprint(ip: str, user_agent: str | None) -> str:
 def normalize_submit_fields(raw: dict[str, Any]) -> tuple[str | None, str | None, dict[str, Any]]:
     """Split email/name from field payload (JSON or flattened form)."""
     data = dict(raw)
+    # Booking workflow internals (W-01) — not part of visitor message fields.
+    for _k in ("hold_id", "forge_hold_id"):
+        data.pop(_k, None)
     email = data.pop("email", None) or data.pop("emailAddress", None)
     if email is not None and not isinstance(email, str):
         email = str(email)

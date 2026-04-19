@@ -1,6 +1,9 @@
 """Global curated template (Mission 09)."""
 
+from __future__ import annotations
+
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import Boolean, DateTime, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
@@ -13,13 +16,14 @@ from app.db.mixins import UUIDPrimaryKeyMixin
 class Template(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "templates"
 
+    slug: Mapped[str] = mapped_column(Text, nullable=False, unique=True, index=True)
     name: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
     category: Mapped[str] = mapped_column(String(32), nullable=False)
     preview_image_url: Mapped[str | None] = mapped_column(Text)
     html: Mapped[str] = mapped_column(Text, nullable=False)
-    form_schema: Mapped[dict | None] = mapped_column(JSONB)
-    intent_json: Mapped[dict | None] = mapped_column(JSONB)
+    form_schema: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    intent_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     is_published: Mapped[bool] = mapped_column(Boolean, server_default="false")
     sort_order: Mapped[int] = mapped_column(Integer, server_default="0")
     created_at: Mapped[datetime] = mapped_column(

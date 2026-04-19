@@ -10,7 +10,7 @@ const PAGES = [
   { path: "/", file: "landing" },
   { path: "/pricing", file: "pricing" },
   { path: "/examples", file: "examples" },
-  { path: "/examples/booking", file: "example-booking" },
+  { path: "/examples/contractor-small-jobs", file: "example-detail" },
   { path: "/terms", file: "terms" },
   { path: "/privacy", file: "privacy" },
 ] as const;

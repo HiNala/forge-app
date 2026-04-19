@@ -69,8 +69,8 @@ async def test_publish_then_public_get_returns_snapshot() -> None:
         assert data["title"] == "Contact us"
         assert data["slug"] == "contact"
         assert data["organization_slug"] == org_slug
-        h = VALID_PUBLISHABLE_HTML.strip()
-        assert h in data["html"] or data["html"].strip() == h
+        assert "Hello world this is long enough" in data["html"]
+        assert "<script>" in data["html"] and "page_view" in data["html"]
 
     async with AsyncSessionLocal() as s3:
         q = select(PageVersion).where(PageVersion.page_id == page_id)

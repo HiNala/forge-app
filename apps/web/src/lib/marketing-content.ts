@@ -4,12 +4,12 @@ export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://forge.app";
 
 export const EXAMPLES_SLUGS = [
-  "booking",
-  "rsvp",
-  "menu",
-  "proposal",
-  "contact",
-  "landing",
+  "contractor-small-jobs",
+  "event-rsvp",
+  "coffee-shop-menu",
+  "freelance-design-proposal",
+  "product-launch",
+  "consultation-slot",
 ] as const;
 
 export type ExampleSlug = (typeof EXAMPLES_SLUGS)[number];
@@ -21,40 +21,40 @@ export const TEMPLATE_CARDS: {
   description: string;
 }[] = [
   {
-    slug: "booking",
-    name: "Small jobs booking",
+    slug: "contractor-small-jobs",
+    name: "Contractor small jobs",
     tag: "Forms",
-    description: "Name, phone, preferred date — routed to your inbox.",
+    description: "Scope, budget, and site notes for quick residential fixes.",
   },
   {
-    slug: "rsvp",
-    name: "Team event RSVP",
+    slug: "event-rsvp",
+    name: "Event RSVP",
     tag: "Events",
-    description: "Meal choice, plus-one, and reminders.",
+    description: "Meal choice, allergies, and headcount for company events.",
   },
   {
-    slug: "menu",
-    name: "Daily specials",
+    slug: "coffee-shop-menu",
+    name: "Coffee shop menu",
     tag: "Hospitality",
-    description: "Lightweight menu with today’s items.",
+    description: "Espresso classics with a reservation line.",
   },
   {
-    slug: "proposal",
-    name: "Sales proposal",
-    tag: "Sales",
-    description: "Tiers, scope, and a clear accept / decline.",
+    slug: "freelance-design-proposal",
+    name: "Design proposal",
+    tag: "Proposals",
+    description: "Discovery, concepts, and handoff in one calm page.",
   },
   {
-    slug: "contact",
-    name: "Contact + uploads",
-    tag: "Forms",
-    description: "Attachments for briefs or portfolios.",
-  },
-  {
-    slug: "landing",
+    slug: "product-launch",
     name: "Product launch",
-    tag: "Marketing",
-    description: "Hero, proof points, and a single CTA.",
+    tag: "Landing",
+    description: "Hero, value props, and a single waitlist form.",
+  },
+  {
+    slug: "consultation-slot",
+    name: "Consultation booking",
+    tag: "Booking",
+    description: "Pick a window — agenda follows by email.",
   },
 ];
 
@@ -110,6 +110,22 @@ export const PRICING_FAQ: { q: string; a: string }[] = [
     q: "Nonprofits or education pricing?",
     a: "Contact us — we keep a small discount pool.",
   },
+  {
+    q: "How does annual billing work?",
+    a: "Pay yearly and get roughly two months free versus month-to-month. You can switch at renewal.",
+  },
+  {
+    q: "What payment methods do you take?",
+    a: "Stripe checkout accepts major cards. Enterprise can pay by invoice where agreed.",
+  },
+  {
+    q: "Do taxes apply?",
+    a: "Where required, tax is calculated at checkout based on your billing address.",
+  },
+  {
+    q: "Can I cancel anytime?",
+    a: "Yes — monthly plans stop at period end; annual plans follow the terms shown at purchase.",
+  },
 ];
 
 export const PRICING_COMPARISON: { feature: string; starter: string; pro: string; enterprise: string }[] =
@@ -128,4 +144,5 @@ export const PRICING_COMPARISON: { feature: string; starter: string; pro: string
     { feature: "Sandbox / staging", starter: "—", pro: "1", enterprise: "Unlimited" },
     { feature: "Calendar integrations", starter: "—", pro: "Yes", enterprise: "Yes" },
     { feature: "API access", starter: "—", pro: "Read", enterprise: "Read/write" },
+    { feature: "White-label remove Forge", starter: "—", pro: "—", enterprise: "Add-on" },
   ];

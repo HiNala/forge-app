@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -19,7 +19,7 @@ class SectionPlan(BaseModel):
         ...,
         description="Component template name, e.g. hero-centered, form-vertical",
     )
-    props: dict[str, str | list | dict] = Field(default_factory=dict)
+    props: dict[str, Any] = Field(default_factory=dict)
 
 
 class PageIntent(BaseModel):
@@ -28,12 +28,15 @@ class PageIntent(BaseModel):
         "booking-form",
         "contact-form",
         "proposal",
+        "pitch_deck",
         "rsvp",
         "menu",
         "custom",
     ] = "custom"
     title_suggestion: str = "Untitled page"
     tone: Literal["warm", "formal", "playful", "serious", "minimal"] = "warm"
+    deck_kind: str | None = None
+    deck_narrative_framework: str | None = None
     fields: list[FormField] | None = None
     sections: list[str] = Field(
         default_factory=lambda: ["hero-centered", "form-vertical"],

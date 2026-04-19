@@ -1,7 +1,10 @@
 """Analytics event (partitioned by created_at)."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import DateTime, ForeignKey, PrimaryKeyConstraint, String, Text, func
 from sqlalchemy.dialects.postgresql import INET, JSONB, UUID
@@ -29,7 +32,7 @@ class AnalyticsEvent(Base):
     event_type: Mapped[str] = mapped_column(String(64), nullable=False)
     visitor_id: Mapped[str] = mapped_column(Text, nullable=False)
     session_id: Mapped[str] = mapped_column(Text, nullable=False)
-    metadata_: Mapped[dict | None] = mapped_column("metadata", JSONB)
+    metadata_: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSONB)
     source_ip: Mapped[str | None] = mapped_column(INET)
     user_agent: Mapped[str | None] = mapped_column(Text)
     referrer: Mapped[str | None] = mapped_column(Text)

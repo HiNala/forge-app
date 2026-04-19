@@ -4,8 +4,9 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +16,7 @@ import {
   getAutomationRuns,
   getPageAutomations,
   listCalendarConnections,
+  postAutomationRunRetry,
   postGoogleCalendarConnect,
   putPageAutomations,
   type AutomationRuleOut,
@@ -138,9 +140,50 @@ function AutomationsEditor({
 
   const markDirty = useCallback(() => setDirty(true), []);
 
+  const popupRef = useRef<Window | null | undefined>(undefined);
+  const oauthCompleteRef = useRef(false);
+
+  useEffect(() => {
+    function onMsg(ev: MessageEvent) {
+      const d = ev.data as { type?: string; status?: string };
+      if (d?.type === "forge:calendar") {
+        oauthCompleteRef.current = true;
+        if (d.status === "connected") {
+          toast.success("Google Calendar connected");
+          void qCal.refetch();
+          void qc.invalidateQueries({ queryKey: ["calendar-connections"] });
+        }
+        if (d.status === "error") {
+          toast.error("Google Calendar connection failed. You can try again anytime.");
+        }
+      }
+    }
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, [qCal, qc]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const w = popupRef.current;
+      if (!w || !w.closed) return;
+      popupRef.current = undefined;
+      if (!oauthCompleteRef.current) {
+        toast.message("Connection cancelled.");
+      }
+      oauthCompleteRef.current = false;
+    }, 600);
+    return () => window.clearInterval(id);
+  }, []);
+
   const onConnectGoogle = async () => {
+    oauthCompleteRef.current = false;
     const r = await postGoogleCalendarConnect(getToken, activeOrganizationId, pageId);
-    window.location.href = r.authorize_url;
+    const w = window.open(
+      r.authorize_url,
+      "forge-google-calendar",
+      "width=520,height=720,scrollbars=yes",
+    );
+    popupRef.current = w ?? undefined;
   };
 
   return (
@@ -283,7 +326,13 @@ function AutomationsEditor({
 
       <section className="space-y-3">
         <h2 className="font-display text-lg font-semibold text-text">Recent runs</h2>
-        <RunsList runs={qRuns.data ?? []} loading={qRuns.isLoading} />
+        <RunsList
+          runs={qRuns.data ?? []}
+          loading={qRuns.isLoading}
+          pageId={pageId}
+          getToken={getToken}
+          activeOrganizationId={activeOrganizationId}
+        />
       </section>
 
       <p className="text-xs text-text-muted">
@@ -329,7 +378,22 @@ function ConnectionPicker({
   );
 }
 
-function RunsList({ runs, loading }: { runs: AutomationRunOut[]; loading: boolean }) {
+function RunsList({
+  runs,
+  loading,
+  pageId,
+  getToken,
+  activeOrganizationId,
+}: {
+  runs: AutomationRunOut[];
+  loading: boolean;
+  pageId: string;
+  getToken: () => Promise<string | null>;
+  activeOrganizationId: string;
+}) {
+  const qc = useQueryClient();
+  const [retrying, setRetrying] = useState<string | null>(null);
+
   if (loading) {
     return <p className="text-sm text-text-muted">Loading runs…</p>;
   }
@@ -340,7 +404,7 @@ function RunsList({ runs, loading }: { runs: AutomationRunOut[]; loading: boolea
     <ul className="divide-y divide-border-subtle rounded-lg border border-border-subtle">
       {runs.map((r) => (
         <li key={r.id} className="flex flex-wrap items-start justify-between gap-2 px-3 py-2 text-sm">
-          <div>
+          <div className="min-w-0 flex-1">
             <span className="font-mono text-xs text-text-muted">{r.step}</span>
             <span
               className={`ml-2 inline-flex rounded-full px-2 py-0.5 text-xs ${
@@ -355,11 +419,32 @@ function RunsList({ runs, loading }: { runs: AutomationRunOut[]; loading: boolea
             </span>
             <p className="mt-1 text-xs text-text-muted">{new Date(r.ran_at).toLocaleString()}</p>
             {r.error_message ? (
-              <p className="mt-1 text-xs text-danger" role="alert">
+              <p className="mt-2 text-xs text-danger" role="alert">
                 {r.error_message}
               </p>
             ) : null}
           </div>
+          {r.status === "failed" ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="shrink-0"
+              loading={retrying === r.id}
+              onClick={() => {
+                setRetrying(r.id);
+                void postAutomationRunRetry(getToken, activeOrganizationId, pageId, r.id)
+                  .then(() => {
+                    toast.success("Automation re-run finished");
+                    void qc.invalidateQueries({ queryKey: ["automation-runs", activeOrganizationId, pageId] });
+                  })
+                  .catch((e: Error) => toast.error(e.message))
+                  .finally(() => setRetrying(null));
+              }}
+            >
+              Retry
+            </Button>
+          ) : null}
         </li>
       ))}
     </ul>

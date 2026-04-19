@@ -1,31 +1,30 @@
-# Motion vocabulary (Forge)
+# Motion vocabulary (`src/lib/motion.ts`)
 
-All product motion goes through **`@/lib/motion`** — `SPRINGS`, `MOTION_TRANSITIONS`, and **Variants** (`fadeIn`, `fadeUp`, `scaleIn`, …). Avoid ad-hoc `transition` inline except in isolated experiments.
+Use **`SPRINGS`** and **`MOTION_TRANSITIONS`** (alias: **`TRANSITIONS`**) instead of ad-hoc durations in components.
 
-## Springs (`SPRINGS`)
+## Springs
 
-| Preset   | Use case |
-| -------- | -------- |
-| **snappy** | Buttons, toggles, small UI feedback (press `whileTap`). |
-| **soft**   | Modals, sheets, sliding tab indicators, large panels. |
-| **bouncy** | Celebratory / success moments (sparingly). |
+| Preset | Stiffness / damping | Use for |
+|--------|---------------------|---------|
+| `snappy` | 500 / 30 | Button press, small toggles. |
+| `soft` | 200 / 25 | Tab pill, dialogs, sheets. |
+| `bouncy` | 400 / 15 | Celebrations, success bursts (sparingly). |
 
-## Tweens (`MOTION_TRANSITIONS`)
+## Transitions (tween)
 
-Short opacity/position tweens for list items, cross-fades, and lightweight enter/exit. Prefer **`MOTION_TRANSITIONS.fadeIn`** (180ms-class) for route-level fades.
+`MOTION_TRANSITIONS.fadeIn`, `.fadeUp`, `.scaleIn`, `.crossfade` — opacity / position / scale for route and list entrances.
 
 ## Variants
 
-Use **Variants** for `motion` components with `initial` / `animate` / `whileInView`. Parent **listStagger** + child **listItem** for stacked reveals.
+`fadeIn`, `fadeUp`, `scaleIn`, `slideInRight`, `listStagger`, `listItem`, `successSpring` — compose with `motion` components.
 
 ## Reduced motion
 
-Use **`useReducedMotion()`** from `@/hooks/use-reduced-motion` before long path animations. **`reduceTransition()`** in `@/lib/motion` can collapse arbitrary transitions to ~0.01s when you compose low-level Framer APIs.
+- **CSS:** `@media (prefers-reduced-motion: reduce)` in `globals.css` for keyframes.
+- **Framer:** use `useReducedMotion()` from **`framer-motion`** in motion-driven components; use `reduceTransition()` from `@/lib/motion` when passing a `transition` object manually.
+- **DOM:** `useReducedMotion()` in `src/hooks/use-reduced-motion.ts` for non-Framer logic.
 
-Browser **`prefers-reduced-motion: reduce`** should be respected everywhere we animate (buttons still function; scale can be skipped).
+## When to use spring vs tween
 
-## When to use what
-
-- **Spring** — Physical, “held” UI (sheet, tab pill, button press).
-- **Tween** — Opacity, simple Y shift, crossfade.
-- **CSS** — Hover color, borders, token-driven durations in `globals.css` keyframes (`dot-pulse`, `shimmer`) for non-interactive decoration.
+- **Spring:** Physical metaphors—press, slide, overshoot (tabs, modals).  
+- **Tween:** Fade-only or crossfade where no overshoot is desired.

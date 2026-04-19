@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+from collections.abc import AsyncIterator
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -40,7 +42,7 @@ router = APIRouter(prefix="/studio", tags=["studio"])
 async def studio_usage(
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_tenant),
-) -> dict:
+) -> dict[str, Any]:
     """Monthly quota + token usage for the active org (Studio UI)."""
     return await usage_snapshot(db, ctx.organization_id)
 
@@ -76,7 +78,7 @@ async def studio_generate(
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_tenant),
     user: User = Depends(require_user),
-):
+) -> StreamingResponse:
     org = await db.get(Organization, ctx.organization_id)
     if org is None:
         raise HTTPException(status_code=404, detail="Organization not found")
@@ -84,7 +86,7 @@ async def studio_generate(
     if body.page_id is None:
         await assert_page_generation_allowed(db, ctx.organization_id)
 
-    async def gen():
+    async def gen() -> AsyncIterator[bytes]:
         async for chunk in stream_page_generation(
             db=db,
             ctx=ctx,
@@ -109,7 +111,7 @@ async def studio_refine(
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_tenant),
     user: User = Depends(require_user),
-):
+) -> StreamingResponse:
     org = await db.get(Organization, ctx.organization_id)
     if org is None:
         raise HTTPException(status_code=404, detail="Organization not found")
@@ -125,7 +127,7 @@ async def studio_refine(
         f"Prior intent summary: {json.dumps(hint)[:4000]}\n"
     )
 
-    async def gen():
+    async def gen_refine() -> AsyncIterator[bytes]:
         async for chunk in stream_page_generation(
             db=db,
             ctx=ctx,
@@ -137,7 +139,7 @@ async def studio_refine(
             yield chunk
 
     return StreamingResponse(
-        gen(),
+        gen_refine(),
         media_type="text/event-stream",
         headers=_SSE_HEADERS,
     )
@@ -149,7 +151,7 @@ async def studio_section_edit(
     _user: User = Depends(require_user),
     db: AsyncSession = Depends(get_db),
     tenant: TenantContext = Depends(require_role("owner", "editor")),
-):
+) -> StudioSectionEditResponse:
     page = await db.get(Page, body.page_id)
     if page is None or page.organization_id != tenant.organization_id:
         raise HTTPException(status_code=404, detail="Not found")

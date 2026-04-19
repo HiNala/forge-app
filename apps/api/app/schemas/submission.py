@@ -31,6 +31,20 @@ class SubmissionOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class SubmissionPatchBody(BaseModel):
+    """Admin update to a submission row."""
+
+    status: str | None = Field(
+        None,
+        description="new | read | replied | archived",
+    )
+
+
+class DraftReplyOut(BaseModel):
+    subject: str
+    body: str
+
+
 class SubmissionListOut(BaseModel):
     """Cursor-paged list (Mission 04 admin)."""
 

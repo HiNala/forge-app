@@ -123,4 +123,10 @@ Commit on milestones: Resend service wired, notification emails firing, confirma
 - All tests pass. Lint / typecheck clean.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Resend, calendar, rule engine, UI: **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** (Mission **05** in *By mission document*); UI: **[ui/FRONTEND_STATUS.md](./ui/FRONTEND_STATUS.md)** (FE-05 Automations tab).
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

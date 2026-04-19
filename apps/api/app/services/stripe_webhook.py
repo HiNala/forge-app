@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import stripe
 from stripe._error import SignatureVerificationError
 
@@ -24,6 +26,6 @@ def verify_stripe_webhook_payload(*, payload: bytes, stripe_signature: str | Non
     if not stripe_signature:
         raise StripeWebhookError("Missing Stripe-Signature header")
     try:
-        stripe.Webhook.construct_event(payload, stripe_signature, secret)
+        cast(Any, stripe.Webhook.construct_event)(payload, stripe_signature, secret)
     except SignatureVerificationError as e:
         raise StripeWebhookError(str(e)) from e

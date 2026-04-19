@@ -32,6 +32,9 @@ mergeEnvFile(".env");
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
 
+/** `next dev` so routes gated with `NODE_ENV !== "production"` (e.g. `/dev/design-system`) exist for axe E2E. */
+const useNextDevServer = process.env.PLAYWRIGHT_NEXT_DEV === "1";
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -49,9 +52,11 @@ export default defineConfig({
    * In CI, build first so `next start` always has `.next`.
    */
   webServer: {
-    command: process.env.CI
-      ? "pnpm exec next build && pnpm exec next start --hostname 127.0.0.1 --port 3000"
-      : "pnpm exec next start --hostname 127.0.0.1 --port 3000",
+    command: useNextDevServer
+      ? "pnpm exec next dev --hostname 127.0.0.1 --port 3000"
+      : process.env.CI
+        ? "pnpm exec next build && pnpm exec next start --hostname 127.0.0.1 --port 3000"
+        : "pnpm exec next start --hostname 127.0.0.1 --port 3000",
     cwd: appDir,
     url: baseURL,
     reuseExistingServer: !process.env.CI,

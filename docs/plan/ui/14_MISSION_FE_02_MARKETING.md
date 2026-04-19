@@ -134,4 +134,10 @@ Commit on section completion: hero working, how-it-works live, gallery rendering
 - Axe-core clean across every marketing page.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Current depth vs this brief: **[FRONTEND_STATUS.md](./FRONTEND_STATUS.md)** · Shipped scope: [MISSION-FE-02-REPORT.md](../MISSION-FE-02-REPORT.md)
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

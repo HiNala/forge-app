@@ -4,7 +4,7 @@
 **Owner:** Digital Studio Labs / Brian
 **Document Purpose:** The single source of truth for what Forge is, how it works, what it is built on, and how every piece fits together. This document is the bible. All missions reference it. No agent should ever have to guess what something means.
 **Version:** 1.1
-**Status:** Pre-scaffold — stack decisions locked in Mission 00 (`docs/architecture/DECISIONS.md`)
+**Status:** Active development — stack and ADRs from Mission 00 apply; **living** completion vs this document is tracked in [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) and [ui/FRONTEND_STATUS.md](./ui/FRONTEND_STATUS.md).
 
 ---
 

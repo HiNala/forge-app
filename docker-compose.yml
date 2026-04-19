@@ -71,7 +71,8 @@ services:
       - REDIS_URL=redis://redis:6379/0
 
   postgres:
-    image: postgres:16-alpine
+    # pg_partman pre-installed (Mission BI-01 / ADR-004). See docs/architecture/PARTITIONING.md.
+    image: ghcr.io/dbsystel/postgresql-partman:16
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

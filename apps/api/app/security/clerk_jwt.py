@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import jwt
 from jwt import PyJWKClient
 
@@ -24,11 +26,11 @@ def _client() -> PyJWKClient:
     return _jwk_client
 
 
-def verify_clerk_jwt(token: str) -> dict:
+def verify_clerk_jwt(token: str) -> dict[str, Any]:
     """Validate Bearer token; returns JWT payload (includes ``sub`` = Clerk user id)."""
     client = _client()
     signing_key = client.get_signing_key_from_jwt(token)
-    decode_kwargs: dict = {
+    decode_kwargs: dict[str, Any] = {
         "algorithms": ["RS256"],
         "options": {"verify_aud": bool(settings.CLERK_AUDIENCE)},
     }

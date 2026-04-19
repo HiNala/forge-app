@@ -12,13 +12,14 @@ Public marketing routes (landing, pricing, examples, FAQ, signup funnel), SEO/me
 | Area | Status |
 |------|--------|
 | Route group `(marketing)/` — landing, pricing, examples + `[slug]`, signin/signup/continue, terms/privacy | ✅ |
+| Signup URL params — `plan`, `billing`, `source` stored in `sessionStorage` (`forge.pendingCheckout`) for post-checkout wiring | ✅ |
 | Marketing chrome — sticky nav, footer, `Container` `xl`, copy width caps | ✅ |
 | Hero — lazy client bundle (`hero-demo-lazy.tsx`), SSE + cached fallback, chips, 15s autostart, signup `?source=hero_demo` | ✅ |
 | How-it-works, gallery cards, FAQ accordion, final CTA | ✅ |
-| Pricing — tiers, annual toggle, comparison table, billing FAQ, Enterprise dialog + mailto | ✅ |
+| Pricing — tiers, annual toggle, 15-row comparison table, 8-question billing FAQ, Enterprise dialog + mailto | ✅ |
 | SEO — `metadataBase` (root + marketing layout), `generateMetadata` on pages, JSON-LD, `robots.ts`, `sitemap.ts`, dynamic OG images (`opengraph-image.tsx`) | ✅ |
 | Next.js 16 — `dynamic(..., { ssr: false })` moved out of Server Components into `hero-demo-lazy.tsx` | ✅ |
-| Playwright — `e2e/marketing-hero.spec.ts` (SSE stubbed), `e2e/marketing-a11y.spec.ts`, `e2e/marketing-visual.spec.ts` | ✅ |
+| Playwright — `e2e/marketing-hero.spec.ts` (SSE stubbed), `e2e/marketing-a11y.spec.ts`, `e2e/marketing-visual.spec.ts` (example slug `contractor-small-jobs`) | ✅ |
 | Tooling — `tsconfig` excludes `e2e/` + `playwright.config.ts` from `next build` typecheck | ✅ |
 | Scripts — `pnpm exec next` for `dev`/`build`/`start` (Windows-friendly PATH) | ✅ |
 

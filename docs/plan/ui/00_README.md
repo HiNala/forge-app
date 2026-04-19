@@ -3,9 +3,30 @@
 **Project:** Forge — AI-Powered Mini-App Builder
 **Purpose:** Complete planning package for building Forge, an AI-powered tool that turns a plain-English prompt into a finished, hosted, single-purpose web page (booking forms, contact forms, event RSVPs, daily menus, sales proposals, landing pages). Includes user case reports, a master Project Reference Document, ten backend missions, and seven frontend missions.
 
+**Plan hub (parent folder):** [../00_README.md](../00_README.md)
+
 **Backend-focused index:** [../backend/00_README.md](../backend/00_README.md) (mission links for API/schema work)
 
-**Frontend vs repo:** [FRONTEND_STATUS.md](./FRONTEND_STATUS.md)
+**Frontend vs repo:** [FRONTEND_STATUS.md](./FRONTEND_STATUS.md) — *living* completion snapshot (update when missions land).
+
+### Mission reports (`docs/plan/`)
+
+Detailed shipped scope, verification commands, and follow-ups:
+
+| Report | Mission |
+|--------|---------|
+| [MISSION-FE-02-REPORT.md](../MISSION-FE-02-REPORT.md) | FE-02 Marketing |
+| [MISSION-FE-03-REPORT.md](../MISSION-FE-03-REPORT.md) | FE-03 App shell |
+| [MISSION-FE-04-REPORT.md](../MISSION-FE-04-REPORT.md) | FE-04 Studio |
+| [MISSION-FE-05-REPORT.md](../MISSION-FE-05-REPORT.md) | FE-05 Dashboard / page detail |
+| [MISSION-FE-06-REPORT.md](../MISSION-FE-06-REPORT.md) | FE-06 Analytics & settings |
+| [MISSION-FE-07-REPORT.md](../MISSION-FE-07-REPORT.md) | FE-07 Polish |
+
+### How to continue
+
+1. Pick the next open items from **FRONTEND_STATUS** and the latest **MISSION-FE-\*-REPORT** follow-ups.  
+2. Reconcile with **[IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md)** for API/backend dependencies.  
+3. After shipping, bump **FRONTEND_STATUS** percentages and add/adjust verification notes in the relevant mission report.
 
 ---
 

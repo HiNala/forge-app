@@ -13,6 +13,7 @@ class OrganizationOut(BaseModel):
     name: str
     slug: str
     plan: str
+    trial_ends_at: datetime | None = None
     deleted_at: datetime | None = None
     scheduled_purge_at: datetime | None = None
 

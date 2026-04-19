@@ -12,7 +12,13 @@
 - **Retention:** Permanent (users expect their submission data forever)
 - **Rationale:** Moderate write volume, queries filter by page + time range
 
+## Docker image
+
+Local development and CI use **`ghcr.io/dbsystel/postgresql-partman:16`** so the `pg_partman` extension is available without a custom build. The stock `postgres:16-alpine` image does not ship this extension.
+
 ## pg_partman Configuration
+
+Registration is applied in Alembic migration **`w03_bi01_partman`** (submissions: premake 3, analytics: premake 4, analytics retention 90 days). Manual SQL for reference:
 
 ```sql
 -- Analytics events (90-day retention)

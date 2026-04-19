@@ -1,16 +1,20 @@
-"""Resolve the Forge :class:`~app.db.models.user.User` from Clerk JWT."""
+"""Resolve the Forge :class:`~app.db.models.user.User` from Clerk JWT or API token."""
 
 from __future__ import annotations
 
+import hashlib
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import HTTPException, Request
 from sqlalchemy import select
 
 from app.config import settings
-from app.db.models import User
+from app.db.models import ApiToken, User
 from app.db.session import AsyncSessionLocal
 from app.security.clerk_jwt import verify_clerk_jwt
+
+FORGE_LIVE_PREFIX = "forge_live_"
 
 
 def _bearer_token(request: Request) -> str | None:
@@ -21,8 +25,51 @@ def _bearer_token(request: Request) -> str | None:
     return parts[1] if len(parts) == 2 else None
 
 
+def _role_for_scopes(scopes: list[str]) -> str:
+    if "admin:all" in scopes:
+        return "owner"
+    return "editor"
+
+
+async def _authenticate_api_token(request: Request, bearer: str) -> User:
+    if not bearer.startswith(FORGE_LIVE_PREFIX):
+        raise HTTPException(status_code=401, detail="Invalid API token")
+    digest = hashlib.sha256(bearer.encode()).hexdigest()
+    body = bearer[len(FORGE_LIVE_PREFIX) :]
+    if len(body) < 8:
+        raise HTTPException(status_code=401, detail="Invalid API token")
+    prefix = body[:8]
+
+    async with AsyncSessionLocal() as session:
+        rows = (
+            await session.execute(
+                select(ApiToken).where(
+                    ApiToken.prefix == prefix,
+                    ApiToken.token_hash == digest,
+                    ApiToken.revoked_at.is_(None),
+                )
+            )
+        ).scalars().all()
+        if not rows:
+            raise HTTPException(status_code=401, detail="Invalid API token")
+        tok = rows[0]
+        if tok.expires_at and datetime.now(UTC) > tok.expires_at.astimezone(UTC):
+            raise HTTPException(status_code=401, detail="API token expired")
+        user = await session.get(User, tok.created_by)
+        if user is None or user.deleted_at is not None:
+            raise HTTPException(status_code=401, detail="User not found")
+
+        request.state.user_id = user.id
+        request.state.user = user
+        request.state.auth_kind = "api_token"
+        request.state.api_token = tok
+        request.state.tenant_id = tok.organization_id
+        request.state.membership_role = _role_for_scopes(list(tok.scopes or []))
+        return user
+
+
 async def require_user(request: Request) -> User:
-    """Load user from ``Authorization: Bearer`` Clerk JWT (or test bypass headers)."""
+    """Load user from ``Authorization: Bearer`` (API token, Clerk JWT, or test headers)."""
     if settings.AUTH_TEST_BYPASS and settings.ENVIRONMENT == "test":
         raw_uid = request.headers.get("x-forge-test-user-id")
         if raw_uid:
@@ -42,6 +89,9 @@ async def require_user(request: Request) -> User:
     token = _bearer_token(request)
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
+
+    if token.startswith(FORGE_LIVE_PREFIX):
+        return await _authenticate_api_token(request, token)
 
     try:
         payload = verify_clerk_jwt(token)

@@ -1,0 +1,7 @@
+{
+  "fetched_at": "2026-04-19T00:00:00Z",
+  "url": "https://api.anthropic.com/v1/design/h/ZhxfTfNViMkEnjhpg1EkxA",
+  "status": 403,
+  "note": "The Anthropic design artifact endpoint requires authenticated access. This file records the failed public fetch so downstream missions know the canonical file was not retrieved in-repo. Replace this file with the full JSON/HTML payload when available via authenticated fetch or manual export.",
+  "fallback_source": "Mission FE-01 directive + warm cream / warm teal (OKLCH hue ~192) described in the mission text; aligned with existing apps/web/src/styles/tokens.css."
+}

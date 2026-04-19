@@ -159,4 +159,10 @@ Commit on each surface: analytics for forms, analytics for proposals, org analyt
 - Axe-core clean across every new screen.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Current depth vs this brief: **[FRONTEND_STATUS.md](./FRONTEND_STATUS.md)** · Shipped scope: [MISSION-FE-06-REPORT.md](../MISSION-FE-06-REPORT.md)
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

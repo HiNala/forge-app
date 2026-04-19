@@ -62,3 +62,5 @@ class PublicPageOut(BaseModel):
     title: str
     slug: str
     organization_slug: str
+    page_id: str
+    page_type: str = "landing"

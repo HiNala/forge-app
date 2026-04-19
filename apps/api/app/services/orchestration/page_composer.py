@@ -8,6 +8,7 @@ import logging
 import re
 from pathlib import Path
 from string import Template
+from typing import Any
 
 from app.services.orchestration.models import AssemblyPlan, PageIntent, SectionPlan
 
@@ -27,7 +28,7 @@ def _escape(s: str) -> str:
     return html_lib.escape(s, quote=True)
 
 
-def _render_form_fields(fields: list[dict]) -> str:
+def _render_form_fields(fields: list[dict[str, Any]]) -> str:
     parts: list[str] = []
     for f in fields:
         name = str(f.get("name", "field"))
@@ -152,7 +153,7 @@ def apply_plan_constraints(intent: PageIntent, plan: AssemblyPlan) -> AssemblyPl
     if intent.page_type in ("booking-form", "contact-form", "rsvp") and not any(
         n.startswith("form") for n in names
     ):
-        fl: list[dict] = []
+        fl: list[dict[str, Any]] = []
         if intent.fields:
             fl = [
                 {

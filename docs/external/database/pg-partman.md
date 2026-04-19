@@ -82,17 +82,11 @@ async def run_partition_maintenance(ctx):
 
 ## Docker Image with pg_partman
 
-```yaml
-# docker-compose.yml
-postgres:
-  image: pgpartman/pg_partman:latest  # or build custom
-  # Alternative: use postgres:16-alpine and install extension
-```
+Forge uses **`ghcr.io/dbsystel/postgresql-partman:16`** (official Postgres base + extension). See `docker-compose.yml` in the repo.
 
-Or custom Dockerfile:
-```dockerfile
-FROM postgres:16-alpine
-RUN apk add --no-cache pg_partman
+```yaml
+postgres:
+  image: ghcr.io/dbsystel/postgresql-partman:16
 ```
 
 ## Known Pitfalls

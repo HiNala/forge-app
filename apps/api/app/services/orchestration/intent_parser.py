@@ -5,15 +5,18 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.schemas.deck_intent import prompt_suggests_pitch_deck
+from app.schemas.proposal_intent import prompt_suggests_proposal
 from app.services.ai.exceptions import LLMConfigurationError, LLMProviderError
 from app.services.ai.router import completion_text
+from app.services.deck_builder import infer_deck_kind, infer_narrative_framework
 from app.services.orchestration.models import AssemblyPlan, PageIntent
 from app.services.orchestration.prompts import load_prompt
 
@@ -25,7 +28,7 @@ def extract_json_object(raw: str) -> dict[str, Any]:
     if text.startswith("```"):
         text = re.sub(r"^```\w*\n?", "", text)
         text = re.sub(r"\n```\s*$", "", text)
-    return json.loads(text)
+    return cast(dict[str, Any], json.loads(text))
 
 
 async def parse_intent(
@@ -66,6 +69,22 @@ async def parse_intent(
         logger.warning("intent_no_llm %s", e)
     except LLMProviderError as e:
         logger.warning("intent_llm_failed %s", e)
+    if prompt_suggests_proposal(prompt):
+        return PageIntent(
+            page_type="proposal",
+            title_suggestion=prompt[:80] or "Proposal",
+            tone="formal",
+            sections=["hero-centered", "form-vertical"],
+        )
+    if prompt_suggests_pitch_deck(prompt):
+        return PageIntent(
+            page_type="pitch_deck",
+            title_suggestion=prompt[:80] or "Deck",
+            tone="formal",
+            sections=["hero-centered"],
+            deck_kind=infer_deck_kind(prompt),
+            deck_narrative_framework=infer_narrative_framework(prompt),
+        )
     return PageIntent(page_type="custom", title_suggestion=prompt[:80] or "Page", tone="warm")
 
 

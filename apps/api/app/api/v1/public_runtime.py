@@ -7,12 +7,17 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.db.models import Organization, Page, PageVersion
+from app.db.rls_context import set_active_organization
 from app.deps.db import get_db_public
 from app.schemas.page import PublicPageOut
+from app.services.deck_public_inject import inject_deck_public_runtime
+from app.services.forge_tracker import inject_forge_tracker
+from app.services.proposal_public_inject import inject_proposal_public_runtime
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +41,37 @@ async def get_public_page(
             raw = await r.get(key)
             if raw:
                 data = json.loads(raw)
-                return PublicPageOut(**data)
+                data["html"] = inject_forge_tracker(
+                    data["html"],
+                    api_base=settings.API_BASE_URL,
+                    org_slug=data["organization_slug"],
+                    page_slug=data["slug"],
+                    page_id=data.get("page_id", ""),
+                    page_type=data.get("page_type", "landing"),
+                )
+                if data.get("page_type") == "proposal":
+                    data["html"] = inject_proposal_public_runtime(
+                        data["html"],
+                        api_base=settings.API_BASE_URL,
+                        org_slug=data["organization_slug"],
+                        page_slug=data["slug"],
+                    )
+                if data.get("page_type") == "pitch_deck":
+                    data["html"] = inject_deck_public_runtime(
+                        data["html"],
+                        api_base=settings.API_BASE_URL,
+                        org_slug=data["organization_slug"],
+                        page_slug=data["slug"],
+                        page_id=str(data.get("page_id", "")),
+                    )
+                return PublicPageOut(
+                    html=data["html"],
+                    title=data["title"],
+                    slug=data["slug"],
+                    organization_slug=data["organization_slug"],
+                    page_id=str(data.get("page_id", "")),
+                    page_type=str(data.get("page_type", "landing")),
+                )
         except Exception as e:
             logger.warning("public_page_cache_read %s", e)
 
@@ -46,10 +81,7 @@ async def get_public_page(
     if org is None:
         raise HTTPException(status_code=404, detail="Not found")
 
-    await db.execute(
-        text("SELECT set_config('app.current_tenant_id', :t, true)"),
-        {"t": str(org.id)},
-    )
+    await set_active_organization(db, org.id)
 
     p = (
         await db.execute(
@@ -73,9 +105,34 @@ async def get_public_page(
     if not html.strip():
         raise HTTPException(status_code=404, detail="Not found")
 
+    html_out = inject_forge_tracker(
+        html,
+        api_base=settings.API_BASE_URL,
+        org_slug=org.slug,
+        page_slug=p.slug,
+        page_id=str(p.id),
+        page_type=p.page_type,
+    )
+    if p.page_type == "proposal":
+        html_out = inject_proposal_public_runtime(
+            html_out,
+            api_base=settings.API_BASE_URL,
+            org_slug=org.slug,
+            page_slug=p.slug,
+        )
+    if p.page_type == "pitch_deck":
+        html_out = inject_deck_public_runtime(
+            html_out,
+            api_base=settings.API_BASE_URL,
+            org_slug=org.slug,
+            page_slug=p.slug,
+            page_id=str(p.id),
+        )
     return PublicPageOut(
-        html=html,
+        html=html_out,
         title=p.title,
         slug=p.slug,
         organization_slug=org.slug,
+        page_id=str(p.id),
+        page_type=p.page_type,
     )

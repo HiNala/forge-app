@@ -161,4 +161,10 @@ Commit on milestones: empty state live, SSE wiring working, chat feed rendering,
 - Keyboard-only user can complete the full generation + section-edit flow.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Current depth vs this brief: **[FRONTEND_STATUS.md](./FRONTEND_STATUS.md)** · Shipped scope: [MISSION-FE-04-REPORT.md](../MISSION-FE-04-REPORT.md)
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

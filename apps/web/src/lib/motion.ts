@@ -1,5 +1,8 @@
 import type { Transition, Variants } from "framer-motion";
 
+/** Non-celebration UI motion should stay at or below this (Mission FE-07). */
+export const MOTION_MAX_DURATION_S = 0.6;
+
 /** Spring presets — buttons = snappy, modals/panels = soft, celebrations = bouncy */
 export const SPRINGS = {
   snappy: { type: "spring" as const, stiffness: 500, damping: 30 },
@@ -19,6 +22,9 @@ export const MOTION_TRANSITIONS = {
   crossfade: { duration: 0.3, ease: easeLegacy as [number, number, number, number] },
 } as const;
 
+/** Alias for mission docs / external references — same as `MOTION_TRANSITIONS`. */
+export const TRANSITIONS = MOTION_TRANSITIONS;
+
 /** Shorten animations when the user prefers reduced motion. */
 export function reduceTransition(transition: Transition | undefined): Transition {
   if (!transition) return { duration: 0.01 };
@@ -33,6 +39,15 @@ export const fadeIn: Variants = {
   show: {
     opacity: 1,
     transition: { duration: 0.18, ease: easeLegacy },
+  },
+};
+
+/** Route shell — `showReduced` keeps opacity instant when user prefers reduced motion. */
+export const fadeInReduced: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { duration: 0.01, ease: easeLegacy },
   },
 };
 
@@ -68,6 +83,15 @@ export const listStagger: Variants = {
   show: {
     opacity: 1,
     transition: { staggerChildren: 0.05, delayChildren: 0.04 },
+  },
+};
+
+/** Same as `listStagger` but without child delays — use with `prefers-reduced-motion`. */
+export const listStaggerReducedMotion: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0, delayChildren: 0 },
   },
 };
 

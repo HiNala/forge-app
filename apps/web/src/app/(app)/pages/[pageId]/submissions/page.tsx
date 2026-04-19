@@ -1,14 +1,22 @@
 "use client";
 
-import { Inbox } from "lucide-react";
-import { ComingSoonPlaceholder } from "@/components/chrome/coming-soon-placeholder";
+import { Suspense } from "react";
+import { SubmissionsPanel } from "@/components/submissions/submissions-panel";
 
-export default function PageSubmissionsStub() {
+function SubmissionsRouteInner() {
+  return <SubmissionsPanel />;
+}
+
+export default function PageSubmissionsRoute() {
   return (
-    <ComingSoonPlaceholder
-      title="Submissions"
-      description="Responses and files collected from your live page."
-      icon={Inbox}
-    />
+    <Suspense
+      fallback={
+        <div className="text-sm text-text-muted font-body" role="status">
+          Loading submissions…
+        </div>
+      }
+    >
+      <SubmissionsRouteInner />
+    </Suspense>
   );
 }

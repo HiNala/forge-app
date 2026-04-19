@@ -1,0 +1,9 @@
+slug: bi01-gallery-3
+name: BI-01 fixture three
+description: YAML fixture for template gallery smoke tests.
+category: landing
+html: "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><title>3</title></head><body><p>Three</p></body></html>"
+form_schema: null
+intent_json: {}
+is_published: true
+sort_order: 102

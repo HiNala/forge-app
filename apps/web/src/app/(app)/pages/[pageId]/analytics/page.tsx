@@ -1,14 +1,12 @@
-"use client";
+import { Suspense } from "react";
+import { LazyPageAnalyticsView } from "@/components/analytics/analytics-views-lazy";
 
-import { LineChart } from "lucide-react";
-import { ComingSoonPlaceholder } from "@/components/chrome/coming-soon-placeholder";
-
-export default function PageAnalyticsStub() {
+export default function PageAnalyticsRoute() {
   return (
-    <ComingSoonPlaceholder
-      title="Page analytics"
-      description="Views, submissions, and conversion for this page only."
-      icon={LineChart}
-    />
+    <Suspense
+      fallback={<p className="text-sm text-text-muted font-body">Loading analytics…</p>}
+    >
+      <LazyPageAnalyticsView />
+    </Suspense>
   );
 }

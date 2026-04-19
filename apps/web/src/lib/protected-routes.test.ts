@@ -11,6 +11,7 @@ describe("isProtectedPath", () => {
   it("matches nested routes", () => {
     expect(isProtectedPath("/pages/foo-bar")).toBe(true);
     expect(isProtectedPath("/settings/billing")).toBe(true);
+    expect(isProtectedPath("/oauth/calendar-popup-close")).toBe(true);
   });
 
   it("ignores query string", () => {

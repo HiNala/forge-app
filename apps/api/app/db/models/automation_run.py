@@ -1,7 +1,10 @@
 """Automation pipeline step observability."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -31,7 +34,7 @@ class AutomationRun(Base, UUIDPrimaryKeyMixin):
     status: Mapped[str] = mapped_column(String(16), nullable=False)
     error_message: Mapped[str | None] = mapped_column(Text)
     attempt: Mapped[int] = mapped_column(Integer, server_default="1")
-    result_json: Mapped[dict | None] = mapped_column(JSONB)
+    result_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     ran_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

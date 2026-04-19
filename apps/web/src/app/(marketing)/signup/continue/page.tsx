@@ -3,7 +3,7 @@
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import { postSignup } from "@/lib/api";
+import { postSignup, postTemplateUse } from "@/lib/api";
 
 function workspaceNameFromEmail(email: string | undefined): string {
   if (!email) return "My workspace";
@@ -27,7 +27,23 @@ export default function SignupContinuePage() {
     (async () => {
       try {
         const name = workspaceNameFromEmail(user.primaryEmailAddress?.emailAddress);
-        await postSignup(() => getToken(), name);
+        const r = await postSignup(() => getToken(), name);
+        let pending: string | null = null;
+        try {
+          pending = sessionStorage.getItem("forge.pendingTemplateId");
+        } catch {
+          pending = null;
+        }
+        if (pending) {
+          try {
+            sessionStorage.removeItem("forge.pendingTemplateId");
+            const out = await postTemplateUse(() => getToken(), r.organization_id, pending);
+            router.replace(out.studio_path);
+            return;
+          } catch {
+            /* fall through */
+          }
+        }
         router.replace("/onboarding");
       } catch {
         router.replace("/dashboard");

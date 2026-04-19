@@ -10,7 +10,7 @@ from app.db.models import AutomationRule, AutomationRun, Page
 from app.deps import get_db, require_role, require_tenant
 from app.deps.tenant import TenantContext
 from app.schemas.automation import AutomationRuleOut, AutomationRuleUpdate, AutomationRunOut
-from app.services.automations import get_or_create_rule
+from app.services.automations import AutomationEngine, get_or_create_rule
 
 router = APIRouter(tags=["automations"])
 
@@ -66,3 +66,31 @@ async def list_automation_runs(
         )
     ).scalars().all()
     return list(rows)
+
+
+@router.post("/pages/{page_id}/automations/runs/{run_id}/retry")
+async def retry_automation_run(
+    page_id: UUID,
+    run_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    ctx: TenantContext = Depends(require_role("owner", "editor")),
+) -> dict[str, bool]:
+    """Re-run the automation pipeline for the submission linked to a failed run."""
+    p = await db.get(Page, page_id)
+    if p is None or p.organization_id != ctx.organization_id:
+        raise HTTPException(status_code=404, detail="Not found")
+    rule = await get_or_create_rule(db, page_id=p.id, organization_id=ctx.organization_id)
+    run = await db.get(AutomationRun, run_id)
+    if (
+        run is None
+        or run.automation_rule_id != rule.id
+        or run.organization_id != ctx.organization_id
+    ):
+        raise HTTPException(status_code=404, detail="Run not found")
+    if run.status != "failed":
+        raise HTTPException(status_code=400, detail="Only failed runs can be retried")
+    if run.submission_id is None:
+        raise HTTPException(status_code=400, detail="Run has no submission")
+    engine = AutomationEngine(db)
+    await engine.run_for_submission(run.submission_id)
+    return {"ok": True}

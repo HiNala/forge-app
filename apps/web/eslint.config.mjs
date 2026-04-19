@@ -13,6 +13,16 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
+  {
+    files: [
+      "src/app/(app)/settings/brand/page.tsx",
+      "src/app/(app)/settings/profile/page.tsx",
+    ],
+    rules: {
+      // Logos/avatars use arbitrary HTTPS URLs (MinIO, S3, Clerk); `next/image` remotePatterns cannot enumerate every tenant bucket.
+      "@next/next/no-img-element": "off",
+    },
+  },
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",

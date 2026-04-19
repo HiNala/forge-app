@@ -1,0 +1,9 @@
+slug: bi01-gallery-6
+name: BI-01 fixture six
+description: YAML fixture for template gallery smoke tests.
+category: promotion
+html: "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><title>6</title></head><body><p>Six</p></body></html>"
+form_schema: null
+intent_json: {}
+is_published: true
+sort_order: 105

@@ -176,10 +176,11 @@ async def test_viewer_can_download_csv_same_as_submissions_list() -> None:
         assert pub.status_code == 200
         org = pub.json()["public_url"].split("/p/")[1].split("/")[0]
 
-        await client.post(
+        sub = await client.post(
             f"/p/{org}/export-me/submit",
             json={"message": "Row", "email": "v@w.com"},
         )
+        assert sub.status_code == 200
 
         r = await client.get(f"/api/v1/pages/{pid}/submissions/export", headers=h_viewer)
         assert r.status_code == 200

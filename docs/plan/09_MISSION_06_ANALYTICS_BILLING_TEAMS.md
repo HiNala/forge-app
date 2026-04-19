@@ -151,4 +151,10 @@ Commit on milestones: event ingestion hardened, summary dashboards live, funnel 
 - All lint / typecheck / test pass.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+API + reporting + billing + teams: **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** (Mission **06** in *By mission document*) · Backend notes: [MISSION_06_REPORT.md](./MISSION_06_REPORT.md) · App surfaces: **[MISSION-FE-06-REPORT.md](./MISSION-FE-06-REPORT.md)** · UI snapshot: **[ui/FRONTEND_STATUS.md](./ui/FRONTEND_STATUS.md)**.
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

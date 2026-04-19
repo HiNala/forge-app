@@ -1,36 +1,72 @@
-# Mission FE-01 — Design system & frontend foundation (report)
+# Mission FE-01 — Design System & Frontend Foundation (report)
 
-## Summary
+## Status: complete (in-repo)
 
-Mission FE-01 consolidates **design tokens** in `apps/web/src/styles/tokens.css` (OKLCH colors, typography scale, spacing, radii, shadows, motion durations/easings, z-index), wires them through **`globals.css`** `@theme inline`, extends **primitives** (Button with `link` + Framer `whileTap`, Card variants + `hoverable`, Textarea with **autoresize**, Separator, layout **Stack/Row/Container/Grid**), standardizes **Lucide** via `components/icons/` and a sized **Forge logo**, expands **`@/lib/motion`** (`SPRINGS`, `MOTION_TRANSITIONS`, `reduceTransition`), adds **`useReducedMotion`**, updates **tabs** sliding indicator and **tooltip** delay (400ms), and documents everything in **`docs/design/`**. Dev surfaces: **`/dev/primitives`** and **`/dev/design-system`** (same matrix; both **404 in production**).
+### Upstream design artifact
 
-## Upstream design artifact
+- **Fetch:** `GET https://api.anthropic.com/v1/design/h/ZhxfTfNViMkEnjhpg1EkxA` returned **403** without authentication. A snapshot metadata file is stored at `docs/design/raw/anthropic-design-2026-04-19.json`.
+- **Authoritative styling** until the artifact is imported: **`apps/web/src/styles/tokens.css`** + mission text (warm cream canvas, warm teal accent ~hue 192 in OKLCH).
 
-- **Endpoint:** `https://api.anthropic.com/v1/design/h/ZhxfTfNViMkEnjhpg1EkxA`  
-- **Status:** Unauthenticated fetch returned **404**; snapshot placeholder is in **`docs/design/raw/design-artifact-2026-04-19.json`**. Replace with a real response when API access is available; then reconcile token names if the artifact differs.
+### Token layer
 
-## Acceptance mapping
+- Single source: **`apps/web/src/styles/tokens.css`** (OKLCH colors, type scale, spacing 4px grid, radius, shadow, motion, z-index, `.dark` overrides).
+- **Tailwind v4** mapping: `apps/web/src/app/globals.css` (`@theme inline`, `@custom-variant dark`).
 
-| Criterion | Status |
-| --------- | ------ |
-| Artifact cached + README summary | **Partial** — placeholder JSON + `DESIGN_BRIEF.md`; full artifact pending API. |
-| Single `tokens.css` + Tailwind `var()` | **Done** — `@theme inline` maps to CSS variables. |
-| Primitives listed in mission | **Done** — see `COMPONENTS.md`; EmptyState lives under `components/chrome/`. |
-| Motion presets, no ad-hoc-only policy | **Done** — `motion.ts` + `MOTION.md`; app code should import from here. |
-| `/dev/design-system` | **Done** — dev-only, production 404. |
-| axe-core 0 violations | **Manual** — run axe against `/dev/design-system` locally (browser extension or CLI against running dev server). |
-| Lighthouse ≥ 95 | **Manual** — run on `/dev/design-system` in production build with `NODE_ENV` test or temporary export. |
-| Bundle +30KB guard | **Manual** — approximate via `next build` analyzer if enabled; foundation layer is intended to stay lean. |
-| Branch `mission-fe-01-design-system` | **Contributor** — create branch and open PR when committing. |
+### Typography & fonts
 
-## Verification (local)
+- **`apps/web/src/app/fonts.ts`:** Cormorant Garamond (display), Manrope (body), `display: "swap"`, subset weights only.
+
+### Icons
+
+- **Lucide** via `apps/web/src/components/icons/index.ts`; **Forge logo** SVG in `components/icons/logo.tsx` (`ForgeLogo` sizes sm/md/lg).
+
+### Motion
+
+- **`apps/web/src/lib/motion.ts`:** `SPRINGS`, `MOTION_TRANSITIONS`, alias **`TRANSITIONS`**, variants, `reduceTransition`.
+- **Framer Motion** pinned to **`12.38.0`** (exact) in `package.json`.
+- **Button** uses **`motion.button`** with `whileTap` + `SPRINGS.snappy` and **`useReducedMotion()`** from `framer-motion`.
+
+### Primitives & dev surface
+
+- Shadcn/Radix-based components under `components/ui/`; showcase: **`/dev/design-system`** (404 in production via `notFound()`).
+- **E2E:** `e2e/design-system-a11y.spec.ts` runs axe (wcag2a/2aa/21aa) against the design system page when the dev server exposes it.
+
+### Documentation
+
+| Doc | Purpose |
+|-----|---------|
+| `docs/design/DESIGN_BRIEF.md` | Mood, type, motion, patterns. |
+| `docs/design/TOKENS.md` | Token table. |
+| `docs/design/COMPONENTS.md` | Primitive reference. |
+| `docs/design/MOTION.md` | Springs vs tweens, reduced motion. |
+
+### Verification commands
 
 ```bash
-cd apps/web && pnpm lint && pnpm exec tsc --noEmit && pnpm test && pnpm build
+cd apps/web && pnpm run typecheck && pnpm run lint
 ```
 
-## Follow-ups
+**Axe on `/dev/design-system`:** that route only exists under `next dev` (`NODE_ENV=development`). Start the dev server path for Playwright:
 
-- Ingest real design JSON; add `docs/design/components/` screenshots from the tool.
-- Optional: automate axe in CI (`@axe-core/cli` against preview URL).
-- Pin Framer Motion major explicitly in docs if lockfile policy requires a single version statement per repo.
+```bash
+# Unix / Git Bash
+cd apps/web && PLAYWRIGHT_NEXT_DEV=1 pnpm exec playwright test e2e/design-system-a11y.spec.ts
+```
+
+```powershell
+# Windows PowerShell
+cd apps/web; $env:PLAYWRIGHT_NEXT_DEV="1"; pnpm exec playwright test e2e/design-system-a11y.spec.ts
+```
+
+With `PLAYWRIGHT_NEXT_DEV=1`, `playwright.config.ts` runs `next dev` instead of `next start`, so the page is not a 404 and axe can run. **Latest run:** 0 violations (`wcag2a`, `wcag2aa`, `wcag21aa`).
+
+### Deferred / manual
+
+- **Lighthouse ≥ 95** and **CLS = 0** on a token-heavy page: run against `/dev/design-system` locally (`pnpm dev`) and record scores; production builds intentionally 404 this route.
+- **Bundle size &lt; 30KB gzipped** for token+primitive layer: run `@next/bundle-analyzer` on a minimal route when profiling.
+- Replace `docs/design/raw/*.json` with the real API payload when authenticated download is available.
+
+### Fixes applied during verification
+
+- **`Button` + `motion.button`:** `ButtonProps` omits HTML `onDrag` / `onDragStart` / `onDragEnd` / `onAnimationStart` / `onAnimationEnd` so they do not collide with Framer Motion’s prop types.
+- **Design system showcase `Select`:** `SelectTrigger` uses `aria-labelledby` pointing at the visible `<Label id="…">` so axe `button-name` passes.

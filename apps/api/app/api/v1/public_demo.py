@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import AsyncIterator
+from typing import Any
 
-import redis.asyncio as redis
 from fastapi import APIRouter, HTTPException, Request
 from starlette.responses import StreamingResponse
 
@@ -38,7 +39,7 @@ def _client_ip(request: Request) -> str:
 
 async def _enforce_demo_cooldown(request: Request) -> None:
     ip = _client_ip(request)
-    r: redis.Redis | None = getattr(request.app.state, "redis", None)
+    r: Any | None = getattr(request.app.state, "redis", None)
     if r is not None:
         try:
             key = f"pubdemo:{ip}"
@@ -68,7 +69,7 @@ async def _enforce_demo_cooldown(request: Request) -> None:
 async def public_demo_stream(request: Request, body: PublicDemoRequest) -> StreamingResponse:
     await _enforce_demo_cooldown(request)
 
-    async def gen():
+    async def gen() -> AsyncIterator[bytes]:
         async for chunk in stream_demo_page(prompt=body.prompt, provider=body.provider):
             yield chunk
 

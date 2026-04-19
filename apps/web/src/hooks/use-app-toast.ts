@@ -1,16 +1,19 @@
 "use client";
 
+import * as React from "react";
 import { toast as sonner } from "sonner";
 
-const DEFAULT_MS = 4000;
-
 /**
- * Global toast pipe — errors stay until dismissed; success/info auto-dismiss.
+ * App-level toast API — success/info auto-dismiss (~4s); errors stay until dismissed (Mission FE-03).
+ * For ad-hoc toasts, still use `toast` from `sonner` with explicit `duration` when needed.
  */
-export function useAppToast() {
-  return {
-    success: (msg: string) => sonner.success(msg, { duration: DEFAULT_MS }),
-    info: (msg: string) => sonner.message(msg, { duration: DEFAULT_MS }),
-    error: (msg: string) => sonner.error(msg, { duration: Infinity }),
-  };
+export function useToast() {
+  return React.useMemo(
+    () => ({
+      success: (message: string) => sonner.success(message, { duration: 4000 }),
+      info: (message: string) => sonner.info(message, { duration: 4000 }),
+      error: (message: string) => sonner.error(message, { duration: Infinity }),
+    }),
+    [],
+  );
 }

@@ -29,12 +29,13 @@
 | **Mission 03 — Studio + AI** | ⚠️ 62% | **SSE** `/studio/generate` & `/refine`; **anonymous** `POST /api/v1/public/demo` (marketing hero); LiteLLM router + orchestration; `StudioWorkspace` + section edit; publish handoff and quota hardening still open — see [ui/FRONTEND_STATUS.md](./ui/FRONTEND_STATUS.md) |
 | **Mission 04 — Live pages** | ⚠️ 72% | Publish + public GET + submit (**arq `run_automations` enqueue** when Redis up) + list + CSV; idempotent job keys / presign upload / CSP / preview / custom domain still open |
 | **Mission 05 — Automations** | ⚠️ 65% | Resend templates + `EmailService`; `AutomationEngine` (notify/confirm/calendar); Google OAuth + calendar events; worker runs engine; automations UI + reply endpoint; failure banner / digest / Apple / full E2E tests still open |
-| **Mission 06 — Analytics, billing, teams** | ⚠️ 40% | Team/brand/billing routes; Stripe webhook path; analytics dashboards stub |
-| **Mission 07 — Polish** | ⚠️ 35% | Lint/type/test for touched areas; WCAG/Lighthouse “green” not verified globally |
+| **Mission 06 — Analytics, billing, teams** | ⚠️ 68% | Analytics aggregates + API routes; Stripe plan/portal/checkout + webhooks; team invites/roles; **FE-06** surfaces analytics + settings/billing in `apps/web` — E2E + hardening partial |
+| **Mission 07 — Polish** | ⚠️ 42% | Backend/API + repo sweep partial (see `10_MISSION_07_POLISH.md`); global WCAG/Lighthouse proof still open (complementary **FE-07** polish in `apps/web` tracked in `ui/FRONTEND_STATUS.md`) |
 | **Mission 08 — Railway deploy** | ⚠️ 20% | Docker/compose; Railway runbooks/CI breadth varies by branch |
 | **Mission 09 — Templates** | ⚠️ 15% | Templates route placeholder; marketplace out of 1.0 scope per PRD |
+| **W-03 — Pitch deck** | ⚠️ partial | Deck model + `render_deck_html`, frameworks, public inject (present/hash/Chart.js), `GET /pages/…/deck`, export queue stub; Studio UI + real PPTX/PDF + LLM composer still open |
 
-**Overall vs. PRD 1.0:** roughly **52–60%** — publish + public HTML path exists; **submissions on live pages**, **automations**, and **commercial hardening** remain the largest gaps.
+**Overall vs. PRD 1.0:** roughly **55–63%** — publish + public HTML + tenant analytics/billing UI path is much further along; **automations reliability**, **custom domain**, and **production polish / a11y proof** remain the largest gaps.
 
 ---
 
@@ -47,11 +48,11 @@
 | Studio chat + refine + section edit (API) | ⚠️ (backend streams; UI not complete) |
 | Publish + live URL + custom domain | ⚠️ (publish + `/p/{org}/{slug}`; custom domain ❌) |
 | Submissions + files + idempotency | ⚠️ (submit + **automation job enqueue** ✅; presigned files + Redis idempotency ❌) |
-| Page admin (Overview / Submissions / Automations / Analytics) | ⚠️ (submissions list + **CSV export** API ✅; UI wiring still partial) |
-| Automations (email + calendar) | ❌ / stub |
-| Analytics (tenant) | ⚠️ stub |
-| Stripe billing | ⚠️ partial |
-| Team invites | ⚠️ partial |
+| Page admin (Overview / Submissions / Automations / Analytics) | ⚠️ (submissions + CSV ✅; **Analytics** + overview tabs ✅ in app; polish/E2E partial) |
+| Automations (email + calendar) | ⚠️ engine + UI exist; failure digests / full E2E still thin |
+| Analytics (tenant) | ⚠️ **API + app** for page/org analytics; advanced proposals/warehouse TBD |
+| Stripe billing | ⚠️ Checkout + portal + usage UI; webhook-driven edge cases need monitoring |
+| Team invites | ⚠️ API + settings UI; production invite E2E deferred |
 | Multi-provider LLM | ⚠️ providers + router present |
 | Docker / Railway / CI | ⚠️ |
 
@@ -91,12 +92,12 @@
 - Presigned upload, custom domain, strict CSP, preview token, **job idempotency (SET NX)** ❌ / partial
 
 ### [08 — Automations](./08_MISSION_05_AUTOMATIONS.md)
-- Rule engine + Resend + Calendar ❌ / stub
+- Rule engine + Resend + Calendar ⚠️ substantial path; worker + OAuth + UI — tuning + monitoring ongoing
 
 ### [09 — Analytics & billing & teams](./09_MISSION_06_ANALYTICS_BILLING_TEAMS.md)
-- Team endpoints ⚠️
-- Stripe ⚠️
-- Analytics feeds ⚠️ stub
+- Team endpoints + invites UI ⚠️
+- Stripe plan/checkout/portal + usage ⚠️
+- Analytics aggregations + **tenant dashboards in app** ⚠️ (see [ui/FRONTEND_STATUS.md](./ui/FRONTEND_STATUS.md))
 
 ### [10 — Polish](./10_MISSION_07_POLISH.md)
 - Not complete repo-wide ❌

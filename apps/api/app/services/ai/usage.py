@@ -12,8 +12,9 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
 from app.db.models import Organization, SubscriptionUsage
+from app.services.billing_gate import check_quota
+from app.services.billing_plans import monthly_page_generation_limit, monthly_submissions_limit
 
 logger = logging.getLogger(__name__)
 
@@ -122,32 +123,28 @@ async def assert_page_generation_allowed(db: AsyncSession, organization_id: UUID
     org = await db.get(Organization, organization_id)
     if org is None:
         raise HTTPException(status_code=404, detail="Organization not found")
-    plan = (org.plan or "trial").lower()
-    limit = (
-        settings.PAGE_GENERATION_QUOTA_PRO
-        if plan in ("pro", "enterprise")
-        else settings.PAGE_GENERATION_QUOTA_TRIAL
-    )
-    period = _month_start()
-    row = await _get_usage_row(db, organization_id, period)
-    used = int(row.pages_generated or 0) if row else 0
-    if used >= limit:
-        raise HTTPException(
-            status_code=402,
-            detail={
-                "code": "quota_exceeded",
-                "message": "Monthly page generation quota exceeded for your plan.",
-                "upgrade_url": settings.UPGRADE_URL,
-            },
-        )
+    await check_quota(db, org, "pages_generated")
     return org
 
 
-def monthly_quota_for_plan(plan: str) -> int:
-    p = (plan or "trial").lower()
-    if p in ("pro", "enterprise"):
-        return settings.PAGE_GENERATION_QUOTA_PRO
-    return settings.PAGE_GENERATION_QUOTA_TRIAL
+def monthly_quota_for_plan(plan: str, *, trial_ends_at: datetime | None = None) -> int:
+    return monthly_page_generation_limit(plan, trial_ends_at=trial_ends_at)
+
+
+async def bump_submissions_received(db: AsyncSession, organization_id: UUID) -> None:
+    """Increment submissions counter for the current month (same transaction as caller)."""
+    period = _month_start()
+    row = await _get_usage_row(db, organization_id, period)
+    if row is None:
+        db.add(
+            SubscriptionUsage(
+                organization_id=organization_id,
+                period_start=period,
+                submissions_received=1,
+            )
+        )
+    else:
+        row.submissions_received = int(row.submissions_received or 0) + 1
 
 
 async def usage_snapshot(db: AsyncSession, organization_id: UUID) -> dict[str, Any]:
@@ -155,14 +152,19 @@ async def usage_snapshot(db: AsyncSession, organization_id: UUID) -> dict[str, A
     row = await _get_usage_row(db, organization_id, period)
     org = await db.get(Organization, organization_id)
     plan = (org.plan if org else "trial").lower()
-    limit = monthly_quota_for_plan(plan)
+    trial_ends = org.trial_ends_at if org else None
+    limit = monthly_quota_for_plan(plan, trial_ends_at=trial_ends)
+    sub_limit = monthly_submissions_limit(plan, trial_ends_at=trial_ends)
     used = int(row.pages_generated or 0) if row else 0
+    subs_used = int(row.submissions_received or 0) if row else 0
     last_day = calendar.monthrange(period.year, period.month)[1]
     period_end = date(period.year, period.month, last_day)
     return {
         "plan": plan,
         "pages_generated": used,
         "pages_quota": limit,
+        "submissions_received": subs_used,
+        "submissions_quota": sub_limit,
         "period_start": period.isoformat(),
         "period_end": period_end.isoformat(),
         "tokens_prompt": int(row.tokens_prompt or 0) if row else 0,

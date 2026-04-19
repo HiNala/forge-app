@@ -5,9 +5,17 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Forge API"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
-    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+    # Comma-separated hosts for TrustedHostMiddleware; "*" allows any (development only).
+    TRUSTED_HOSTS: str = "*"
+    # Subdomain tenant routing: ``{slug}.{APP_ROOT_DOMAIN}`` → resolve org by slug.
+    APP_ROOT_DOMAIN: str = ""
+    # Non-production: allow ``?org=<uuid>`` for manual testing (BI-02).
+    ALLOW_ORG_QUERY_PARAM: bool = False
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/forge_dev"
     REDIS_URL: str = "redis://localhost:6379/0"
+    # Prefix for cache keys so dev/staging can share one Redis (BI-04).
+    FORGE_CACHE_NS: str = "forge"
     SECRET_KEY: str = "change-me-in-production-use-openssl-rand-hex-32"
     SENTRY_DSN: str | None = None
 
@@ -47,6 +55,12 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_PRICE_PRO: str = ""
     STRIPE_PRICE_STARTER: str = ""
+    PAGE_GENERATION_LIMIT_STARTER: int = 20
+    PAGE_GENERATION_LIMIT_PRO: int = 200
+    SUBMISSIONS_LIMIT_STARTER: int = 500
+    SUBMISSIONS_LIMIT_PRO: int = 10_000
+    POSTHOG_API_KEY: str = ""
+    POSTHOG_HOST: str = "https://us.i.posthog.com"
 
     # LLM (LiteLLM — docs/plan/02_PRD.md, Mission 03)
     OPENAI_API_KEY: str = ""
@@ -65,10 +79,13 @@ class Settings(BaseSettings):
     PAGE_GENERATION_QUOTA_PRO: int = 100_000
     STUDIO_GENERATE_PER_MINUTE_TRIAL: int = 5
     STUDIO_GENERATE_PER_MINUTE_PRO: int = 30
-    UPGRADE_URL: str = "http://localhost:3000/settings"
+    UPGRADE_URL: str = "http://localhost:3000/settings/billing"
 
     # Internal admin API (`/api/v1/admin/*`) — comma-separated org UUIDs (Mission 01)
     FORGE_OPERATOR_ORG_IDS: str = ""
+
+    # Caddy on-demand TLS `ask` — optional shared secret (set in prod if endpoint is exposed)
+    CADDY_INTERNAL_TOKEN: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 

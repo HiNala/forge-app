@@ -83,6 +83,16 @@
     color: var(--text);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  button,
+  a,
+  [role="button"],
+  input,
+  textarea,
+  select {
+    -webkit-tap-highlight-color: transparent;
   }
 
   ::selection {
@@ -156,6 +166,33 @@
   }
 }
 
+/** Studio generation — staggered wave (replaces generic spinner when generating). */
+@keyframes studio-dot-wave {
+  0%,
+  100% {
+    opacity: 0.28;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.studio-dot-wave span {
+  animation: studio-dot-wave 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-dot-wave span {
+    animation: none;
+    opacity: 0.85;
+  }
+
+  .animate-highlight-pulse {
+    animation: none;
+    background-color: transparent;
+  }
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -200,6 +237,19 @@
     opacity: 0;
     transform: translateY(12px);
   }
+}
+
+@keyframes highlight-pulse {
+  0% {
+    background-color: color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.animate-highlight-pulse {
+  animation: highlight-pulse 800ms ease-out 1;
 }
 
 /* Simple CSS tooltip (icon-only collapsed sidebar) */

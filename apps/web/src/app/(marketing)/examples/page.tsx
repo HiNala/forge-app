@@ -24,8 +24,7 @@ export default function ExamplesPage() {
         Examples
       </h1>
       <p className="mt-4 max-w-[65ch] text-lg text-text-muted">
-        Curated starters — open any card for a static preview. Live template API hooks land with the
-        templates mission.
+        Curated starters — each card opens a live HTML preview backed by the template library API.
       </p>
       <ul className="mt-12 grid list-none gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
         {TEMPLATE_CARDS.map((item) => (

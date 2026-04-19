@@ -228,4 +228,10 @@ The component library is the secret weapon for quality + token efficiency. Rathe
 - `docker compose up --build` from a clean clone produces a working Studio with OpenAI as the LLM backend.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Studio + AI + public demo SSE: **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** (Mission **03** in *By mission document*); UI: **[ui/FRONTEND_STATUS.md](./ui/FRONTEND_STATUS.md)** (FE-04).
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const cardVariants = cva(
-  "rounded-[var(--radius-lg)] border text-text transition-[transform,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-legacy-out)]",
+  "rounded-[var(--radius-lg)] border text-text transition-[transform,box-shadow] duration-[var(--duration-base)] ease-[var(--ease-legacy-out)] motion-reduce:transition-none",
   {
     variants: {
       variant: {
@@ -14,7 +14,8 @@ const cardVariants = cva(
         outlined: "border-border bg-transparent shadow-none",
       },
       hoverable: {
-        true: "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg",
+        true:
+          "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-md",
         false: "",
       },
     },

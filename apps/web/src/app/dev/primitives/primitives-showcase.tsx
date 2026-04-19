@@ -157,9 +157,12 @@ export function PrimitivesShowcase() {
             />
           </div>
           <div>
-            <Label>Select (native styled)</Label>
+            <Label id="forge-select-demo-label">Select (native styled)</Label>
             <Select defaultValue="a">
-              <SelectTrigger className="mt-2">
+              <SelectTrigger
+                className="mt-2"
+                aria-labelledby="forge-select-demo-label"
+              >
                 <SelectValue placeholder="Pick one" />
               </SelectTrigger>
               <SelectContent>

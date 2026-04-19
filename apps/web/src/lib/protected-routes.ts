@@ -9,9 +9,11 @@ export const PROTECTED_PREFIXES = [
   "/pages",
   "/analytics",
   "/templates",
+  "/admin",
   "/settings",
   "/automations",
   "/submissions",
+  "/oauth",
 ] as const;
 
 export function isProtectedPath(pathname: string): boolean {

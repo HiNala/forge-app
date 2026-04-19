@@ -143,4 +143,10 @@ Commit on milestones: publish flow working, public page rendering, submit endpoi
 - All lint / typecheck / test pass.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Publish, public URL, submit, CSV: **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** (Mission **04** in *By mission document*); gaps (custom domain, strict CSP, etc.) called out there.
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

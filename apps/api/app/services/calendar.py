@@ -31,7 +31,7 @@ def _credentials_from_connection(conn: CalendarConnection) -> Credentials:
         client_id=settings.GOOGLE_OAUTH_CLIENT_ID,
         client_secret=settings.GOOGLE_OAUTH_CLIENT_SECRET,
         scopes=[CALENDAR_SCOPE],
-    )
+    )  # type: ignore[no-untyped-call]
 
 
 async def refresh_and_persist(
@@ -69,6 +69,14 @@ def _event_start_end(
     payload: dict[str, Any],
     duration_min: int,
 ) -> tuple[datetime, datetime]:
+    fb = payload.get("forge_booking")
+    if isinstance(fb, dict) and fb.get("slot_start") and fb.get("slot_end"):
+        from app.services.booking_calendar.datetime_parse import parse_iso_datetime
+
+        s = parse_iso_datetime(str(fb["slot_start"]))
+        e = parse_iso_datetime(str(fb["slot_end"]))
+        return s.astimezone(UTC), e.astimezone(UTC)
+
     start = (
         submitted_at.replace(tzinfo=UTC)
         if submitted_at.tzinfo is None

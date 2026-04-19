@@ -4,11 +4,17 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 export const SHORTCUTS_HELP = [
-  { keys: "⌘ K / Ctrl+K", action: "Command palette" },
+  { keys: "⌘ K / Ctrl+K", action: "Command palette (search pages, people, settings)" },
   { keys: "G then D", action: "Go to Dashboard" },
   { keys: "G then S", action: "Go to Studio" },
   { keys: "G then A", action: "Go to Analytics" },
-  { keys: "?", action: "This shortcuts list" },
+  { keys: "↑ / ↓", action: "Dashboard — move focus between page cards; Submissions — move between rows" },
+  { keys: "Enter", action: "Dashboard — open focused page; Submissions — expand or collapse row" },
+  { keys: "E", action: "Dashboard — open focused page in Studio" },
+  { keys: "Escape", action: "Submissions — collapse expanded row" },
+  { keys: "R", action: "Submissions — open reply (when a row is expanded)" },
+  { keys: "A", action: "Submissions — archive submission (when expanded)" },
+  { keys: "?", action: "Open this shortcuts list" },
 ] as const;
 
 /**

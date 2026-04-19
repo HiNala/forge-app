@@ -12,6 +12,7 @@ export function AppToaster() {
     <Sonner
       position={desktop ? "bottom-right" : "bottom-center"}
       duration={4000}
+      closeButton
       gap={10}
       toastOptions={{
         classNames: {

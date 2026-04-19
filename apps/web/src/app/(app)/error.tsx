@@ -23,11 +23,11 @@ export default function AppError({
     <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
       <p className="font-display text-2xl font-semibold text-text">Something went wrong</p>
       <p className="mt-2 max-w-md text-sm text-text-muted font-body">
-        We couldn&apos;t load this screen. Your work is safe — try again, or return to the dashboard.
+        We couldn&apos;t load this screen. Your work is safe — try again, or head back to the dashboard.
       </p>
       {ref ? (
         <p className="mt-4 font-mono text-[11px] text-text-subtle">
-          Reference: {ref}
+          Support reference (include in your message): {ref}
         </p>
       ) : null}
       <Button type="button" variant="primary" className="mt-8" onClick={() => reset()}>

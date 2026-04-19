@@ -1,0 +1,9 @@
+slug: bi01-gallery-4
+name: BI-01 fixture four
+description: YAML fixture for template gallery smoke tests.
+category: form
+html: "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><title>4</title></head><body><p>Four</p></body></html>"
+form_schema: null
+intent_json: {}
+is_published: true
+sort_order: 103

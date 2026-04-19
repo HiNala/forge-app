@@ -32,6 +32,7 @@ class SubscriptionUsage(Base, UUIDPrimaryKeyMixin):
     tokens_prompt: Mapped[int] = mapped_column(BigInteger, server_default="0")
     tokens_completion: Mapped[int] = mapped_column(BigInteger, server_default="0")
     cost_cents: Mapped[int] = mapped_column(Integer, server_default="0")
+    submissions_received: Mapped[int] = mapped_column(Integer, server_default="0")
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

@@ -163,4 +163,10 @@ Commit on each screen completion: Dashboard with grid and filters, Page Detail s
 - Axe-core clean.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Current depth vs this brief: **[FRONTEND_STATUS.md](./FRONTEND_STATUS.md)** · Shipped scope: [MISSION-FE-05-REPORT.md](../MISSION-FE-05-REPORT.md)
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

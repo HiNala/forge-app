@@ -584,4 +584,10 @@ Then:
 - CI pipeline runs green on an initial push.
 - Mission report written to `docs/missions/MISSION-01-REPORT.md`.
 
+---
+
+## Repo tracking (living)
+
+Monorepo + schema vs this brief: **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** (Mission **01** in *By mission document*).
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

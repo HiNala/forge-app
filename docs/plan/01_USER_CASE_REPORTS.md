@@ -284,3 +284,9 @@ The flows above are not sequenced randomly. If the agent implements them in this
 8. Flow 11 → templates. Now it scales to less-technical users.
 
 This ordering is the recommended mission sequence for implementation.
+
+---
+
+## Repo tracking (living)
+
+Implementation progress against these flows: **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** (PRD checklist + mission notes) and **[ui/FRONTEND_STATUS.md](./ui/FRONTEND_STATUS.md)** (UI missions). This document is **normative** for product behavior; the status files describe what the codebase has shipped so far.

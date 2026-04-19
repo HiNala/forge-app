@@ -4,6 +4,8 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { SPRINGS } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -13,7 +15,6 @@ const buttonVariants = cva(
     "duration-[var(--duration-fast)] ease-[var(--ease-legacy-out)]",
     "outline-none focus-visible:ring-2 focus-visible:ring-accent-mid focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
     "disabled:pointer-events-none disabled:opacity-45",
-    "active:scale-[0.97] active:duration-[var(--duration-fast)]",
   ].join(" "),
   {
     variants: {
@@ -45,7 +46,20 @@ const buttonVariants = cva(
   },
 );
 
-export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
+/**
+ * Props that overlap Framer Motion's gesture / animation API on `motion.button`
+ * (HTML drag + CSS animation events use different signatures).
+ */
+type ButtonHTMLProps = Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  | "onDrag"
+  | "onDragStart"
+  | "onDragEnd"
+  | "onAnimationStart"
+  | "onAnimationEnd"
+>;
+
+export type ButtonProps = ButtonHTMLProps &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
     loading?: boolean;
@@ -66,7 +80,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
+    const reduced = useReducedMotion();
     const compClass = cn(buttonVariants({ variant, size, className }));
+    const tap =
+      reduced || disabled || loading || variant === "link"
+        ? undefined
+        : { scale: 0.97 };
 
     if (asChild && !loading) {
       return (
@@ -77,11 +96,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }
 
     return (
-      <button
+      <motion.button
         className={compClass}
         ref={ref}
         type={type}
         disabled={disabled || loading}
+        whileTap={tap}
+        transition={SPRINGS.snappy}
         {...props}
       >
         {loading ? (
@@ -93,7 +114,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ) : (
           children
         )}
-      </button>
+      </motion.button>
     );
   },
 );

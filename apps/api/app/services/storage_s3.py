@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import mimetypes
+from typing import Any
 from uuid import UUID
 
 import boto3
@@ -11,7 +12,7 @@ from botocore.config import Config
 from app.config import settings
 
 
-def _client():
+def _client() -> Any:
     return boto3.client(
         "s3",
         endpoint_url=settings.S3_ENDPOINT,
@@ -45,6 +46,21 @@ def upload_brand_logo(
         Key=key,
         Body=content,
         ContentType=content_type,
+    )
+    base = settings.PUBLIC_ASSET_BASE_URL.rstrip("/")
+    return f"{base}/{key}"
+
+
+def upload_template_preview_png(*, template_id: UUID, content: bytes) -> str:
+    """Store template gallery screenshot; returns public URL."""
+    ensure_bucket()
+    key = f"templates/{template_id}/preview.png"
+    c = _client()
+    c.put_object(
+        Bucket=settings.S3_BUCKET,
+        Key=key,
+        Body=content,
+        ContentType="image/png",
     )
     base = settings.PUBLIC_ASSET_BASE_URL.rstrip("/")
     return f"{base}/{key}"

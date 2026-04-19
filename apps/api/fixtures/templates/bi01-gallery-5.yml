@@ -1,0 +1,9 @@
+slug: bi01-gallery-5
+name: BI-01 fixture five
+description: YAML fixture for template gallery smoke tests.
+category: proposal
+html: "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><title>5</title></head><body><p>Five</p></body></html>"
+form_schema: null
+intent_json: {}
+is_published: true
+sort_order: 104

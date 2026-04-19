@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import BrandKit, Organization, Page, PageRevision, User
 from app.deps.tenant import TenantContext
 from app.services.ai.usage import increment_pages_generated
+from app.services.deck_service import finalize_deck_studio_html
 from app.services.orchestration.html_validate import validate_generated_html
 from app.services.orchestration.intent_parser import compose_assembly_plan, parse_intent
 from app.services.orchestration.models import PageIntent
@@ -23,6 +24,7 @@ from app.services.orchestration.page_composer import (
     default_assembly_plan,
     render_section,
 )
+from app.services.proposal_service import finalize_proposal_studio_html
 from app.utils.slug import slugify_page_title, unique_page_slug
 
 logger = logging.getLogger(__name__)
@@ -39,7 +41,8 @@ def _refine_suggestions_for_page_type(page_type: str) -> list[str]:
     extras: dict[str, tuple[str, str]] = {
         "booking-form": ("Add pricing", "Add a phone number"),
         "contact-form": ("Add file upload", "Add address fields"),
-        "proposal": ("Add pricing", "Tighten the headline"),
+        "proposal": ("Add a materials line for …", "Change labor rate to $/hr"),
+        "pitch_deck": ("Focus more on traction", "Shorter — cut to 8 slides"),
         "rsvp": ("Add dietary restrictions", "Show event time prominently"),
         "menu": ("Highlight dietary info", "Add pricing"),
         "landing": ("Add social proof", "Tighter hero copy"),
@@ -185,6 +188,38 @@ async def stream_page_generation(
         page = existing
         page.title = title
         page.page_type = intent.page_type
+        html = await finalize_proposal_studio_html(
+            db,
+            page=page,
+            html=html,
+            intent=intent,
+            prompt=prompt,
+            title=title,
+            org=org_row,
+            primary=primary,
+            secondary=secondary,
+        )
+        html = await finalize_deck_studio_html(
+            db,
+            page=page,
+            html=html,
+            intent=intent,
+            prompt=prompt,
+            title=title,
+            org=org_row,
+            primary=primary,
+            secondary=secondary,
+        )
+        if intent.page_type == "proposal":
+            okp, reasonp = validate_generated_html(html)
+            if not okp:
+                yield _sse("error", {"code": "validation_failed", "message": reasonp})
+                return
+        if intent.page_type == "pitch_deck":
+            okd, reasond = validate_generated_html(html)
+            if not okd:
+                yield _sse("error", {"code": "validation_failed", "message": reasond})
+                return
         page.current_html = html
         page.form_schema = form_schema
         page.intent_json = intent.model_dump(mode="json")
@@ -219,6 +254,39 @@ async def stream_page_generation(
         db.add(page)
         await db.flush()
         pid = page.id
+        html = await finalize_proposal_studio_html(
+            db,
+            page=page,
+            html=html,
+            intent=intent,
+            prompt=prompt,
+            title=title,
+            org=org_row,
+            primary=primary,
+            secondary=secondary,
+        )
+        html = await finalize_deck_studio_html(
+            db,
+            page=page,
+            html=html,
+            intent=intent,
+            prompt=prompt,
+            title=title,
+            org=org_row,
+            primary=primary,
+            secondary=secondary,
+        )
+        if intent.page_type == "proposal":
+            okp, reasonp = validate_generated_html(html)
+            if not okp:
+                yield _sse("error", {"code": "validation_failed", "message": reasonp})
+                return
+        if intent.page_type == "pitch_deck":
+            okd, reasond = validate_generated_html(html)
+            if not okd:
+                yield _sse("error", {"code": "validation_failed", "message": reasond})
+                return
+        page.current_html = html
         db.add(
             PageRevision(
                 page_id=pid,

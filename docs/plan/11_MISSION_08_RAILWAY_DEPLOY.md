@@ -179,4 +179,10 @@ Commit on milestones: Railway project scaffolded, staging deploy green, producti
 - Dogfooding org is live with Brian as Owner.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Deploy & runbooks vs this brief: **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** (Mission **08 — Railway** in *By mission document*).
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

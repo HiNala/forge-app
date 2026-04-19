@@ -144,7 +144,14 @@ export async function postSwitchOrg(
 
 export async function patchUserPreferences(
   getToken: () => Promise<string | null>,
-  body: { sidebar_collapsed?: boolean; dashboard_tip_dismissed?: boolean },
+  body: {
+    sidebar_collapsed?: boolean;
+    dashboard_tip_dismissed?: boolean;
+    notification_daily_automation_digest?: boolean;
+    notification_weekly_submissions?: boolean;
+    notification_product_updates?: boolean;
+    workspace_timezone?: string | null;
+  },
 ): Promise<{ ok: boolean }> {
   return apiRequest("/auth/me/preferences", {
     method: "PATCH",
@@ -175,6 +182,27 @@ export async function postCreateWorkspace(
   });
 }
 
+export type OrganizationOut = {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  trial_ends_at: string | null;
+  deleted_at: string | null;
+  scheduled_purge_at: string | null;
+};
+
+export async function getOrg(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<OrganizationOut> {
+  return apiRequest<OrganizationOut>("/org", {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
 export async function patchOrg(
   getToken: () => Promise<string | null>,
   activeOrgId: string | null,
@@ -185,6 +213,151 @@ export async function patchOrg(
     getToken,
     activeOrgId,
     body: JSON.stringify(body),
+  });
+}
+
+/** W-01 — availability calendars for booking slots on live pages. */
+export type AvailabilityCalendarOut = {
+  id: string;
+  organization_id: string;
+  name: string;
+  source_type: string;
+  source_ref: string | null;
+  timezone: string;
+  business_hours: Record<string, unknown>;
+  buffer_before_minutes: number;
+  buffer_after_minutes: number;
+  min_notice_minutes: number;
+  max_advance_days: number;
+  slot_duration_minutes: number;
+  slot_increment_minutes: number;
+  all_day_events_block: boolean;
+  metadata: Record<string, unknown> | null;
+  last_synced_at: string | null;
+  last_sync_summary: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function listAvailabilityCalendars(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<AvailabilityCalendarOut[]> {
+  return apiRequest<AvailabilityCalendarOut[]>("/availability-calendars", {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function createAvailabilityCalendar(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  body: { name: string; source_type: "ics_file" | "ics_url" | "google"; source_ref?: string | null; timezone?: string },
+): Promise<AvailabilityCalendarOut> {
+  return apiRequest<AvailabilityCalendarOut>("/availability-calendars", {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify(body),
+  });
+}
+
+export async function patchAvailabilityCalendar(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  calendarId: string,
+  body: Record<string, unknown>,
+): Promise<AvailabilityCalendarOut> {
+  return apiRequest<AvailabilityCalendarOut>(`/availability-calendars/${calendarId}`, {
+    method: "PATCH",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify(body),
+  });
+}
+
+export async function previewAvailabilityIcs(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  file: File,
+): Promise<{
+  event_count: number;
+  busy_block_count: number;
+  recurrence_expansions: number;
+  warnings: string[];
+  duration_ms: number;
+  business_hours_suggested: Record<string, unknown>;
+}> {
+  const form = new FormData();
+  form.append("file", file);
+  const token = await getToken();
+  if (!token) {
+    throw new ApiError("Not authenticated", 401);
+  }
+  const h = new Headers();
+  h.set("Authorization", `Bearer ${token}`);
+  if (activeOrgId) {
+    h.set(FORGE_ACTIVE_ORG_HEADER, activeOrgId);
+  }
+  const res = await fetch(`${getApiUrl()}/availability-calendars/preview-ics`, {
+    method: "POST",
+    body: form,
+    headers: h,
+  });
+  const ct = res.headers.get("content-type") ?? "";
+  const json = ct.includes("application/json") ? await res.json().catch(() => null) : null;
+  if (!res.ok) {
+    throw new ApiError(typeof json?.detail === "string" ? json.detail : "Preview failed", res.status, json);
+  }
+  return json as {
+    event_count: number;
+    busy_block_count: number;
+    recurrence_expansions: number;
+    warnings: string[];
+    duration_ms: number;
+    business_hours_suggested: Record<string, unknown>;
+  };
+}
+
+export async function uploadAvailabilityCalendarIcs(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  calendarId: string,
+  file: File,
+): Promise<Record<string, unknown>> {
+  const form = new FormData();
+  form.append("file", file);
+  const token = await getToken();
+  if (!token) {
+    throw new ApiError("Not authenticated", 401);
+  }
+  const h = new Headers();
+  h.set("Authorization", `Bearer ${token}`);
+  if (activeOrgId) {
+    h.set(FORGE_ACTIVE_ORG_HEADER, activeOrgId);
+  }
+  const res = await fetch(`${getApiUrl()}/availability-calendars/${calendarId}/upload-ics`, {
+    method: "POST",
+    body: form,
+    headers: h,
+  });
+  const ct = res.headers.get("content-type") ?? "";
+  const json = ct.includes("application/json") ? await res.json().catch(() => null) : null;
+  if (!res.ok) {
+    throw new ApiError(typeof json?.detail === "string" ? json.detail : "Upload failed", res.status, json);
+  }
+  return json as Record<string, unknown>;
+}
+
+export async function deleteOrg(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<OrganizationOut> {
+  return apiRequest<OrganizationOut>("/org", {
+    method: "DELETE",
+    getToken,
+    activeOrgId,
   });
 }
 
@@ -269,8 +442,12 @@ export async function getTeamMembers(
 export async function postTeamInvite(
   getToken: () => Promise<string | null>,
   activeOrgId: string | null,
-  body: { email: string; role: "owner" | "editor" | "viewer" },
-): Promise<{ ok: boolean; invitation_id: string }> {
+  body: {
+    email?: string;
+    emails?: string;
+    role: "owner" | "editor" | "viewer";
+  },
+): Promise<{ invitation_ids: string[] }> {
   return apiRequest("/team/invite", {
     method: "POST",
     getToken,
@@ -305,6 +482,194 @@ export async function deleteTeamMember(
   });
 }
 
+export type InvitationPendingOut = {
+  id: string;
+  email: string;
+  role: string;
+  expires_at: string;
+  created_at: string;
+  invited_by_email: string | null;
+};
+
+export async function getPendingInvitations(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<InvitationPendingOut[]> {
+  return apiRequest<InvitationPendingOut[]>("/team/invitations/pending", {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function cancelTeamInvitation(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  invitationId: string,
+): Promise<{ ok: boolean }> {
+  return apiRequest(`/team/invitations/${invitationId}`, {
+    method: "DELETE",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function postTransferOwnership(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  targetMembershipId: string,
+): Promise<MemberOut> {
+  return apiRequest<MemberOut>("/team/transfer-ownership", {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({ target_membership_id: targetMembershipId }),
+  });
+}
+
+/** Range: 7d | 30d | 90d */
+export async function getPageAnalyticsSummary(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+  range: "7d" | "30d" | "90d",
+): Promise<Record<string, unknown>> {
+  const q = new URLSearchParams({ range });
+  return apiRequest(`/pages/${pageId}/analytics/summary?${q}`, {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function getPageAnalyticsFunnel(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+  range: "7d" | "30d" | "90d",
+): Promise<Record<string, unknown>> {
+  const q = new URLSearchParams({ range });
+  return apiRequest(`/pages/${pageId}/analytics/funnel?${q}`, {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function getPageAnalyticsEngagement(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+  range: "7d" | "30d" | "90d",
+): Promise<Record<string, unknown>> {
+  const q = new URLSearchParams({ range });
+  return apiRequest(`/pages/${pageId}/analytics/engagement?${q}`, {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function getOrgAnalyticsSummary(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  range: "7d" | "30d" | "90d",
+): Promise<Record<string, unknown>> {
+  const q = new URLSearchParams({ range });
+  return apiRequest(`/analytics/summary?${q}`, {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export type BillingPlanOut = {
+  plan: string;
+  status: string | null;
+  trial_ends_at: string | null;
+  next_invoice_at: string | null;
+  payment_method_last4: string | null;
+  payment_failed_at: string | null;
+};
+
+export type BillingUsageOut = {
+  pages_generated: number;
+  pages_quota: number;
+  submissions_received: number;
+  submissions_quota: number;
+  tokens_prompt: number;
+  tokens_completion: number;
+  period_start: string;
+  period_end: string;
+};
+
+export async function getBillingPlan(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<BillingPlanOut> {
+  return apiRequest<BillingPlanOut>("/billing/plan", {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function getBillingUsage(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<BillingUsageOut> {
+  return apiRequest<BillingUsageOut>("/billing/usage", {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function postBillingCheckout(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  plan: "starter" | "pro",
+): Promise<{ url: string }> {
+  return apiRequest<{ url: string }>("/billing/checkout", {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({ plan }),
+  });
+}
+
+export async function postBillingPortal(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<{ url: string }> {
+  return apiRequest<{ url: string }>("/billing/portal", {
+    method: "POST",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export type InvoiceRow = {
+  id: string;
+  created: number;
+  amount_due: number;
+  currency: string;
+  status: string | null;
+  invoice_pdf: string | null;
+  hosted_invoice_url: string | null;
+};
+
+export async function getBillingInvoices(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<{ items: InvoiceRow[] }> {
+  return apiRequest<{ items: InvoiceRow[] }>("/billing/invoices", {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
 export type PageOut = {
   id: string;
   organization_id: string;
@@ -314,6 +679,8 @@ export type PageOut = {
   status: string;
   created_at: string;
   updated_at: string;
+  /** Set when a screenshot job has run (Mission FE-05). */
+  preview_image_url?: string | null;
 };
 
 /** From GET `/pages/{id}` — includes generated HTML for preview. */
@@ -341,6 +708,132 @@ export async function getPage(
     method: "GET",
     getToken,
     activeOrgId,
+  });
+}
+
+/** Curated global templates (Mission 09) — browse without an active org. */
+export type TemplateListItemOut = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  category: string;
+  preview_image_url: string | null;
+  sort_order: number;
+};
+
+export async function listTemplates(
+  getToken: () => Promise<string | null>,
+  options?: { q?: string; category?: string },
+): Promise<TemplateListItemOut[]> {
+  const params = new URLSearchParams();
+  if (options?.q) params.set("q", options.q);
+  if (options?.category) params.set("category", options.category);
+  const qs = params.toString();
+  return apiRequest<TemplateListItemOut[]>(`/templates${qs ? `?${qs}` : ""}`, {
+    method: "GET",
+    getToken,
+    activeOrgId: null,
+  });
+}
+
+export type TemplateDetailOut = TemplateListItemOut & {
+  html: string;
+  form_schema: Record<string, unknown> | null;
+  intent_json: Record<string, unknown> | null;
+  updated_at: string;
+};
+
+export async function getTemplateDetail(
+  getToken: () => Promise<string | null>,
+  templateId: string,
+): Promise<TemplateDetailOut> {
+  return apiRequest<TemplateDetailOut>(`/templates/${templateId}`, {
+    method: "GET",
+    getToken,
+    activeOrgId: null,
+  });
+}
+
+export async function postTemplateUse(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string,
+  templateId: string,
+): Promise<{ page_id: string; studio_path: string }> {
+  return apiRequest(`/templates/${templateId}/use`, {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({}),
+  });
+}
+
+export type PublicTemplateOut = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  category: string;
+  preview_image_url: string | null;
+  html: string;
+};
+
+export async function getPublicTemplateBySlug(slug: string): Promise<PublicTemplateOut> {
+  const res = await fetch(`${getApiUrl()}/public/templates/by-slug/${encodeURIComponent(slug)}`);
+  const json = res.headers.get("content-type")?.includes("application/json")
+    ? await res.json().catch(() => null)
+    : null;
+  if (!res.ok) {
+    throw new ApiError(res.statusText || "Request failed", res.status, json);
+  }
+  return json as PublicTemplateOut;
+}
+
+export async function listPublicTemplateSlugs(): Promise<string[]> {
+  const res = await fetch(`${getApiUrl()}/public/templates/slugs`);
+  const json = res.headers.get("content-type")?.includes("application/json")
+    ? await res.json().catch(() => null)
+    : null;
+  if (!res.ok) {
+    throw new ApiError(res.statusText || "Request failed", res.status, json);
+  }
+  return (json as { slugs: string[] }).slugs;
+}
+
+export type AdminTemplateRow = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  category: string;
+  preview_image_url: string | null;
+  is_published: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function adminListTemplates(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string,
+): Promise<AdminTemplateRow[]> {
+  return apiRequest<AdminTemplateRow[]>("/admin/templates", {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function adminRegenerateTemplatePreview(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string,
+  templateId: string,
+): Promise<AdminTemplateRow> {
+  return apiRequest<AdminTemplateRow>(`/admin/templates/${templateId}/regenerate-preview`, {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({}),
   });
 }
 
@@ -502,6 +995,19 @@ export async function getAutomationRuns(
   });
 }
 
+export async function postAutomationRunRetry(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+  runId: string,
+): Promise<{ ok: boolean }> {
+  return apiRequest<{ ok: boolean }>(`/pages/${pageId}/automations/runs/${runId}/retry`, {
+    method: "POST",
+    getToken,
+    activeOrgId,
+  });
+}
+
 export type CalendarConnectionOut = {
   id: string;
   provider: string;
@@ -532,5 +1038,183 @@ export async function postGoogleCalendarConnect(
     getToken,
     activeOrgId,
     body: JSON.stringify({ page_id: pageId ?? null }),
+  });
+}
+
+/** Per-page count of submissions with status `new`. */
+export async function getPageUnreadCounts(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<Record<string, number>> {
+  return apiRequest<Record<string, number>>("/pages/unread-counts", {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export type SubmissionOut = {
+  id: string;
+  organization_id: string;
+  page_id: string;
+  page_version_id: string | null;
+  payload: Record<string, unknown>;
+  submitter_email: string | null;
+  submitter_name: string | null;
+  status: string;
+  created_at: string;
+};
+
+export type SubmissionListOut = {
+  items: SubmissionOut[];
+  next_before: string | null;
+};
+
+export async function listPageSubmissions(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+  opts?: {
+    limit?: number;
+    before?: string | null;
+    status?: string | null;
+    q?: string | null;
+  },
+): Promise<SubmissionListOut> {
+  const p = new URLSearchParams();
+  if (opts?.limit) p.set("limit", String(opts.limit));
+  if (opts?.before) p.set("before", opts.before);
+  if (opts?.status) p.set("status", opts.status);
+  if (opts?.q) p.set("q", opts.q);
+  const qs = p.toString();
+  return apiRequest<SubmissionListOut>(`/pages/${pageId}/submissions${qs ? `?${qs}` : ""}`, {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function patchSubmission(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  submissionId: string,
+  body: { status?: string },
+): Promise<SubmissionOut> {
+  return apiRequest<SubmissionOut>(`/submissions/${submissionId}`, {
+    method: "PATCH",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify(body),
+  });
+}
+
+export async function postSubmissionDraftReply(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  submissionId: string,
+): Promise<{ subject: string; body: string }> {
+  return apiRequest<{ subject: string; body: string }>(`/submissions/${submissionId}/draft-reply`, {
+    method: "POST",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function postSubmissionReply(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  submissionId: string,
+  body: { subject: string; body: string },
+): Promise<{ ok: boolean; resend_message_id: string }> {
+  return apiRequest(`/submissions/${submissionId}/reply`, {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteSubmission(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  submissionId: string,
+): Promise<void> {
+  const token = await getToken();
+  if (!token) throw new ApiError("Not authenticated", 401);
+  const h = new Headers();
+  h.set("Authorization", `Bearer ${token}`);
+  if (activeOrgId) h.set(FORGE_ACTIVE_ORG_HEADER, activeOrgId);
+  const res = await fetch(`${getApiUrl()}/submissions/${submissionId}`, {
+    method: "DELETE",
+    headers: h,
+  });
+  if (res.status === 401 && typeof window !== "undefined") {
+    const next = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+    window.location.assign(`/signin?next=${next}`);
+    throw new ApiError("Unauthorized", 401);
+  }
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    throw new ApiError(res.statusText || "Request failed", res.status, json);
+  }
+}
+
+export async function duplicatePage(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+): Promise<{ ok: boolean; id?: string }> {
+  return apiRequest(`/pages/${pageId}/duplicate`, {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({}),
+  });
+}
+
+function parseContentDispositionFilename(cd: string | null): string | null {
+  if (!cd) return null;
+  const m = /filename\*?=(?:UTF-8''|")?([^";\n]+)/i.exec(cd);
+  if (!m?.[1]) return null;
+  return decodeURIComponent(m[1].replace(/^"|"$/g, ""));
+}
+
+export async function exportSubmissionsCsv(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+  opts?: { status?: string | null; q?: string | null },
+): Promise<{ blob: Blob; filename: string }> {
+  const token = await getToken();
+  if (!token) throw new ApiError("Not authenticated", 401);
+  const h = new Headers();
+  h.set("Authorization", `Bearer ${token}`);
+  if (activeOrgId) h.set(FORGE_ACTIVE_ORG_HEADER, activeOrgId);
+  const p = new URLSearchParams();
+  if (opts?.status) p.set("status", opts.status);
+  if (opts?.q) p.set("q", opts.q);
+  const qs = p.toString();
+  const res = await fetch(`${getApiUrl()}/pages/${pageId}/submissions/export${qs ? `?${qs}` : ""}`, {
+    method: "GET",
+    headers: h,
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    throw new ApiError(res.statusText, res.status, json);
+  }
+  const fname = parseContentDispositionFilename(res.headers.get("content-disposition")) ?? `submissions-${pageId}.csv`;
+  const blob = await res.blob();
+  return { blob, filename: fname };
+}
+
+export async function deleteCalendarConnection(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  connectionId: string,
+): Promise<{ ok: boolean }> {
+  return apiRequest(`/calendar/connections/${connectionId}`, {
+    method: "DELETE",
+    getToken,
+    activeOrgId,
   });
 }

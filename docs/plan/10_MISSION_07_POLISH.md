@@ -135,4 +135,10 @@ Commit on each of these sweeps: PRD compliance, design integration, lint/type/te
 - All TODOs in the codebase are resolved or tracked in an issue.
 - Mission report lists what was found and what was fixed.
 
+---
+
+## Repo tracking (living)
+
+Repo-wide quality bar vs this brief: **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** (Mission **07 — Polish**, backend) · Notes: [MISSION_07_REPORT.md](./MISSION_07_REPORT.md). Complementary **frontend** polish is **FE-07**: [MISSION-FE-07-REPORT.md](./MISSION-FE-07-REPORT.md), [ui/FRONTEND_STATUS.md](./ui/FRONTEND_STATUS.md).
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

@@ -133,7 +133,14 @@ async def test_invite_rate_limit_blocks_eleventh_request() -> None:
                 auth_provider_id=f"clerk_{uid}",
             )
         )
-        s.add(Organization(id=oid, name="RL Org", slug=f"rl-{uid.hex[:8]}"))
+        s.add(
+            Organization(
+                id=oid,
+                name="RL Org",
+                slug=f"rl-{uid.hex[:8]}",
+                plan="enterprise",
+            )
+        )
         await s.flush()
         s.add(Membership(user_id=uid, organization_id=oid, role="owner"))
         await s.commit()

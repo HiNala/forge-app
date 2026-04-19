@@ -19,7 +19,7 @@ export type TextareaProps = Omit<
 
 const textAreaClass = cn(
   "flex w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text",
-  "font-body shadow-sm transition-[box-shadow,border-color,opacity] duration-[var(--duration-fast)] ease-[var(--ease-legacy-out)]",
+  "font-body shadow-sm transition-[box-shadow,border-color,opacity] duration-200 ease-[var(--ease-legacy-out)]",
   "placeholder:text-text-subtle",
   "focus-visible:border-accent focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--accent-light)]",
   "disabled:cursor-not-allowed disabled:opacity-50",

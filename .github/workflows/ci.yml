@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16-alpine
+        image: ghcr.io/dbsystel/postgresql-partman:16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -61,5 +61,7 @@ jobs:
         run: cd apps/api && uv run mypy app
       - name: Pytest
         run: cd apps/api && uv run pytest
+      - name: Alembic round-trip (downgrade base → upgrade head)
+        run: cd apps/api && uv run alembic downgrade base && uv run alembic upgrade head
       - name: Verify RLS on tenant tables
         run: cd apps/api && uv run python ../../scripts/check-rls.py

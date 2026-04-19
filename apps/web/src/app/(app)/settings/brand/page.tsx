@@ -50,6 +50,7 @@ function BrandSettingsInner() {
   });
 
   const [overrides, setOverrides] = React.useState<Partial<BrandKitOut>>({});
+  const [savedTick, setSavedTick] = React.useState(false);
 
   const draft = React.useMemo((): BrandKitOut | null => {
     if (!q.data) return null;
@@ -89,6 +90,8 @@ function BrandSettingsInner() {
     onSuccess: (data) => {
       qc.setQueryData(["brand", activeOrganizationId], data);
       setOverrides({});
+      setSavedTick(true);
+      window.setTimeout(() => setSavedTick(false), 2000);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -125,7 +128,7 @@ function BrandSettingsInner() {
   const primaryIsHex = primary.trim().startsWith("#");
 
   return (
-    <div className="mx-auto max-w-2xl space-y-10">
+    <div className="mx-auto max-w-6xl space-y-10">
       <div>
         <h1 className="font-display text-3xl font-semibold tracking-tight text-text">Brand kit</h1>
         <p className="mt-2 text-text-muted font-body">
@@ -134,6 +137,8 @@ function BrandSettingsInner() {
         </p>
       </div>
 
+      <div className="grid gap-10 lg:grid-cols-2 lg:gap-12">
+        <div className="space-y-10">
       <section className="space-y-4">
         <h2 className="text-sm font-semibold text-text">Colors</h2>
         <div className="grid gap-6 sm:grid-cols-2">
@@ -197,9 +202,9 @@ function BrandSettingsInner() {
             </div>
           </div>
         </div>
-        {saveMut.isPending ? (
-          <p className="text-xs text-text-muted font-body">Saving…</p>
-        ) : null}
+        <p className="text-xs text-text-muted font-body" aria-live="polite">
+          {saveMut.isPending ? "Saving…" : savedTick ? "Saved" : null}
+        </p>
       </section>
 
       <section className="space-y-4">
@@ -255,7 +260,6 @@ function BrandSettingsInner() {
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-text">Logo</h2>
         {draft.logo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={draft.logo_url}
             alt="Workspace logo"
@@ -317,6 +321,51 @@ function BrandSettingsInner() {
           Viewers can see brand settings but cannot edit. Ask an owner or editor to make changes.
         </p>
       ) : null}
+        </div>
+
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Live preview</p>
+          <div
+            className="mt-3 overflow-hidden rounded-[14px] border border-border bg-surface shadow-md"
+            style={{
+              fontFamily: `"${draft.body_font || "Inter"}", system-ui, sans-serif`,
+            }}
+          >
+            <div
+              className="px-5 py-8 text-white"
+              style={{ background: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)` }}
+            >
+              {draft.logo_url ? (
+                <img src={draft.logo_url} alt="" className="mb-4 h-10 w-auto object-contain" />
+              ) : null}
+              <p
+                className="font-semibold text-2xl leading-tight"
+                style={{ fontFamily: `"${draft.display_font || "Fraunces"}", serif` }}
+              >
+                Your next launch
+              </p>
+              <p className="mt-2 max-w-sm text-sm text-white/90">
+                This mock hero updates as you edit colors and fonts.
+              </p>
+              <button
+                type="button"
+                className="mt-6 rounded-full bg-white/95 px-5 py-2 text-sm font-medium"
+                style={{ color: primary }}
+              >
+                Book a call
+              </button>
+            </div>
+            <div className="space-y-2 px-5 py-4 text-sm text-text">
+              <div className="h-2 rounded bg-bg-elevated" />
+              <div className="h-2 w-[80%] rounded bg-bg-elevated" />
+            </div>
+          </div>
+          <p className="mt-4 text-xs leading-relaxed text-text-muted font-body">
+            Changes apply to new pages you create. Existing live pages keep their current branding until you edit and
+            republish them.
+          </p>
+        </aside>
+      </div>
     </div>
   );
 }

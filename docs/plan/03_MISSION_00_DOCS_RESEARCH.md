@@ -221,6 +221,12 @@ If any of these downstream missions find that their referenced doc is missing a 
 
 ---
 
+## Repo tracking (living)
+
+**`docs/external/`** and **`docs/architecture/`** are the deliverables; completeness vs repo expectations: **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** (Mission 00 row).
+
+---
+
 ## Final Reminders (Three Times, Because They Matter)
 
 **Do not stop until every item in the TODO list is verified complete.**

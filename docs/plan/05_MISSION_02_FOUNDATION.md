@@ -111,4 +111,10 @@ If at any point you find something missing in Mission 01's scaffolding that bloc
 - All linting, typechecking, and tests pass.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Auth, RLS, brand: **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** (Mission **02** in *By mission document*).
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

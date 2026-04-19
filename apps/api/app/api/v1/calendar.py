@@ -6,6 +6,7 @@ import json
 import logging
 import secrets
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -16,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db.models import CalendarConnection, User
+from app.db.rls_context import set_active_organization
 from app.deps import get_db, require_tenant
 from app.deps.auth import require_user
 from app.deps.db import get_db_no_auth
@@ -32,7 +34,7 @@ router = APIRouter(prefix="/calendar", tags=["calendar"])
 _STATE_PREFIX = "cal:oauth:"
 
 
-def _client_config() -> dict:
+def _client_config() -> dict[str, Any]:
     uri = f"{settings.API_BASE_URL.rstrip('/')}/api/v1/calendar/callback/google"
     return {
         "web": {
@@ -59,7 +61,7 @@ async def connect_google(
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_tenant),
     user: User = Depends(require_user),
-    redis=Depends(require_redis),
+    redis: Any = Depends(require_redis),
 ) -> dict[str, str]:
     if not settings.GOOGLE_OAUTH_CLIENT_ID or not settings.GOOGLE_OAUTH_CLIENT_SECRET:
         raise HTTPException(status_code=503, detail="Google OAuth is not configured")
@@ -88,12 +90,12 @@ async def callback_google(
     state: str | None = None,
     error: str | None = None,
     db: AsyncSession = Depends(get_db_no_auth),
-    redis=Depends(require_redis),
+    redis: Any = Depends(require_redis),
 ) -> RedirectResponse:
     if error:
         logger.warning("google oauth error=%s", error)
         return RedirectResponse(
-            url=f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings?calendar_error=1",
+            url=f"{settings.APP_PUBLIC_URL.rstrip('/')}/oauth/calendar-popup-close?error=access_denied",
             status_code=302,
         )
     if not code or not state:
@@ -112,10 +114,7 @@ async def callback_google(
         text("SELECT set_config('app.current_user_id', :u, true)"),
         {"u": str(user_id)},
     )
-    await db.execute(
-        text("SELECT set_config('app.current_tenant_id', :t, true)"),
-        {"t": str(org_id)},
-    )
+    await set_active_organization(db, org_id)
 
     flow = _flow()
     try:
@@ -151,11 +150,10 @@ async def callback_google(
     db.add(conn)
     await db.commit()
 
-    dest = f"{settings.APP_PUBLIC_URL.rstrip('/')}/pages"
+    # Front-end popup listens for postMessage and closes (Mission FE-05).
+    dest = f"{settings.APP_PUBLIC_URL.rstrip('/')}/oauth/calendar-popup-close?provider=google"
     if page_id:
-        dest = f"{settings.APP_PUBLIC_URL.rstrip('/')}/pages/{page_id}/automations?connected=1"
-    else:
-        dest = f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings?calendar_connected=1"
+        dest += f"&page_id={page_id}"
     return RedirectResponse(url=dest, status_code=302)
 
 

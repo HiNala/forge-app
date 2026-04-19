@@ -1,5 +1,6 @@
-import { SignUp } from "@clerk/nextjs";
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { SignupClient } from "./signup-client";
 
 export const metadata: Metadata = {
   title: "Sign up | Forge",
@@ -15,24 +16,13 @@ export default function SignUpPage() {
       <p className="mt-2 text-center text-sm text-text-muted font-body">
         Create your workspace
       </p>
-      <div className="mt-10 w-full max-w-[400px]">
-        <SignUp
-          appearance={{
-            elements: {
-              rootBox: "mx-auto w-full",
-              card: "shadow-lg border border-border bg-surface rounded-[10px]",
-              headerTitle: "font-display",
-              formButtonPrimary:
-                "bg-accent hover:bg-accent/90 text-sm font-medium shadow-sm",
-              footerActionLink: "text-accent font-medium",
-              formFieldInput:
-                "rounded-md border-border focus:ring-accent-mid focus:border-accent",
-            },
-          }}
-          signInUrl="/signin"
-          forceRedirectUrl="/signup/continue"
-        />
-      </div>
+      <Suspense
+        fallback={
+          <div className="mt-10 h-80 w-full max-w-[400px] animate-pulse rounded-lg bg-surface-muted" />
+        }
+      >
+        <SignupClient />
+      </Suspense>
     </div>
   );
 }

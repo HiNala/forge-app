@@ -1,9 +1,13 @@
 """Anthropic adapter — stub."""
 
+from __future__ import annotations
+
+from typing import Any, NoReturn
+
 
 class AnthropicProvider:
-    async def complete(self, *args, **kwargs):
+    async def complete(self, *args: Any, **kwargs: Any) -> NoReturn:
         raise NotImplementedError
 
-    async def stream(self, *args, **kwargs):
+    async def stream(self, *args: Any, **kwargs: Any) -> NoReturn:
         raise NotImplementedError

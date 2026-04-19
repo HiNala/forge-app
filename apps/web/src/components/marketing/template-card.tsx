@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,13 @@ export function TemplateCard({ href, name, tag, description }: Props) {
       )}
     >
       <div className="relative aspect-video w-full overflow-hidden bg-bg-elevated">
+        <Image
+          src="/marketing/template-thumb.svg"
+          alt=""
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover"
+        />
         <div
           className="absolute inset-0 bg-gradient-to-br from-accent-light via-bg to-bg-elevated transition-opacity duration-[var(--duration-base)] ease-[var(--ease-out)] group-hover:opacity-0"
           aria-hidden

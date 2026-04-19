@@ -156,4 +156,10 @@ Commit on each boundary: shell scaffolded, sidebar with collapse, workspace swit
 - Axe-core clean.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Current depth vs this brief: **[FRONTEND_STATUS.md](./FRONTEND_STATUS.md)** · Shipped scope: [MISSION-FE-03-REPORT.md](../MISSION-FE-03-REPORT.md)
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**

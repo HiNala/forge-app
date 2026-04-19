@@ -1,7 +1,10 @@
 """Immutable published snapshot."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import DateTime, ForeignKey, Integer, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -28,8 +31,8 @@ class PageVersion(Base, UUIDPrimaryKeyMixin):
     )
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
     html: Mapped[str] = mapped_column(Text, nullable=False)
-    form_schema: Mapped[dict | None] = mapped_column(JSONB)
-    brand_kit_snapshot: Mapped[dict | None] = mapped_column(JSONB)
+    form_schema: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    brand_kit_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     published_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

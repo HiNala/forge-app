@@ -43,7 +43,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  getStudioUsage,
+  getBillingUsage,
   patchUserPreferences,
   postAuthSignOut,
   postCreateWorkspace,
@@ -66,7 +66,8 @@ const NAV = [
   { href: "/settings/profile", label: "Settings", icon: Settings },
 ] as const;
 
-function UsageMeter({
+/** Plan usage: submissions quota when set, else pages generated (Mission 06). */
+function OrgQuotaBar({
   collapsed,
   getToken,
   activeOrgId,
@@ -76,39 +77,40 @@ function UsageMeter({
   activeOrgId: string | null;
 }) {
   const q = useQuery({
-    queryKey: ["studio-usage", activeOrgId],
-    queryFn: () => getStudioUsage(getToken, activeOrgId),
+    queryKey: ["billing-usage", activeOrgId],
+    queryFn: () => getBillingUsage(getToken, activeOrgId),
     enabled: !!activeOrgId,
     staleTime: 60_000,
   });
   const u = q.data;
-  if (!u || u.pages_quota <= 0) return null;
-  const ratio = Math.min(1, u.pages_generated / u.pages_quota);
+  if (!u) return null;
+  const useSubs = u.submissions_quota > 0;
+  const cap = useSubs ? u.submissions_quota : u.pages_quota;
+  const used = useSubs ? u.submissions_received : u.pages_generated;
+  if (cap <= 0) return null;
+  const ratio = Math.min(1, used / cap);
   const pct = ratio * 100;
   const barClass =
-    pct >= 100
-      ? "bg-danger"
-      : pct >= 80
-        ? "bg-warning"
-        : "bg-accent";
-
-  const label = `${u.pages_generated}/${u.pages_quota} pages this month`;
+    pct >= 100 ? "bg-danger" : pct >= 80 ? "bg-warning" : "bg-accent";
+  const label = useSubs
+    ? `${used}/${cap} submissions this month`
+    : `${used}/${cap} pages this month`;
 
   const inner = (
     <Link
       href="/settings/billing"
       className={cn(
-        "block rounded-md border border-border/80 bg-bg-elevated/50 px-2 py-2 text-left transition-colors hover:bg-bg-elevated",
-        collapsed && "px-1.5",
+        "block w-full rounded-md px-1 py-2 text-left transition-colors hover:bg-bg-elevated/60",
+        collapsed && "px-0 py-1.5",
       )}
       aria-label={label}
     >
       {!collapsed ? (
         <p className="mb-1 text-[10px] font-medium tracking-wide text-text-subtle uppercase">
-          Usage
+          Plan usage
         </p>
       ) : null}
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
+      <div className="h-1 w-full overflow-hidden rounded-full bg-border">
         <div
           className={cn("h-full rounded-full transition-all", barClass)}
           style={{ width: `${Math.min(100, pct)}%` }}
@@ -125,7 +127,7 @@ function UsageMeter({
       <Tooltip>
         <TooltipTrigger asChild>{inner}</TooltipTrigger>
         <TooltipContent side="right" className="max-w-[220px]">
-          {label} — manage in Billing
+          {label} — Billing
         </TooltipContent>
       </Tooltip>
     );
@@ -373,13 +375,11 @@ export function Sidebar({
           ))}
         </nav>
 
-        <div className="mt-auto shrink-0 space-y-2 border-t border-border p-2">
-          <UsageMeter
-            collapsed={collapsed}
-            getToken={getToken}
-            activeOrgId={activeOrganizationId}
-          />
+        <div className="shrink-0 border-t border-border px-2 pt-2 pb-1">
+          <OrgQuotaBar collapsed={collapsed} getToken={getToken} activeOrgId={activeOrganizationId} />
+        </div>
 
+        <div className="mt-auto shrink-0 space-y-2 border-t border-border p-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

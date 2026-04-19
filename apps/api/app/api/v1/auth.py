@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -13,19 +13,29 @@ from app.config import settings
 from app.db.models import Membership, Organization, User
 from app.deps import get_db, require_user
 from app.deps.db import get_db_no_auth
-from app.deps.tenant import raw_active_organization_id
+from app.deps.tenant import TenantContext, raw_active_organization_id, require_tenant
 from app.schemas.auth import (
+    DeleteMeResponse,
     MembershipOut,
     MeResponse,
     SignupBody,
     SignupResponse,
     SwitchOrgBody,
     SwitchOrgResponse,
+    UserMePatch,
     UserOut,
-    UserPreferencesPatch,
 )
+from app.schemas.user_preferences_full import UserPreferences, UserPreferencesPartial
 from app.security.clerk_jwt import verify_clerk_jwt
+from app.services.audit_log import write_audit
 from app.services.bootstrap import clerk_email_from_payload, ensure_user_org_signup
+from app.services.queue import enqueue_purge_deleted_user
+from app.services.settings_cache import cache_delete, cache_get_json, cache_set_json, prefs_key
+from app.services.user_prefs_merge import (
+    apply_partial_update,
+    merged_user_preferences,
+    preference_diff,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -117,25 +127,122 @@ async def me(
         memberships=memberships,
         active_organization_id=active_org if raw_org else None,
         active_role=active_role,
-        preferences=user.preferences,
+        preferences=merged_user_preferences(user.user_preferences).model_dump(mode="json"),
     )
+
+
+@router.patch("/me", response_model=MeResponse)
+async def patch_me(
+    body: UserMePatch,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> MeResponse:
+    """Update profile fields; timezone/locale merge into `preferences`."""
+    uid = getattr(request.state, "user_id", None)
+    if uid is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    user = await db.get(User, uid)
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+    if body.display_name is not None:
+        user.display_name = body.display_name
+    if body.avatar_url is not None:
+        user.avatar_url = body.avatar_url
+    prefs = dict(merged_user_preferences(user.user_preferences).model_dump(mode="json"))
+    if body.timezone is not None:
+        prefs["timezone"] = body.timezone
+    if body.locale is not None:
+        prefs["locale"] = body.locale
+    user.user_preferences = prefs
+    await db.commit()
+    await db.refresh(user)
+    request.state.user = user
+    return await me(request, db)
+
+
+@router.get("/me/preferences", response_model=UserPreferences)
+async def get_user_preferences_me(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> UserPreferences:
+    """Merged preferences with server defaults (BI-04)."""
+    uid = getattr(request.state, "user_id", None)
+    if uid is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    row = await db.get(User, uid)
+    if row is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    key = prefs_key(str(row.id))
+    cached = await cache_get_json(request, key)
+    if cached is not None:
+        return UserPreferences.model_validate(cached)
+    out = merged_user_preferences(row.user_preferences)
+    await cache_set_json(request, key, out.model_dump(mode="json"), ttl_seconds=60)
+    return out
 
 
 @router.patch("/me/preferences")
 async def patch_user_preferences(
-    body: UserPreferencesPatch,
-    user: User = Depends(require_user),
+    body: UserPreferencesPartial,
+    request: Request,
     db: AsyncSession = Depends(get_db),
+    ctx: TenantContext = Depends(require_tenant),
 ) -> dict[str, bool]:
-    """Persist UI preferences (e.g. sidebar collapsed) for cross-device sync."""
-    prefs = dict(user.preferences or {})
-    if body.sidebar_collapsed is not None:
-        prefs["sidebar_collapsed"] = body.sidebar_collapsed
-    if body.dashboard_tip_dismissed is not None:
-        prefs["dashboard_tip_dismissed"] = body.dashboard_tip_dismissed
-    user.preferences = prefs
+    """Merge partial preferences; audit + cache invalidation."""
+    uid = getattr(request.state, "user_id", None)
+    if uid is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    row = await db.get(User, uid)
+    if row is None:
+        raise HTTPException(status_code=401, detail="User not found")
+    before = merged_user_preferences(row.user_preferences).model_dump(mode="json")
+    after = apply_partial_update(row.user_preferences, body)
+    row.user_preferences = after
+    dif = preference_diff(before, after)
+    if dif:
+        await write_audit(
+            db,
+            organization_id=ctx.organization_id,
+            actor_user_id=row.id,
+            action="preferences_updated",
+            resource_type="user",
+            resource_id=row.id,
+            changes=dif,
+        )
     await db.commit()
+    await cache_delete(request, prefs_key(str(row.id)))
     return {"ok": True}
+
+
+@router.post("/preferences")
+async def post_user_preferences(
+    body: UserPreferencesPartial,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    ctx: TenantContext = Depends(require_tenant),
+) -> dict[str, bool]:
+    """Alias for PATCH /me/preferences."""
+    return await patch_user_preferences(body, request, db, ctx)
+
+
+@router.delete("/me", response_model=DeleteMeResponse)
+async def delete_me(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> DeleteMeResponse:
+    """Soft-delete the user; PII scrub is deferred 30 days via background job."""
+    uid = getattr(request.state, "user_id", None)
+    if uid is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    user = await db.get(User, uid)
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+    if user.deleted_at is not None:
+        return DeleteMeResponse(ok=True, purge_job_scheduled=False)
+    user.deleted_at = datetime.now(UTC)
+    await db.commit()
+    await enqueue_purge_deleted_user(request.app.state, str(user.id))
+    return DeleteMeResponse(ok=True, purge_job_scheduled=True)
 
 
 @router.post("/switch-org", response_model=SwitchOrgResponse)
@@ -220,8 +327,6 @@ async def auth_webhook(
                 await db.execute(select(User).where(User.auth_provider_id == aid))
             ).scalar_one_or_none()
             if u:
-                from datetime import datetime
-
                 u.deleted_at = datetime.now(UTC)
                 await db.commit()
 

@@ -16,6 +16,7 @@ docker compose up --build -d
 - **Frontend:** http://localhost:3000
 - **Backend API:** http://localhost:8000
 - **API Docs:** http://localhost:8000/docs
+- **Deep health (Postgres + Redis):** http://localhost:8000/health/deep
 
 ### Signup → onboarding → brand (Mission 02)
 

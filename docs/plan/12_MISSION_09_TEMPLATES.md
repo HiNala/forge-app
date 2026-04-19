@@ -111,6 +111,12 @@ Commit on milestones: template CRUD endpoints live, curated templates seeded, ga
 - All lint / typecheck / test pass.
 - Mission report written.
 
+---
+
+## Repo tracking (living)
+
+Template marketplace vs PRD “post-launch”: **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** (Mission **09 — Templates** in *By mission document*).
+
 **Do not stop until every item is verified. Do not stop until every item is verified. Do not stop until every item is verified.**
 
 ---

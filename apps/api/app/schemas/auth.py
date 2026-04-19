@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -27,12 +28,21 @@ class UserOut(BaseModel):
     avatar_url: str | None
 
 
+class UserMePatch(BaseModel):
+    """Profile fields saved from Settings; timezone/locale live in `preferences` JSONB."""
+
+    display_name: str | None = Field(default=None, max_length=200)
+    avatar_url: str | None = Field(default=None, max_length=2048)
+    timezone: str | None = Field(default=None, max_length=64)
+    locale: str | None = Field(default=None, max_length=32)
+
+
 class MeResponse(BaseModel):
     user: UserOut
     memberships: list[MembershipOut]
     active_organization_id: UUID | None
     active_role: str | None
-    preferences: dict | None = None
+    preferences: dict[str, Any] | None = None
 
 
 class SwitchOrgResponse(BaseModel):
@@ -46,6 +56,6 @@ class SignupResponse(BaseModel):
     organization_id: UUID
 
 
-class UserPreferencesPatch(BaseModel):
-    sidebar_collapsed: bool | None = None
-    dashboard_tip_dismissed: bool | None = None
+class DeleteMeResponse(BaseModel):
+    ok: bool = True
+    purge_job_scheduled: bool = True

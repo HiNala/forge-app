@@ -243,6 +243,9 @@ class AutomationEngine:
                             duration_min=rule.calendar_event_duration_min,
                             send_invite=rule.calendar_send_invite,
                         )
+                        ev_id = meta.get("event_id") if isinstance(meta, dict) else None
+                        if isinstance(ev_id, str) and ev_id and sub.calendar_event_id is None:
+                            sub.calendar_event_id = ev_id
                         await _record_run(
                             self.db,
                             rule_id=rule.id,

@@ -2,11 +2,12 @@
 
 import { useAuth, useUser } from "@clerk/nextjs";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
-import { Loader2, Monitor, PanelsTopLeft, Send } from "lucide-react";
+import { Monitor, PanelsTopLeft, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import TextareaAutosize from "react-textarea-autosize";
+import { FocusScope } from "@radix-ui/react-focus-scope";
 import { toast } from "sonner";
 import { Virtuoso } from "react-virtuoso";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
 } from "@/lib/api";
 import { debounce } from "@/lib/debounce";
 import { MOTION_TRANSITIONS, SPRINGS } from "@/lib/motion";
+import { SIDEBAR_AUTO_COLLAPSE_EVENT } from "@/lib/shell-events";
 import {
   DEFAULT_REFINE_CHIPS,
   SECTION_EDIT_QUICK_CHIPS,
@@ -38,6 +40,7 @@ import {
 } from "@/lib/studio-preview-html";
 import { createChunkBuffer } from "@/lib/studio-buffer";
 import { streamStudioSse } from "@/lib/sse";
+import { fireFirstPublishConfetti } from "@/lib/confetti";
 import { slugifyPageTitle } from "@/lib/slugify-page";
 import { useForgeSession } from "@/providers/session-provider";
 import { useUIStore } from "@/stores/ui";
@@ -56,14 +59,14 @@ function inferSummary(page: PageDetailOut): string {
   return `A ${page.page_type.replace("-", " ")} page — ${t}.`.slice(0, 140);
 }
 
-function DotPulse() {
+function DotPulse({ className }: { className?: string }) {
   return (
-    <span className="inline-flex gap-1" aria-hidden>
+    <span className={cn("studio-dot-wave inline-flex gap-1.5", className)} aria-hidden>
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="size-1.5 animate-pulse rounded-full bg-accent"
-          style={{ animationDelay: `${i * 160}ms` }}
+          className="size-1.5 rounded-full bg-accent"
+          style={{ animationDelay: `${i * 0.2}s` }}
         />
       ))}
     </span>
@@ -74,6 +77,7 @@ export function StudioWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pageIdFromUrl = searchParams.get("pageId");
+  const promptPrefill = searchParams.get("prompt");
   const { getToken } = useAuth();
   const { user } = useUser();
   const { activeOrganizationId, activeOrg } = useForgeSession();
@@ -137,6 +141,14 @@ export function StudioWorkspace() {
     [setDraftStore],
   );
 
+  const debouncedPersistEmptyPrompt = React.useMemo(
+    () =>
+      debounce((text: string) => {
+        setDraftStore(null, text);
+      }, 2000),
+    [setDraftStore],
+  );
+
   React.useEffect(() => {
     setChatInput(storeDraft);
   }, [sk, storeDraft]);
@@ -151,11 +163,33 @@ export function StudioWorkspace() {
   }, []);
 
   React.useEffect(() => {
+    if (!promptPrefill) return;
+    try {
+      setPromptEmpty(decodeURIComponent(promptPrefill));
+    } catch {
+      setPromptEmpty(promptPrefill);
+    }
+  }, [promptPrefill]);
+
+  React.useEffect(() => {
+    if (emptyFocused) return;
     const id = setInterval(() => {
       setPlaceholderIdx((i) => (i + 1) % STUDIO_PLACEHOLDERS.length);
     }, 4000);
     return () => clearInterval(id);
+  }, [emptyFocused]);
+
+  React.useEffect(() => {
+    return useStudioStore.persist.onFinishHydration(() => {
+      const d = useStudioStore.getState().getSession(null).draftInput;
+      if (d) setPromptEmpty((prev) => prev || d);
+    });
   }, []);
+
+  React.useEffect(() => {
+    if (active) return;
+    debouncedPersistEmptyPrompt(promptEmpty);
+  }, [active, promptEmpty, debouncedPersistEmptyPrompt]);
 
   const applyIframeHtml = React.useCallback((docHtml: string) => {
     const iframe = iframeRef.current;
@@ -181,7 +215,7 @@ export function StudioWorkspace() {
   React.useEffect(() => {
     if (active) {
       setSidebarCollapsed(true);
-      window.dispatchEvent(new CustomEvent("sidebar:auto-collapse"));
+      window.dispatchEvent(new CustomEvent(SIDEBAR_AUTO_COLLAPSE_EVENT));
     }
   }, [active, setSidebarCollapsed]);
 
@@ -299,10 +333,14 @@ export function StudioWorkspace() {
         e.preventDefault();
         setSectionFocusIdx((i) => (i - 1 + sectionIds.length) % sectionIds.length);
       }
-      if (e.key === "Enter" && sectionIds[sectionFocusIdx]) {
+      if (e.key === "Enter" && sectionIds[sectionFocusIdx] && iframeRef.current) {
+        e.preventDefault();
         const id = sectionIds[sectionFocusIdx]!;
-        const fake = { type: "forge-section-click", sectionId: id, rect: { top: 80, left: 40, width: 200, height: 80 } };
-        window.dispatchEvent(new MessageEvent("message", { data: { forgeStudio: true, ...fake } }));
+        const ir = iframeRef.current.getBoundingClientRect();
+        setEditAnchor({ top: ir.top + 72, left: ir.left + 24, width: Math.min(320, ir.width - 48) });
+        setEditSectionId(id);
+        setEditPrompt("");
+        setEditOpen(true);
       }
     }
     window.addEventListener("keydown", onKey);
@@ -506,10 +544,15 @@ export function StudioWorkspace() {
     router.replace("/studio", { scroll: false });
   }
 
-  function openPreviewTab() {
+  async function openPreviewTab() {
     if (!pageSlug || !activeOrg?.organization_slug) return;
-    const url = `${window.location.origin}/p/${activeOrg.organization_slug}/${pageSlug}?preview=true`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    const token = await getToken();
+    const url = new URL(
+      `${window.location.origin}/p/${activeOrg.organization_slug}/${pageSlug}`,
+    );
+    url.searchParams.set("preview", "true");
+    if (token) url.searchParams.set("token", token);
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
   }
 
   async function onPublishClick() {
@@ -533,6 +576,7 @@ export function StudioWorkspace() {
     try {
       if (typeof window === "undefined" || localStorage.getItem(CELEBRATION_KEY)) return;
       localStorage.setItem(CELEBRATION_KEY, "1");
+      void fireFirstPublishConfetti();
       toast.success("Your first page is live", {
         description: "Share it with your world.",
         duration: 6000,
@@ -655,7 +699,12 @@ export function StudioWorkspace() {
                 />
                 <div className="pointer-events-none absolute bottom-3 right-3">
                   {busy ? (
-                    <DotPulse />
+                    <>
+                      <span className="sr-only" aria-live="polite">
+                        Working on your page…
+                      </span>
+                      <DotPulse />
+                    </>
                   ) : (
                     <button
                       type="submit"
@@ -756,9 +805,15 @@ export function StudioWorkspace() {
                   </div>
                 )}
                 {busy ? (
-                  <div className="flex items-center gap-2 border-t border-white/10 px-4 py-2 text-xs text-white/60 font-body">
-                    <Loader2 className="size-4 animate-spin" />
-                    {streamPhase === "intent" ? "Understanding what you need…" : "Building the page…"}
+                  <div
+                    className="flex items-center gap-2 border-t border-white/10 px-4 py-2 text-xs text-white/60 font-body"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <DotPulse />
+                    <span>
+                      {streamPhase === "intent" ? "Understanding what you need…" : "Building the page…"}
+                    </span>
                   </div>
                 ) : null}
               </div>
@@ -914,63 +969,65 @@ export function StudioWorkspace() {
               ) : null}
 
               {editOpen && editAnchor ? (
-                <div
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="section-edit-title"
-                  tabIndex={-1}
-                  className="fixed z-50 w-[min(92vw,360px)] rounded-xl border border-border bg-surface p-3 shadow-lg"
-                  style={{
-                    top: Math.min(editAnchor.top + 8, window.innerHeight - 280),
-                    left: Math.min(editAnchor.left, window.innerWidth - 380),
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") setEditOpen(false);
-                  }}
-                >
-                  <p id="section-edit-title" className="text-xs font-medium text-text-muted font-body">
-                    Edit {editSectionId}
-                  </p>
-                  <Input
-                    ref={editInputRef}
-                    value={editPrompt}
-                    onChange={(e) => setEditPrompt(e.target.value)}
-                    placeholder="What should change?"
-                    className="mt-2"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        void onSectionEditSubmit();
-                      }
+                <FocusScope trapped loop>
+                  <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="section-edit-title"
+                    tabIndex={-1}
+                    className="fixed z-50 w-[min(92vw,360px)] rounded-xl border border-border bg-surface p-3 shadow-lg outline-none"
+                    style={{
+                      top: Math.min(editAnchor.top + 8, window.innerHeight - 280),
+                      left: Math.min(editAnchor.left, window.innerWidth - 380),
                     }}
-                  />
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {SECTION_EDIT_QUICK_CHIPS.map((c) => (
-                      <button
-                        key={c}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setEditOpen(false);
+                    }}
+                  >
+                    <p id="section-edit-title" className="text-xs font-medium text-text-muted font-body">
+                      Edit {editSectionId}
+                    </p>
+                    <Input
+                      ref={editInputRef}
+                      value={editPrompt}
+                      onChange={(e) => setEditPrompt(e.target.value)}
+                      placeholder="What should change?"
+                      className="mt-2"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void onSectionEditSubmit();
+                        }
+                      }}
+                    />
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {SECTION_EDIT_QUICK_CHIPS.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          className="rounded-full border border-border bg-bg px-2 py-0.5 text-[11px] font-body"
+                          onClick={() => setEditPrompt(c)}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-3 flex justify-end gap-2">
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setEditOpen(false)}>
+                        Close
+                      </Button>
+                      <Button
                         type="button"
-                        className="rounded-full border border-border bg-bg px-2 py-0.5 text-[11px] font-body"
-                        onClick={() => setEditPrompt(c)}
+                        size="sm"
+                        variant="primary"
+                        loading={editBusy}
+                        onClick={() => void onSectionEditSubmit()}
                       >
-                        {c}
-                      </button>
-                    ))}
+                        Apply
+                      </Button>
+                    </div>
                   </div>
-                  <div className="mt-3 flex justify-end gap-2">
-                    <Button type="button" size="sm" variant="ghost" onClick={() => setEditOpen(false)}>
-                      Close
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="primary"
-                      loading={editBusy}
-                      onClick={() => void onSectionEditSubmit()}
-                    >
-                      Apply
-                    </Button>
-                  </div>
-                </div>
+                </FocusScope>
               ) : null}
             </motion.section>
           </motion.div>

@@ -7,7 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy import func, select
+from sqlalchemy import String, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -25,7 +25,9 @@ from app.schemas.page import (
     PublishOut,
 )
 from app.schemas.submission import SubmissionListOut, SubmissionOut
+from app.services.analytics_cache import bust_page_and_org
 from app.services.orchestration.html_validate import validate_publishable_html
+from app.services.proposal_service import get_or_create_proposal_for_page
 from app.services.submissions_csv import iter_submission_csv_rows
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,24 @@ logger = logging.getLogger(__name__)
 _CACHE_PREFIX = "page:live:"
 
 router = APIRouter(prefix="/pages", tags=["pages"])
+
+
+@router.get("/unread-counts", response_model=dict[str, int])
+async def page_unread_counts(
+    db: AsyncSession = Depends(get_db),
+    ctx: TenantContext = Depends(require_tenant),
+) -> dict[str, int]:
+    """Unread = submissions with ``status == 'new'`` per page (Mission FE-05)."""
+    stmt = (
+        select(Submission.page_id, func.count())
+        .where(
+            Submission.organization_id == ctx.organization_id,
+            Submission.status == "new",
+        )
+        .group_by(Submission.page_id)
+    )
+    rows = (await db.execute(stmt)).all()
+    return {str(pid): int(cnt) for pid, cnt in rows}
 
 
 @router.get("", response_model=list[PageOut])
@@ -162,6 +182,15 @@ async def publish_page(
     await db.flush()
     p.published_version_id = ver.id
     p.status = "live"
+    if p.page_type == "proposal":
+        try:
+            prop = await get_or_create_proposal_for_page(db, page=p)
+            if prop.status == "draft":
+                prop.status = "sent"
+                prop.sent_at = datetime.now(UTC)
+            await db.flush()
+        except ValueError:
+            pass
     await db.commit()
     await db.refresh(p)
 
@@ -170,11 +199,14 @@ async def publish_page(
         "title": p.title,
         "slug": p.slug,
         "organization_slug": org.slug,
+        "page_id": str(p.id),
+        "page_type": p.page_type,
     }
     r = getattr(request.app.state, "redis", None)
     if r is not None:
         try:
             await r.set(f"{_CACHE_PREFIX}{org.slug}:{p.slug}", json.dumps(payload))
+            await bust_page_and_org(r, page_id=p.id, organization_id=ctx.organization_id)
         except Exception as e:
             logger.warning("publish_cache_write %s", e)
 
@@ -262,12 +294,18 @@ async def list_page_submissions(
         None,
         description="Return submissions created strictly before this timestamp (cursor, ISO 8601).",
     ),
+    status: str | None = Query(None, description="Filter: new | read | replied | archived"),
+    q: str | None = Query(None, description="Case-insensitive search across payload JSON text"),
 ) -> SubmissionListOut:
     """List submissions (newest first). Paginate using ``before`` from prior ``next_before``."""
     p = await db.get(Page, page_id)
     if p is None or p.organization_id != ctx.organization_id:
         raise HTTPException(status_code=404, detail="Not found")
     stmt = select(Submission).where(Submission.page_id == page_id)
+    if status:
+        stmt = stmt.where(Submission.status == status)
+    if q and q.strip():
+        stmt = stmt.where(cast(Submission.payload, String).ilike(f"%{q.strip()}%"))
     if before is not None:
         stmt = stmt.where(Submission.created_at < before)
     stmt = stmt.order_by(Submission.created_at.desc()).limit(limit)
@@ -282,18 +320,20 @@ async def export_submissions_csv(
     page_id: UUID,
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_tenant),
+    status: str | None = Query(None, description="Filter: new | read | replied | archived"),
+    q: str | None = Query(None, description="Case-insensitive search across payload JSON text"),
 ) -> StreamingResponse:
-    """Download all submissions for this page as CSV (oldest first)."""
+    """Download submissions for this page as CSV (oldest first), mirroring list filters."""
     p = await db.get(Page, page_id)
     if p is None or p.organization_id != ctx.organization_id:
         raise HTTPException(status_code=404, detail="Not found")
-    rows = (
-        await db.execute(
-            select(Submission)
-            .where(Submission.page_id == page_id)
-            .order_by(Submission.created_at.asc())
-        )
-    ).scalars().all()
+    stmt = select(Submission).where(Submission.page_id == page_id)
+    if status:
+        stmt = stmt.where(Submission.status == status)
+    if q and q.strip():
+        stmt = stmt.where(cast(Submission.payload, String).ilike(f"%{q.strip()}%"))
+    stmt = stmt.order_by(Submission.created_at.asc())
+    rows = (await db.execute(stmt)).scalars().all()
     day = datetime.now(UTC).strftime("%Y%m%d")
     safe_slug = "".join(c if c.isalnum() or c in "-_" else "-" for c in p.slug)[:80]
     filename = f"submissions-{safe_slug}-{day}.csv"

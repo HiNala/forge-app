@@ -149,6 +149,10 @@ async def test_tenant_isolation_api_and_rls() -> None:
             {"u": str(uuid.uuid4())},
         )
         await conn.execute(
+            text("SELECT set_config('app.current_org_id', :t, false)"),
+            {"t": str(wrong_tenant)},
+        )
+        await conn.execute(
             text("SELECT set_config('app.current_tenant_id', :t, false)"),
             {"t": str(wrong_tenant)},
         )
