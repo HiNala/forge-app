@@ -261,14 +261,22 @@ export function DashboardView() {
         </div>
       ) : (
         <>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="font-display text-xl text-text">
-              Good to see you, {firstName}. Here&apos;s your workspace.
-            </p>
-            <div className="flex w-full max-w-md flex-col gap-2">
+          {/* Greeting + search bar */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-text">
+                {firstName}&apos;s workspace
+              </h1>
+              <p className="mt-1 font-body text-sm text-text-muted">
+                {(pagesQ.data ?? []).filter((p) => p.status === "live").length} live
+                {" · "}
+                {(pagesQ.data ?? []).filter((p) => p.status === "draft").length} drafts
+              </p>
+            </div>
+            <div className="flex w-full max-w-xs flex-col gap-1.5">
               <Input
                 className="w-full"
-                placeholder="Search titles…"
+                placeholder="Search pages…"
                 value={qInput}
                 onChange={(e) => setQInput(e.target.value)}
                 aria-label="Search pages"
@@ -276,7 +284,7 @@ export function DashboardView() {
               {keywordWorkflowHint ? (
                 <button
                   type="button"
-                  className="text-left text-xs font-medium text-accent underline-offset-4 hover:underline font-body"
+                  className="text-left font-body text-xs font-medium text-accent underline-offset-4 hover:underline"
                   onClick={() => {
                     setWorkflowFilter(keywordWorkflowHint === "proposal" ? "proposal" : keywordWorkflowHint);
                     setQInput("");
@@ -294,48 +302,50 @@ export function DashboardView() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                { id: "all" as const, label: "All types" },
-                { id: "contact" as const, label: "Contact forms" },
-                { id: "proposal" as const, label: "Proposals" },
-                { id: "deck" as const, label: "Decks" },
-                { id: "other" as const, label: "Other" },
-              ] satisfies { id: DashboardWorkflowFilter; label: string }[]
-            ).map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setWorkflowFilter(c.id)}
-                className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-medium font-body transition-colors",
-                  workflowFilter === c.id
-                    ? "border-accent bg-accent-light text-accent"
-                    : "border-border bg-surface text-text-muted hover:border-accent/50",
-                )}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {chips.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setFilter(c.id)}
-                className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-medium font-body transition-colors",
-                  filter === c.id
-                    ? "border-accent bg-accent-light text-accent"
-                    : "border-border bg-surface text-text-muted hover:border-accent/50",
-                )}
-              >
-                {c.label}
-              </button>
-            ))}
+          {/* Unified filter strip */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-border pb-4">
+            <div className="flex flex-wrap gap-1.5">
+              {chips.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setFilter(c.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 font-body text-xs font-semibold transition-colors",
+                    filter === c.id
+                      ? "border-accent bg-accent-light text-accent"
+                      : "border-border bg-surface text-text-muted hover:border-accent/40 hover:text-text",
+                  )}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {(
+                [
+                  { id: "all" as const, label: "All types" },
+                  { id: "contact" as const, label: "Contact" },
+                  { id: "proposal" as const, label: "Proposals" },
+                  { id: "deck" as const, label: "Decks" },
+                  { id: "other" as const, label: "Other" },
+                ] satisfies { id: DashboardWorkflowFilter; label: string }[]
+              ).map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setWorkflowFilter(c.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 font-body text-xs font-semibold transition-colors",
+                    workflowFilter === c.id
+                      ? "border-text/20 bg-text text-bg"
+                      : "border-border bg-surface text-text-muted hover:border-border-strong hover:text-text",
+                  )}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {slice.length === 0 ? (

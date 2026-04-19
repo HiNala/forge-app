@@ -31,10 +31,33 @@ function StatusDot({ status }: { status: string }) {
   );
 }
 
+const TYPE_PALETTE: Record<string, { from: string; accent: string }> = {
+  proposal:     { from: "oklch(67% 0.16 72 / 0.18)",   accent: "oklch(67% 0.16 72)" },
+  pitch_deck:   { from: "oklch(58% 0.19 280 / 0.16)",  accent: "oklch(58% 0.19 280)" },
+  "booking-form":   { from: "oklch(50% 0.15 192 / 0.16)", accent: "oklch(50% 0.15 192)" },
+  "contact-form":   { from: "oklch(50% 0.15 192 / 0.16)", accent: "oklch(50% 0.15 192)" },
+  rsvp:         { from: "oklch(60% 0.18 350 / 0.14)",  accent: "oklch(60% 0.18 350)" },
+  landing:      { from: "oklch(55% 0.18 152 / 0.14)",  accent: "oklch(55% 0.18 152)" },
+};
+
+function getTypePalette(pageType: string) {
+  return (
+    TYPE_PALETTE[pageType] ??
+    (pageType.includes("booking") ? TYPE_PALETTE["booking-form"] :
+     pageType.includes("contact") ? TYPE_PALETTE["contact-form"] :
+     { from: "oklch(50% 0.15 192 / 0.12)", accent: "oklch(50% 0.15 192)" })
+  );
+}
+
 function PageThumbnail({ page }: { page: PageOut }) {
   const src = page.preview_image_url?.trim();
+  const palette = getTypePalette(page.page_type);
+
   return (
-    <div className="relative h-[140px] overflow-hidden rounded-t-[14px] bg-gradient-to-br from-bg-elevated to-accent-light/30">
+    <div
+      className="relative h-[156px] overflow-hidden rounded-t-[14px]"
+      style={{ background: `linear-gradient(135deg, ${palette.from} 0%, var(--bg-elevated) 70%)` }}
+    >
       {src ? (
         <Image
           src={src}
@@ -44,17 +67,30 @@ function PageThumbnail({ page }: { page: PageOut }) {
           className="object-cover object-top"
           unoptimized={/^https?:\/\//.test(src)}
         />
-      ) : null}
-      <div
-        className={cn(
-          "absolute inset-0 flex items-center justify-center",
-          src ? "bg-bg/10" : "opacity-40",
-        )}
+      ) : (
+        /* Decorative page chrome lines */
+        <div className="absolute inset-5 flex flex-col gap-2.5" aria-hidden>
+          <div
+            className="h-3 w-2/5 rounded-full opacity-30"
+            style={{ background: palette.accent }}
+          />
+          <div className="h-2 w-3/4 rounded-full bg-current opacity-10" />
+          <div className="h-2 w-1/2 rounded-full bg-current opacity-[0.07]" />
+          <div
+            className="mt-2 h-9 w-full rounded-xl opacity-[0.08]"
+            style={{ background: palette.accent }}
+          />
+          <div className="h-2 w-5/6 rounded-full bg-current opacity-[0.06]" />
+          <div className="h-2 w-2/3 rounded-full bg-current opacity-[0.06]" />
+        </div>
+      )}
+      {/* Type label */}
+      <span
+        className="absolute bottom-3 left-3 font-body text-[11px] font-semibold capitalize"
+        style={{ color: palette.accent }}
       >
-        <span className="font-body text-xs font-medium text-accent capitalize drop-shadow-sm">
-          {page.page_type.replace(/-/g, " ")}
-        </span>
-      </div>
+        {page.page_type.replace(/-/g, " ")}
+      </span>
     </div>
   );
 }
