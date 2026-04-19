@@ -13,6 +13,7 @@ erDiagram
   pages ||--o{ page_versions : versions
   pages ||--o{ submissions : receives
   organizations ||--o{ analytics_events : tracks
+  organizations ||--o{ subscription_usage : quotas
   organizations ||--o{ audit_log : auditable
 ```
 
@@ -20,6 +21,7 @@ erDiagram
 
 - **Defense in depth:** FastAPI still filters by organization; PostgreSQL policies block accidental cross-tenant reads/writes if a query omits a `WHERE` clause.
 - **Tenant tables** use `organization_id` with policies `forge_tenant_isolation` (`app.current_tenant_id`) from the initial migration; BI-01 adds `public.current_org_id()` / `public.current_user_id()` and **`organizations`** self-policy: visible row `id = current_org_id()`.
+- **Session GUCs** set per request include `app.current_org_id`, `app.current_user_id`, and `app.is_admin` (`'t'` / `'f'` text); the async engine **resets** these on connection pool check-in so tenants never leak across requests (`app/db/session.py`).
 - **`users`** and global **`templates`** are not tenant-scoped with `organization_id` RLS in the same way; user resolution uses the memberships policies (see migration `c4f8a1b92e3d`).
 
 ## Partitioning
@@ -40,3 +42,7 @@ erDiagram
 4. `GRANT` appropriate privileges to `forge_app`.  
 5. Add the table to the RLS regression check (`scripts/check-rls.py` and `tests/test_schema.py` — tables with `organization_id`, excluding partition children and pg_partman `template_public_%` templates).  
 6. Register the SQLAlchemy model in `apps/api/app/db/models/` and import it in `apps/api/app/db/models/__init__.py` for autogenerate metadata.
+
+## Mission BI-01 naming notes
+
+Billing **monthly usage rollups** live in `subscription_usage` (mission text historically called this `usage_counters`). See [MISSION-BI-01-REPORT.md](../plan/MISSION-BI-01-REPORT.md) for a full spec-to-repo map.

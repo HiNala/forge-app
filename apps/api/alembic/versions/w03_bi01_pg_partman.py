@@ -7,8 +7,10 @@ Create Date: 2026-04-19
 Requires PostgreSQL with the ``pg_partman`` extension (see ``docker-compose.yml``:
 ``ghcr.io/dbsystel/postgresql-partman:16``).
 
-Upgrade drops the placeholder ``*_default`` partitions (only when empty), then
-calls ``create_parent`` so partman premakes monthly children and a managed default.
+Upgrade drops the placeholder ``*_default`` partitions. If a default partition still
+holds rows (typical dev DB after seeding), rows are stashed in ``public._bi01_stash_*``,
+the default is dropped, ``create_parent`` runs, then rows are re-inserted into the
+parent so PostgreSQL routes them to the correct monthly children.
 
 Downgrade removes partman registration, drops generated children + template tables,
 and recreates a single ``DEFAULT`` partition per parent (empty-DB CI assumption).
@@ -25,29 +27,43 @@ down_revision: str | Sequence[str] | None = "w03_pitch_decks"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
-_DROP_DEFAULTS_SQL = r"""
+_STASH_AND_DROP_DEFAULTS_SQL = r"""
 DO $body$
 DECLARE
   n bigint;
 BEGIN
+  DROP TABLE IF EXISTS public._bi01_stash_submissions;
+  DROP TABLE IF EXISTS public._bi01_stash_analytics_events;
+
   IF to_regclass('public.submissions_default') IS NOT NULL THEN
-    EXECUTE 'SELECT COUNT(*) FROM submissions_default' INTO n;
+    EXECUTE 'SELECT COUNT(*)::bigint FROM public.submissions_default' INTO n;
     IF n > 0 THEN
-      RAISE EXCEPTION
-        'BI-01 partman: submissions_default must be empty before registration. '
-        'Archive or move rows, then re-run migrations.';
+      CREATE TABLE public._bi01_stash_submissions AS SELECT * FROM public.submissions_default;
     END IF;
-    EXECUTE 'DROP TABLE submissions_default';
+    EXECUTE 'DROP TABLE public.submissions_default';
   END IF;
 
   IF to_regclass('public.analytics_events_default') IS NOT NULL THEN
-    EXECUTE 'SELECT COUNT(*) FROM analytics_events_default' INTO n;
+    EXECUTE 'SELECT COUNT(*)::bigint FROM public.analytics_events_default' INTO n;
     IF n > 0 THEN
-      RAISE EXCEPTION
-        'BI-01 partman: analytics_events_default must be empty before registration. '
-        'Archive or move rows, then re-run migrations.';
+      CREATE TABLE public._bi01_stash_analytics_events AS SELECT * FROM public.analytics_events_default;
     END IF;
-    EXECUTE 'DROP TABLE analytics_events_default';
+    EXECUTE 'DROP TABLE public.analytics_events_default';
+  END IF;
+END
+$body$;
+"""
+
+_RESTORE_STASHED_ROWS_SQL = r"""
+DO $body$
+BEGIN
+  IF to_regclass('public._bi01_stash_submissions') IS NOT NULL THEN
+    INSERT INTO public.submissions SELECT * FROM public._bi01_stash_submissions;
+    DROP TABLE public._bi01_stash_submissions;
+  END IF;
+  IF to_regclass('public._bi01_stash_analytics_events') IS NOT NULL THEN
+    INSERT INTO public.analytics_events SELECT * FROM public._bi01_stash_analytics_events;
+    DROP TABLE public._bi01_stash_analytics_events;
   END IF;
 END
 $body$;
@@ -124,7 +140,7 @@ $body$;
 def upgrade() -> None:
     # One statement per execute — asyncpg cannot batch multiple SQL commands.
     op.execute("CREATE EXTENSION IF NOT EXISTS pg_partman")
-    op.execute(_DROP_DEFAULTS_SQL)
+    op.execute(_STASH_AND_DROP_DEFAULTS_SQL)
     op.execute(
         """
         SELECT public.create_parent(
@@ -156,6 +172,7 @@ def upgrade() -> None:
         WHERE parent_table = 'public.analytics_events'
         """
     )
+    op.execute(_RESTORE_STASHED_ROWS_SQL)
     op.execute(
         "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO forge_app"
     )
@@ -163,5 +180,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.execute("DROP TABLE IF EXISTS public._bi01_stash_submissions")
+    op.execute("DROP TABLE IF EXISTS public._bi01_stash_analytics_events")
     op.execute(_DOWNGRADE_UNPARTMAN_SQL)
     op.execute(_DOWNGRADE_RESTORE_DEFAULTS_SQL)

@@ -7,8 +7,9 @@ Create Date: 2026-04-18
 """
 from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 revision: str = "c4f8a1b92e3d"
 down_revision: str | Sequence[str] | None = "2a517e73c899"
@@ -158,6 +159,29 @@ def downgrade() -> None:
     op.execute("REVOKE ALL ON ALL TABLES IN SCHEMA public FROM forge_app")
     op.execute("REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM forge_app")
     op.execute("REVOKE USAGE ON SCHEMA public FROM forge_app")
+    op.execute(
+        """
+        DO $$
+        BEGIN
+          EXECUTE format('REVOKE CONNECT ON DATABASE %I FROM forge_app', current_database());
+        EXCEPTION WHEN undefined_object THEN
+          NULL;
+        END
+        $$;
+        """
+    )
+    op.execute(
+        """
+        ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+          REVOKE ALL ON TABLES FROM forge_app
+        """
+    )
+    op.execute(
+        """
+        ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+          REVOKE ALL ON SEQUENCES FROM forge_app
+        """
+    )
     op.execute("DROP ROLE IF EXISTS forge_app")
 
     for tbl in RLS_TABLES:
