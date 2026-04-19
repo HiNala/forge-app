@@ -130,17 +130,16 @@ function BrandSettingsInner() {
   return (
     <div className="mx-auto max-w-6xl space-y-10">
       <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight text-text">Brand kit</h1>
-        <p className="mt-2 text-text-muted font-body">
-          Colors and type apply to the Forge app while you work. Published pages use their own
-          snapshots.
+        <h1 className="font-display text-2xl font-bold tracking-tight text-text">Brand kit</h1>
+        <p className="mt-1.5 font-body text-sm text-text-muted">
+          Colors and type apply to the Forge app while you work. Published pages use their own snapshots.
         </p>
       </div>
 
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-12">
-        <div className="space-y-10">
-      <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-text">Colors</h2>
+        <div className="space-y-8">
+      <section className="space-y-5 rounded-2xl border border-border bg-surface p-6">
+        <h2 className="font-display text-base font-bold text-text">Colors</h2>
         <div className="grid gap-6 sm:grid-cols-2">
           <div>
             <Label htmlFor="primary">Primary</Label>
@@ -207,8 +206,9 @@ function BrandSettingsInner() {
         </p>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-text">Typography</h2>
+      </section>
+      <section className="space-y-5 rounded-2xl border border-border bg-surface p-6">
+        <h2 className="font-display text-base font-bold text-text">Typography</h2>
         <div className="grid gap-6 sm:grid-cols-2">
           <div>
             <Label>Display / headings</Label>
@@ -257,8 +257,9 @@ function BrandSettingsInner() {
         </div>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-text">Logo</h2>
+      </section>
+      <section className="space-y-4 rounded-2xl border border-border bg-surface p-6">
+        <h2 className="font-display text-base font-bold text-text">Logo</h2>
         {draft.logo_url ? (
           <img
             src={draft.logo_url}
@@ -300,8 +301,10 @@ function BrandSettingsInner() {
         </div>
       </section>
 
-      <section className="space-y-2">
-        <Label htmlFor="voice">Voice & tone note</Label>
+      </section>
+      <section className="space-y-4 rounded-2xl border border-border bg-surface p-6">
+        <h2 className="font-display text-base font-bold text-text">Voice & tone</h2>
+        <Label htmlFor="voice" className="sr-only">Voice & tone note</Label>
         <Textarea
           id="voice"
           disabled={!canEdit}
@@ -316,17 +319,18 @@ function BrandSettingsInner() {
         />
       </section>
 
+      </section>
       {!canEdit ? (
-        <p className="text-sm text-text-muted font-body">
+        <p className="font-body text-sm text-text-muted">
           Viewers can see brand settings but cannot edit. Ask an owner or editor to make changes.
         </p>
       ) : null}
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Live preview</p>
+          <span className="section-label mb-4 block">Live preview</span>
           <div
-            className="mt-3 overflow-hidden rounded-[14px] border border-border bg-surface shadow-md"
+            className="mt-4 overflow-hidden rounded-2xl border border-border bg-surface shadow-lg"
             style={{
               fontFamily: `"${draft.body_font || "Inter"}", system-ui, sans-serif`,
             }}

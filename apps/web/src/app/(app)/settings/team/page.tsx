@@ -38,6 +38,7 @@ import {
 } from "@/lib/api";
 import { teamSeatLimit } from "@/lib/team-seats";
 import { useForgeSession } from "@/providers/session-provider";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -163,16 +164,16 @@ export default function TeamSettingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-10">
       <div>
-        <PageHeader
-          title="Team"
-          description="Invite collaborators and manage roles. Ownership transfer reassigns the Owner role atomically."
-        />
+        <h1 className="font-display text-2xl font-bold tracking-tight text-text">Team</h1>
+        <p className="mt-1.5 font-body text-sm text-text-muted">
+          Invite collaborators and manage roles. Ownership transfer is atomic.
+        </p>
       </div>
 
       {isOwner ? (
-        <section className="rounded-[10px] border border-border bg-surface p-6 shadow-sm">
+        <section className="rounded-2xl border border-border bg-surface p-6">
           <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-            <h2 className="text-sm font-semibold text-text">Invite people</h2>
+            <h2 className="font-display text-base font-bold text-text">Invite people</h2>
             <p className="text-xs text-text-muted font-body">
               Using {used} of {cap} seats
             </p>
@@ -269,8 +270,8 @@ export default function TeamSettingsPage() {
 
       <TooltipProvider delayDuration={200}>
         <section>
-          <h2 className="text-sm font-semibold text-text">Members</h2>
-          <ul className="mt-3 divide-y divide-border rounded-[10px] border border-border bg-surface">
+          <h2 className="font-display text-base font-bold text-text">Members</h2>
+          <ul className="mt-3 divide-y divide-border rounded-2xl border border-border bg-surface overflow-hidden">
             {members.isLoading ? (
               <li className="px-4 py-8 text-sm text-text-muted font-body">Loading…</li>
             ) : list.length === 0 ? (
@@ -285,20 +286,25 @@ export default function TeamSettingsPage() {
                     key={m.id}
                     className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium text-text font-body">
-                          {m.display_name?.trim() || m.email}
-                        </span>
-                        <Badge className={cn("capitalize", roleBadgeClass(m.role))}>{m.role}</Badge>
-                        {isSelf ? <span className="text-xs text-text-muted font-body">(you)</span> : null}
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar
+                        name={m.display_name?.trim() || m.email}
+                        size="sm"
+                        className="shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-body font-semibold text-text">
+                            {m.display_name?.trim() || m.email}
+                          </span>
+                          <Badge className={cn("capitalize", roleBadgeClass(m.role))}>{m.role}</Badge>
+                          {isSelf ? <span className="font-body text-xs text-text-muted">(you)</span> : null}
+                        </div>
+                        <div className="mt-0.5 truncate font-body text-xs text-text-muted">{m.email}</div>
+                        <p className="mt-0.5 font-body text-xs text-text-subtle">
+                          Joined {formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}
+                        </p>
                       </div>
-                      <div className="mt-0.5 truncate text-sm text-text-muted font-body">{m.email}</div>
-                      <p className="mt-1 text-xs text-text-muted">
-                        Joined {formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}
-                        {" · "}
-                        Last active: not tracked yet
-                      </p>
                     </div>
                     {isOwner ? (
                       <div className="flex flex-wrap items-center gap-2">
