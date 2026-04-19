@@ -4,16 +4,21 @@ services:
     working_dir: /srv
     volumes:
       - .:/srv
+      # Linux deps inside the container (avoid bind-mounting Windows node_modules)
+      - web_root_node_modules:/srv/node_modules
+      - web_app_node_modules:/srv/apps/web/node_modules
     ports:
-      - "3000:3000"
+      # Host 3001 avoids clashing with a local Next.js dev server on 3000
+      - "3001:3000"
     depends_on:
       api:
         condition: service_started
     environment:
+      # Do not set CI=true — pnpm treats CI as frozen-lockfile and our dev lock can lag package.json
       - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
-      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_APP_URL=http://localhost:3001
     command: >
-      sh -c "corepack enable && corepack prepare pnpm@9 --activate && pnpm install && pnpm --filter web dev --hostname 0.0.0.0 --port 3000"
+      sh -c "corepack enable && corepack prepare pnpm@9 --activate && pnpm install --no-frozen-lockfile && pnpm --filter web dev --hostname 0.0.0.0 --port 3000"
 
   api:
     build:
@@ -25,13 +30,19 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Mount source only; leave image .venv/pyproject intact (full /app mount hid .venv)
     volumes:
-      - ./apps/api:/app
+      - ./apps/api/app:/app/app
+      - ./apps/api/alembic:/app/alembic
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/forge_dev
       - REDIS_URL=redis://redis:6379/0
+      # Match web service (host 3001) and local Next on 3000
+      - BACKEND_CORS_ORIGINS=["http://localhost:3000","http://localhost:3001"]
+      - APP_PUBLIC_URL=http://localhost:3001
+      - UPGRADE_URL=http://localhost:3001/settings
     command: >
-      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+      sh -c "uv run --no-dev alembic upgrade head && uv run --no-dev uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     healthcheck:
       test:
         [
@@ -55,7 +66,7 @@ services:
         condition: service_started
     volumes:
       - ./apps/worker/worker.py:/app/worker.py
-      - ./apps/api:/app/api
+      - ./apps/api/app:/app/api/app
     environment:
       - REDIS_URL=redis://redis:6379/0
 
@@ -108,3 +119,5 @@ volumes:
   pgdata:
   redisdata:
   miniodata:
+  web_root_node_modules:
+  web_app_node_modules:

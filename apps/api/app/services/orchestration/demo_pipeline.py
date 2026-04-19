@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 # Marketing hero brand (no org — warm teal / slate from design direction)
 _DEMO_PRIMARY = "#0d9488"
 _DEMO_SECONDARY = "#0f172a"
+_DEMO_ORG = "demo"
 _DEMO_SLUG = "demo-preview"
 
 
@@ -47,7 +48,7 @@ async def stream_demo_page(
 
     title = intent.title_suggestion or "Untitled"
     slug = _DEMO_SLUG
-    form_action = f"/p/{slug}/submit"
+    form_action = f"/p/{_DEMO_ORG}/{slug}/submit"
 
     plan = await compose_assembly_plan(intent, provider=provider)
     plan = apply_plan_constraints(intent, plan)
@@ -60,7 +61,8 @@ async def stream_demo_page(
     html = assemble_html(
         plan,
         title=title,
-        slug=slug,
+        org_slug=_DEMO_ORG,
+        page_slug=slug,
         primary=_DEMO_PRIMARY,
         secondary=_DEMO_SECONDARY,
     )
@@ -77,7 +79,8 @@ async def stream_demo_page(
         html = assemble_html(
             plan2,
             title=title,
-            slug=slug,
+            org_slug=_DEMO_ORG,
+            page_slug=slug,
             primary=_DEMO_PRIMARY,
             secondary=_DEMO_SECONDARY,
         )

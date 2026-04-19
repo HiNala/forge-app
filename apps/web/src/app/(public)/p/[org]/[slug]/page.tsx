@@ -1,0 +1,50 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+
+type PublicPayload = {
+  html: string;
+  title: string;
+  slug: string;
+  organization_slug: string;
+};
+
+async function fetchPublicPage(org: string, slug: string): Promise<PublicPayload | null> {
+  const base = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/?$/, "");
+  const res = await fetch(`${base}/api/v1/public/pages/${org}/${slug}`, {
+    next: { revalidate: 60 },
+  });
+  if (!res.ok) return null;
+  return (await res.json()) as PublicPayload;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ org: string; slug: string }>;
+}): Promise<Metadata> {
+  const { org, slug } = await params;
+  const data = await fetchPublicPage(org, slug);
+  if (!data) return { title: "Page" };
+  return { title: data.title };
+}
+
+export default async function PublicPublishedPage({
+  params,
+}: {
+  params: Promise<{ org: string; slug: string }>;
+}) {
+  const { org, slug } = await params;
+  const data = await fetchPublicPage(org, slug);
+  if (!data) notFound();
+
+  return (
+    <iframe
+      title={data.title}
+      className="h-screen w-full border-0 bg-white"
+      srcDoc={data.html}
+      sandbox="allow-same-origin allow-forms allow-popups allow-modals"
+    />
+  );
+}

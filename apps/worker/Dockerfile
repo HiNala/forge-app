@@ -7,4 +7,4 @@ COPY apps/api/ ./
 COPY apps/worker/worker.py ../worker.py
 ENV PYTHONPATH=/app
 WORKDIR /app/api
-CMD ["uv", "run", "arq", "worker.WorkerSettings"]
+CMD ["uv", "run", "--no-dev", "arq", "worker.WorkerSettings"]

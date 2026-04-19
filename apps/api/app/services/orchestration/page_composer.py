@@ -116,11 +116,12 @@ def assemble_html(
     plan: AssemblyPlan,
     *,
     title: str,
-    slug: str,
+    org_slug: str,
+    page_slug: str,
     primary: str,
     secondary: str,
 ) -> str:
-    form_action = f"/p/{slug}/submit"
+    form_action = f"/p/{org_slug}/{page_slug}/submit"
     parts: list[str] = []
     for i, sec in enumerate(plan.sections):
         sid = f"{sec.component}-{i}"

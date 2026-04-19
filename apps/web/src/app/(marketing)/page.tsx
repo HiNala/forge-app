@@ -1,26 +1,12 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { FaqAccordion } from "@/components/marketing/faq-accordion";
 import { FinalCta } from "@/components/marketing/final-cta";
 import { GallerySection } from "@/components/marketing/gallery-section";
+import { HeroDemoLazy } from "@/components/marketing/hero-demo-lazy";
 import { HowItWorks } from "@/components/marketing/how-it-works";
 import { MarketingJsonLd } from "@/components/marketing/json-ld";
 import { Container } from "@/components/ui/container";
 import { LANDING_FAQ, SITE_URL } from "@/lib/marketing-content";
-
-const HeroDemo = dynamic(
-  () =>
-    import("@/components/marketing/hero-demo").then((m) => m.HeroDemo),
-  {
-    loading: () => (
-      <div
-        className="mx-auto mt-10 min-h-[280px] max-w-2xl rounded-xl border border-dashed border-border bg-bg-elevated/40 lg:mt-12"
-        aria-hidden
-      />
-    ),
-    ssr: false,
-  },
-);
 
 export const metadata: Metadata = {
   title: "Pages from a sentence",
@@ -55,7 +41,7 @@ export default function MarketingHomePage() {
             </p>
           </div>
         </Container>
-        <HeroDemo />
+        <HeroDemoLazy />
       </section>
       <HowItWorks />
       <GallerySection />

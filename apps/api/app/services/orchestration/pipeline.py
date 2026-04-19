@@ -11,7 +11,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import BrandKit, Page, PageRevision, User
+from app.db.models import BrandKit, Organization, Page, PageRevision, User
 from app.deps.tenant import TenantContext
 from app.services.ai.usage import increment_pages_generated
 from app.services.orchestration.html_validate import validate_generated_html
@@ -95,7 +95,13 @@ async def stream_page_generation(
     else:
         base_slug = slugify_page_title(title)
         slug = await unique_page_slug(db, ctx.organization_id, base_slug)
-    form_action = f"/p/{slug}/submit"
+
+    org_row = await db.get(Organization, ctx.organization_id)
+    if org_row is None:
+        yield _sse("error", {"code": "not_found", "message": "Organization not found"})
+        return
+    org_slug = org_row.slug
+    form_action = f"/p/{org_slug}/{slug}/submit"
 
     plan = await compose_assembly_plan(
         intent,
@@ -113,7 +119,8 @@ async def stream_page_generation(
     html = assemble_html(
         plan,
         title=title,
-        slug=slug,
+        org_slug=org_slug,
+        page_slug=slug,
         primary=primary,
         secondary=secondary,
     )
@@ -127,7 +134,14 @@ async def stream_page_generation(
             frag = render_section(sec, form_action=form_action, section_id=sid)
             payload = {"index": i, "component": sec.component, "fragment": frag, "retry": True}
             yield _sse("html.chunk", payload)
-        html = assemble_html(plan2, title=title, slug=slug, primary=primary, secondary=secondary)
+        html = assemble_html(
+            plan2,
+            title=title,
+            org_slug=org_slug,
+            page_slug=slug,
+            primary=primary,
+            secondary=secondary,
+        )
         ok2, _ = validate_generated_html(html)
         if not ok2:
             yield _sse("error", {"code": "validation_failed", "message": reason})

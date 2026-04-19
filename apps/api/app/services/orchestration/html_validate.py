@@ -20,10 +20,28 @@ def validate_generated_html(html: str) -> tuple[bool, str]:
         return False, "javascript: URLs are not allowed"
     if re.search(r"style\s*=", low) and "javascript:" in low:
         return False, "javascript: in styles not allowed"
+    action_ok = re.compile(r"^/p/[^/]+/[^/]+/submit/?$")
     for m in re.finditer(r'<form[^>]*action="([^"]*)"', html, re.IGNORECASE):
-        act = m.group(1)
-        if "/p/" not in act or "/submit" not in act:
-            return False, f"Form action must target /p/{{slug}}/submit, got {act!r}"
+        act = m.group(1).strip()
+        if not action_ok.match(act.rstrip("/")):
+            return False, f"Form action must be /p/{{org}}/{{page}}/submit, got {act!r}"
+    return True, ""
+
+
+def validate_publishable_html(html: str) -> tuple[bool, str]:
+    """Pre-publish checks: document shell, viewport, no scripts; form action not enforced."""
+    s = html.strip()
+    if len(s) < 80:
+        return False, "Document too short"
+    low = s.lower()
+    if "<html" not in low and "<!doctype" not in low:
+        return False, "Missing document shell"
+    if "<meta" not in low or "viewport" not in low:
+        return False, "Missing viewport meta"
+    if re.search(r"<script", low):
+        return False, "Script tags are not allowed in published pages"
+    if "javascript:" in low:
+        return False, "javascript: URLs are not allowed"
     return True, ""
 
 

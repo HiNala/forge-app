@@ -10,6 +10,7 @@ from app.api.v1 import (
     organization,
     pages,
     public_demo,
+    public_runtime,
     studio,
     submissions,
     team,
@@ -20,6 +21,7 @@ api_router = APIRouter()
 
 api_router.include_router(auth.router)
 api_router.include_router(public_demo.router)
+api_router.include_router(public_runtime.router)
 api_router.include_router(organization.router)
 api_router.include_router(team.router)
 api_router.include_router(pages.router)
