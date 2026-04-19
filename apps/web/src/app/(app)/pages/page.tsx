@@ -3,10 +3,8 @@
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { PageHeader } from "@/components/chrome/page-header";
 import { WorkspacePageGrid } from "@/components/pages/workspace-page-grid";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { listPages } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 
@@ -23,7 +21,7 @@ export default function PagesIndexPage() {
 
   if (!activeOrganizationId) {
     return (
-      <p className="text-sm text-text-muted font-body">
+      <p className="font-body text-sm text-text-muted">
         Choose a workspace to see your pages.
       </p>
     );
@@ -32,10 +30,11 @@ export default function PagesIndexPage() {
   if (q.isLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-10 w-48 max-w-full rounded-lg" />
+        <div className="h-8 w-48 animate-pulse rounded-xl bg-bg-elevated" />
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Skeleton className="h-36 rounded-[10px]" />
-          <Skeleton className="h-36 rounded-[10px]" />
+          <div className="h-36 animate-pulse rounded-2xl bg-bg-elevated" />
+          <div className="h-36 animate-pulse rounded-2xl bg-bg-elevated" />
+          <div className="h-36 animate-pulse rounded-2xl bg-bg-elevated" />
         </div>
       </div>
     );
@@ -43,7 +42,7 @@ export default function PagesIndexPage() {
 
   if (q.isError) {
     return (
-      <p className="text-sm text-danger font-body" role="alert">
+      <p className="font-body text-sm text-danger" role="alert">
         {q.error instanceof Error ? q.error.message : "Could not load pages."}
       </p>
     );
@@ -53,19 +52,34 @@ export default function PagesIndexPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="Pages"
-        description="Every generated page is a single unit with its own URL, submissions, and settings."
-        actions={
-          <Button type="button" variant="primary" onClick={() => router.push("/studio")}>
-            New in Studio
-          </Button>
-        }
-      />
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-text">Pages</h1>
+          <p className="mt-1.5 font-body text-sm text-text-muted">
+            Every generated page is a single unit with its own URL, submissions, and settings.
+          </p>
+        </div>
+        <Button type="button" variant="primary" onClick={() => router.push("/studio")}>
+          New in Studio
+        </Button>
+      </div>
+
       {pages.length === 0 ? (
-        <p className="rounded-[10px] border border-dashed border-border bg-surface px-6 py-12 text-center text-sm text-text-muted font-body">
-          No pages yet. Start from Studio with a plain-English prompt.
-        </p>
+        <div className="rounded-2xl border border-dashed border-border bg-surface px-6 py-12 text-center">
+          <p className="font-body text-sm text-text-muted">No pages yet.</p>
+          <p className="mt-1 font-body text-xs text-text-subtle">
+            Start from Studio with a plain-English prompt.
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="mt-4"
+            onClick={() => router.push("/studio")}
+          >
+            Open Studio →
+          </Button>
+        </div>
       ) : (
         <WorkspacePageGrid pages={pages} />
       )}

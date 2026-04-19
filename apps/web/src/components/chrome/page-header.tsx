@@ -33,11 +33,11 @@ export function PageHeader({
         {breadcrumb ? (
           <div className="mb-2 text-sm text-text-muted font-body">{breadcrumb}</div>
         ) : null}
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-text sm:text-3xl">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-text">
           {title}
         </h1>
         {description ? (
-          <p className="mt-2 max-w-[65ch] text-text-muted font-body">{description}</p>
+          <p className="mt-1.5 max-w-[65ch] font-body text-sm text-text-muted">{description}</p>
         ) : null}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
