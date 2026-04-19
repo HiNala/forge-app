@@ -62,13 +62,24 @@ _PUBLIC_SLIDE_SCRIPT = """
   if (!root) return;
 
   function getParam(name) {
-    try { return new URLSearchParams(window.location.search).get(name); } catch (e) { return null; }
+    try {
+      var pq = window.__FORGE_PARENT_SEARCH__;
+      if (pq && typeof pq === "string") {
+        var v = new URLSearchParams(pq.replace(/^\\?/, "")).get(name);
+        if (v !== null && v !== "") return v;
+      }
+      return new URLSearchParams(window.location.search).get(name);
+    } catch (e) {
+      return null;
+    }
   }
 
   var present = getParam("mode") === "present";
   var notes = getParam("notes") === "true" || getParam("notes") === "1";
+  var presenterView = getParam("presenter") === "true" || getParam("presenter") === "1";
   if (present) root.setAttribute("data-forge-mode", "present");
   if (notes) root.setAttribute("data-forge-notes", "true");
+  if (presenterView) document.body.setAttribute("data-forge-presenter-view", "1");
 
   var slideNodes = Array.prototype.slice.call(root.querySelectorAll("[data-forge-slide]"));
   slideNodes.forEach(function (el, i) {
@@ -77,7 +88,7 @@ _PUBLIC_SLIDE_SCRIPT = """
 
   function slideIndexFromHash() {
     var h = (window.location.hash || "").replace(/^#/, "");
-    var m = /^slide-(\d+)$/.exec(h);
+    var m = /^slide-(\\d+)$/.exec(h);
     if (m) {
       var n = parseInt(m[1], 10);
       if (n >= 1 && n <= slideNodes.length) return n - 1;
@@ -239,7 +250,7 @@ _PUBLIC_SLIDE_SCRIPT = """
         e.preventDefault();
         setHashForIndex(cur + 1);
         scrollToIndex(slideIndexFromHash());
-      } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+      } else if (e.key === "ArrowLeft" || e.key === "PageUp" || e.key === "Backspace") {
         e.preventDefault();
         setHashForIndex(cur - 1);
         scrollToIndex(slideIndexFromHash());
@@ -251,6 +262,22 @@ _PUBLIC_SLIDE_SCRIPT = """
         e.preventDefault();
         setHashForIndex(slideNodes.length - 1);
         scrollToIndex(slideNodes.length - 1);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        endPresent("escape");
+        try {
+          if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+        } catch (err) {}
+      } else if (e.key === "?" || (e.shiftKey && e.key === "/")) {
+        e.preventDefault();
+        window.alert(
+          "Keyboard shortcuts (present mode):\\n" +
+          "→ Space PageDn — next slide\\n" +
+          "← Backspace PageUp — previous\\n" +
+          "Home / End — first / last slide\\n" +
+          "Esc — exit fullscreen\\n" +
+          "Click — next slide"
+        );
       }
     },
     true
@@ -276,7 +303,7 @@ _PUBLIC_SLIDE_SCRIPT = """
   function buildDatasets(chart) {
     var series = chart.series || [];
     var labels = chart.labels || [];
-    var cht = String(chart.type || "");
+    var cht = String(chart.chart_type || chart.type || "");
     var ty = mapChartType(cht);
     if (ty === "pie") {
       var s0 = series[0] || {};
@@ -319,7 +346,7 @@ _PUBLIC_SLIDE_SCRIPT = """
         var chartSpec;
         try { chartSpec = JSON.parse(text); } catch (e) { return; }
         var Chart = window.Chart;
-        var ty = mapChartType(chartSpec.type || "");
+        var ty = mapChartType(chartSpec.chart_type || chartSpec.type || "");
         var built = buildDatasets(chartSpec);
         var opts = { responsive: true, maintainAspectRatio: true, animation: false };
         if (ty !== "pie") {
