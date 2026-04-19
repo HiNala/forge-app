@@ -68,18 +68,36 @@ export function KpiCard({
   value,
   hint,
   trend,
+  accent,
 }: {
   label: string;
   value: React.ReactNode;
   hint?: string;
-  /** Daily points for a tiny trend line — only rendered when there are ≥2 points (see `TrendSparkline`). */
   trend?: { d: string; v: number }[];
+  accent?: boolean;
 }) {
   return (
-    <div className="rounded-[12px] border border-border bg-surface p-4 shadow-sm">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted font-body">{label}</p>
-      <p className="mt-1 font-display text-2xl font-semibold tracking-tight text-text">{value}</p>
-      {hint ? <p className="mt-1 text-xs text-text-muted font-body">{hint}</p> : null}
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-2xl border bg-surface p-5 shadow-sm transition-shadow hover:shadow-md",
+        accent ? "border-accent/30" : "border-border",
+      )}
+    >
+      {accent && (
+        <span
+          className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl"
+          style={{ background: "var(--accent)" }}
+          aria-hidden
+        />
+      )}
+      <p className="section-label mb-3">{label}</p>
+      <p className={cn(
+        "font-display font-bold leading-none tracking-tight text-text",
+        "text-[clamp(28px,4vw,40px)]",
+      )}>
+        {value}
+      </p>
+      {hint ? <p className="mt-2 font-body text-xs text-text-subtle">{hint}</p> : null}
       {trend && trend.length >= 2 ? <TrendSparkline data={trend} /> : null}
     </div>
   );
