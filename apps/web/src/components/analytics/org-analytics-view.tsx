@@ -177,7 +177,7 @@ export function OrgAnalyticsView() {
     <div className="mx-auto max-w-5xl space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted font-body">
+          <p className="section-label">
             {orgMetaQ.data?.name ?? "Workspace"}
           </p>
           <h1 className="font-display text-2xl font-semibold tracking-tight text-text">Analytics</h1>
@@ -193,11 +193,11 @@ export function OrgAnalyticsView() {
         </div>
       </div>
 
-      <div className="rounded-[12px] border border-border bg-surface p-6 shadow-sm">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted font-body">
+      <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
+        <p className="section-label">
           Total submissions this month
         </p>
-        <p className="mt-1 font-display text-4xl font-semibold tabular-nums tracking-tight text-text">
+        <p className="mt-2 font-display text-[clamp(40px,5vw,60px)] font-bold tabular-nums leading-none tracking-tight text-text">
           {subsMonth}
         </p>
         {typeof data?.submissions_month_trend_pct === "number" ? (
@@ -227,9 +227,9 @@ export function OrgAnalyticsView() {
           <div className="grid gap-3 sm:grid-cols-3">
             <Link
               href="/dashboard?workflow=contact"
-              className="rounded-[12px] border border-border bg-surface p-4 shadow-sm transition hover:border-accent/30"
+              className="rounded-2xl border border-border bg-surface p-4 shadow-sm transition hover:border-accent/30"
             >
-              <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted font-body">
+              <p className="section-label">
                 Contact &amp; booking
               </p>
               <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-text">
@@ -239,9 +239,9 @@ export function OrgAnalyticsView() {
             </Link>
             <Link
               href="/dashboard?workflow=proposal"
-              className="rounded-[12px] border border-border bg-surface p-4 shadow-sm transition hover:border-accent/30"
+              className="rounded-2xl border border-border bg-surface p-4 shadow-sm transition hover:border-accent/30"
             >
-              <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted font-body">
+              <p className="section-label">
                 Proposals
               </p>
               <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-text">
@@ -251,9 +251,9 @@ export function OrgAnalyticsView() {
             </Link>
             <Link
               href="/dashboard?workflow=deck"
-              className="rounded-[12px] border border-border bg-surface p-4 shadow-sm transition hover:border-accent/30"
+              className="rounded-2xl border border-border bg-surface p-4 shadow-sm transition hover:border-accent/30"
             >
-              <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted font-body">
+              <p className="section-label">
                 Pitch decks
               </p>
               <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-text">
@@ -271,7 +271,7 @@ export function OrgAnalyticsView() {
       </div>
 
       {livePages === 0 ? (
-        <div className="rounded-[12px] border border-dashed border-border bg-bg-elevated/40 p-6 text-center">
+        <div className="rounded-2xl border border-dashed border-border bg-bg-elevated/40 p-6 text-center">
           <p className="text-sm text-text-muted font-body">No pages yet.</p>
           <p className="mt-2 text-sm text-text-muted font-body">
             Create a page in Studio to start collecting analytics and submissions.
@@ -309,7 +309,7 @@ export function OrgAnalyticsView() {
       </div>
 
       {selectedPageId && pageSumQ.isSuccess && ps ? (
-        <div className="rounded-[12px] border border-border bg-bg-elevated/40 p-4">
+        <div className="rounded-2xl border border-border bg-bg-elevated/40 p-4">
           <p className="text-sm font-medium text-text font-body">{selectedPage?.title}</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-4">
             <KpiCard label="Views" value={Number(ps.total_views ?? 0)} />
@@ -340,7 +340,7 @@ export function OrgAnalyticsView() {
         {topPages.length === 0 ? (
           <ChartEmpty message="No submissions in this range yet." />
         ) : (
-          <div className="overflow-x-auto rounded-[10px] border border-border">
+          <div className="overflow-x-auto rounded-2xl overflow-hidden border border-border">
             <table className="w-full text-left text-sm font-body">
               <thead className="border-b border-border bg-bg-elevated text-xs uppercase text-text-muted">
                 <tr>
@@ -378,7 +378,7 @@ export function OrgAnalyticsView() {
         {recent.length === 0 ? (
           <ChartEmpty message="No submissions in this range." />
         ) : (
-          <ul className="divide-y divide-border rounded-[10px] border border-border">
+          <ul className="divide-y divide-border rounded-2xl overflow-hidden border border-border">
             {recent.map((s) => (
               <li key={s.id}>
                 <Link

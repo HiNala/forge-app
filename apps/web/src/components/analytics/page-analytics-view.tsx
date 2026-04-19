@@ -199,7 +199,7 @@ export function PageAnalyticsView() {
               chartId="gallery-referrers"
               label="Referrer breakdown"
               table={
-                <div className="overflow-x-auto rounded-[10px] border border-border">
+                <div className="overflow-x-auto rounded-2xl overflow-hidden border border-border">
                   <table className="w-full text-left text-sm font-body">
                     <thead className="border-b border-border bg-bg-elevated text-xs uppercase text-text-muted">
                       <tr>
@@ -219,7 +219,7 @@ export function PageAnalyticsView() {
                 </div>
               }
             >
-              <div className="rounded-[10px] border border-border bg-surface p-3">
+              <div className="rounded-2xl overflow-hidden border border-border bg-surface p-3">
                 <ul className="space-y-2 text-sm font-body">
                   {referrers.map((row) => (
                     <li key={row.referrer} className="flex justify-between gap-4">
@@ -245,7 +245,7 @@ export function PageAnalyticsView() {
                 chartId="page-referrers"
                 label="Referrer breakdown"
                 table={
-                  <div className="overflow-x-auto rounded-[10px] border border-border">
+                  <div className="overflow-x-auto rounded-2xl overflow-hidden border border-border">
                     <table className="w-full text-left text-sm font-body">
                       <thead className="border-b border-border bg-bg-elevated text-xs uppercase text-text-muted">
                         <tr>
@@ -265,7 +265,7 @@ export function PageAnalyticsView() {
                   </div>
                 }
               >
-                <div className="rounded-[10px] border border-border bg-surface p-3">
+                <div className="rounded-2xl overflow-hidden border border-border bg-surface p-3">
                   <ul className="space-y-2 text-sm font-body">
                     {referrers.map((row) => (
                       <li key={row.referrer} className="flex justify-between gap-4">
@@ -287,7 +287,7 @@ export function PageAnalyticsView() {
                 chartId="page-devices"
                 label="Device breakdown"
                 table={
-                  <div className="overflow-x-auto rounded-[10px] border border-border">
+                  <div className="overflow-x-auto rounded-2xl overflow-hidden border border-border">
                     <table className="w-full text-left text-sm font-body">
                       <thead className="border-b border-border bg-bg-elevated text-xs uppercase text-text-muted">
                         <tr>
@@ -375,7 +375,7 @@ function FormFunnelSection({ funnel, emptyMsg }: { funnel: Record<string, unknow
           chartId="form-funnel"
           label="Form funnel counts"
           table={
-            <div className="overflow-x-auto rounded-[10px] border border-border">
+            <div className="overflow-x-auto rounded-2xl overflow-hidden border border-border">
               <table className="w-full text-left text-sm font-body">
                 <thead className="border-b border-border bg-bg-elevated text-xs uppercase text-text-muted">
                   <tr>
@@ -395,7 +395,7 @@ function FormFunnelSection({ funnel, emptyMsg }: { funnel: Record<string, unknow
             </div>
           }
         >
-          <div className="h-56 rounded-[10px] border border-border bg-surface p-2">
+          <div className="h-56 rounded-2xl overflow-hidden border border-border bg-surface p-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart layout="vertical" data={stepData} margin={{ left: 112, right: 16, top: 8, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -413,7 +413,7 @@ function FormFunnelSection({ funnel, emptyMsg }: { funnel: Record<string, unknow
         {sortedFields.length === 0 ? (
           <ChartEmpty message="No field touches recorded in this range." />
         ) : (
-          <div className="overflow-x-auto rounded-[10px] border border-border">
+          <div className="overflow-x-auto rounded-2xl overflow-hidden border border-border">
             <table className="w-full text-left text-sm font-body">
               <thead className="border-b border-border bg-bg-elevated text-xs uppercase text-text-muted">
                 <tr>
@@ -481,7 +481,7 @@ function ProposalSection({
             chartId="proposal-scroll-depth"
             label="Scroll depth histogram"
             table={
-              <div className="overflow-x-auto rounded-[10px] border border-border">
+              <div className="overflow-x-auto rounded-2xl overflow-hidden border border-border">
                 <table className="w-full text-left text-sm font-body">
                   <thead className="border-b border-border bg-bg-elevated text-xs uppercase text-text-muted">
                     <tr>
@@ -501,7 +501,7 @@ function ProposalSection({
               </div>
             }
           >
-            <div className="h-56 rounded-[10px] border border-border bg-surface p-2">
+            <div className="h-56 rounded-2xl overflow-hidden border border-border bg-surface p-2">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={hist.map((h) => ({ pct: `${h.scroll_pct}%`, c: h.count }))}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -521,7 +521,7 @@ function ProposalSection({
         {dwell.length === 0 ? (
           <ChartEmpty message={emptyMsg} />
         ) : (
-          <div className="overflow-x-auto rounded-[10px] border border-border">
+          <div className="overflow-x-auto rounded-2xl overflow-hidden border border-border">
             <table className="w-full text-left text-sm font-body">
               <thead className="border-b border-border bg-bg-elevated text-xs uppercase text-text-muted">
                 <tr>
