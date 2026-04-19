@@ -21,6 +21,7 @@ from app.services.public_submission import (
     validate_payload_against_form_schema,
     visitor_fingerprint,
 )
+from app.services.queue import enqueue_run_automations
 
 logger = logging.getLogger(__name__)
 
@@ -140,6 +141,8 @@ async def public_submit(
         logger.exception("public_submit_commit %s", e)
         await db.rollback()
         raise HTTPException(status_code=500, detail="Could not save submission") from e
+
+    await enqueue_run_automations(request.app.state, str(sub.id))
 
     return PublicSubmitOut()
 

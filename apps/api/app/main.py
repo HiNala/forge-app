@@ -1,6 +1,9 @@
+import logging
 from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
+from arq import create_pool
+from arq.connections import RedisSettings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,19 +13,33 @@ from app.config import settings
 from app.db.session import engine
 from app.middleware import RateLimitMiddleware, TenantMiddleware
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.redis = None
+    app.state.arq_pool = None
     try:
         client = redis.from_url(settings.REDIS_URL, decode_responses=True)
         await client.ping()
         app.state.redis = client
     except Exception:
         app.state.redis = None
+    if app.state.redis is not None:
+        try:
+            app.state.arq_pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
+        except Exception as e:
+            logger.warning("arq pool disabled: %s", e)
+            app.state.arq_pool = None
+    else:
+        app.state.arq_pool = None
     try:
         yield
     finally:
+        pool = getattr(app.state, "arq_pool", None)
+        if pool is not None:
+            await pool.close()
         r = getattr(app.state, "redis", None)
         if r is not None:
             await r.aclose()

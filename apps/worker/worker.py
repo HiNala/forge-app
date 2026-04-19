@@ -1,9 +1,19 @@
 """arq worker entry — job bodies filled in Mission 05."""
 
+import logging
 import os
 
 from arq import cron
 from arq.connections import RedisSettings
+
+logger = logging.getLogger(__name__)
+
+
+async def run_automations(ctx, submission_id: str) -> str:
+    """Mission 05 will run rules + notifications; Mission 04 only acknowledges the job."""
+    del ctx
+    logger.info("run_automations stub submission_id=%s", submission_id)
+    return "ok"
 
 
 async def send_notify_email(ctx, submission_id: str) -> None:
@@ -28,6 +38,7 @@ async def drop_old_analytics_partitions(ctx) -> None:
 
 class WorkerSettings:
     functions = [
+        run_automations,
         send_notify_email,
         send_confirm_email,
         create_calendar_event,
