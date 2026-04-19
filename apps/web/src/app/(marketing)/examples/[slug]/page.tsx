@@ -65,16 +65,33 @@ export default async function ExampleDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-text-muted">{t.category}</p>
-        <h1 className="font-display text-3xl font-semibold tracking-tight text-text sm:text-4xl">
+      <nav className="mb-4 flex items-center gap-1.5 font-body text-xs" aria-label="Breadcrumb">
+        <Link href="/examples" className="text-text-muted underline-offset-4 hover:text-text hover:underline transition-colors">
+          Examples
+        </Link>
+        <span className="text-border-strong">/</span>
+        <span className="text-text-subtle capitalize">{t.category ?? "Template"}</span>
+      </nav>
+
+      <div className="max-w-[48ch]">
+        <span className="section-label mb-3">{t.category ?? "Template"}</span>
+        <h1 className="mt-2 font-display text-[clamp(36px,5vw,64px)] font-bold leading-[0.95] tracking-tight text-text">
           {t.name}
         </h1>
         {t.description ? (
-          <p className="max-w-[65ch] text-lg text-text-muted">{t.description}</p>
+          <p className="mt-4 font-body text-base font-light leading-relaxed text-text-muted">{t.description}</p>
         ) : null}
       </div>
-      <div className="mt-8 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+
+      <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
+        <div className="flex items-center gap-2 border-b border-border bg-bg-elevated px-3 py-2">
+          <span className="flex gap-1" aria-hidden>
+            <span className="size-2 rounded-full bg-red-400/70" />
+            <span className="size-2 rounded-full bg-amber-400/70" />
+            <span className="size-2 rounded-full bg-emerald-400/70" />
+          </span>
+          <span className="font-body text-[11px] text-text-subtle">Preview</span>
+        </div>
         <iframe
           title={`Preview: ${t.name}`}
           className="min-h-[560px] w-full border-0 bg-white"
@@ -82,18 +99,19 @@ export default async function ExampleDetailPage({ params }: Props) {
           srcDoc={t.html}
         />
       </div>
-      <div className="mt-10 flex flex-wrap items-center gap-4">
+
+      <div className="mt-8 flex flex-wrap items-center gap-4">
         <Link
           href={`/signup?template=${encodeURIComponent(t.id)}`}
-          className="inline-flex min-h-11 items-center rounded-md bg-accent px-5 text-sm font-medium text-white shadow-sm hover:bg-accent/90"
+          className="inline-flex min-h-11 items-center rounded-xl bg-text px-6 py-3 font-body text-sm font-semibold text-bg transition-opacity hover:opacity-80"
         >
-          Sign up and use this template
+          Use this template →
         </Link>
         <Link
-          href="/templates"
-          className="text-sm font-medium text-accent underline-offset-4 hover:underline"
+          href="/examples"
+          className="inline-flex min-h-11 items-center font-body text-sm font-medium text-text-muted underline-offset-4 hover:underline"
         >
-          Browse all templates →
+          Browse all examples
         </Link>
       </div>
     </Container>
