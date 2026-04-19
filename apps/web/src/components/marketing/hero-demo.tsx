@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Container } from "@/components/ui/container";
 import { streamPublicDemo } from "@/lib/public-demo";
 
 const PLACEHOLDERS = [

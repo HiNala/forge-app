@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 import { ForgeMark } from "@/components/chrome/forge-logo";
 import { SignupClient } from "./signup-client";
@@ -33,9 +34,9 @@ export default function SignUpPage() {
 
       <p className="mt-6 font-body text-xs text-text-subtle">
         Already have an account?{" "}
-        <a href="/signin" className="font-medium text-text underline-offset-4 hover:underline">
+        <Link href="/signin" className="font-medium text-text underline-offset-4 hover:underline">
           Sign in
-        </a>
+        </Link>
       </p>
     </div>
   );

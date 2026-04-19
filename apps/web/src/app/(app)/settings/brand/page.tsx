@@ -205,8 +205,6 @@ function BrandSettingsInner() {
           {saveMut.isPending ? "Saving…" : savedTick ? "Saved" : null}
         </p>
       </section>
-
-      </section>
       <section className="space-y-5 rounded-2xl border border-border bg-surface p-6">
         <h2 className="font-display text-base font-bold text-text">Typography</h2>
         <div className="grid gap-6 sm:grid-cols-2">
@@ -256,8 +254,6 @@ function BrandSettingsInner() {
           </div>
         </div>
       </section>
-
-      </section>
       <section className="space-y-4 rounded-2xl border border-border bg-surface p-6">
         <h2 className="font-display text-base font-bold text-text">Logo</h2>
         {draft.logo_url ? (
@@ -300,8 +296,6 @@ function BrandSettingsInner() {
           {logoMut.isPending ? "Uploading…" : "Drop a logo here, or click to browse (max 2MB)"}
         </div>
       </section>
-
-      </section>
       <section className="space-y-4 rounded-2xl border border-border bg-surface p-6">
         <h2 className="font-display text-base font-bold text-text">Voice & tone</h2>
         <Label htmlFor="voice" className="sr-only">Voice & tone note</Label>
@@ -317,8 +311,6 @@ function BrandSettingsInner() {
           onBlur={(e) => saveMut.mutate({ voice_note: e.target.value })}
           className="resize-y"
         />
-      </section>
-
       </section>
       {!canEdit ? (
         <p className="font-body text-sm text-text-muted">

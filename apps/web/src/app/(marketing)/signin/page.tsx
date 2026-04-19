@@ -1,5 +1,6 @@
 import { SignIn } from "@clerk/nextjs";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ForgeMark } from "@/components/chrome/forge-logo";
 
 export const metadata: Metadata = {
@@ -50,9 +51,9 @@ export default function SignInPage() {
 
       <p className="mt-6 font-body text-xs text-text-subtle">
         Don&apos;t have an account?{" "}
-        <a href="/signup" className="font-medium text-text underline-offset-4 hover:underline">
+        <Link href="/signup" className="font-medium text-text underline-offset-4 hover:underline">
           Sign up free
-        </a>
+        </Link>
       </p>
     </div>
   );

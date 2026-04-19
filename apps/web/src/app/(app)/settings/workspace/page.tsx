@@ -15,11 +15,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { deleteOrg, getOrg, patchOrg } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
 
 function SettingRow({
   label,
