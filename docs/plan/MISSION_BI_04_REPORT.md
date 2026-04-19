@@ -28,7 +28,14 @@
 ### API tokens
 
 - `deps/auth.py` accepts `Authorization: Bearer forge_live_...`, resolves `ApiToken`, sets `request.state.tenant_id` / role; `optional_tenant` short-circuits for `auth_kind=api_token`.
+- **RLS lookup:** migration `n2b3i405_lookup` extends `api_tokens` policy so authentication can `SELECT` by `app.api_token_lookup_prefix` + `app.api_token_lookup_hash` GUCs before `app.current_tenant_id` is set; `auth.py` sets/clears those around the lookup query.
+- **Test bypass order:** `forge_live_` Bearer is handled **before** `AUTH_TEST_BYPASS` test headers so API token integration tests work under `conftest.py`.
 - Org routes: `GET/POST/DELETE /api/v1/org/api-tokens`.
+- **Scope enforcement:** `require_api_scopes` depends on `require_user` and is wired on `pages` routes (`read:pages` / `write:pages` / `read:submissions`); JWT sessions bypass scope checks.
+
+### `/orgs/current` aliases
+
+- `app/api/v1/orgs_current_alias.py` mirrors `/org/*` settings and org handlers at `/api/v1/orgs/current/*` (settings, custom domains, API tokens, outbound webhooks, email templates, audit).
 
 ### Org settings surface
 
@@ -63,11 +70,30 @@
 
 ## Not completed (explicit follow-up)
 
-- Scope enforcement dependency on **all** routers; outbound webhook HMAC dispatch + worker job; data export/delete flows; admin `is_admin` routes; MFA/sessions/email verify; full `test_api_contracts` matrix; **≥85%** coverage target.
+- Scope enforcement on **remaining** routers (analytics, org patch, etc.); outbound webhook HMAC dispatch + worker job; data export/delete flows; admin `is_admin` routes; MFA/sessions/email verify; full `test_api_contracts` matrix; **≥85%** coverage target.
 - Redis pubsub invalidation for memberships; `scheduled_plan_change` Stripe wiring; email preview engine for templates.
+
+### Extended follow-up (checklist)
+
+- **Billing** — `POST /billing/plan/upgrade|downgrade|downgrade/cancel` are still stubs (501); `scheduled_plan_changes` exists but is not fully wired to Stripe.
+- **Admin surface** — Org search, impersonation, suspend, MRR/metrics, LLM cost endpoints, and `POST /admin/feature-flags/{flag}` need implementation plus a `BYPASSRLS` or service-role DB path for cross-tenant reads.
+- **Webhooks** — Full dispatch pipeline (HMAC, retries, `automation_jobs` deliveries list) may need worker integration beyond CRUD.
+- **Data** — Org export/restore/delete grace flows and `POST /auth/me/data-export` if not yet complete in `organization` / queue workers.
+- **Email** — Preview route `POST .../email-templates/preview` and safe template engine.
+- **Cron** — Trial reminders and trial end → starter plan automation.
+- **Coverage** — Broad tests (DNS mock, cache invalidation, org delete timeline, impersonation audit); expand pytest toward the ≥85% bar.
+
+## Fixes applied during integration passes
+
+1. **Scope enforcement ordering** — `require_api_scopes` calls `await require_user(request)` directly so FastAPI dependency ordering cannot skip authentication before reading `request.state.auth_kind`.
+2. **Route parameter order** — `pages.py` paths place `page_id` / `body` before `Depends(require_api_scopes(…))` to satisfy Python’s parameter rules.
+3. **Auth in tests** — API tokens are honored under `AUTH_TEST_BYPASS` by checking bearer tokens first.
 
 ## Tests
 
 - `tests/test_auth_bi03.py` updated for `user_preferences` column.
-- Migration applied: `alembic upgrade head` succeeds on Postgres.
-- Full suite: one occasionally flaky submission list test on Windows (passes on isolated rerun).
+- `tests/test_bi04_api_scopes_and_alias.py` — API token with `read:pages` may list pages but not create; `/orgs/current/settings` matches `/org/settings`.
+- `PATCH /auth/me` imports `validate_display_name` / `validate_timezone_iana` from `profile_validate`.
+- Migration applied: `alembic upgrade head` succeeds on Postgres (single head: `n2b3i405_lookup`).
+- Full API suite: 127 tests passing (latest run).
+- `uv run pytest tests/test_bi04_api_scopes_and_alias.py` — passing after auth + scope fixes.
