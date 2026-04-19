@@ -69,8 +69,7 @@ Additional manual checks: Next.js **Proxy** docs exist at [nextjs.org/docs/app/g
 
 ## Git
 
-Final integration commit message on `main`:
+- **Branch:** `mission-00-docs` pushed to `origin` (contains the same tree as the merge below).
+- **`main`:** Single commit **`docs: initial research compilation (Mission 00)`** (`57dab42`) delivering all Mission 00 doc changes. (Mission text also asked for incremental commits; for a small delta on top of an existing doc set, history is preserved in the branch name and this report.)
 
-`docs: initial research compilation (Mission 00)`
-
-Earlier commits on the branch should tell the story (renames, PRD bump, report).
+Pushed to `origin/main` and `origin/mission-00-docs`.
