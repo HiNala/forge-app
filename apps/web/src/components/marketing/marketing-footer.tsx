@@ -1,97 +1,96 @@
 import Link from "next/link";
+import { ForgeLogo } from "@/components/icons/logo";
 import { Container } from "@/components/ui/container";
+
+const LINKS = {
+  Product: [
+    { href: "/#how", label: "How it works" },
+    { href: "/pricing", label: "Pricing" },
+    { href: "/examples", label: "Examples" },
+    { href: "/signup", label: "Start free" },
+  ],
+  Legal: [
+    { href: "/terms", label: "Terms" },
+    { href: "/privacy", label: "Privacy" },
+    { href: "mailto:hello@forge.app", label: "Contact" },
+    { href: "https://status.forge.app", label: "Status", external: true },
+  ],
+} as const;
 
 export function MarketingFooter() {
   return (
-    <footer className="border-t border-border bg-bg-elevated">
-      <Container max="xl" className="py-12 sm:py-14">
-        <div className="grid gap-10 sm:grid-cols-3">
-          <div>
-            <p className="font-display text-lg font-semibold text-text">Forge</p>
-            <p className="mt-3 max-w-[65ch] text-sm leading-relaxed text-text-muted">
-              Describe what you need. Get a branded page you can publish in minutes.
+    <footer className="border-t border-border bg-bg">
+      <Container max="xl" className="py-16 sm:py-20">
+        <div className="grid gap-12 sm:grid-cols-[1fr_auto_auto]">
+          {/* Brand */}
+          <div className="max-w-[280px]">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 font-display text-xl font-semibold tracking-tight text-text no-underline"
+            >
+              <ForgeLogo size="md" className="text-accent" />
+              Forge
+            </Link>
+            <p className="mt-4 font-body text-sm font-light leading-relaxed text-text-muted">
+              Type a sentence. Get a live, hosted page. No code, no designer, no wait.
             </p>
-            <p className="mt-6 text-xs text-text-subtle">
-              © {new Date().getFullYear()} Digital Studio Labs. All rights reserved.
+            <p className="mt-6 font-body text-xs text-text-subtle">
+              © {new Date().getFullYear()} Digital Studio Labs
             </p>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">
-              Product
-            </p>
-            <ul className="mt-3 space-y-2">
-              <li>
-                <Link
-                  href="/pricing"
-                  className="min-h-11 inline-flex items-center text-sm text-text-muted transition-colors hover:text-text"
-                >
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/examples"
-                  className="min-h-11 inline-flex items-center text-sm text-text-muted transition-colors hover:text-text"
-                >
-                  Examples
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">
-              Legal & status
-            </p>
-            <ul className="mt-3 space-y-2">
-              <li>
-                <Link
-                  href="/terms"
-                  className="min-h-11 inline-flex items-center text-sm text-text-muted transition-colors hover:text-text"
-                >
-                  Terms
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/privacy"
-                  className="min-h-11 inline-flex items-center text-sm text-text-muted transition-colors hover:text-text"
-                >
-                  Privacy
-                </Link>
-              </li>
-              <li>
-                <a
-                  href="mailto:hello@forge.app"
-                  className="min-h-11 inline-flex items-center text-sm text-text-muted transition-colors hover:text-text"
-                >
-                  Contact
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://status.forge.app"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="min-h-11 inline-flex items-center text-sm text-text-muted transition-colors hover:text-text"
-                >
-                  Status
-                </a>
-              </li>
-            </ul>
-          </div>
+
+          {/* Link columns */}
+          {(Object.entries(LINKS) as [string, ReadonlyArray<{ href: string; label: string; external?: boolean }>][]).map(
+            ([heading, items]) => (
+              <div key={heading}>
+                <p className="section-label mb-4">{heading}</p>
+                <ul className="space-y-3">
+                  {items.map(({ href, label, external }) => (
+                    <li key={href}>
+                      {external ? (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-body text-sm text-text-muted transition-colors hover:text-text"
+                        >
+                          {label}
+                        </a>
+                      ) : (
+                        <Link
+                          href={href}
+                          className="font-body text-sm text-text-muted transition-colors hover:text-text"
+                        >
+                          {label}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ),
+          )}
         </div>
-        <div className="mt-10 border-t border-border pt-8 text-center text-xs text-text-subtle sm:text-left">
-          <p>
-            A product of{" "}
+
+        {/* Bottom bar */}
+        <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-8">
+          <p className="font-body text-xs text-text-subtle">
+            Built by{" "}
             <a
               href="https://digitalstudiolabs.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-text-muted underline-offset-2 hover:underline"
+              className="underline-offset-2 hover:underline"
             >
               Digital Studio Labs
             </a>
           </p>
+          <Link
+            href="/signup"
+            className="font-body text-xs font-semibold text-accent underline-offset-4 hover:underline"
+          >
+            Start building free →
+          </Link>
         </div>
       </Container>
     </footer>

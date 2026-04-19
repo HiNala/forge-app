@@ -169,16 +169,18 @@ export default function OnboardingPage() {
       className="mx-auto max-w-lg transition-[color] duration-300 ease-[var(--ease-out)]"
       style={previewStyle}
     >
-      <h1 className="font-display text-3xl font-semibold tracking-tight text-text sm:text-4xl">
-        Let&apos;s get you set up
+      <span className="section-label mb-4">Welcome</span>
+      <h1 className="font-display text-[clamp(32px,5vw,48px)] font-bold leading-[0.95] tracking-tight text-text">
+        {greeting()}, {first}.
+        <br />
+        <span className="text-accent">Let&apos;s build something.</span>
       </h1>
-      <p className="mt-3 text-base leading-relaxed text-text-muted font-body">
-        {greeting()}, {first} — name your workspace and set a first-pass brand. You can refine
-        everything later in Settings.
+      <p className="mt-4 font-body text-base font-light leading-relaxed text-text-muted">
+        Name your workspace and set a brand color. You can refine everything later in Settings.
       </p>
 
       <div className="mt-10 space-y-3">
-        <p className="text-sm font-medium text-text font-body">What&apos;s the first thing you want to build?</p>
+        <p className="font-body text-sm font-semibold text-text">What will you build first?</p>
         <div className="grid gap-2 sm:grid-cols-2">
           {WORKFLOW_CARDS.map((c) => (
             <button
@@ -186,23 +188,32 @@ export default function OnboardingPage() {
               type="button"
               onClick={() => setWorkflowOverride(c.id)}
               className={cn(
-                "rounded-[10px] border px-4 py-3 text-left text-sm transition-colors",
+                "relative overflow-hidden rounded-2xl border px-5 py-4 text-left transition-all duration-150",
                 workflowChoice === c.id
-                  ? "border-accent bg-accent-light ring-2 ring-accent/25"
-                  : "border-border bg-surface hover:border-accent/40",
+                  ? "border-accent bg-accent-light shadow-sm ring-2 ring-accent/20"
+                  : "border-border bg-surface hover:border-accent/40 hover:bg-bg-elevated",
               )}
             >
-              <span className="font-medium text-text font-body">{c.title}</span>
-              <span className="mt-1 block text-xs text-text-muted font-body">{c.description}</span>
+              {workflowChoice === c.id && (
+                <span
+                  className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl"
+                  style={{ background: "var(--accent)" }}
+                  aria-hidden
+                />
+              )}
+              <span className="block font-display text-[15px] font-bold text-text">{c.title}</span>
+              <span className="mt-1 block font-body text-xs font-light leading-relaxed text-text-muted">
+                {c.description}
+              </span>
             </button>
           ))}
         </div>
         <button
           type="button"
-          className="text-xs font-medium text-text-muted underline-offset-4 hover:underline font-body"
+          className="font-body text-xs font-medium text-text-subtle underline-offset-4 hover:text-text-muted hover:underline"
           onClick={() => setWorkflowOverride("unsure")}
         >
-          Skip
+          Skip this step
         </button>
       </div>
 
