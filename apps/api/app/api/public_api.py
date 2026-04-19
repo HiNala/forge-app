@@ -580,6 +580,32 @@ async def public_track(
     if p is None:
         raise HTTPException(status_code=404, detail="Not found")
 
+    ip_raw = get_client_ip(request)
+    ip_anon = anonymize_ipv4_to_slash24(ip_raw)
+    ua = request.headers.get("user-agent")
+    ref = request.headers.get("referer") or request.headers.get("referrer")
+    now = datetime.now(UTC)
+    rows: list[AnalyticsEvent] = []
+    for ev in batch.events:
+        if ev.event_type not in _ALLOWED_TRACK_EVENTS:
+            raise HTTPException(status_code=400, detail=f"Unsupported event_type: {ev.event_type}")
+        rows.append(
+            AnalyticsEvent(
+                id=uuid.uuid4(),
+                organization_id=org.id,
+                page_id=p.id,
+                event_type=ev.event_type,
+                visitor_id=ev.visitor_id[:200],
+                session_id=ev.session_id[:200],
+                metadata_=_trim_metadata(ev.metadata),
+                source_ip=ip_anon,
+                user_agent=(ua[:4000] if ua else None),
+                referrer=(ref[:2000] if ref else None),
+                created_at=now,
+            )
+        )
+    for row in rows:
+        db.add(row)
     try:
         return await handle_public_track_batch(
             db=db,

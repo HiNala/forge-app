@@ -1,7 +1,4 @@
-import json
-from typing import Any
-
-from pydantic import AliasChoices, Field, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,11 +6,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Forge API"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
-    # Env: comma-separated, JSON array, or a single URL (list[str] in env required JSON).
-    backend_cors_origins_raw: str = Field(
-        default="http://localhost:3000,http://localhost:3001",
-        validation_alias=AliasChoices("BACKEND_CORS_ORIGINS", "CORS_ORIGINS"),
-    )
+    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001"]
     # Comma-separated extra origins (staging/prod frontends). Merged with BACKEND_CORS_ORIGINS (BI-02).
     CORS_ORIGINS_EXTRA: str = ""
     # Comma-separated hosts for TrustedHostMiddleware; "*" allows any (development only).
@@ -162,6 +155,30 @@ class Settings(BaseSettings):
                     seen.add(o)
                     merged.append(o)
         return merged
+
+    def effective_cors_origins(self) -> list[str]:
+        """Origins for CORSMiddleware: dev defaults plus optional ``CORS_ORIGINS_EXTRA`` (comma-separated)."""
+        merged: list[str] = []
+        seen: set[str] = set()
+        for raw in self.BACKEND_CORS_ORIGINS:
+            o = str(raw).strip().rstrip("/")
+            if o and o not in seen:
+                seen.add(o)
+                merged.append(o)
+        if self.CORS_ORIGINS_EXTRA.strip():
+            for part in self.CORS_ORIGINS_EXTRA.split(","):
+                o = part.strip().rstrip("/")
+                if o and o not in seen:
+                    seen.add(o)
+                    merged.append(o)
+        return merged
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
+    def _split_csv_cors(cls, v: object) -> object:
+        if isinstance(v, str) and "," in v:
+            return [p.strip() for p in v.split(",") if p.strip()]
+        return v
 
     def llm_fallback_model_list(self) -> list[str]:
         if not self.LLM_FALLBACK_MODELS.strip():

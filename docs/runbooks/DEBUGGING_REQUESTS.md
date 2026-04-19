@@ -21,18 +21,7 @@ Every response includes `X-Request-ID` (also mirrored from `X-Request-ID` on the
 
 ## Sentry scrubbing
 
-If `SENTRY_DSN` is set (recommended in production), `app.core.sentry.init_sentry` registers FastAPI/Starlette integrations. `before_send` scrubs `Authorization`, `Cookie`, and header keys matching password/secret/token/api key patterns. User id and `organization_id` are set when `get_db` runs. Do not paste raw tokens into tickets.
-
-## Local reproduction
-
-```bash
-cd apps/api && uv run alembic upgrade head
-export DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/forge_dev
-uv run uvicorn app.main:app --reload
-curl -i http://127.0.0.1:8000/health/live -H "X-Request-ID: debug-1"
-```
-
-Use `ENVIRONMENT=test` + `AUTH_TEST_BYPASS=true` + `x-forge-test-user-id` only in automated tests — never in production deployments.
+If `SENTRY_DSN` is set (recommended in production), `app.core.sentry.init_sentry` registers FastAPI/Starlette integrations. `before_send` scrubs `Authorization`, `Cookie`, and header keys matching password/secret/token. User id and `organization_id` are set when `get_db` runs.
 
 ## OpenAPI / types
 

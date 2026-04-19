@@ -30,6 +30,7 @@ async def get_db(
     """RLS GUCs on the session transaction; mirrors :class:`RequestContext` for logs."""
     async with AsyncSessionLocal() as session:
         await set_current_user(session, user.id)
+        await set_is_admin(session, bool(getattr(user, "is_admin", False)))
         tid = getattr(request.state, "tenant_id", None)
         if isinstance(tid, UUID):
             await set_active_organization(session, tid)
@@ -43,20 +44,19 @@ async def get_db(
             rc.user_id = user.id
             rc.organization_id = tid if isinstance(tid, UUID) else None
             rc.user_role = role
-            rc.is_admin = is_adm
+            rc.is_admin = bool(getattr(user, "is_admin", False))
         structlog.contextvars.bind_contextvars(
             user_id=str(user.id),
             organization_id=str(tid) if isinstance(tid, UUID) else None,
         )
-        if sentry_sdk is not None:
-            try:
-                sentry_sdk.set_user(
-                    {"id": str(user.id), "email": getattr(user, "email", None) or ""}
-                )
-                if isinstance(tid, UUID):
-                    sentry_sdk.set_tag("organization_id", str(tid))
-            except Exception:
-                pass
+        try:
+            import sentry_sdk
+
+            sentry_sdk.set_user({"id": str(user.id), "email": getattr(user, "email", "") or ""})
+            if isinstance(tid, UUID):
+                sentry_sdk.set_tag("organization_id", str(tid))
+        except Exception:
+            pass
         yield session
 
 
@@ -90,15 +90,14 @@ async def get_admin_db(
             user_id=str(user.id),
             organization_id=str(tid) if isinstance(tid, UUID) else None,
         )
-        if sentry_sdk is not None:
-            try:
-                sentry_sdk.set_user(
-                    {"id": str(user.id), "email": getattr(user, "email", None) or ""}
-                )
-                if isinstance(tid, UUID):
-                    sentry_sdk.set_tag("organization_id", str(tid))
-            except Exception:
-                pass
+        try:
+            import sentry_sdk
+
+            sentry_sdk.set_user({"id": str(user.id), "email": getattr(user, "email", "") or ""})
+            if isinstance(tid, UUID):
+                sentry_sdk.set_tag("organization_id", str(tid))
+        except Exception:
+            pass
         yield session
 
 

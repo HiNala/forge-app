@@ -89,12 +89,6 @@ def _limit_key_and_max(request: Request) -> tuple[str | None, int]:
     ):
         return f"rl:ptrack:{get_client_ip(request)}", _RL_PUBLIC_TRACK_PER_MIN
 
-    if request.method == "POST" and path.rstrip("/") == f"{settings.API_V1_STR}/analytics/track":
-        auth = request.headers.get("authorization") or ""
-        if auth.lower().startswith("bearer ") and len(auth) > 24:
-            h = hashlib.sha256(auth.encode()).hexdigest()[:32]
-            return f"rl:atrack:tok:{h}", _RL_ANALYTICS_TRACK_PER_MIN
-
     auth = request.headers.get("authorization") or ""
     if auth.lower().startswith("bearer ") and len(auth) > 24:
         h = hashlib.sha256(auth.encode()).hexdigest()[:32]
@@ -160,10 +154,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        # Integration tests: off unless ``RATE_LIMIT_IN_TESTS`` or ``FORCE_RATE_LIMIT_IN_TESTS``.
-        if settings.ENVIRONMENT == "test" and not (
-            settings.RATE_LIMIT_IN_TESTS or settings.FORCE_RATE_LIMIT_IN_TESTS
-        ):
+        # Integration tests: disable unless ``FORCE_RATE_LIMIT_IN_TESTS`` (see ``test_rate_limit.py``).
+        if settings.ENVIRONMENT == "test" and not settings.FORCE_RATE_LIMIT_IN_TESTS:
             return await call_next(request)
 
         submit_keys = _public_submit_keys(request)

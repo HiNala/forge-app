@@ -8,25 +8,11 @@ Middleware is registered in `apps/api/app/main.py`. In Starlette, `app.user_midd
 2. **`BodySizeLimitMiddleware`** — rejects bodies over 10 MiB (25 MiB for paths under `/api/v1/uploads/*`); streaming defense when `Content-Length` is absent.
 3. **`GZipMiddleware`** — compresses responses (`minimum_size=1024`).
 4. **`TrustedHostMiddleware`** — hosts from `TRUSTED_HOSTS` (`*` in dev).
-5. **`RateLimitMiddleware`** — Redis fixed windows with in-process fallback; webhooks and health exempt. Under `ENVIRONMENT=test`, limits are off unless `RATE_LIMIT_IN_TESTS` or `FORCE_RATE_LIMIT_IN_TESTS` is true (see `test_rate_limit.py` / `test_rate_limit_force.py`).
+5. **`RateLimitMiddleware`** — Redis fixed windows with in-process fallback; webhooks and health exempt; see `FORCE_RATE_LIMIT_IN_TESTS` for pytest.
 6. **`TenantMiddleware`** — primes `request.state.tenant_id` when the org header is already a bare UUID (full resolution, membership, and single-org default run in `optional_tenant`).
 7. **`CORSMiddleware`** — origins from `settings.effective_cors_origins()` (`BACKEND_CORS_ORIGINS` + optional `CORS_ORIGINS_EXTRA`), exposes `X-Request-ID`.
 
 Authentication and tenant membership run in **FastAPI dependencies** (`require_user`, `optional_tenant`, `require_tenant`), not in a separate JWT middleware, so verification stays aligned with Clerk JWKS in `app.security.clerk_jwt` and test bypass headers.
-
-## Errors and validation
-
-- `ForgeError` subclasses → JSON `{code, message, extra, request_id}`.
-- `RequestValidationError` → `{code: validation_error, extra.fields, request_id}` via `app.core.exception_handlers`.
-- `HTTPException` / Starlette → structured JSON when `detail` contains `code` / `message` (quota, etc.); otherwise `{detail, request_id}`.
-- `IntegrityError` → `409` / `404` / `500` mapping in `integrity_error_handler` (Postgres codes).
-- `PayloadTooLarge` → `413`.
-- Unhandled exceptions → `500` with generic copy in production; `request_id` when `RequestContextMiddleware` ran.
-
-## Observability
-
-- **Sentry**: initialized in `app/core/sentry.py` when `SENTRY_DSN` is set; scrubs sensitive headers/fields in `before_send`.
-- **Prometheus**: `GET /metrics` (unchanged).
 
 ## Database session
 
@@ -37,6 +23,10 @@ Authentication and tenant membership run in **FastAPI dependencies** (`require_u
 ## Client IP
 
 `app.core.ip.get_client_ip` uses `X-Forwarded-For` only when `TRUST_PROXY_HEADERS` is true **or** `ENVIRONMENT=test` (ASGI test clients). Production defaults avoid header spoofing.
+
+## Errors
+
+`ForgeError`, `HTTPException` with dict `detail` containing `code`, `RequestValidationError`, `IntegrityError`, `PayloadTooLarge`, and unhandled exceptions are mapped to JSON with `code`, `message`, `extra`, and `request_id` where applicable (`app.core.exception_handlers`).
 
 ## Adding middleware
 
