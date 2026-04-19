@@ -29,8 +29,15 @@ class Settings(BaseSettings):
 
     # Email
     RESEND_API_KEY: str = ""
+    RESEND_WEBHOOK_SECRET: str = ""
     EMAIL_FROM: str = "noreply@forge.app"
     APP_PUBLIC_URL: str = "http://localhost:3000"
+    # Public API base (OAuth callbacks, webhooks) — no trailing slash
+    API_BASE_URL: str = "http://localhost:8000"
+
+    # Google Calendar OAuth (web application)
+    GOOGLE_OAUTH_CLIENT_ID: str = ""
+    GOOGLE_OAUTH_CLIENT_SECRET: str = ""
 
     # Rate limits
     TEAM_INVITE_RATE_LIMIT_PER_MINUTE: int = 10

@@ -1,21 +1,12 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth, useClerk, useUser } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, Menu, Search } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import { Avatar } from "@/components/ui/avatar";
 import { useCommandPalette } from "@/contexts/command-palette-context";
 import { getNotificationUnreadCount } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
@@ -79,10 +70,8 @@ export function TopBar({ className }: { className?: string }) {
   const { setOpen: openCommand } = useCommandPalette();
   const [notifOpen, setNotifOpen] = React.useState(false);
   const { getToken } = useAuth();
-  const { signOut } = useClerk();
   const isMobile = useMediaQuery("(max-width: 767px)");
-  const { activeOrganizationId, user } = useForgeSession();
-  const { user: clerkUser } = useUser();
+  const { activeOrganizationId } = useForgeSession();
 
   const unread = useQuery({
     queryKey: ["notifications-unread", activeOrganizationId],
@@ -90,10 +79,6 @@ export function TopBar({ className }: { className?: string }) {
     enabled: !!activeOrganizationId,
     staleTime: 60 * 1000,
   });
-
-  const displayName =
-    clerkUser?.fullName ?? user?.display_name ?? user?.email ?? "Account";
-  const avatarUrl = clerkUser?.imageUrl ?? user?.avatar_url ?? null;
 
   return (
     <header
@@ -168,33 +153,6 @@ export function TopBar({ className }: { className?: string }) {
           </SheetContent>
         </Sheet>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="flex items-center gap-2 rounded-full ring-offset-2 ring-offset-bg focus-visible:ring-2 focus-visible:ring-accent-mid focus-visible:outline-none"
-              aria-label="Account menu"
-            >
-              <Avatar name={displayName} src={avatarUrl} size="md" />
-              <span className="hidden text-xs font-medium text-accent lg:inline">Free</span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-48">
-            <DropdownMenuItem asChild>
-              <Link href="/settings">Profile</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/settings">Settings</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-danger focus:text-danger font-body"
-              onSelect={() => signOut({ redirectUrl: "/" })}
-            >
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </header>
   );

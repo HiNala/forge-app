@@ -34,6 +34,7 @@ class CalendarConnection(Base, UUIDPrimaryKeyMixin):
         DateTime(timezone=True), server_default=func.now()
     )
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[str | None] = mapped_column(Text)
 
     user = relationship("User")
     organization = relationship("Organization")

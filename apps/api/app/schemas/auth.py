@@ -48,3 +48,4 @@ class SignupResponse(BaseModel):
 
 class UserPreferencesPatch(BaseModel):
     sidebar_collapsed: bool | None = None
+    dashboard_tip_dismissed: bool | None = None

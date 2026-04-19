@@ -28,6 +28,26 @@ from app.utils.slug import slugify_page_title, unique_page_slug
 logger = logging.getLogger(__name__)
 
 
+def _refine_suggestions_for_page_type(page_type: str) -> list[str]:
+    """Context-aware quick refinements for Studio chips (FE-04)."""
+    core = [
+        "Make it more minimal",
+        "Dark color scheme",
+        "Bigger CTA",
+        "Change the tone",
+    ]
+    extras: dict[str, tuple[str, str]] = {
+        "booking-form": ("Add pricing", "Add a phone number"),
+        "contact-form": ("Add file upload", "Add address fields"),
+        "proposal": ("Add pricing", "Tighten the headline"),
+        "rsvp": ("Add dietary restrictions", "Show event time prominently"),
+        "menu": ("Highlight dietary info", "Add pricing"),
+        "landing": ("Add social proof", "Tighter hero copy"),
+    }
+    a, b = extras.get(page_type, ("Add pricing", "Add a phone number"))
+    return [core[0], core[1], a, b, core[2], core[3]]
+
+
 def _sse(event: str, payload: dict[str, Any]) -> bytes:
     return f"event: {event}\ndata: {json.dumps(payload, default=str)}\n\n".encode()
 
@@ -221,5 +241,7 @@ async def stream_page_generation(
             "page_id": str(pid),
             "slug": slug,
             "title": title,
+            "refine_suggestions": _refine_suggestions_for_page_type(intent.page_type),
+            "page_type": intent.page_type,
         },
     )

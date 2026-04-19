@@ -4,21 +4,21 @@ import { useAuth, useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
   Check,
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
-  FileText,
   LayoutDashboard,
-  LayoutTemplate,
-  Plus,
-  Sparkles,
+  PlusCircle,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ForgeMark } from "@/components/chrome/forge-logo";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,7 +26,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -36,8 +35,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { patchUserPreferences } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  getStudioUsage,
+  patchUserPreferences,
+  postAuthSignOut,
+  postCreateWorkspace,
+} from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useForgeSession } from "@/providers/session-provider";
 import {
@@ -46,56 +56,142 @@ import {
   useUIStore,
 } from "@/stores/ui";
 
+const SIDEBAR_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+const SIDEBAR_MS = "240ms";
+
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/pages", label: "Pages", icon: FileText },
-  { href: "/studio", label: "Studio", icon: Sparkles },
+  { href: "/studio", label: "Studio", icon: PlusCircle, primary: true as const },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/templates", label: "Templates", icon: LayoutTemplate },
+  { href: "/settings/profile", label: "Settings", icon: Settings },
 ] as const;
 
-type NavItem = (typeof NAV)[number];
+function UsageMeter({
+  collapsed,
+  getToken,
+  activeOrgId,
+}: {
+  collapsed: boolean;
+  getToken: () => Promise<string | null>;
+  activeOrgId: string | null;
+}) {
+  const q = useQuery({
+    queryKey: ["studio-usage", activeOrgId],
+    queryFn: () => getStudioUsage(getToken, activeOrgId),
+    enabled: !!activeOrgId,
+    staleTime: 60_000,
+  });
+  const u = q.data;
+  if (!u || u.pages_quota <= 0) return null;
+  const ratio = Math.min(1, u.pages_generated / u.pages_quota);
+  const pct = ratio * 100;
+  const barClass =
+    pct >= 100
+      ? "bg-danger"
+      : pct >= 80
+        ? "bg-warning"
+        : "bg-accent";
 
-function NavLink({
-  item,
+  const label = `${u.pages_generated}/${u.pages_quota} pages this month`;
+
+  const inner = (
+    <Link
+      href="/settings/billing"
+      className={cn(
+        "block rounded-md border border-border/80 bg-bg-elevated/50 px-2 py-2 text-left transition-colors hover:bg-bg-elevated",
+        collapsed && "px-1.5",
+      )}
+      aria-label={label}
+    >
+      {!collapsed ? (
+        <p className="mb-1 text-[10px] font-medium tracking-wide text-text-subtle uppercase">
+          Usage
+        </p>
+      ) : null}
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
+        <div
+          className={cn("h-full rounded-full transition-all", barClass)}
+          style={{ width: `${Math.min(100, pct)}%` }}
+        />
+      </div>
+      {!collapsed ? (
+        <p className="mt-1 truncate text-[11px] text-text-muted">{label}</p>
+      ) : null}
+    </Link>
+  );
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{inner}</TooltipTrigger>
+        <TooltipContent side="right" className="max-w-[220px]">
+          {label} — manage in Billing
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  return inner;
+}
+
+function navLinkActive(pathname: string, href: string): boolean {
+  if (href === "/settings/profile") return pathname.startsWith("/settings");
+  if (href === "/dashboard") return pathname === "/dashboard";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function NavItem({
+  href,
+  label,
+  Icon,
+  primary,
   collapsed,
 }: {
-  item: NavItem;
+  href: string;
+  label: string;
+  Icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  primary?: boolean;
   collapsed: boolean;
 }) {
   const pathname = usePathname();
-  const active =
-    pathname === item.href ||
-    (item.href !== "/dashboard" && pathname.startsWith(item.href));
-  const Icon = item.icon;
-
-  return (
-    <div className="relative w-full" {...(collapsed ? { "data-tip": item.label } : {})}>
-      <Link
-        href={item.href}
-        aria-current={active ? "page" : undefined}
+  const active = navLinkActive(pathname, href);
+  const link = (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      aria-label={collapsed ? label : undefined}
+      className={cn(
+        "relative flex items-center gap-3 rounded-md py-2 pr-2 pl-3 text-sm font-medium font-body",
+        "transition-[background-color,color,opacity] duration-[120ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+        primary &&
+          "shadow-sm ring-1 ring-accent/20 bg-accent-light/40 font-semibold",
+        active && !primary
+          ? "bg-accent-light text-accent"
+          : !active && "text-text-muted hover:bg-bg-elevated/80 hover:text-text",
+        active &&
+          !primary &&
+          "before:absolute before:top-1 before:bottom-1 before:left-0 before:w-0.5 before:rounded-full before:bg-accent",
+        collapsed && "justify-center px-0",
+      )}
+    >
+      <Icon className="size-[18px] shrink-0 text-accent" aria-hidden />
+      <span
         className={cn(
-          "relative flex items-center gap-3 rounded-md py-2 pr-2 pl-3 text-sm font-medium font-body",
-          "transition-[background-color,color,opacity] duration-[120ms] ease-[cubic-bezier(0.4,0,0.2,1)]",
-          active
-            ? "bg-accent-light text-accent"
-            : "text-text-muted hover:bg-bg-elevated/80 hover:text-text",
-          collapsed && "justify-center px-0",
-          active &&
-            "before:absolute before:top-1 before:bottom-1 before:left-0 before:w-0.5 before:rounded-full before:bg-accent",
+          "truncate transition-opacity duration-[120ms]",
+          collapsed ? "sr-only" : "inline",
         )}
       >
-        <Icon className="size-[18px] shrink-0 text-accent" aria-hidden />
-        <span
-          className={cn(
-            "truncate transition-opacity duration-[120ms] ease-[cubic-bezier(0.4,0,0.2,1)]",
-            collapsed ? "sr-only" : "inline",
-          )}
-        >
-          {item.label}
-        </span>
-      </Link>
-    </div>
+        {label}
+      </span>
+    </Link>
+  );
+
+  if (!collapsed) return link;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{link}</TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -104,7 +200,6 @@ export function Sidebar({
   closeMobileNav,
 }: {
   className?: string;
-  /** When the sidebar is shown in the mobile sheet, call after actions that do not change the URL (e.g. workspace switch). */
   closeMobileNav?: () => void;
 }) {
   const collapsed = useUIStore((s) => s.sidebarCollapsed);
@@ -145,94 +240,91 @@ export function Sidebar({
   }, [collapsed, persistCollapse]);
 
   const [workspaceOpen, setWorkspaceOpen] = React.useState(false);
+  const [createOpen, setCreateOpen] = React.useState(false);
+  const [newName, setNewName] = React.useState("");
+  const [creating, setCreating] = React.useState(false);
 
-  const showLeaveWorkspace =
-    !!activeOrg &&
-    !(
-      activeOrg.role.toLowerCase() === "owner" && memberships.length === 1
-    );
-
-  function onCreateWorkspaceHint() {
-    toast.info("Additional workspaces from the app shell will use the team billing API — coming soon.");
-    setWorkspaceOpen(false);
+  async function onCreateWorkspace() {
+    const name = newName.trim();
+    if (!name) return;
+    setCreating(true);
+    try {
+      const org = await postCreateWorkspace(() => getToken(), { name });
+      setCreateOpen(false);
+      setNewName("");
+      setWorkspaceOpen(false);
+      await setActiveOrganizationId(String(org.id), {
+        navigateTo: "/onboarding",
+      });
+      closeMobileNav?.();
+      toast.success("Workspace created");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not create workspace");
+    } finally {
+      setCreating(false);
+    }
   }
 
-  function onLeaveWorkspace() {
-    toast.message("Leave workspace is available once the membership API ships.");
+  async function onSignOut() {
+    try {
+      await postAuthSignOut(() => getToken());
+    } catch {
+      /* best-effort */
+    }
+    await signOut({ redirectUrl: "/signin" });
   }
 
   return (
     <aside
       className={cn(
         "relative flex h-full shrink-0 flex-col border-r border-border bg-surface",
-        "transition-[width] duration-[220ms] ease-[cubic-bezier(0.4,0,0.2,1)]",
         className,
       )}
-      style={{ width }}
+      style={{
+        width,
+        transition: `width ${SIDEBAR_MS} ${SIDEBAR_EASE}`,
+      }}
     >
       <div
         className={cn(
-          "overflow-hidden transition-opacity duration-[120ms] ease-out",
-          collapsed ? "opacity-90" : "opacity-100",
+          "flex min-h-0 flex-1 flex-col overflow-hidden transition-opacity duration-[120ms]",
+          collapsed ? "opacity-95" : "opacity-100",
         )}
       >
+        {/* Workspace switcher — top */}
         <div
           className={cn(
-            "flex h-14 items-center gap-2 border-b border-border px-3",
+            "flex h-14 shrink-0 items-center gap-2 border-b border-border px-3",
             collapsed && "justify-center px-2",
           )}
         >
-          <Link
-            href="/dashboard"
-            className="flex min-w-0 items-center gap-2 rounded-md outline-none ring-offset-bg focus-visible:ring-2 focus-visible:ring-accent-mid"
-          >
-            <ForgeMark className="size-7" />
-            {!collapsed && (
-              <span className="font-display text-lg font-semibold tracking-tight text-text">
-                Forge
-              </span>
-            )}
-          </Link>
-        </div>
-
-        <nav className="flex flex-col gap-0.5 p-2" aria-label="Primary">
-          {NAV.map((item) => (
-            <NavLink key={item.href} item={item} collapsed={collapsed} />
-          ))}
-        </nav>
-
-        <div className="mt-auto flex flex-col gap-1 border-t border-border p-2">
-          <DropdownMenu>
+          <DropdownMenu open={workspaceOpen} onOpenChange={setWorkspaceOpen}>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm font-body",
-                  "hover:bg-bg-elevated/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mid",
-                  collapsed && "justify-center",
+                  "flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 pr-2 pl-1 text-left outline-none ring-offset-bg focus-visible:ring-2 focus-visible:ring-accent-mid",
+                  collapsed && "flex-none justify-center p-1.5",
                 )}
-                {...(collapsed ? { "data-tip": "Switch workspace" } : {})}
+                aria-label="Workspace switcher"
               >
-                <Avatar
-                  name={activeOrg?.organization_name ?? "Workspace"}
-                  size="sm"
-                />
-                {!collapsed && (
-                  <span className="min-w-0 flex-1 truncate text-left font-medium text-text">
-                    {activeOrg?.organization_name ?? "Workspace"}
-                  </span>
-                )}
-                {!collapsed && (
-                  <ChevronsUpDown className="size-4 shrink-0 text-text-subtle" />
-                )}
+                <ForgeMark className="size-8 shrink-0" />
+                {!collapsed ? (
+                  <>
+                    <span className="min-w-0 flex-1 truncate font-display text-base font-semibold tracking-tight text-text">
+                      {activeOrg?.organization_name ?? "Workspace"}
+                    </span>
+                    <ChevronsUpDown className="size-4 shrink-0 text-text-subtle" aria-hidden />
+                  </>
+                ) : null}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="start" className="min-w-56">
-              <DropdownMenuLabel>Switch workspace</DropdownMenuLabel>
+            <DropdownMenuContent side="bottom" align="start" className="min-w-64">
+              <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
               {memberships.map((m) => (
                 <DropdownMenuItem
                   key={m.organization_id}
-                  className="flex items-start gap-2 font-body"
+                  className="flex cursor-pointer items-start gap-2 font-body"
                   onSelect={() => {
                     void (async () => {
                       await setActiveOrganizationId(m.organization_id);
@@ -244,14 +336,9 @@ export function Sidebar({
                   <Avatar className="mt-0.5" name={m.organization_name} size="sm" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-text">{m.organization_name}</p>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                      <Badge variant="archived" className="text-[10px]">
-                        Free
-                      </Badge>
-                      <Badge variant="count" className="text-[10px] capitalize">
-                        {m.role.replace(/_/g, " ")}
-                      </Badge>
-                    </div>
+                    <Badge variant="count" className="mt-0.5 text-[10px] capitalize">
+                      {m.role.replace(/_/g, " ")}
+                    </Badge>
                   </div>
                   {m.organization_id === activeOrganizationId ? (
                     <Check className="mt-1 size-4 shrink-0 text-accent" aria-hidden />
@@ -259,85 +346,87 @@ export function Sidebar({
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <Dialog open={workspaceOpen} onOpenChange={setWorkspaceOpen}>
-                <DialogTrigger asChild>
-                  <DropdownMenuItem
-                    onSelect={(e) => e.preventDefault()}
-                    className="gap-2 font-body"
-                  >
-                    <Plus className="size-4" />
-                    Create workspace
-                  </DropdownMenuItem>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>New workspace</DialogTitle>
-                  </DialogHeader>
-                  <p className="text-sm text-text-muted font-body">
-                    Multi-workspace creation for existing accounts is wired in the next backend
-                    milestone.
-                  </p>
-                  <DialogFooter>
-                    <Button type="button" variant="secondary" onClick={() => setWorkspaceOpen(false)}>
-                      Close
-                    </Button>
-                    <Button type="button" onClick={onCreateWorkspaceHint}>
-                      OK
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-              {showLeaveWorkspace ? (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="font-body text-danger focus:text-danger"
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      onLeaveWorkspace();
-                    }}
-                  >
-                    Leave workspace
-                  </DropdownMenuItem>
-                </>
-              ) : null}
+              <DropdownMenuItem
+                className="gap-2 font-body"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setCreateOpen(true);
+                }}
+              >
+                <PlusCircle className="size-4" />
+                Create workspace
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
+
+        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-2" aria-label="Primary">
+          {NAV.map((item) => (
+            <NavItem
+              key={item.href}
+              href={item.href}
+              label={item.label}
+              Icon={item.icon}
+              primary={"primary" in item && item.primary}
+              collapsed={collapsed}
+            />
+          ))}
+        </nav>
+
+        <div className="mt-auto shrink-0 space-y-2 border-t border-border p-2">
+          <UsageMeter
+            collapsed={collapsed}
+            getToken={getToken}
+            activeOrgId={activeOrganizationId}
+          />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-md p-2 text-left",
+                  "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm",
                   "hover:bg-bg-elevated/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mid",
                   collapsed && "justify-center",
                 )}
                 aria-label="Account menu"
-                {...(collapsed ? { "data-tip": "Account" } : {})}
               >
-                <Avatar name={user?.display_name ?? user?.email ?? "User"} src={user?.avatar_url ?? null} size="sm" />
-                {!collapsed && (
+                <Avatar
+                  name={user?.display_name ?? user?.email ?? "User"}
+                  src={user?.avatar_url ?? null}
+                  size="sm"
+                />
+                {!collapsed ? (
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-text font-body">
-                      {user?.display_name ?? "Account"}
+                      {user?.display_name ?? user?.email ?? "Account"}
                     </p>
-                    <p className="truncate text-xs text-accent font-body">Free</p>
+                    <p className="truncate text-xs text-text-muted font-body">{user?.email}</p>
                   </div>
-                )}
+                ) : null}
+                {!collapsed ? (
+                  <ChevronsUpDown className="size-4 shrink-0 text-text-subtle" aria-hidden />
+                ) : null}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="start">
+            <DropdownMenuContent side="top" align="start" className="min-w-56">
+              <DropdownMenuLabel className="font-normal text-text-muted">
+                {user?.email}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/settings">Profile</Link>
+                <Link href="/settings/profile">Profile settings</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/settings">Settings</Link>
+                <Link href="/settings/billing">Billing</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled className="text-text-subtle">
+                Theme (soon)
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-danger focus:text-danger font-body"
-                onSelect={() => signOut({ redirectUrl: "/" })}
+                onSelect={() => void onSignOut()}
               >
                 Sign out
               </DropdownMenuItem>
@@ -352,16 +441,45 @@ export function Sidebar({
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         className={cn(
           "absolute top-16 -right-3 z-20 flex size-7 items-center justify-center rounded-full border border-border bg-surface shadow-md",
-          "transition-[transform,box-shadow] duration-[80ms] ease-[cubic-bezier(0.4,0,0.2,1)] hover:shadow-lg active:scale-[0.97]",
+          "transition-[transform,box-shadow] duration-[80ms] hover:shadow-lg active:scale-[0.97]",
           "text-text-muted hover:text-text",
         )}
+        style={{ transitionTimingFunction: SIDEBAR_EASE }}
       >
         {collapsed ? (
-          <ChevronRight className="size-4 transition-transform duration-[220ms]" aria-hidden />
+          <ChevronRight className="size-4" style={{ transition: `transform ${SIDEBAR_MS} ${SIDEBAR_EASE}` }} aria-hidden />
         ) : (
-          <ChevronLeft className="size-4 transition-transform duration-[220ms]" aria-hidden />
+          <ChevronLeft className="size-4" aria-hidden />
         )}
       </button>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New workspace</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="ws-new">Workspace name</Label>
+            <Input
+              id="ws-new"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Acme team"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void onCreateWorkspace();
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" loading={creating} onClick={() => void onCreateWorkspace()}>
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </aside>
   );
 }

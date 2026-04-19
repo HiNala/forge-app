@@ -78,3 +78,16 @@ Paths: `apps/web/src/components/ui/*.tsx` unless noted. All accept **`className`
 
 - **Lucide:** prefer `@/components/icons` barrel for shared exports.
 - **Logo:** `@/components/icons/logo` — `ForgeLogo` / `ForgeMark`, `size` — `sm | md | lg`.
+
+## App shell (authenticated)
+
+Paths: `apps/web/src/components/chrome/*.tsx` (Mission FE-03).
+
+- **`AppShell`** — wraps `(app)/layout`: `BrandThemeProvider`, `CommandPalette`, `ShortcutsDialog`, `OnboardingGate`, desktop `Sidebar` + `TopBar`, scrollable `main` with `fadeIn` on route change. Mobile: sidebar in a left `Sheet` from the top bar.
+- **`Sidebar`** — single primary navigation (Dashboard → Studio → Analytics → Settings), workspace switcher in the header row, usage meter link to Billing, account menu at bottom, collapse control (`220px` ↔ `58px`, persisted via `PATCH /auth/me/preferences` + `zustand`/`localStorage`).
+- **`TopBar`** — search/command affordance (⌘K), notifications sheet; **no** duplicate account menu (account lives in the sidebar).
+- **`PageHeader`** — shared title block with optional `breadcrumb`, `description`, single `actions` slot (`components/chrome/page-header.tsx`).
+- **`OnboardingGate`** — client redirect to `/onboarding` when the active org has no primary brand color **and** no pages yet (session `markOnboardingSeen` still respected).
+- **`ShortcutsDialog`** + **`useAppShortcuts`** — `?` opens help; `G` then `D` / `S` / `A` navigates; ⌘K handled by `CommandPaletteProvider`.
+- **`ComingSoonPlaceholder`** — settings stubs and secondary routes use `EmptyState` for “coming soon” copy.
+- **`DashboardTipBanner`** — one-time dismissible tip; dismissal persists in user `preferences.dashboard_tip_dismissed`.

@@ -5,10 +5,13 @@ import { FORGE_ACTIVE_ORG_HEADER, getApiUrl } from "./api";
 type AuthOpts = {
   getToken: () => Promise<string | null>;
   activeOrgId: string | null;
+  /** When aborted, the stream stops without surfacing an error. */
+  signal?: AbortSignal;
 };
 
 /**
  * Authenticated Studio SSE (generate, refine, etc.) — sends Bearer + org header.
+ * Pass `signal` to cancel (e.g. new prompt submitted or route change).
  */
 export async function streamStudioSse(
   path: string,
@@ -26,6 +29,7 @@ export async function streamStudioSse(
 
   await fetchEventSource(`${getApiUrl()}${path.startsWith("/") ? path : `/${path}`}`, {
     method: "POST",
+    signal: auth.signal,
     headers: {
       "Content-Type": "application/json",
       Accept: "text/event-stream",
@@ -33,6 +37,7 @@ export async function streamStudioSse(
       [FORGE_ACTIVE_ORG_HEADER]: auth.activeOrgId,
     },
     body: JSON.stringify(body),
+    openWhenHidden: true,
     onmessage(ev) {
       if (!ev.event || !ev.data) return;
       let parsed: unknown;
@@ -44,8 +49,10 @@ export async function streamStudioSse(
       void onMessage(ev.event, parsed);
     },
     onerror(err) {
+      if (auth.signal?.aborted) return;
       console.error("Studio SSE:", err);
-      throw err;
+      // Stop infinite retry; callers can show reconnect UI.
+      throw err instanceof Error ? err : new Error(String(err));
     },
   });
 }

@@ -144,11 +144,33 @@ export async function postSwitchOrg(
 
 export async function patchUserPreferences(
   getToken: () => Promise<string | null>,
-  body: { sidebar_collapsed?: boolean },
+  body: { sidebar_collapsed?: boolean; dashboard_tip_dismissed?: boolean },
 ): Promise<{ ok: boolean }> {
   return apiRequest("/auth/me/preferences", {
     method: "PATCH",
     getToken,
+    body: JSON.stringify(body),
+  });
+}
+
+export async function postAuthSignOut(
+  getToken: () => Promise<string | null>,
+): Promise<{ ok: boolean }> {
+  return apiRequest("/auth/signout", {
+    method: "POST",
+    getToken,
+    activeOrgId: null,
+  });
+}
+
+export async function postCreateWorkspace(
+  getToken: () => Promise<string | null>,
+  body: { name: string },
+): Promise<{ id: string; name: string; slug: string; plan: string }> {
+  return apiRequest("/org/workspaces", {
+    method: "POST",
+    getToken,
+    activeOrgId: null,
     body: JSON.stringify(body),
   });
 }
@@ -322,6 +344,66 @@ export async function getPage(
   });
 }
 
+export async function patchPage(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+  body: { title?: string; slug?: string; status?: string },
+): Promise<PageOut> {
+  return apiRequest<PageOut>(`/pages/${pageId}`, {
+    method: "PATCH",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify(body),
+  });
+}
+
+export type PublishOut = {
+  ok: boolean;
+  page_id: string;
+  status: string;
+  published_version_id: string;
+  public_url: string;
+};
+
+export async function publishPage(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+): Promise<PublishOut> {
+  return apiRequest<PublishOut>(`/pages/${pageId}/publish`, {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({}),
+  });
+}
+
+export type StudioMessageOut = {
+  id: string;
+  role: string;
+  content: string;
+  created_at: string;
+};
+
+export type StudioConversationResponse = {
+  page_id: string;
+  conversation_id: string;
+  messages: StudioMessageOut[];
+};
+
+export async function getStudioConversation(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+): Promise<StudioConversationResponse> {
+  return apiRequest<StudioConversationResponse>(`/studio/conversations/${pageId}`, {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
 export type StudioUsageOut = {
   plan: string;
   pages_generated: number;
@@ -357,4 +439,98 @@ export async function getNotificationUnreadCount(
   } catch {
     return { count: 0 };
   }
+}
+
+export type AutomationRuleOut = {
+  page_id: string;
+  organization_id: string;
+  notify_emails: string[];
+  confirm_submitter: boolean;
+  confirm_template_subject: string | null;
+  confirm_template_body: string | null;
+  calendar_sync_enabled: boolean;
+  calendar_connection_id: string | null;
+  calendar_event_duration_min: number;
+  calendar_send_invite: boolean;
+};
+
+export type AutomationRunOut = {
+  id: string;
+  submission_id: string | null;
+  step: string;
+  status: string;
+  error_message: string | null;
+  result_json: Record<string, unknown> | null;
+  ran_at: string;
+};
+
+export async function getPageAutomations(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+): Promise<AutomationRuleOut> {
+  return apiRequest<AutomationRuleOut>(`/pages/${pageId}/automations`, {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function putPageAutomations(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+  body: Partial<AutomationRuleOut>,
+): Promise<AutomationRuleOut> {
+  return apiRequest<AutomationRuleOut>(`/pages/${pageId}/automations`, {
+    method: "PUT",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify(body),
+  });
+}
+
+export async function getAutomationRuns(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+): Promise<AutomationRunOut[]> {
+  return apiRequest<AutomationRunOut[]>(`/pages/${pageId}/automations/runs`, {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export type CalendarConnectionOut = {
+  id: string;
+  provider: string;
+  calendar_id: string;
+  calendar_name: string | null;
+  connected_at: string;
+  last_error: string | null;
+};
+
+export async function listCalendarConnections(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<CalendarConnectionOut[]> {
+  return apiRequest<CalendarConnectionOut[]>("/calendar/connections", {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function postGoogleCalendarConnect(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId?: string,
+): Promise<{ authorize_url: string; state: string }> {
+  return apiRequest<{ authorize_url: string; state: string }>("/calendar/connect/google", {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({ page_id: pageId ?? null }),
+  });
 }

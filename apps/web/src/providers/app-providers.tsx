@@ -4,6 +4,7 @@ import * as React from "react";
 import { ClerkProvider } from "@clerk/nextjs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { CommandPaletteProvider } from "@/contexts/command-palette-context";
 import { SessionProvider } from "@/providers/session-provider";
 
@@ -27,7 +28,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <SessionProvider>
           <CommandPaletteProvider>
-            <ThemeProvider>{children}</ThemeProvider>
+            <ThemeProvider>
+              <TooltipProvider delayDuration={0}>{children}</TooltipProvider>
+            </ThemeProvider>
           </CommandPaletteProvider>
         </SessionProvider>
       </QueryClientProvider>

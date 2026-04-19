@@ -131,6 +131,8 @@ async def patch_user_preferences(
     prefs = dict(user.preferences or {})
     if body.sidebar_collapsed is not None:
         prefs["sidebar_collapsed"] = body.sidebar_collapsed
+    if body.dashboard_tip_dismissed is not None:
+        prefs["dashboard_tip_dismissed"] = body.dashboard_tip_dismissed
     user.preferences = prefs
     await db.commit()
     return {"ok": True}
@@ -156,6 +158,12 @@ async def switch_org(
     if org is None or org.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Organization not found")
     return SwitchOrgResponse(active_organization_id=body.organization_id)
+
+
+@router.post("/signout")
+async def signout() -> dict[str, bool]:
+    """Client clears Clerk session; this exists for explicit sign-out telemetry hooks."""
+    return {"ok": True}
 
 
 @router.post("/webhook")

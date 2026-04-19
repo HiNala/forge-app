@@ -44,3 +44,7 @@ class BrandKitPut(BaseModel):
 
 class LogoUploadResponse(BaseModel):
     logo_url: str
+
+
+class CreateWorkspaceBody(BaseModel):
+    name: str = Field(min_length=1, max_length=120)

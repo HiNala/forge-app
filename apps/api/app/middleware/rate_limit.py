@@ -26,6 +26,7 @@ _EXEMPT_PATH_PREFIXES: tuple[str, ...] = (
     "/docs",
     "/openapi.json",
     "/redoc",
+    "/api/v1/webhooks",
 )
 _EXEMPT_PATHS: frozenset[str] = frozenset(
     {

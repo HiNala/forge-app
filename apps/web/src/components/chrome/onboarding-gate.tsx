@@ -4,13 +4,14 @@ import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
-import { getBrand } from "@/lib/api";
+import { getBrand, listPages } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 
 const SEEN_KEY = (orgId: string) => `forge-onboarding-seen-${orgId}`;
 
 /**
- * Sends new workspaces to onboarding until they set a primary brand color or dismiss once.
+ * New workspaces need onboarding when there is no primary brand color yet **and** no pages.
+ * Skip when the user dismissed the flow once for this org (`sessionStorage`).
  */
 export function OnboardingGate() {
   const { getToken } = useAuth();
@@ -18,14 +19,21 @@ export function OnboardingGate() {
   const pathname = usePathname();
   const { activeOrganizationId, isLoading: sessionLoading } = useForgeSession();
 
-  const { data: brand, isFetched } = useQuery({
+  const brandQuery = useQuery({
     queryKey: ["brand", activeOrganizationId],
     enabled: !!activeOrganizationId && !sessionLoading,
     queryFn: () => getBrand(getToken, activeOrganizationId),
   });
 
+  const pagesQuery = useQuery({
+    queryKey: ["pages", activeOrganizationId],
+    enabled: !!activeOrganizationId && !sessionLoading,
+    queryFn: () => listPages(getToken, activeOrganizationId),
+  });
+
   React.useEffect(() => {
-    if (!activeOrganizationId || sessionLoading || !isFetched || !brand) return;
+    if (!activeOrganizationId || sessionLoading) return;
+    if (!brandQuery.isFetched || !pagesQuery.isFetched) return;
     if (pathname?.startsWith("/onboarding")) return;
     try {
       if (typeof sessionStorage !== "undefined" && sessionStorage.getItem(SEEN_KEY(activeOrganizationId))) {
@@ -34,10 +42,23 @@ export function OnboardingGate() {
     } catch {
       /* ignore */
     }
-    if (!brand.primary_color) {
+    const brand = brandQuery.data;
+    const pages = pagesQuery.data ?? [];
+    const needsOnboard =
+      !brand?.primary_color && pages.length === 0;
+    if (needsOnboard) {
       router.replace("/onboarding");
     }
-  }, [activeOrganizationId, sessionLoading, isFetched, brand, pathname, router]);
+  }, [
+    activeOrganizationId,
+    sessionLoading,
+    brandQuery.isFetched,
+    brandQuery.data,
+    pagesQuery.isFetched,
+    pagesQuery.data,
+    pathname,
+    router,
+  ]);
 
   return null;
 }

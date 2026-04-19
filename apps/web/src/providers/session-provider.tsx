@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getMe,
@@ -22,13 +23,17 @@ type SessionContextValue = {
   activeOrg: MembershipOut | null;
   activeRole: string | null;
   isLoading: boolean;
-  setActiveOrganizationId: (orgId: string) => Promise<void>;
+  setActiveOrganizationId: (
+    orgId: string,
+    opts?: { navigateTo?: string | null },
+  ) => Promise<void>;
   refetchSession: () => Promise<unknown>;
 };
 
 const SessionContext = React.createContext<SessionContextValue | null>(null);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
@@ -78,7 +83,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [me?.preferences]);
 
   const setActiveOrganizationId = React.useCallback(
-    async (orgId: string) => {
+    async (orgId: string, opts?: { navigateTo?: string | null }) => {
       await postSwitchOrg(getToken, activeOrgId, orgId);
       setActiveOrgState(orgId);
       try {
@@ -89,8 +94,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       for (const key of QUERY_KEYS_INVALIDATED_ON_ORG_SWITCH) {
         await queryClient.invalidateQueries({ queryKey: [...key] });
       }
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
+      const navigateTo =
+        opts?.navigateTo === null ? null : (opts?.navigateTo ?? "/dashboard");
+      if (navigateTo) router.push(navigateTo);
     },
-    [getToken, activeOrgId, queryClient],
+    [getToken, activeOrgId, queryClient, router],
   );
 
   const activeOrg =
@@ -123,3 +132,6 @@ export function useForgeSession(): SessionContextValue {
   }
   return ctx;
 }
+
+/** FE-03 alias — same as `useForgeSession`. */
+export const useSession = useForgeSession;

@@ -1,18 +1,37 @@
-"""arq worker entry — job bodies filled in Mission 05."""
+"""arq worker — automations + scheduled jobs (Mission 05)."""
 
 import logging
 import os
+from uuid import UUID
 
 from arq import cron
 from arq.connections import RedisSettings
+from sqlalchemy import select, text
+
+from app.db.models import Submission
+from app.db.session import AsyncSessionLocal
+from app.services.automations import AutomationEngine
 
 logger = logging.getLogger(__name__)
 
 
 async def run_automations(ctx, submission_id: str) -> str:
-    """Mission 05 will run rules + notifications; Mission 04 only acknowledges the job."""
+    """Execute automation pipeline for a submission (notify, confirm, calendar)."""
     del ctx
-    logger.info("run_automations stub submission_id=%s", submission_id)
+    sid = UUID(submission_id)
+    async with AsyncSessionLocal() as db:
+        sub = (
+            await db.execute(select(Submission).where(Submission.id == sid))
+        ).scalar_one_or_none()
+        if sub is None:
+            logger.warning("run_automations: submission not found %s", submission_id)
+            return "missing"
+        await db.execute(
+            text("SELECT set_config('app.current_tenant_id', :t, true)"),
+            {"t": str(sub.organization_id)},
+        )
+        eng = AutomationEngine(db)
+        await eng.run_for_submission(sid)
     return "ok"
 
 

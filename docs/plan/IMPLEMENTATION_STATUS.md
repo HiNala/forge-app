@@ -4,7 +4,7 @@
 
 **Legend:** ✅ substantial · ⚠️ partial / stub · ❌ not started
 
-**Last audited:** 2026-04-19 — `apps/api` **48** pytest tests (`tests/README.md`); submissions **CSV export** (`GET …/submissions/export`) + list + public submit; Postgres-backed tests skip when DB is down. If `uv` cannot refresh `.venv` on Windows, use e.g. `UV_PROJECT_ENVIRONMENT=.venv-forge` before `uv sync`.
+**Last audited:** 2026-04-19 — `apps/api` **60** pytest tests (`tests/README.md`); identity (incl. DELETE + **versions** without session), **empty page list**, **GET /versions** after publish, submit + arq enqueue, submissions CSV; Postgres-backed tests skip when DB is down. If `uv` cannot refresh `.venv` on Windows, use e.g. `UV_PROJECT_ENVIRONMENT=.venv-forge` before `uv sync`.
 
 ---
 
@@ -27,7 +27,7 @@
 | **Mission 01 — Contracts & scaffold** | ✅ 75% | Monorepo, Alembic schema, FastAPI routers, Next app; some endpoints still stubs |
 | **Mission 02 — Foundation** | ⚠️ 60% | Clerk, orgs, RLS, brand API, middleware, tests; not every edge case hardened |
 | **Mission 03 — Studio + AI** | ⚠️ 62% | **SSE** `/studio/generate` & `/refine`; **anonymous** `POST /api/v1/public/demo` (marketing hero); LiteLLM router + orchestration; `StudioWorkspace` + section edit; publish handoff and quota hardening still open — see [ui/FRONTEND_STATUS.md](./ui/FRONTEND_STATUS.md) |
-| **Mission 04 — Live pages** | ⚠️ 70% | Publish + public GET + submit + list + **CSV export**; upload presign, CSP, preview token, custom domain still open |
+| **Mission 04 — Live pages** | ⚠️ 72% | Publish + public GET + submit (**arq `run_automations` enqueue** when Redis up) + list + CSV; idempotent job keys / presign upload / CSP / preview / custom domain still open |
 | **Mission 05 — Automations** | ⚠️ 25% | Models/services sketched; Resend/Calendar/rule engine not end-to-end |
 | **Mission 06 — Analytics, billing, teams** | ⚠️ 40% | Team/brand/billing routes; Stripe webhook path; analytics dashboards stub |
 | **Mission 07 — Polish** | ⚠️ 35% | Lint/type/test for touched areas; WCAG/Lighthouse “green” not verified globally |
@@ -46,7 +46,7 @@
 | Brand kit | ✅ (app + API) |
 | Studio chat + refine + section edit (API) | ⚠️ (backend streams; UI not complete) |
 | Publish + live URL + custom domain | ⚠️ (publish + `/p/{org}/{slug}`; custom domain ❌) |
-| Submissions + files + idempotency | ⚠️ (public JSON/text submit ✅; files / worker idempotency ❌) |
+| Submissions + files + idempotency | ⚠️ (submit + **automation job enqueue** ✅; presigned files + Redis idempotency ❌) |
 | Page admin (Overview / Submissions / Automations / Analytics) | ⚠️ (submissions list + **CSV export** API ✅; UI wiring still partial) |
 | Automations (email + calendar) | ❌ / stub |
 | Analytics (tenant) | ⚠️ stub |
@@ -87,7 +87,8 @@
 - **`POST /p/{org}/{slug}/submit`** — live page only, validates `form_schema.required`, stores anonymized IPv4 /24 ✅
 - **`GET /api/v1/pages/{page_id}/submissions`** — cursor pagination (`before` / `next_before`) ✅
 - **`GET …/submissions/export`** — streaming CSV (`text/csv`), `Content-Disposition` attachment ✅
-- Presigned upload, custom domain, strict CSP, worker enqueue ❌ / partial
+- **Post-submit** `run_automations` **enqueued** (arq) when API Redis pool up; worker **stub** in `apps/worker` ✅
+- Presigned upload, custom domain, strict CSP, preview token, **job idempotency (SET NX)** ❌ / partial
 
 ### [08 — Automations](./08_MISSION_05_AUTOMATIONS.md)
 - Rule engine + Resend + Calendar ❌ / stub
@@ -110,7 +111,7 @@
 
 ## What “done” means for the next milestones
 
-1. **Mission 04 completion:** stable public URL ✅; **public submit** ✅; **CSV export** ✅; presigned uploads, worker idempotency, CSP, custom domain remain.
+1. **Mission 04 completion:** stable public URL ✅; **public submit** ✅; **CSV export** ✅; **automation enqueue** ✅ (stub worker); presigned uploads, **idempotent jobs**, CSP, custom domain remain.
 2. **Mission 05 completion:** notify + confirm emails; OAuth + calendar create behind feature flags.
 3. **Mission 06 completion:** usage-linked billing; analytics charts from real events.
 4. **Mission 07 completion:** a11y audit, perf budget, security pass on public endpoints.

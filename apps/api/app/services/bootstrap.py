@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -64,6 +66,31 @@ async def ensure_user_org_signup(
     session.add(BrandKit(organization_id=org.id))
     await session.flush()
     return user, org
+
+
+async def create_additional_workspace(
+    session: AsyncSession,
+    *,
+    user_id: UUID,
+    workspace_name: str,
+) -> Organization:
+    """Second+ workspace for an existing user (owner membership)."""
+    base = slugify_workspace(workspace_name)
+    slug = unique_org_slug(base)
+    org = Organization(name=workspace_name, slug=slug)
+    session.add(org)
+    await session.flush()
+    await session.execute(
+        text("SELECT set_config('app.current_user_id', :u, true)"),
+        {"u": str(user_id)},
+    )
+    session.add(
+        Membership(user_id=user_id, organization_id=org.id, role="owner"),
+    )
+    session.add(BrandKit(organization_id=org.id))
+    await session.flush()
+    await session.refresh(org)
+    return org
 
 
 def clerk_email_from_payload(payload: dict) -> str:

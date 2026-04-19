@@ -6,16 +6,20 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import BrandKit, Organization
+from app.db.models import BrandKit, Organization, User
 from app.deps import get_db, require_role, require_tenant
+from app.deps.auth import require_user
+from app.deps.db import get_db_user_only
 from app.deps.tenant import TenantContext
 from app.schemas.org import (
     BrandKitOut,
     BrandKitPut,
+    CreateWorkspaceBody,
     LogoUploadResponse,
     OrganizationOut,
     OrganizationPatch,
 )
+from app.services.bootstrap import create_additional_workspace
 from app.services.brand_validate import is_valid_color
 from app.services.storage_s3 import guess_ext, upload_brand_logo
 
@@ -24,6 +28,21 @@ router = APIRouter(prefix="/org", tags=["organization"])
 _ALLOWED_CT = frozenset(
     {"image/png", "image/jpeg", "image/svg+xml", "image/webp"},
 )
+
+
+@router.post("/workspaces", response_model=OrganizationOut)
+async def create_workspace(
+    body: CreateWorkspaceBody,
+    user: User = Depends(require_user),
+    db: AsyncSession = Depends(get_db_user_only),
+) -> Organization:
+    """Create an additional workspace (owner); used by the app-shell workspace switcher."""
+    org = await create_additional_workspace(
+        db, user_id=user.id, workspace_name=body.name
+    )
+    await db.commit()
+    await db.refresh(org)
+    return org
 
 
 @router.get("", response_model=OrganizationOut)

@@ -15,6 +15,17 @@ import { patchOrg, postBrandLogo, putBrand } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
 
+const CURATED_SWATCHES = [
+  "#2a9d8f",
+  "#2563eb",
+  "#7c3aed",
+  "#db2777",
+  "#ea580c",
+  "#ca8a04",
+  "#0d9488",
+  "#4b5563",
+] as const;
+
 function greeting(): string {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
@@ -89,12 +100,12 @@ export default function OnboardingPage() {
       className="mx-auto max-w-lg transition-[color] duration-300 ease-[var(--ease-out)]"
       style={previewStyle}
     >
-      <h1 className="font-display text-3xl font-semibold tracking-tight text-text">
-        {greeting()}, {first}
+      <h1 className="font-display text-3xl font-semibold tracking-tight text-text sm:text-4xl">
+        Let&apos;s get you set up
       </h1>
       <p className="mt-3 text-base leading-relaxed text-text-muted font-body">
-        Name your workspace and set a first-pass brand. You can refine everything later in
-        Settings.
+        {greeting()}, {first} — name your workspace and set a first-pass brand. You can refine
+        everything later in Settings.
       </p>
 
       <form className="mt-10 space-y-8" onSubmit={onSubmit}>
@@ -116,10 +127,33 @@ export default function OnboardingPage() {
         </div>
 
         <div>
-          <Label htmlFor="color">Primary color</Label>
-          <div className="mt-2 flex items-center gap-3">
+          <Label>Primary color</Label>
+          <p className="mt-1 text-sm text-text-muted font-body">
+            Pick a starting swatch or open the custom picker. Live preview updates accents below.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {CURATED_SWATCHES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className={cn(
+                  "size-10 rounded-full border-2 transition-transform hover:scale-105",
+                  color.toLowerCase() === c.toLowerCase()
+                    ? "border-text ring-2 ring-offset-2 ring-offset-bg ring-accent"
+                    : "border-transparent",
+                )}
+                style={{ backgroundColor: c }}
+                aria-label={`Use ${c}`}
+                onClick={() => setColor(c)}
+              />
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <Label htmlFor="color-custom" className="sr-only">
+              Custom color
+            </Label>
             <input
-              id="color"
+              id="color-custom"
               type="color"
               className={cn(
                 "h-12 w-14 cursor-pointer rounded-md border border-border bg-surface p-1",
@@ -128,11 +162,9 @@ export default function OnboardingPage() {
               )}
               value={color}
               onChange={(e) => setColor(e.target.value)}
-              aria-label="Pick primary color"
+              aria-label="Pick custom color"
             />
-            <span className="text-sm text-text-muted font-body">
-              This updates buttons and focus rings live.
-            </span>
+            <span className="text-sm text-text-muted font-body">Custom</span>
           </div>
         </div>
 
@@ -162,7 +194,7 @@ export default function OnboardingPage() {
             className="shadow-sm"
             style={{ backgroundColor: color, borderColor: "transparent" }}
           >
-            Save and continue
+            Finish setup
           </Button>
           <Link
             href="/dashboard"

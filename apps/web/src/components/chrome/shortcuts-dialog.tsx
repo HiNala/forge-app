@@ -3,6 +3,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -20,6 +21,9 @@ export function ShortcutsDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display">Keyboard shortcuts</DialogTitle>
+          <DialogDescription className="sr-only">
+            Global navigation and command palette shortcuts available in the app.
+          </DialogDescription>
         </DialogHeader>
         <ul className="mt-4 space-y-2 text-sm font-body">
           {SHORTCUTS_HELP.map((row) => (

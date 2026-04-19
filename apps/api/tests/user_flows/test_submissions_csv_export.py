@@ -122,3 +122,65 @@ async def test_export_csv_404_for_other_tenants_page() -> None:
             headers=forge_test_headers(u_b, o_b),
         )
     assert r.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_viewer_can_download_csv_same_as_submissions_list() -> None:
+    """Read-only role can export leads for reporting (same access as GET …/submissions)."""
+    await require_postgres()
+    from app.main import app
+
+    owner_id = uuid.uuid4()
+    viewer_id = uuid.uuid4()
+    oid = uuid.uuid4()
+    async with AsyncSessionLocal() as s:
+        s.add(
+            User(
+                id=owner_id,
+                email=f"{owner_id.hex}@own-csv.example.com",
+                auth_provider_id=f"clerk_{owner_id}",
+            )
+        )
+        s.add(
+            User(
+                id=viewer_id,
+                email=f"{viewer_id.hex}@view-csv.example.com",
+                auth_provider_id=f"clerk_{viewer_id}",
+            )
+        )
+        s.add(Organization(id=oid, name="Team CSV", slug=f"tc-{owner_id.hex[:8]}"))
+        await s.flush()
+        s.add(Membership(user_id=owner_id, organization_id=oid, role="owner"))
+        s.add(Membership(user_id=viewer_id, organization_id=oid, role="viewer"))
+        s.add(
+            Page(
+                organization_id=oid,
+                slug="export-me",
+                page_type="landing",
+                title="Export",
+                current_html=VALID_PUBLISHABLE_HTML,
+                form_schema={"required": ["message"]},
+            )
+        )
+        await s.commit()
+
+    async with AsyncSessionLocal() as s2:
+        p = (await s2.execute(select(Page).where(Page.organization_id == oid))).scalars().first()
+        assert p is not None
+        pid = p.id
+
+    h_owner = forge_test_headers(owner_id, oid)
+    h_viewer = forge_test_headers(viewer_id, oid)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        pub = await client.post(f"/api/v1/pages/{pid}/publish", headers=h_owner)
+        assert pub.status_code == 200
+        org = pub.json()["public_url"].split("/p/")[1].split("/")[0]
+
+        await client.post(
+            f"/p/{org}/export-me/submit",
+            json={"message": "Row", "email": "v@w.com"},
+        )
+
+        r = await client.get(f"/api/v1/pages/{pid}/submissions/export", headers=h_viewer)
+        assert r.status_code == 200
+        assert "Row" in r.text

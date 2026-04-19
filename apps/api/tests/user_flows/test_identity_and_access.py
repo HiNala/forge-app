@@ -13,6 +13,31 @@ from httpx import ASGITransport, AsyncClient
 
 
 @pytest.mark.asyncio
+async def test_visitor_without_session_cannot_read_single_page() -> None:
+    """Studio page detail is tenant-private — no session, no GET /pages/{id}."""
+    from app.main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        r = await client.get(f"/api/v1/pages/{uuid.uuid4()}")
+    assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_visitor_without_session_cannot_patch_page() -> None:
+    """Renaming or archiving a page requires sign-in."""
+    from app.main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        r = await client.patch(
+            f"/api/v1/pages/{uuid.uuid4()}",
+            json={"title": "Hijack"},
+        )
+    assert r.status_code == 401
+
+
+@pytest.mark.asyncio
 async def test_visitor_without_session_cannot_list_pages() -> None:
     """A browser with no Forge session should not read tenant page lists."""
     from app.main import app
@@ -56,4 +81,26 @@ async def test_visitor_without_session_cannot_list_page_submissions() -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         r = await client.get(f"/api/v1/pages/{uuid.uuid4()}/submissions")
+    assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_visitor_without_session_cannot_delete_page() -> None:
+    """Removing a page requires a signed-in member with editor rights."""
+    from app.main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        r = await client.delete(f"/api/v1/pages/{uuid.uuid4()}")
+    assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_visitor_without_session_cannot_list_page_versions() -> None:
+    """Publish history is tenant-private — no GET /pages/{id}/versions without session."""
+    from app.main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        r = await client.get(f"/api/v1/pages/{uuid.uuid4()}/versions")
     assert r.status_code == 401

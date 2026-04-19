@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { DashboardTipBanner } from "@/components/chrome/dashboard-tip-banner";
 import { EmptyState } from "@/components/chrome/empty-state";
 import { WorkspacePageGrid } from "@/components/pages/workspace-page-grid";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -96,6 +97,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5">
+      <DashboardTipBanner />
       {/* Greeting header */}
       <div>
         <h1 className="font-display text-[30px] font-bold leading-tight tracking-tight text-text">

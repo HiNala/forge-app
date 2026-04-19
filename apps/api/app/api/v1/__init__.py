@@ -15,6 +15,7 @@ from app.api.v1 import (
     submissions,
     team,
     templates,
+    webhooks,
 )
 
 api_router = APIRouter()
@@ -32,4 +33,5 @@ api_router.include_router(calendar.router)
 api_router.include_router(analytics.router)
 api_router.include_router(billing.router)
 api_router.include_router(templates.router)
+api_router.include_router(webhooks.router)
 api_router.include_router(admin.router)

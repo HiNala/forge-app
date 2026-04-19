@@ -1,15 +1,16 @@
 "use client";
 
 import { Toaster as Sonner } from "sonner";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 /**
- * Global toast host: bottom-center, 4s default, hover pauses (Sonner default).
- * Styled with design tokens via classNames.
+ * Global toast host: bottom-right on desktop, bottom-center on narrow viewports (safe-area aware).
  */
 export function AppToaster() {
+  const desktop = useMediaQuery("(min-width: 768px)");
   return (
     <Sonner
-      position="bottom-center"
+      position={desktop ? "bottom-right" : "bottom-center"}
       duration={4000}
       gap={10}
       toastOptions={{
