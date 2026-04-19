@@ -3,6 +3,8 @@
 **Project:** Forge — AI-Powered Mini-App Builder
 **Purpose:** This folder contains the complete planning package for building Forge, an AI-powered tool that turns a plain-English prompt into a finished, hosted, single-purpose web page (booking forms, contact forms, event RSVPs, daily menus, sales proposals, landing pages). It includes user case reports, a master Project Reference Document, and ten sequential missions for coding agents to execute.
 
+**Focused indexes:** [Backend missions & invariants](./backend/00_README.md) · [Frontend missions & design](./ui/00_README.md) · [Implementation status vs. repo](./IMPLEMENTATION_STATUS.md)
+
 ---
 
 ## Reading Order

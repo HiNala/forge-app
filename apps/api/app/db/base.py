@@ -1,11 +1,7 @@
-import uuid
-from datetime import datetime
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import DateTime, func
+"""SQLAlchemy declarative base."""
+
+from sqlalchemy.orm import DeclarativeBase
+
 
 class Base(DeclarativeBase):
-    pass
-    
-class TimeStampMixin:
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    """Base class for all ORM models."""

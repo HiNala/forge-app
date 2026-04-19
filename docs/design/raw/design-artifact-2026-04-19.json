@@ -1,0 +1,6 @@
+{
+  "_comment": "Placeholder snapshot. The upstream Anthropic design endpoint requires authentication and returned 404 without a valid API key/session. Re-fetch with: curl -sS -H \"x-api-key: $ANTHROPIC_API_KEY\" \"https://api.anthropic.com/v1/design/h/ZhxfTfNViMkEnjhpg1EkxA\" and replace this file. Commit with a date-stamped filename per mission FE-01.",
+  "fetch_status": "not_available_unauthenticated",
+  "fetch_url": "https://api.anthropic.com/v1/design/h/ZhxfTfNViMkEnjhpg1EkxA",
+  "fetched_at": "2026-04-19"
+}
