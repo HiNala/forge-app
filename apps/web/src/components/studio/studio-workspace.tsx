@@ -2,14 +2,7 @@
 
 import { useAuth, useUser } from "@clerk/nextjs";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
-import {
-  ExternalLink,
-  Loader2,
-  Monitor,
-  PanelsTopLeft,
-  Send,
-  Sparkles,
-} from "lucide-react";
+import { Loader2, Monitor, PanelsTopLeft, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -19,7 +12,7 @@ import { Virtuoso } from "react-virtuoso";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  ApiError,
+  apiRequest,
   getPage,
   getStudioConversation,
   getStudioUsage,
@@ -28,7 +21,7 @@ import {
   type StudioUsageOut,
 } from "@/lib/api";
 import { debounce } from "@/lib/debounce";
-import { SPRINGS } from "@/lib/motion";
+import { MOTION_TRANSITIONS, SPRINGS } from "@/lib/motion";
 import {
   DEFAULT_REFINE_CHIPS,
   SECTION_EDIT_QUICK_CHIPS,
@@ -40,7 +33,6 @@ import {
 import { timeOfDayGreeting } from "@/lib/studio-greeting";
 import {
   ensureBridgeInFullDocument,
-  extractSectionOuterHtml,
   parseSectionIds,
   wrapStudioPreviewHtml,
 } from "@/lib/studio-preview-html";
@@ -55,7 +47,7 @@ import { ForgeLogo } from "@/components/icons/logo";
 import { StudioPageArtifactCard } from "@/components/studio/studio-page-artifact-card";
 import { StudioPublishDialog } from "@/components/studio/studio-publish-dialog";
 
-const TRANSITION_PANEL = { type: "spring" as const, ...SPRINGS.soft, duration: 0.4 };
+const TRANSITION_PANEL = { ...SPRINGS.soft };
 
 const CELEBRATION_KEY = "forge:first-page-live-celebration";
 
@@ -84,7 +76,7 @@ export function StudioWorkspace() {
   const pageIdFromUrl = searchParams.get("pageId");
   const { getToken } = useAuth();
   const { user } = useUser();
-  const { activeOrganizationId, activeOrg, me } = useForgeSession();
+  const { activeOrganizationId, activeOrg } = useForgeSession();
   const setSidebarCollapsed = useUIStore((s) => s.setSidebarCollapsed);
 
   const firstName = user?.firstName || user?.emailAddresses?.[0]?.emailAddress?.split("@")[0] || "there";
@@ -100,7 +92,7 @@ export function StudioWorkspace() {
   const [pageSlug, setPageSlug] = React.useState<string | null>(null);
   const [pageTitle, setPageTitle] = React.useState("");
   const [pageStatus, setPageStatus] = React.useState<string>("draft");
-  const [pageType, setPageType] = React.useState("landing");
+  const [, setPageType] = React.useState("landing");
   const [finalHtml, setFinalHtml] = React.useState<string | null>(null);
   const streamAccRef = React.useRef("");
   const [previewTick, setPreviewTick] = React.useState(0);
@@ -122,11 +114,12 @@ export function StudioWorkspace() {
   const [editBusy, setEditBusy] = React.useState(false);
   const [editAnchor, setEditAnchor] = React.useState<{ top: number; left: number; width: number } | null>(null);
   const editInputRef = React.useRef<HTMLInputElement>(null);
-  const undoRef = React.useState<{ html: string } | null>(null);
+  const undoRef = React.useRef<{ html: string } | null>(null);
 
   const [publishOpen, setPublishOpen] = React.useState(false);
   const [sectionFocusIdx, setSectionFocusIdx] = React.useState(0);
   const liveAnnounceRef = React.useRef<HTMLDivElement>(null);
+  const [origin, setOrigin] = React.useState("");
 
   const sk = studioSessionKey(pageId);
   const storeMessages = useStudioStore((s) => s.sessions[sk]?.messages ?? []);
@@ -154,6 +147,10 @@ export function StudioWorkspace() {
   }, [getToken, activeOrganizationId]);
 
   React.useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  React.useEffect(() => {
     const id = setInterval(() => {
       setPlaceholderIdx((i) => (i + 1) % STUDIO_PLACEHOLDERS.length);
     }, 4000);
@@ -172,10 +169,12 @@ export function StudioWorkspace() {
     setPreviewTick((t) => t + 1);
   }, []);
 
+  const applyIframeRef = React.useRef(applyIframeHtml);
+  applyIframeRef.current = applyIframeHtml;
   const bufferRef = React.useRef(
     createChunkBuffer(60, (acc) => {
       streamAccRef.current = acc;
-      applyIframeHtml(acc);
+      applyIframeRef.current(acc);
     }),
   );
 
@@ -206,14 +205,15 @@ export function StudioWorkspace() {
         try {
           const conv = await getStudioConversation(getToken, activeOrganizationId, p.id);
           if (cancelled) return;
-          if (!storeMessages.length && conv.messages.length > 0) {
+          const existing = useStudioStore.getState().getSession(p.id).messages;
+          if (existing.length === 0 && conv.messages.length > 0) {
             const mapped: StudioChatMsg[] = conv.messages.map((m) => ({
               id: m.id,
               role: m.role === "user" ? "user" : "assistant",
               text: m.content,
               kind: "plain",
             }));
-            bootstrapSession(p.id, { messages: mapped, draftInput: storeDraft });
+            bootstrapSession(p.id, { messages: mapped, draftInput: useStudioStore.getState().getSession(p.id).draftInput });
           }
         } catch {
           /* optional */
@@ -225,7 +225,7 @@ export function StudioWorkspace() {
     return () => {
       cancelled = true;
     };
-  }, [pageIdFromUrl, activeOrganizationId, getToken, pageId, applyIframeHtml, bootstrapSession, storeMessages.length, storeDraft]);
+  }, [pageIdFromUrl, activeOrganizationId, getToken, pageId, applyIframeHtml, bootstrapSession]);
 
   React.useEffect(() => {
     if (!liveAnnounceRef.current) return;
@@ -280,7 +280,12 @@ export function StudioWorkspace() {
     return () => window.removeEventListener("message", onMsg);
   }, [editMode]);
 
-  const sectionIds = React.useMemo(() => parseSectionIds(finalHtml ?? streamAccRef.current), [finalHtml, previewTick]);
+  const sectionIds = React.useMemo(
+    () => parseSectionIds(finalHtml ?? streamAccRef.current),
+    // previewTick bumps when streaming updates without committing finalHtml
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
+    [finalHtml, previewTick],
+  );
 
   React.useEffect(() => {
     if (!editMode || sectionIds.length === 0) return;
@@ -345,7 +350,7 @@ export function StudioWorkspace() {
       streamAccRef.current = "";
       bufferRef.current.reset();
       setFinalHtml(null);
-      setMessagesStore(pageId, (m) => [...m, { id: crypto.randomUUID(), role: "user", text: userText }]);
+      setMessagesStore(null, (m) => [...m, { id: crypto.randomUUID(), role: "user", text: userText }]);
     } else if (pageId) {
       setMessagesStore(pageId, (m) => [...m, { id: crypto.randomUUID(), role: "user", text: userText }]);
     }
@@ -377,7 +382,6 @@ export function StudioWorkspace() {
             if (d.page_id && activeOrganizationId) {
               const p = await getPage(getToken, activeOrganizationId, d.page_id);
               setFinalHtml(p.current_html);
-              setPageId(p.id);
               setPageSlug(p.slug);
               setPageTitle(p.title);
               setPageStatus(p.status);
@@ -389,9 +393,10 @@ export function StudioWorkspace() {
                   ? d.refine_suggestions
                   : [...DEFAULT_REFINE_CHIPS];
               setRefineChips(sug);
-              setMessagesStore(p.id, (m) => [
-                ...m,
-                {
+              const wasGenerate = lastStreamRef.current?.kind === "generate";
+              if (wasGenerate) {
+                const fromEmpty = useStudioStore.getState().getSession(null).messages;
+                const artifact: StudioChatMsg = {
                   id: crypto.randomUUID(),
                   role: "assistant",
                   kind: "artifact",
@@ -404,15 +409,31 @@ export function StudioWorkspace() {
                     status: p.status,
                     summary: inferSummary(p),
                   },
-                },
-              ]);
+                };
+                setMessagesStore(p.id, [...fromEmpty, artifact]);
+                bootstrapSession(null, { messages: [], draftInput: "" });
+              } else {
+                setMessagesStore(p.id, (m) => [
+                  ...m,
+                  {
+                    id: crypto.randomUUID(),
+                    role: "assistant",
+                    kind: "plain",
+                    text: "Changes applied — preview updated.",
+                  },
+                ]);
+              }
+              setPageId(p.id);
             }
             setStreamPhase("idle");
             if (activeOrganizationId) void getStudioUsage(getToken, activeOrganizationId).then(setUsage).catch(() => {});
           }
           if (event === "error" && data && typeof data === "object") {
             const msg = (data as { message?: string }).message ?? "Generation failed";
-            setMessagesStore(pageId, (m) => [...m, { id: crypto.randomUUID(), role: "system", text: msg }]);
+            setMessagesStore(pageId ?? null, (m) => [
+              ...m,
+              { id: crypto.randomUUID(), role: "system", text: msg },
+            ]);
             toast.error(msg);
             setStreamPhase("idle");
           }
@@ -479,8 +500,8 @@ export function StudioWorkspace() {
     setPageId(null);
     setPageSlug(null);
     setFinalHtml(null);
-    setStreamAccRef("");
     streamAccRef.current = "";
+    bootstrapSession(null, { messages: [], draftInput: "" });
     bufferRef.current.reset();
     router.replace("/studio", { scroll: false });
   }
@@ -489,16 +510,6 @@ export function StudioWorkspace() {
     if (!pageSlug || !activeOrg?.organization_slug) return;
     const url = `${window.location.origin}/p/${activeOrg.organization_slug}/${pageSlug}?preview=true`;
     window.open(url, "_blank", "noopener,noreferrer");
-  }
-
-  function copyPageLink() {
-    if (!pageSlug || !activeOrg?.organization_slug) return;
-    const base = window.location.origin;
-    const url =
-      pageStatus === "live"
-        ? `${base}/p/${activeOrg.organization_slug}/${pageSlug}`
-        : `${base}/p/${activeOrg.organization_slug}/${pageSlug}?preview=true`;
-    void navigator.clipboard.writeText(url).then(() => toast.success("Link copied"));
   }
 
   async function onPublishClick() {
@@ -538,35 +549,21 @@ export function StudioWorkspace() {
     const prev = finalHtml;
     undoRef.current = { html: prev };
     try {
-      const res = await import("@/lib/api").then((m) =>
-        m.apiRequest<{ current_html: string }>("/studio/sections/edit", {
-          method: "POST",
-          getToken,
-          activeOrgId: activeOrganizationId,
-          body: JSON.stringify({
-            page_id: pageId,
-            section_id: editSectionId,
-            html: null,
-            instruction: editPrompt.trim() || "Polish this section.",
-            provider: "openai",
-          }),
+      const res = await apiRequest<{ current_html: string }>("/studio/sections/edit", {
+        method: "POST",
+        getToken,
+        activeOrgId: activeOrganizationId,
+        body: JSON.stringify({
+          page_id: pageId,
+          section_id: editSectionId,
+          html: null,
+          instruction: editPrompt.trim() || "Polish this section.",
+          provider: "openai",
         }),
-      );
+      });
       const newFull = res.current_html;
-      const newSec = extractSectionOuterHtml(newFull, editSectionId);
       setFinalHtml(newFull);
       applyIframeHtml(newFull);
-      if (newSec && iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.postMessage(
-          {
-            forgeStudioParent: true,
-            type: "apply-section-html",
-            sectionId: editSectionId,
-            html: newSec,
-          },
-          "*",
-        );
-      }
       setEditOpen(false);
       toast.success("Section updated", {
         action: {
@@ -702,10 +699,10 @@ export function StudioWorkspace() {
             layout
             transition={TRANSITION_PANEL}
             className={cn(
-              "flex min-h-[min(720px,100vh)] w-full flex-1 flex-col gap-0 lg:min-h-[calc(100vh-6rem)] lg:flex-row",
+              "flex min-h-[min(720px,100vh)] w-full flex-1 flex-col-reverse gap-0 lg:min-h-[calc(100vh-6rem)] lg:flex-row",
             )}
           >
-            {/* Chat column */}
+            {/* Chat column (below preview on narrow viewports) */}
             <motion.section
               layout
               transition={TRANSITION_PANEL}
@@ -744,8 +741,10 @@ export function StudioWorkspace() {
                   <Virtuoso
                     className="h-full"
                     data={messages}
-                    itemContent={(_, msg) => <ChatRow msg={msg} orgSlug={activeOrg?.organization_slug ?? ""} />}
                     followOutput="smooth"
+                    itemContent={(_, msg) => (
+                      <ChatRow msg={msg} orgSlug={activeOrg?.organization_slug ?? ""} />
+                    )}
                   />
                 ) : (
                   <div className="h-full overflow-y-auto px-4 py-4">
@@ -845,8 +844,8 @@ export function StudioWorkspace() {
                     <span className="size-2.5 rounded-full bg-emerald-400/80" />
                   </span>
                   <span className="max-w-[min(280px,40vw)] truncate text-[11px] text-text-muted font-body">
-                    {activeOrg?.organization_slug && pageSlug
-                      ? `${window.location.origin}/p/${activeOrg.organization_slug}/${pageSlug}`
+                    {origin && activeOrg?.organization_slug && pageSlug
+                      ? `${origin}/p/${activeOrg.organization_slug}/${pageSlug}`
                       : "Preview URL"}
                   </span>
                 </div>
@@ -895,7 +894,7 @@ export function StudioWorkspace() {
                 />
                 {busy ? (
                   <div
-                    className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 to-transparent"
+                    className="pointer-events-none absolute inset-0 bg-linear-to-b from-white/40 to-transparent"
                     style={{ willChange: "opacity" }}
                   />
                 ) : null}
@@ -903,12 +902,13 @@ export function StudioWorkspace() {
 
               {hoverSection && editMode && hoverRect ? (
                 <div
-                  className="pointer-events-none absolute z-10 rounded-md border-2 border-dashed border-accent"
+                  className="pointer-events-none fixed z-10 rounded-md border-2 border-dashed border-accent"
                   style={{
-                    top: hoverRect.top + window.scrollY - (iframeRef.current?.getBoundingClientRect().top ?? 0) + (iframeRef.current?.offsetTop ?? 0),
-                    left: hoverRect.left + window.scrollX,
+                    top: hoverRect.top,
+                    left: hoverRect.left,
                     width: hoverRect.width,
                     height: hoverRect.height,
+                    willChange: "transform",
                   }}
                 />
               ) : null}
@@ -1000,8 +1000,6 @@ export function StudioWorkspace() {
 }
 
 function ChatRow({ msg, orgSlug }: { msg: StudioChatMsg; orgSlug: string }) {
-  const { getToken } = useAuth();
-  const { activeOrganizationId } = useForgeSession();
   const router = useRouter();
 
   if (msg.kind === "artifact" && msg.artifactMeta) {
@@ -1010,7 +1008,7 @@ function ChatRow({ msg, orgSlug }: { msg: StudioChatMsg; orgSlug: string }) {
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={fadeUp}
+        transition={MOTION_TRANSITIONS.fadeUp}
         className="mb-3"
       >
         <div className="flex gap-2">
@@ -1047,7 +1045,7 @@ function ChatRow({ msg, orgSlug }: { msg: StudioChatMsg; orgSlug: string }) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={fadeUp}
+      transition={MOTION_TRANSITIONS.fadeUp}
       className={cn("mb-3 flex", isUser ? "justify-end" : "justify-start gap-2")}
     >
       {!isUser ? <ForgeLogo size="sm" className="mt-1 shrink-0 opacity-80" /> : null}
@@ -1063,4 +1061,3 @@ function ChatRow({ msg, orgSlug }: { msg: StudioChatMsg; orgSlug: string }) {
   );
 }
 
-const fadeUp = { duration: 0.24, ease: [0.22, 1, 0.36, 1] };

@@ -54,7 +54,7 @@ export function StudioPageArtifactCard({
         </Button>
         <Button type="button" size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={onSaveExit}>
           <LogOut className="size-3.5" />
-          Save &amp; exit
+          Save & exit
         </Button>
         <Button type="button" size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={onCopyLink}>
           <Copy className="size-3.5" />

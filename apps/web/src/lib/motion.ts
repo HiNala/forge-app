@@ -13,10 +13,10 @@ const springEase = [0.34, 1.56, 0.64, 1] as const;
 
 /** Low-level transition objects (Framer Motion `transition` prop). */
 export const MOTION_TRANSITIONS = {
-  fadeIn: { duration: 0.18, ease: easeOut },
-  fadeUp: { duration: 0.24, ease: easeOut },
-  scaleIn: { duration: 0.18, ease: easeOut },
-  crossfade: { duration: 0.3, ease: easeLegacy },
+  fadeIn: { duration: 0.18, ease: easeOut as [number, number, number, number] },
+  fadeUp: { duration: 0.24, ease: easeOut as [number, number, number, number] },
+  scaleIn: { duration: 0.18, ease: easeOut as [number, number, number, number] },
+  crossfade: { duration: 0.3, ease: easeLegacy as [number, number, number, number] },
 } as const;
 
 /** Shorten animations when the user prefers reduced motion. */

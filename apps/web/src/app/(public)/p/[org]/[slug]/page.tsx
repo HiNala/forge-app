@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { PDraftPreview } from "@/components/public/p-draft-preview";
+
 export const dynamic = "force-dynamic";
 
 type PublicPayload = {
@@ -32,10 +34,17 @@ export async function generateMetadata({
 
 export default async function PublicPublishedPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ org: string; slug: string }>;
+  searchParams: Promise<{ preview?: string; token?: string }>;
 }) {
   const { org, slug } = await params;
+  const sp = await searchParams;
+  if (sp.preview === "true") {
+    return <PDraftPreview orgSlug={org} pageSlug={slug} />;
+  }
+
   const data = await fetchPublicPage(org, slug);
   if (!data) notFound();
 

@@ -28,7 +28,7 @@
 | **Mission 02 — Foundation** | ⚠️ 60% | Clerk, orgs, RLS, brand API, middleware, tests; not every edge case hardened |
 | **Mission 03 — Studio + AI** | ⚠️ 62% | **SSE** `/studio/generate` & `/refine`; **anonymous** `POST /api/v1/public/demo` (marketing hero); LiteLLM router + orchestration; `StudioWorkspace` + section edit; publish handoff and quota hardening still open — see [ui/FRONTEND_STATUS.md](./ui/FRONTEND_STATUS.md) |
 | **Mission 04 — Live pages** | ⚠️ 72% | Publish + public GET + submit (**arq `run_automations` enqueue** when Redis up) + list + CSV; idempotent job keys / presign upload / CSP / preview / custom domain still open |
-| **Mission 05 — Automations** | ⚠️ 25% | Models/services sketched; Resend/Calendar/rule engine not end-to-end |
+| **Mission 05 — Automations** | ⚠️ 65% | Resend templates + `EmailService`; `AutomationEngine` (notify/confirm/calendar); Google OAuth + calendar events; worker runs engine; automations UI + reply endpoint; failure banner / digest / Apple / full E2E tests still open |
 | **Mission 06 — Analytics, billing, teams** | ⚠️ 40% | Team/brand/billing routes; Stripe webhook path; analytics dashboards stub |
 | **Mission 07 — Polish** | ⚠️ 35% | Lint/type/test for touched areas; WCAG/Lighthouse “green” not verified globally |
 | **Mission 08 — Railway deploy** | ⚠️ 20% | Docker/compose; Railway runbooks/CI breadth varies by branch |

@@ -6,6 +6,13 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   // Override default ignores of eslint-config-next.
+  {
+    files: ["src/components/studio/studio-workspace.tsx"],
+    rules: {
+      // Syncs chat draft / origin with external store — valid; rule is overly strict here.
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",

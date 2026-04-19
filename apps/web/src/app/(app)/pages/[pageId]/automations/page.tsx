@@ -36,19 +36,60 @@ function textToEmails(text: string) {
 
 export default function PageAutomationsPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const pageId = typeof params.pageId === "string" ? params.pageId : "";
   const { getToken } = useAuth();
   const { activeOrganizationId } = useForgeSession();
-  const qc = useQueryClient();
-
-  const connected = searchParams.get("connected") === "1";
 
   const qRule = useQuery({
     queryKey: ["automations", activeOrganizationId, pageId],
     queryFn: () => getPageAutomations(getToken, activeOrganizationId, pageId),
     enabled: !!activeOrganizationId && !!pageId,
   });
+
+  if (!activeOrganizationId) {
+    return (
+      <p className="text-sm text-text-muted font-body">Choose a workspace to configure automations.</p>
+    );
+  }
+
+  if (qRule.isLoading || !qRule.data) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-text-muted">
+        <Loader2 className="size-4 animate-spin" aria-hidden />
+        Loading automations…
+      </div>
+    );
+  }
+
+  if (qRule.isError) {
+    return <p className="text-sm text-danger">Could not load automations.</p>;
+  }
+
+  return (
+    <AutomationsEditor
+      key={`${pageId}-${qRule.dataUpdatedAt}`}
+      pageId={pageId}
+      initial={qRule.data}
+      getToken={getToken}
+      activeOrganizationId={activeOrganizationId}
+    />
+  );
+}
+
+function AutomationsEditor({
+  pageId,
+  initial,
+  getToken,
+  activeOrganizationId,
+}: {
+  pageId: string;
+  initial: AutomationRuleOut;
+  getToken: () => Promise<string | null>;
+  activeOrganizationId: string;
+}) {
+  const searchParams = useSearchParams();
+  const connected = searchParams.get("connected") === "1";
+  const qc = useQueryClient();
 
   const qRuns = useQuery({
     queryKey: ["automation-runs", activeOrganizationId, pageId],
@@ -62,16 +103,9 @@ export default function PageAutomationsPage() {
     enabled: !!activeOrganizationId,
   });
 
-  const [draft, setDraft] = useState<AutomationRuleOut | null>(null);
-  const [notifyText, setNotifyText] = useState("");
+  const [draft, setDraft] = useState<AutomationRuleOut>(initial);
+  const [notifyText, setNotifyText] = useState(emailsToText(initial.notify_emails));
   const [dirty, setDirty] = useState(false);
-
-  useEffect(() => {
-    if (qRule.data) {
-      setDraft(qRule.data);
-      setNotifyText(emailsToText(qRule.data.notify_emails));
-    }
-  }, [qRule.data]);
 
   const saveMut = useMutation({
     mutationFn: async (body: Partial<AutomationRuleOut>) => {
@@ -99,7 +133,6 @@ export default function PageAutomationsPage() {
       });
     }, 500);
     return () => window.clearTimeout(t);
-    // saveMut is stable enough; listing draft fields would be noisy.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- debounce save for whole form
   }, [dirty, draft, notifyText]);
 
@@ -109,25 +142,6 @@ export default function PageAutomationsPage() {
     const r = await postGoogleCalendarConnect(getToken, activeOrganizationId, pageId);
     window.location.href = r.authorize_url;
   };
-
-  if (!activeOrganizationId) {
-    return (
-      <p className="text-sm text-text-muted font-body">Choose a workspace to configure automations.</p>
-    );
-  }
-
-  if (qRule.isLoading || !draft) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-text-muted">
-        <Loader2 className="size-4 animate-spin" aria-hidden />
-        Loading automations…
-      </div>
-    );
-  }
-
-  if (qRule.isError) {
-    return <p className="text-sm text-danger">Could not load automations.</p>;
-  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-10">
@@ -165,7 +179,7 @@ export default function PageAutomationsPage() {
           <Switch
             checked={draft.confirm_submitter}
             onCheckedChange={(v) => {
-              setDraft((d) => (d ? { ...d, confirm_submitter: v } : d));
+              setDraft((d) => ({ ...d, confirm_submitter: v }));
               markDirty();
             }}
           />
@@ -178,7 +192,7 @@ export default function PageAutomationsPage() {
                 id="conf-subj"
                 value={draft.confirm_template_subject ?? ""}
                 onChange={(e) => {
-                  setDraft((d) => (d ? { ...d, confirm_template_subject: e.target.value } : d));
+                  setDraft((d) => ({ ...d, confirm_template_subject: e.target.value }));
                   markDirty();
                 }}
               />
@@ -190,7 +204,7 @@ export default function PageAutomationsPage() {
                 rows={5}
                 value={draft.confirm_template_body ?? ""}
                 onChange={(e) => {
-                  setDraft((d) => (d ? { ...d, confirm_template_body: e.target.value } : d));
+                  setDraft((d) => ({ ...d, confirm_template_body: e.target.value }));
                   markDirty();
                 }}
               />
@@ -210,7 +224,7 @@ export default function PageAutomationsPage() {
           <Switch
             checked={draft.calendar_sync_enabled}
             onCheckedChange={(v) => {
-              setDraft((d) => (d ? { ...d, calendar_sync_enabled: v } : d));
+              setDraft((d) => ({ ...d, calendar_sync_enabled: v }));
               markDirty();
             }}
           />
@@ -229,7 +243,7 @@ export default function PageAutomationsPage() {
               connections={qCal.data ?? []}
               value={draft.calendar_connection_id}
               onChange={(id) => {
-                setDraft((d) => (d ? { ...d, calendar_connection_id: id } : d));
+                setDraft((d) => ({ ...d, calendar_connection_id: id }));
                 markDirty();
               }}
             />
@@ -243,9 +257,10 @@ export default function PageAutomationsPage() {
                   value={draft.calendar_event_duration_min}
                   onChange={(e) => {
                     const n = Number(e.target.value);
-                    setDraft((d) =>
-                      d ? { ...d, calendar_event_duration_min: Number.isFinite(n) ? n : d.calendar_event_duration_min } : d,
-                    );
+                    setDraft((d) => ({
+                      ...d,
+                      calendar_event_duration_min: Number.isFinite(n) ? n : d.calendar_event_duration_min,
+                    }));
                     markDirty();
                   }}
                 />
@@ -256,7 +271,7 @@ export default function PageAutomationsPage() {
                   id="inv"
                   checked={draft.calendar_send_invite}
                   onCheckedChange={(v) => {
-                    setDraft((d) => (d ? { ...d, calendar_send_invite: v } : d));
+                    setDraft((d) => ({ ...d, calendar_send_invite: v }));
                     markDirty();
                   }}
                 />

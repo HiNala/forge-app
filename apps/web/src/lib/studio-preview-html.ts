@@ -45,7 +45,11 @@ export function parseSectionIds(html: string): string[] {
 export function extractSectionOuterHtml(full: string, sectionId: string): string | null {
   try {
     const doc = new DOMParser().parseFromString(full, "text/html");
-    const el = doc.querySelector(`[data-forge-section="${CSS.escape(sectionId)}"]`);
+    const safe =
+      typeof CSS !== "undefined" && typeof CSS.escape === "function"
+        ? CSS.escape(sectionId)
+        : sectionId.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    const el = doc.querySelector(`[data-forge-section="${safe}"]`);
     return el?.outerHTML ?? null;
   } catch {
     return null;
