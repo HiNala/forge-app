@@ -12,40 +12,45 @@ export const metadata: Metadata = {
 export default function WorkflowContactFormPage() {
   return (
     <Container max="lg" className="py-16 sm:py-24">
-      <p className="text-sm font-medium uppercase tracking-wide text-accent font-body">Workflow</p>
-      <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-text sm:text-5xl">
-        Stop phone tag with customers.
+      <span className="section-label mb-4">Contact &amp; booking</span>
+      <h1 className="mt-3 font-display text-[clamp(40px,6vw,72px)] font-bold leading-[0.95] tracking-tight text-text">
+        Stop phone tag
+        <br />
+        <span className="text-accent">with customers.</span>
       </h1>
-      <p className="mt-4 max-w-[60ch] text-lg text-text-muted font-body">
+      <p className="mt-5 max-w-[60ch] font-body text-lg font-light leading-relaxed text-text-muted">
         Describe the fields you need — Forge generates a hosted, on-brand page. Connect calendars in Settings
         so bookings land where you already work.
       </p>
-      <ul className="mt-8 list-disc space-y-2 pl-5 text-text font-body">
-        <li>Lead capture tuned to your business</li>
-        <li>Optional pick-a-time scheduling</li>
-        <li>Submissions and analytics in one dashboard</li>
+      <ul className="mt-8 space-y-2 font-body text-sm text-text">
+        {["Lead capture tuned to your business", "Optional pick-a-time scheduling", "Submissions and analytics in one dashboard"].map((item) => (
+          <li key={item} className="flex items-center gap-2">
+            <span className="size-1.5 rounded-full bg-accent shrink-0" aria-hidden />
+            {item}
+          </li>
+        ))}
       </ul>
       <div className="mt-10 flex flex-wrap gap-3">
         <Link
           href="/signup?workflow=contact_form"
-          className="inline-flex rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white shadow-sm"
+          className="inline-flex min-h-11 items-center rounded-xl bg-text px-6 py-3 font-body text-sm font-semibold text-bg transition-opacity hover:opacity-80"
         >
-          Start free
+          Start free →
         </Link>
-        <Link href="/templates?q=contact" className="text-sm font-medium text-accent underline-offset-4 hover:underline">
+        <Link href="/templates?q=contact" className="inline-flex min-h-11 items-center font-body text-sm font-medium text-text-muted underline-offset-4 hover:underline">
           Browse templates
         </Link>
       </div>
       <section className="mt-16 border-t border-border pt-12">
-        <h2 className="font-display text-2xl font-semibold text-text">FAQ</h2>
-        <dl className="mt-6 space-y-4 text-sm text-text-muted font-body">
-          <div>
-            <dt className="font-medium text-text">Do I need a separate booking tool?</dt>
-            <dd className="mt-1">Forge focuses on the page and hand-off; calendar sync uses your connected provider.</dd>
+        <h2 className="font-display text-2xl font-bold text-text">Frequently asked</h2>
+        <dl className="mt-6 divide-y divide-border">
+          <div className="py-4">
+            <dt className="font-body text-sm font-semibold text-text">Do I need a separate booking tool?</dt>
+            <dd className="mt-1.5 font-body text-sm font-light text-text-muted">Forge focuses on the page and hand-off; calendar sync uses your connected provider.</dd>
           </div>
-          <div>
-            <dt className="font-medium text-text">Can I change the form later?</dt>
-            <dd className="mt-1">Yes — open the page in Studio and refine with plain language.</dd>
+          <div className="py-4">
+            <dt className="font-body text-sm font-semibold text-text">Can I change the form later?</dt>
+            <dd className="mt-1.5 font-body text-sm font-light text-text-muted">Yes — open the page in Studio and refine with plain language.</dd>
           </div>
         </dl>
       </section>

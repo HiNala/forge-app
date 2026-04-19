@@ -374,15 +374,16 @@ export function SubmissionsPanel() {
       {listQ.isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-12 animate-pulse rounded-md bg-bg-elevated" />
+            <div key={i} className="h-12 animate-pulse rounded-xl bg-bg-elevated" />
           ))}
         </div>
       ) : rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border px-6 py-12 text-center text-sm text-text-muted font-body">
-          No submissions yet. Share your live page to collect responses.
-        </p>
+        <div className="rounded-2xl border border-dashed border-border px-6 py-12 text-center">
+          <p className="font-body text-sm text-text-muted">No submissions yet.</p>
+          <p className="mt-1 font-body text-xs text-text-subtle">Share your live page to collect responses.</p>
+        </div>
       ) : (
-        <div className="overflow-hidden rounded-[10px] border border-border">
+        <div className="overflow-hidden rounded-2xl border border-border">
           <table className="w-full text-left text-sm font-body">
             <thead className="border-b border-border bg-bg-elevated text-xs uppercase tracking-wide text-text-muted">
               <tr>

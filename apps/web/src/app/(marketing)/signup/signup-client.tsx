@@ -52,13 +52,19 @@ export function SignupClient() {
         appearance={{
           elements: {
             rootBox: "mx-auto w-full",
-            card: "shadow-lg border border-border bg-surface rounded-[10px]",
-            headerTitle: "font-display",
+            card: "shadow-none border border-border bg-surface rounded-2xl",
+            headerTitle: "font-display text-lg font-bold tracking-tight",
+            headerSubtitle: "font-body text-sm text-text-muted",
             formButtonPrimary:
-              "bg-accent hover:bg-accent/90 text-sm font-medium shadow-sm",
-            footerActionLink: "text-accent font-medium",
+              "bg-text text-bg hover:opacity-80 text-sm font-semibold rounded-xl shadow-none transition-opacity",
+            footerActionLink: "text-text font-semibold underline-offset-4 hover:underline",
             formFieldInput:
-              "rounded-md border-border focus:ring-accent-mid focus:border-accent",
+              "rounded-xl border-border bg-bg font-body text-sm focus:ring-2 focus:ring-text/20 focus:border-text/40",
+            formFieldLabel: "font-body text-sm font-medium text-text",
+            socialButtonsBlockButton:
+              "rounded-xl border border-border font-body text-sm hover:bg-bg-elevated transition-colors",
+            dividerLine: "bg-border",
+            dividerText: "font-body text-xs text-text-subtle",
           },
         }}
         signInUrl="/signin"
