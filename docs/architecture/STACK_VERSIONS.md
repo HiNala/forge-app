@@ -1,6 +1,6 @@
 # Stack Version Lock — Forge
 
-**Locked:** 2026-04-19
+**Locked:** 2026-04-18 (Mission 00 verification pass)
 **Author:** Forge Engineering
 
 ## Purpose
@@ -11,10 +11,10 @@ This document pins every dependency version for Forge. All agents and engineers 
 | Package | Version | Notes |
 |---------|---------|-------|
 | Next.js | 16.2.4 | App Router, Turbopack default, Cache Components |
-| React | 19.2.0 | React Compiler stable, RSC stable |
+| React | 19.2.4 | Matches `apps/web`; React Compiler stable |
 | TypeScript | 5.7.x | Strict mode enabled |
 | Tailwind CSS | 4.1.x | CSS-first config, `@theme` directive |
-| @clerk/nextjs | latest | Org support, JWT auth |
+| @clerk/nextjs | 7.2.3 | Org support, JWT auth (add at Mission 02) |
 | @tanstack/react-query | 5.75.x | Server state, SSR hydration |
 | zustand | 5.0.x | Client UI state |
 | zod | 3.24.x | Runtime validation |
@@ -37,7 +37,7 @@ This document pins every dependency version for Forge. All agents and engineers 
 | Alembic | 1.14.x | Async migrations |
 | Pydantic | 2.10.x | v2 API |
 | pydantic-settings | 2.7.x | .env loading |
-| LiteLLM | 1.83.7 | LLM abstraction (pin exact) |
+| LiteLLM | 1.83.10 | LLM abstraction (pin exact; avoid 1.82.7–1.82.8) |
 | arq | 0.28.0 | Background jobs |
 | redis | 5.2.x | Async Redis client |
 | httpx | 0.28.x | Async HTTP client |

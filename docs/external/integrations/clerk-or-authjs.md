@@ -1,7 +1,22 @@
-# Clerk — Authentication — Reference for Forge
+# Clerk vs Auth.js — Reference for Forge
 
-**Version:** @clerk/nextjs latest
-**Last researched:** 2026-04-19
+**Version:** `@clerk/nextjs` 7.2.3 (npm latest stable at research; pin in `apps/web/package.json` when Clerk is added)
+**Last researched:** 2026-04-18
+
+## Decision (ADR-002)
+
+Forge uses **Clerk** (`@clerk/nextjs`) for authentication and **Organizations** for multi-tenant membership. **Auth.js v5** was evaluated and rejected for v1 launch velocity reasons (see below).
+
+## Why Not Auth.js v5?
+
+| Factor | Clerk | Auth.js v5 |
+|--------|--------|------------|
+| Organizations / RBAC | First-class Organizations product | Build custom tables + session claims |
+| Prebuilt UI | Sign-in/up components | More DIY |
+| Webhooks | Svix-backed delivery | You wire providers yourself |
+| Our timeline | Days to integrate | Weeks for org switcher + invites + RBAC parity |
+
+Auth.js remains viable if we ever need to minimize vendor cost at very large MAU; revisit via ADR if requirements change.
 
 ## What Forge Uses
 
@@ -10,7 +25,7 @@ Clerk for authentication per ADR-002. Handles: email + password signup, Google S
 ## Frontend Setup
 
 ```bash
-pnpm add @clerk/nextjs
+pnpm add @clerk/nextjs@7.2.3
 ```
 
 ```typescript
@@ -27,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 
 ```typescript
-// proxy.ts (replaces middleware.ts in Next.js 16)
+// proxy.ts (Next.js 16 request layer; see nextjs-16-app-router.md)
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 const isProtectedRoute = createRouteMatcher(['/app(.*)', '/api/v1(.*)']);
@@ -130,9 +145,11 @@ function useSession() {
 1. **Sync user to DB**: Clerk is the auth provider, but our DB is the source of truth for business logic. Always sync via webhook.
 2. **JWKS caching**: Cache the JWKS response. Don't fetch on every request.
 3. **Webhook verification**: Use the Svix SDK for signature verification. Don't skip this.
-4. **Organization support**: May require the "Organizations" feature to be enabled in Clerk dashboard.
+4. **Organization support**: Enable Organizations in the Clerk dashboard for Forge’s tenant model.
 
 ## Links
+
 - [Clerk Next.js Docs](https://clerk.com/docs/quickstarts/nextjs)
 - [Backend JWT Verification](https://clerk.com/docs/backend-requests/handling/manual-jwt)
 - [Webhooks](https://clerk.com/docs/integrations/webhooks)
+- [Auth.js](https://authjs.dev/) (not selected for v1 — reference only)

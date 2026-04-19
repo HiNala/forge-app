@@ -1,19 +1,30 @@
-# LiteLLM — LLM Provider Abstraction — Reference for Forge
+# LiteLLM vs Custom Adapter — Reference for Forge
 
-**Version:** 1.83.7
-**Last researched:** 2026-04-19
+**Version:** LiteLLM 1.83.10 (PyPI latest stable at research; pin `litellm==1.83.10` in `uv.lock`)
+**Last researched:** 2026-04-18
+
+## Decision (ADR-003)
+
+Forge uses the **LiteLLM** Python SDK as the unified caller for OpenAI, Anthropic, and Google Gemini. We wrap it in our own thin `LLMProvider` facade for tenant-scoped metering and tests.
+
+**Rejected alternatives:**
+
+- **Hand-rolled per-provider HTTP clients** — highest maintenance as provider APIs drift; no normalized streaming or cost helpers.
+- **Bifrost** — smaller ecosystem and fewer production references at Forge’s target launch window; LiteLLM’s `acompletion` + provider strings match our router needs.
+- **LiteLLM Proxy server** — not used; Forge calls the SDK from FastAPI directly (simpler ops, one fewer network hop).
 
 ## What Forge Uses
 
-LiteLLM as the unified interface for calling OpenAI, Anthropic, and Google Gemini. Chosen per ADR-003. Used as SDK (not proxy mode).
+LiteLLM as the unified interface for calling OpenAI, Anthropic, and Google Gemini. Used as **SDK only** (not proxy mode). See `docs/architecture/DECISIONS.md` ADR-003.
 
 ## Setup
 
 ```bash
-uv add litellm
+uv add "litellm==1.83.10"
 ```
 
 Environment variables:
+
 ```env
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
@@ -143,16 +154,17 @@ async def generate_with_fallback(messages, tier="heavy"):
 
 ## Security Note
 
-LiteLLM had a supply chain compromise in March 2026 (versions 1.82.7-1.82.8). We pin to 1.83.7+ and verify checksums. Monitor for advisories.
+Avoid compromised versions from the March 2026 supply-chain incident: **do not use** `1.82.7` or `1.82.8`. Pin a known-good release (e.g. `1.83.10`), verify hashes in CI, and monitor GitHub advisories.
 
 ## Known Pitfalls
 
-1. **Pin version carefully**: Due to the March 2026 incident, always verify the version integrity.
-2. **Streaming + JSON mode incompatible**: Can't use `response_format=json_object` with `stream=True`.
+1. **Pin version carefully**: Always verify package integrity after any bump.
+2. **Streaming + JSON mode incompatible**: Cannot use `response_format=json_object` with `stream=True`.
 3. **Cost tracking**: `cost_per_token()` returns floats in dollars. Multiply by 100 for cents.
 4. **Model names differ**: OpenAI uses `gpt-4o`, Anthropic needs `anthropic/` prefix, Gemini needs `gemini/` prefix.
 
 ## Links
+
 - [LiteLLM Docs](https://docs.litellm.ai/)
 - [Supported Models](https://docs.litellm.ai/docs/providers)
 - [Streaming](https://docs.litellm.ai/docs/completion/stream)

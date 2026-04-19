@@ -1,7 +1,7 @@
 # React 19 — Reference for Forge
 
-**Version:** 19.2.0
-**Last researched:** 2026-04-19
+**Version:** 19.2.4 (pinned in `apps/web`; npm `latest` was 19.2.5 at research time)
+**Last researched:** 2026-04-18
 
 ## What Forge Uses
 
