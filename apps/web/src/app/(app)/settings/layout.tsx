@@ -20,31 +20,36 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const pathname = usePathname();
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-3xl">
+      {/* Settings section label */}
+      <p className="section-label mb-3">Settings</p>
+
+      {/* Tab navigation */}
       <nav
-        className="-mx-4 mb-8 flex gap-0 overflow-x-auto border-b border-border px-4 scrollbar-thin sm:mx-0 sm:px-0"
+        className="-mx-1 mb-10 overflow-x-auto"
         aria-label="Settings sections"
       >
-        <ul className="flex min-w-max gap-1">
+        <ul className="flex min-w-max gap-0.5 border-b border-border pb-px">
           {TABS.map((tab) => {
-            const active =
-              pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+            const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
             return (
               <li key={tab.href}>
                 <Link
                   href={tab.href}
                   className={cn(
-                    "relative inline-flex items-center rounded-t-md px-3 py-2.5 text-sm font-medium font-body whitespace-nowrap transition-colors",
-                    active ? "text-text" : "text-text-muted hover:text-text",
+                    "relative inline-flex min-h-10 items-center px-3.5 py-2 font-body text-sm font-medium whitespace-nowrap transition-colors duration-100",
+                    active
+                      ? "text-text"
+                      : "text-text-muted hover:text-text focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
                   )}
                 >
-                  {active ? (
+                  {active && (
                     <motion.span
                       layoutId="settings-tab-indicator"
-                      className="absolute inset-x-1 -bottom-px h-0.5 rounded-full bg-accent"
-                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                      className="absolute inset-x-1 -bottom-px h-0.5 rounded-full bg-text"
+                      transition={{ type: "spring", stiffness: 420, damping: 35 }}
                     />
-                  ) : null}
+                  )}
                   <span className="relative z-10">{tab.label}</span>
                 </Link>
               </li>
@@ -52,11 +57,13 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
           })}
         </ul>
       </nav>
+
+      {/* Page content with fade transition */}
       <motion.div
         key={pathname}
-        initial={{ opacity: 0.88 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
       >
         {children}
       </motion.div>
