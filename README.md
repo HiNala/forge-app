@@ -9,12 +9,27 @@ Forge turns a plain-English prompt into a finished, hosted, single-purpose web p
 git clone https://github.com/HiNala/forge-app.git
 cd forge-app
 cp .env.example .env
+# Add Clerk keys (see .env.example) for sign-in; optional: Resend + S3 for invites/logo.
 docker compose up --build -d
 ```
 
 - **Frontend:** http://localhost:3000
 - **Backend API:** http://localhost:8000
 - **API Docs:** http://localhost:8000/docs
+
+### Signup → onboarding → brand (Mission 02)
+
+1. **Sign up** with Clerk (`/signup`); the app calls `POST /api/v1/auth/signup` to create the Forge `User`, default **Organization**, and **Owner** membership.
+2. Complete **onboarding** (`/onboarding`) for workspace name and initial brand hints (skippable).
+3. Adjust **brand** under **Settings → Brand** (`/settings/brand`); the API persists `BrandKit` and optional logo to MinIO/S3.
+
+The browser sends **`Authorization: Bearer`** (Clerk JWT) and **`x-forge-active-org-id`** on API calls; Postgres **RLS** enforces tenant isolation. See `docs/runbooks/TENANT_ISOLATION.md`.
+
+### Studio (Mission 03)
+
+1. Open **Studio** (`/studio`), enter a prompt (or use a chip), and **Generate**.
+2. The API streams **SSE** events (`intent` → `html.chunk` → `html.complete`) while composing sections from the template library; the preview updates in an **iframe**.
+3. **Refine** with follow-up messages, or use **Edit mode** to target a section by `data-forge-section` id. Set **`OPENAI_API_KEY`** (or other provider keys) in `.env` for live LLM calls.
 
 ## Tech Stack
 

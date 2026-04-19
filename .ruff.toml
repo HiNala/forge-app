@@ -1,17 +1,16 @@
-[tool.ruff]
 line-length = 100
 target-version = "py312"
 
-[tool.ruff.lint]
+[lint]
 select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "C",  # flake8-comprehensions
-    "B",  # flake8-bugbear
-    "UP", # pyupgrade
+    "E",
+    "W",
+    "F",
+    "I",
+    "C",
+    "B",
+    "UP",
 ]
 ignore = [
-    "B008",  # do not perform function calls in argument defaults (acceptable for FastAPI Depends)
+    "B008",
 ]

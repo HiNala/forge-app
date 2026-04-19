@@ -1,5 +1,3 @@
-// Auth utilities (Delegates to chosen provider later)
-export const getSession = () => {
-    // Stub implementation
-    return null;
-}
+"use client";
+
+export { useForgeSession as useSession } from "@/providers/session-provider";

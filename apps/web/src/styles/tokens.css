@@ -1,0 +1,158 @@
+/**
+ * Forge design tokens — single source of truth (Mission FE-01).
+ * All colors use OKLCH. App components consume Tailwind-mapped utilities (bg-bg, text-text, …)
+ * backed by these variables via `globals.css` @theme.
+ *
+ * Upstream: reconcile variable names when `docs/design/raw/artifact` is available.
+ */
+
+:root {
+  /* —— Color (semantic, OKLCH) —— */
+  --color-bg: oklch(97.2% 0.006 88);
+  --color-bg-elevated: oklch(94.2% 0.01 88);
+  --color-surface: oklch(100% 0 0);
+  --color-surface-dark: oklch(15.5% 0.012 75);
+
+  --color-text: oklch(22% 0.018 75);
+  --color-text-muted: oklch(42% 0.02 75);
+  --color-text-subtle: oklch(54% 0.022 72);
+
+  --color-border: oklch(90% 0.012 88);
+  --color-border-strong: oklch(82% 0.018 85);
+
+  --color-accent: oklch(50% 0.15 192);
+  --color-accent-hover: oklch(45% 0.15 192);
+  --color-accent-light: color-mix(in oklch, var(--color-accent) 10%, transparent);
+  --color-accent-mid: color-mix(in oklch, var(--color-accent) 20%, transparent);
+  --color-accent-bold: color-mix(in oklch, var(--color-accent) 32%, transparent);
+
+  --color-success: oklch(52% 0.12 155);
+  --color-warning: oklch(72% 0.14 85);
+  --color-danger: oklch(52% 0.18 25);
+
+  /* —— Typography scale (rem, ~1.25 modular) —— */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* —— Spacing (4px baseline) —— */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* —— Radius —— */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
+  /* —— Shadow (warm-neutral; slight chroma via oklch ink) —— */
+  --shadow-sm: 0 1px 2px color-mix(in oklch, oklch(25% 0.02 80) 8%, transparent);
+  --shadow-md: 0 4px 16px color-mix(in oklch, oklch(25% 0.02 80) 10%, transparent);
+  --shadow-lg: 0 12px 40px color-mix(in oklch, oklch(22% 0.02 80) 14%, transparent);
+  --shadow-xl: 0 20px 50px color-mix(in oklch, oklch(20% 0.02 80) 18%, transparent);
+  --shadow-2xl: 0 25px 60px color-mix(in oklch, oklch(18% 0.02 80) 22%, transparent);
+
+  /* —— Motion —— */
+  --duration-instant: 100ms;
+  --duration-fast: 180ms;
+  --duration-base: 240ms;
+  --duration-slow: 400ms;
+  --duration-slower: 600ms;
+
+  --ease-linear: linear;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* legacy alias used across app chrome */
+  --ease-legacy-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* —— Z-index —— */
+  --z-base: 0;
+  --z-dropdown: 50;
+  --z-sticky: 40;
+  --z-overlay: 80;
+  --z-modal: 100;
+  --z-toast: 110;
+  --z-max: 9999;
+
+  /* —— Border width —— */
+  --border-width: 1.5px;
+
+  /*
+   * Breakpoints (Tailwind defaults; document only — media queries use px in CSS files):
+   * sm 640px | md 768px | lg 1024px | xl 1280px | 2xl 1536px
+   */
+
+  /* —— Legacy aliases (same tokens; existing components reference these names) —— */
+  --bg: var(--color-bg);
+  --bg-elevated: var(--color-bg-elevated);
+  --surface: var(--color-surface);
+  --surface-dark: var(--color-surface-dark);
+  --text: var(--color-text);
+  --text-muted: var(--color-text-muted);
+  --text-subtle: var(--color-text-subtle);
+  --border: var(--color-border);
+  --border-strong: var(--color-border-strong);
+  --accent: var(--color-accent);
+  --accent-light: var(--color-accent-light);
+  --accent-mid: var(--color-accent-mid);
+  --accent-bold: var(--color-accent-bold);
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --danger: var(--color-danger);
+}
+
+/* Studio / split-panel dark scope — opt-in via `.dark` on subtree */
+.dark {
+  --color-bg: oklch(15.5% 0.012 75);
+  --color-bg-elevated: oklch(19% 0.015 72);
+  --color-surface: oklch(19% 0.015 72);
+  --color-surface-dark: oklch(15.5% 0.012 75);
+
+  --color-text: oklch(96% 0.012 85);
+  --color-text-muted: oklch(78% 0.02 82);
+  --color-text-subtle: oklch(62% 0.02 78);
+
+  --color-border: oklch(30% 0.02 72);
+  --color-border-strong: oklch(38% 0.022 70);
+
+  --color-accent-light: color-mix(in oklch, var(--color-accent) 14%, transparent);
+  --color-accent-mid: color-mix(in oklch, var(--color-accent) 26%, transparent);
+  --color-accent-bold: color-mix(in oklch, var(--color-accent) 38%, transparent);
+
+  --shadow-sm: 0 1px 2px color-mix(in oklch, oklch(8% 0.02 80) 45%, transparent);
+  --shadow-md: 0 4px 16px color-mix(in oklch, oklch(6% 0.02 80) 55%, transparent);
+  --shadow-lg: 0 12px 40px color-mix(in oklch, oklch(5% 0.02 80) 65%, transparent);
+  --shadow-xl: 0 20px 50px color-mix(in oklch, oklch(5% 0.02 80) 70%, transparent);
+  --shadow-2xl: 0 25px 60px color-mix(in oklch, oklch(4% 0.02 80) 75%, transparent);
+}

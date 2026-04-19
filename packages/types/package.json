@@ -1,0 +1,13 @@
+{
+  "name": "@forge/types",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "openapi-typescript http://127.0.0.1:8000/openapi.json -o ./src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.8.0"
+  }
+}

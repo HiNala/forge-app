@@ -1,0 +1,14 @@
+{
+  "name": "@forge/eslint-config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.js"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "eslint-config-next": "16.2.4",
+    "typescript": "^5.8.0"
+  }
+}

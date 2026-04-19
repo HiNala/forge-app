@@ -147,3 +147,24 @@ These feed the `subscription_usage` table and Sentry/PostHog for operational vis
 | Pro | 20 | 100 | $0.70 |
 
 Well within the PRD target of < $0.50/tenant/month for free-tier users.
+
+---
+
+## Implementation (Mission 03 — shipped)
+
+- **Router:** All chat completions go through `app/services.ai.router.completion_text` using **LiteLLM** (`acompletion`) with a per-task model chain, env overrides (`LLM_MODEL_*`, `LLM_FALLBACK_MODELS`), and optional `LLM_DEFAULT_PROVIDER`. This satisfies provider switching via **keys** without code changes.
+- **Usage:** Each call can record tokens + rough `cost_cents` into `subscription_usage` for the org’s calendar month (`app/services/ai/usage.py`). In-memory metrics for ops: `app/services/ai/metrics.py` + `GET /api/v1/admin/llm-stats`.
+- **Structured logs:** Successful completions emit one JSON line per call (`event: llm_call`) when `LLM_LOG_METRICS` is true.
+- **Pipeline:** `stream_page_generation` emits SSE: `intent` → `html.start` → `html.chunk` (per section fragment) → `html.complete` | `error`. Sections use `data-forge-section="{component}-{index}"` for splicing. `apply_plan_constraints` injects `form-vertical` for booking-style intents and `proposal-accept-decline` for proposals when missing.
+- **Validator:** Regex/tolerant checks in `html_validate.py` (document shell, viewport, no scripts, form `action` contains `/p/.../submit`).
+- **Studio API:** `POST /studio/generate`, `/studio/refine` (SSE), `/studio/sections/edit`, conversation CRUD, `GET /studio/usage`. **Quota:** `402` with `{code: quota_exceeded, upgrade_url}` before streaming when monthly `pages_generated` exceeds plan limit. **Rate limit:** Redis `forge:rl:studio_gen:{user_id}:{minute}` — 5/min trial, 30/min pro (skipped if Redis unavailable, same pattern as team invites).
+
+### Troubleshooting
+
+| Symptom | Check |
+|--------|--------|
+| 401 on Studio | Clerk JWT + `x-forge-active-org-id` on the client. |
+| 402 quota | `subscription_usage.pages_generated` vs `PAGE_GENERATION_QUOTA_*` / org `plan`. |
+| 429 rate limit | Redis key TTL; raise `STUDIO_GENERATE_PER_MINUTE_*` in dev only if needed. |
+| Empty intent / fallback page | Missing `OPENAI_API_KEY` (or other provider keys); intent parser falls back to `PageIntent` defaults. |
+| Section edit no-op | `section_id` must match `data-forge-section` in stored HTML (e.g. `hero-centered-0`). |
