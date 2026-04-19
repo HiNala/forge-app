@@ -403,7 +403,10 @@ _PUBLIC_SLIDE_SCRIPT = """
     { passive: true }
   );
 
+  var presentEndedSent = false;
   function endPresent(reason) {
+    if (!present || presentEndedSent) return;
+    presentEndedSent = true;
     track("present_ended", { reason: reason || "unknown" });
   }
 
