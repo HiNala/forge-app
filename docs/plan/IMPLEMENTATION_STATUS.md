@@ -72,6 +72,7 @@
 
 ### [05 — Foundation](./05_MISSION_02_FOUNDATION.md)
 - RLS policies ✅ (with ongoing verification)
+- **BI-02 pipeline:** middleware order, unified errors, Sentry, OpenAPI codegen — see `docs/architecture/REQUEST_PIPELINE.md`, `docs/plan/MISSION_BI_02_REPORT.md` ✅
 - **Partitioning:** `submissions` / `analytics_events` via pg_partman; retention on analytics partitions ✅ (see `docs/architecture/PARTITIONING.md`)
 - Tenant header + session ✅
 - Brand kit CRUD ✅

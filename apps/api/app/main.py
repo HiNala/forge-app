@@ -7,10 +7,13 @@ import redis.asyncio as redis
 from arq import create_pool
 from arq.connections import RedisSettings
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -20,7 +23,16 @@ from app.api.public_proposal import router as public_proposal_router
 from app.api.v1 import api_router
 from app.config import settings
 from app.core.errors import ForgeError
+from app.core.exception_handlers import (
+    forge_error_handler,
+    forge_http_exception_handler,
+    integrity_error_handler,
+    payload_too_large_handler,
+    request_validation_handler,
+    unhandled_exception_handler,
+)
 from app.core.logging import configure_logging
+from app.core.sentry import init_sentry
 from app.db.session import AsyncSessionLocal, engine
 from app.middleware import (
     BodySizeLimitMiddleware,
@@ -28,8 +40,10 @@ from app.middleware import (
     RequestContextMiddleware,
     TenantMiddleware,
 )
+from app.middleware.body_size_limit import PayloadTooLarge
 
 configure_logging()
+init_sentry()
 logger = logging.getLogger(__name__)
 
 
@@ -79,12 +93,15 @@ app = FastAPI(
     lifespan=lifespan,
     contact={"name": "Forge", "url": settings.APP_PUBLIC_URL},
     license_info={"name": "Proprietary"},
+    servers=[
+        {"url": settings.API_BASE_URL, "description": settings.ENVIRONMENT},
+    ],
 )
 
-# Last ``add_middleware`` runs first on ingress (Starlette). Order: RequestContext → … → CORS → app.
+# Last ``add_middleware`` wraps outermost (first to see the request). See ``docs/architecture/REQUEST_PIPELINE.md``.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+    allow_origins=settings.effective_cors_origins(),
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=[
@@ -95,29 +112,24 @@ app.add_middleware(
         "x-forge-tenant-id",
         "x-active-org",
         "x-forge-test-user-id",
+        "x-forwarded-for",
     ],
     expose_headers=["X-Request-ID"],
 )
-app.add_middleware(RateLimitMiddleware)
 app.add_middleware(TenantMiddleware)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=_trusted_hosts())
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(BodySizeLimitMiddleware)
 app.add_middleware(RequestContextMiddleware)
 
 
-@app.exception_handler(ForgeError)
-async def forge_exception_handler(request: Request, exc: ForgeError) -> JSONResponse:
-    rid = getattr(request.state, "request_id", None)
-    return JSONResponse(
-        status_code=exc.http_status,
-        content={
-            "code": exc.code,
-            "message": exc.message,
-            "extra": exc.extra,
-            "request_id": rid,
-        },
-    )
+app.add_exception_handler(ForgeError, forge_error_handler)
+app.add_exception_handler(StarletteHTTPException, forge_http_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(RequestValidationError, request_validation_handler)  # type: ignore[arg-type]
+app.add_exception_handler(IntegrityError, integrity_error_handler)  # type: ignore[arg-type]
+app.add_exception_handler(PayloadTooLarge, payload_too_large_handler)
+app.add_exception_handler(Exception, unhandled_exception_handler)
 
 
 @app.get("/metrics")

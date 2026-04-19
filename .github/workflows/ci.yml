@@ -23,6 +23,9 @@ jobs:
         run: pnpm --filter web lint
       - name: Typecheck web
         run: pnpm --filter web typecheck
+      - name: OpenAPI TypeScript drift check
+        run: |
+          cd apps/web && pnpm exec openapi-typescript ../api/openapi.json -o /tmp/schema.gen.ts && diff -q src/lib/api/schema.gen.ts /tmp/schema.gen.ts
 
   test-api:
     runs-on: ubuntu-latest
@@ -59,6 +62,9 @@ jobs:
         run: cd apps/api && uv run ruff check .
       - name: Mypy check
         run: cd apps/api && uv run mypy app
+      - name: OpenAPI JSON drift check
+        run: |
+          cd apps/api && uv run python scripts/export_openapi.py /tmp/openapi.json && diff -q openapi.json /tmp/openapi.json
       - name: Pytest
         run: cd apps/api && uv run pytest
       - name: Alembic round-trip (downgrade base → upgrade head)

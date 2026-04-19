@@ -1,4 +1,4 @@
-"""Reject oversized request bodies using ``Content-Length`` (BI-02)."""
+"""Reject oversized request bodies using ``Content-Length`` and streaming defense (BI-02)."""
 
 from __future__ import annotations
 
@@ -6,10 +6,14 @@ from collections.abc import Awaitable, Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Message, Receive
 
 _DEFAULT_MAX = 10 * 1024 * 1024  # 10 MiB
-_UPLOAD_MAX = 25 * 1024 * 1024  # 25 MiB for future ``/api/v1/uploads`` routes
+_UPLOAD_MAX = 25 * 1024 * 1024  # 25 MiB for ``/api/v1/uploads/*``
+
+
+class PayloadTooLarge(Exception):
+    """Raised when the request body exceeds the configured limit (streaming path)."""
 
 
 class BodySizeLimitMiddleware(BaseHTTPMiddleware):
@@ -28,19 +32,43 @@ class BodySizeLimitMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         if request.method not in ("POST", "PUT", "PATCH"):
             return await call_next(request)
-        cl = request.headers.get("content-length")
-        if not cl:
-            return await call_next(request)
-        try:
-            n = int(cl)
-        except ValueError:
-            return await call_next(request)
+
         path = request.url.path
-        limit = self.upload_max_bytes if "/api/v1/uploads" in path else self.default_max_bytes
-        if n > limit:
+        limit = self.upload_max_bytes if path.startswith("/api/v1/uploads") else self.default_max_bytes
+
+        cl = request.headers.get("content-length")
+        if cl:
+            try:
+                n = int(cl)
+            except ValueError:
+                return await call_next(request)
+            if n > limit:
+                return Response(
+                    content='{"code":"payload_too_large","message":"Request body too large"}',
+                    status_code=413,
+                    media_type="application/json",
+                )
+            return await call_next(request)
+
+        received = 0
+        receive: Receive = request.scope["receive"]
+
+        async def capped_receive() -> Message:
+            nonlocal received
+            message = await receive()
+            if message["type"] == "http.request":
+                body = message.get("body", b"") or b""
+                received += len(body)
+                if received > limit:
+                    raise PayloadTooLarge()
+            return message
+
+        request.scope["receive"] = capped_receive
+        try:
+            return await call_next(request)
+        except PayloadTooLarge:
             return Response(
                 content='{"code":"payload_too_large","message":"Request body too large"}',
                 status_code=413,
                 media_type="application/json",
             )
-        return await call_next(request)

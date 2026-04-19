@@ -20,4 +20,15 @@ Every response includes **`X-Request-ID`** (or echoes the client’s `X-Request-
 
 ## Sentry
 
-If `SENTRY_DSN` is set (recommended in production), unhandled exceptions attach `request_id` and user context when `get_db` has run. Scrub sensitive headers centrally in Sentry `before_send` when enabled.
+If `SENTRY_DSN` is set (recommended in production), `app.core.sentry.init_sentry` registers FastAPI/Starlette integrations. `before_send` scrubs `Authorization`, `Cookie`, and header keys matching password/secret/token. User id and `organization_id` are set when `get_db` runs.
+
+## OpenAPI / types
+
+Regenerate the committed snapshot after API changes:
+
+```bash
+cd apps/api && uv run python scripts/export_openapi.py openapi.json
+cd ../web && pnpm run codegen:api
+```
+
+CI fails if generated output drifts from what is committed.

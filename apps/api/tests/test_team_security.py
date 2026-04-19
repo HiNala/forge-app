@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime, timedelta
+from unittest.mock import patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -147,26 +148,27 @@ async def test_invite_rate_limit_blocks_eleventh_request() -> None:
 
     transport = ASGITransport(app=app)
     try:
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            app.state.redis = _MemRedis()
-            headers = {
-                "x-forge-test-user-id": str(uid),
-                "x-forge-active-org-id": str(oid),
-            }
-            for i in range(10):
-                r = await client.post(
+        with patch("app.services.rate_limit.time.time", return_value=1_700_000_000.0):
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                app.state.redis = _MemRedis()
+                headers = {
+                    "x-forge-test-user-id": str(uid),
+                    "x-forge-active-org-id": str(oid),
+                }
+                for i in range(10):
+                    r = await client.post(
+                        "/api/v1/team/invite",
+                        json={"email": f"user{i}@rate.example.com", "role": "viewer"},
+                        headers=headers,
+                    )
+                    assert r.status_code == 200, r.text
+
+                r11 = await client.post(
                     "/api/v1/team/invite",
-                    json={"email": f"user{i}@rate.example.com", "role": "viewer"},
+                    json={"email": "eleventh@rate.example.com", "role": "viewer"},
                     headers=headers,
                 )
-                assert r.status_code == 200, r.text
-
-            r11 = await client.post(
-                "/api/v1/team/invite",
-                json={"email": "eleventh@rate.example.com", "role": "viewer"},
-                headers=headers,
-            )
-            assert r11.status_code == 429
-            assert "Too many" in r11.json()["detail"]
+                assert r11.status_code == 429
+                assert "Too many" in r11.json()["detail"]
     finally:
         app.state.redis = None

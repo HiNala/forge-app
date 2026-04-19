@@ -74,4 +74,4 @@ async def test_studio_quota_returns_402(monkeypatch: pytest.MonkeyPatch) -> None
         )
     assert r.status_code == 402
     body = r.json()
-    assert body["detail"]["code"] == "quota_exceeded"
+    assert body["code"] == "quota_exceeded"

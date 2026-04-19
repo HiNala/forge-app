@@ -69,7 +69,7 @@ async def test_org_not_specified_when_two_memberships() -> None:
         )
     assert r.status_code == 400
     body = r.json()
-    assert body.get("detail", {}).get("code") == "org_not_specified"
+    assert body.get("code") == "org_not_specified"
 
 
 @pytest.mark.asyncio
