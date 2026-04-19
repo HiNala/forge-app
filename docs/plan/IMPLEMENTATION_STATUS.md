@@ -4,7 +4,7 @@
 
 **Legend:** ✅ substantial · ⚠️ partial / stub · ❌ not started
 
-**Last audited:** 2026-04-19 — `apps/api` **60** pytest tests (`tests/README.md`); identity (incl. DELETE + **versions** without session), **empty page list**, **GET /versions** after publish, submit + arq enqueue, submissions CSV; Postgres-backed tests skip when DB is down. If `uv` cannot refresh `.venv` on Windows, use e.g. `UV_PROJECT_ENVIRONMENT=.venv-forge` before `uv sync`.
+**Last audited:** 2026-04-18 — `apps/api` **106** pytest tests (`tests/README.md`); `ruff check .` + `mypy app` clean; `apps/web` `pnpm run typecheck` + `pnpm run lint` clean. Postgres-backed tests require a running DB (`uv run alembic upgrade head`). If `uv` cannot refresh `.venv` on Windows, use e.g. `UV_PROJECT_ENVIRONMENT=.venv-forge` before `uv sync`.
 
 ---
 
@@ -72,6 +72,7 @@
 
 ### [05 — Foundation](./05_MISSION_02_FOUNDATION.md)
 - RLS policies ✅ (with ongoing verification)
+- **Partitioning:** `submissions` / `analytics_events` via pg_partman; retention on analytics partitions ✅ (see `docs/architecture/PARTITIONING.md`)
 - Tenant header + session ✅
 - Brand kit CRUD ✅
 
