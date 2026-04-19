@@ -8,7 +8,7 @@ from datetime import date
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.db.models import Membership, Organization, Page, SubscriptionUsage, User
+from app.db.models import Membership, Organization, SubscriptionUsage, User
 from app.db.session import AsyncSessionLocal
 from app.services.orchestration.section_editor import extract_section_html, splice_section
 
