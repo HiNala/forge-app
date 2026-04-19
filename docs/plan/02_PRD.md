@@ -3,8 +3,8 @@
 **Project:** Forge — AI-Powered Mini-App Builder
 **Owner:** Digital Studio Labs / Brian
 **Document Purpose:** The single source of truth for what Forge is, how it works, what it is built on, and how every piece fits together. This document is the bible. All missions reference it. No agent should ever have to guess what something means.
-**Version:** 1.0
-**Status:** Pre-scaffold — ready to execute
+**Version:** 1.1
+**Status:** Pre-scaffold — stack decisions locked in Mission 00 (`docs/architecture/DECISIONS.md`)
 
 ---
 
@@ -38,7 +38,7 @@ The primary user is an administrative or creative professional: Lucy from Reds C
 
 ### In Scope for 1.0
 
-- User signup and authentication (email + password, Google SSO via Clerk or Auth.js — to be decided in the documentation mission)
+- User signup and authentication (email + password, Google SSO via **Clerk** — see ADR-002)
 - Organization-based multi-tenancy with Owner / Editor / Viewer roles
 - Brand Kit per organization (logo, primary + secondary colors, fonts, voice note)
 - Studio chat interface for creating and refining pages
@@ -85,7 +85,7 @@ The primary user is an administrative or creative professional: Lucy from Reds C
 
 ### Backend
 
-- **Python 3.12** with **FastAPI** (latest stable, ~0.115+)
+- **Python 3.12** with **FastAPI** (pinned to **0.136.x** in Mission 01 — see `docs/architecture/STACK_VERSIONS.md`)
 - **SQLAlchemy 2.0 async** with **asyncpg** driver
 - **Alembic** for migrations (configured for async)
 - **Pydantic v2** for request/response validation
@@ -93,14 +93,14 @@ The primary user is an administrative or creative professional: Lucy from Reds C
 - **Ruff** for linting and formatting (replaces Black + Flake8 + isort)
 - **pytest** and **pytest-asyncio** for tests
 - **httpx** for outbound HTTP (Resend, Google Calendar, LLM providers)
-- **arq** or **Celery** for background jobs (arq is lighter; decide in docs mission)
+- **arq** for background jobs (ADR-001; Redis-backed async workers)
 - **sse-starlette** for SSE (FastAPI's native `EventSourceResponse` if on ≥0.135)
 
 ### Data & Infrastructure
 
 - **PostgreSQL 16** as primary database
 - Row-level security (RLS) for tenant isolation on all tables with `organization_id`
-- Time-partitioned tables (monthly) for `analytics_events` and `submissions` via `pg_partman` or manual declarative partitions
+- Time-partitioned tables (monthly) for `analytics_events` and `submissions` via **pg_partman** (ADR-004)
 - **Redis 7** for: response cache, rate limiting counters, background job queue, SSE session state
 - **MinIO** (local) / **AWS S3** or **Cloudflare R2** (production) for file uploads
 - **Caddy** as a reverse proxy in production for automatic HTTPS on custom domains
@@ -110,13 +110,13 @@ The primary user is an administrative or creative professional: Lucy from Reds C
 - **Resend** for transactional email
 - **Google Calendar API** for calendar integration
 - **Stripe** for billing
-- **Clerk** or **Auth.js v5** for authentication (documentation mission picks one; Clerk is faster to ship but costs more at scale)
+- **Clerk** for authentication (ADR-002; `@clerk/nextjs` with Organizations)
 - **Sentry** for error tracking
 - **PostHog** for product analytics (internal, separate from the analytics shown to users about their own pages)
 
 ### AI / LLM Layer
 
-- Unified provider abstraction that normalizes OpenAI, Anthropic, and Google Gemini behind a common interface
+- Unified provider abstraction via **LiteLLM** (SDK in-process; ADR-003) that normalizes OpenAI, Anthropic, and Google Gemini behind a common interface
 - Dual-tier model strategy: a **heavy model** (GPT-4o / Claude Opus 4.7 / Gemini 2.5 Pro) for first-time page generation and complex full-page edits; a **fast model** (GPT-4o-mini / Claude Haiku 4.5 / Gemini Flash) for section edits, refinement chips, and autocomplete
 - Prompt caching and session-level context reuse to minimize cost
 - Streaming via SSE for real-time preview updates

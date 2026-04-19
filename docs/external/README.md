@@ -1,100 +1,135 @@
 # External Reference Documentation — Forge
 
-This directory contains research-compiled reference documentation for every external library, framework, and service used by Forge. Each doc includes the pinned version, Forge-specific usage patterns, code examples, and known pitfalls.
+This directory holds curated, Forge-specific notes for every external library and service we depend on. Each file includes a **pinned version**, the **API surface we actually use**, **pitfalls**, **copy-paste snippets**, and **links** to official documentation.
 
-**Last compiled:** 2026-04-19
+**Last compiled:** 2026-04-18  
+**Mission:** 00 — Documentation Research & Compilation  
+**Canonical decisions:** `docs/architecture/DECISIONS.md` (ADR-001–ADR-007)
 
-## Directory Structure
+## Directory layout
 
 ```
 docs/external/
-├── frontend/          # Next.js, React, Tailwind, State, UI
-├── backend/           # FastAPI, SQLAlchemy, Testing, Tooling
-├── database/          # PostgreSQL, Redis, RLS, Partitioning
-├── ai/                # LLM Providers, Caching, Optimization
-├── integrations/      # Auth, Email, Calendar, Billing, Monitoring
-├── infrastructure/    # Docker, Deploy, CI, Proxy
-└── security/          # OWASP, CSP, Uploads, Rate Limiting
+├── frontend/
+├── backend/
+├── database/
+├── ai/
+├── integrations/
+├── infrastructure/
+└── security/
 ```
 
-## Frontend (10 docs)
+## Index by area
 
-| Doc | Version | Purpose |
-|-----|---------|---------|
-| [nextjs-16-app-router.md](frontend/nextjs-16-app-router.md) | 16.2.4 | App Router, routing, caching, proxy.ts |
-| [react-19.md](frontend/react-19.md) | 19.2.0 | Hooks, Compiler, Server Components |
-| [tailwind-css.md](frontend/tailwind-css.md) | 4.1.x | CSS-first config, design tokens |
-| [tanstack-query.md](frontend/tanstack-query.md) | 5.75.x | Server state, SSR hydration |
-| [zustand.md](frontend/zustand.md) | 5.0.x | Client UI state stores |
-| [zod.md](frontend/zod.md) | 3.24.x | Runtime validation schemas |
-| [shadcn-ui.md](frontend/shadcn-ui.md) | latest | Component primitives |
-| [framer-motion.md](frontend/framer-motion.md) | 12.x | Micro-animations |
-| [lucide-react.md](frontend/lucide-react.md) | 0.470.x | Icon library |
-| [fetch-event-source.md](frontend/fetch-event-source.md) | 2.0.1 | POST SSE for Studio streaming |
+### Frontend (10 files)
 
-## Backend (10 docs)
+| File | Version (at research) | Summary |
+|------|-------------------------|---------|
+| [frontend/nextjs-16-app-router.md](frontend/nextjs-16-app-router.md) | Next.js 16.2.4 | App Router, caching, `proxy.ts`, metadata |
+| [frontend/react-19.md](frontend/react-19.md) | React 19.2.4 | Compiler, hooks, Server vs Client Components |
+| [frontend/tailwind-css.md](frontend/tailwind-css.md) | Tailwind v4 | Tokens, `@theme`, dark mode |
+| [frontend/tanstack-query.md](frontend/tanstack-query.md) | TanStack Query v5 | Queries, mutations, SSR |
+| [frontend/zustand.md](frontend/zustand.md) | Zustand 5.x | Stores, persistence |
+| [frontend/zod.md](frontend/zod.md) | Zod 3.24.x | Schemas, sharing with API types |
+| [frontend/shadcn-ui.md](frontend/shadcn-ui.md) | shadcn/ui | Install, theming, component list |
+| [frontend/framer-motion.md](frontend/framer-motion.md) | Motion 12.x | Section crossfade pattern |
+| [frontend/lucide-react.md](frontend/lucide-react.md) | lucide-react | Icons |
+| [frontend/fetch-event-source.md](frontend/fetch-event-source.md) | @microsoft/fetch-event-source 2.x | POST + SSE for Studio |
 
-| Doc | Version | Purpose |
-|-----|---------|---------|
-| [fastapi.md](backend/fastapi.md) | 0.136.0 | API framework, lifespan, DI, SSE |
-| [sqlalchemy-2-async.md](backend/sqlalchemy-2-async.md) | 2.0.40+ | ORM, async sessions, RLS |
-| [alembic-async.md](backend/alembic-async.md) | 1.14.x | Async migrations, partitioning |
-| [pydantic-v2.md](backend/pydantic-v2.md) | 2.10.x | Request/Response schemas |
-| [asyncpg.md](backend/asyncpg.md) | 0.30.x | PostgreSQL async driver |
-| [uv-python-package-manager.md](backend/uv-python-package-manager.md) | 0.6.x | Dependency management |
-| [ruff.md](backend/ruff.md) | 0.8.x | Linter + formatter |
-| [pytest-asyncio.md](backend/pytest-asyncio.md) | 0.24.x | Async testing |
-| [arq.md](backend/arq.md) | 0.28.0 | Background job queue |
-| [sse-starlette.md](backend/sse-starlette.md) | 2.2.x | Server-Sent Events |
+### Backend (10 files)
 
-## Database (4 docs)
+| File | Version (at research) | Summary |
+|------|-------------------------|---------|
+| [backend/fastapi.md](backend/fastapi.md) | FastAPI 0.136.x | Lifespan, DI, SSE, middleware |
+| [backend/sqlalchemy-2-async.md](backend/sqlalchemy-2-async.md) | SQLAlchemy 2.0.x | AsyncSession, `Mapped`, loading |
+| [backend/alembic-async.md](backend/alembic-async.md) | Alembic 1.14.x | Async `env.py`, autogenerate |
+| [backend/pydantic-v2.md](backend/pydantic-v2.md) | Pydantic v2 | Models, validators |
+| [backend/asyncpg.md](backend/asyncpg.md) | asyncpg 0.30.x | Pooling, timeouts |
+| [backend/uv-python-package-manager.md](backend/uv-python-package-manager.md) | uv 0.6.x | `uv sync`, Docker |
+| [backend/ruff.md](backend/ruff.md) | Ruff 0.8.x | Ruleset E/W/F/I/N/UP/B/SIM/C4/PT/RUF |
+| [backend/pytest-asyncio.md](backend/pytest-asyncio.md) | pytest-asyncio 0.24.x | Async tests, DB fixtures |
+| [backend/arq-or-celery.md](backend/arq-or-celery.md) | **arq** 0.28.0 | Background jobs (ADR-001; Celery compared) |
+| [backend/sse-starlette.md](backend/sse-starlette.md) | sse-starlette 2.x | SSE, keepalive, buffering headers |
 
-| Doc | Version | Purpose |
-|-----|---------|---------|
-| [postgres-16.md](database/postgres-16.md) | 16.x | JSONB, UUID, CITEXT |
-| [row-level-security.md](database/row-level-security.md) | PG 16 | Tenant isolation, CI check |
-| [pg-partman.md](database/pg-partman.md) | 5.x | Automated partitioning |
-| [redis-7.md](database/redis-7.md) | 7.x | Caching, jobs, rate limiting |
+### Database (4 files)
 
-## AI (6 docs)
+| File | Version (at research) | Summary |
+|------|-------------------------|---------|
+| [database/postgres-16.md](database/postgres-16.md) | PostgreSQL 16 | JSONB, UUID, CITEXT, indexes |
+| [database/row-level-security.md](database/row-level-security.md) | PG 16 | `app.current_tenant_id`, policies |
+| [database/pg-partman.md](database/pg-partman.md) | pg_partman 5.x | Time partitions (ADR-004) |
+| [database/redis-7.md](database/redis-7.md) | Redis 7 | Rate limits, queues, TTL |
 
-| Doc | Version | Purpose |
-|-----|---------|---------|
-| [openai-api.md](ai/openai-api.md) | v1 | GPT-4o, streaming, JSON mode |
-| [anthropic-api.md](ai/anthropic-api.md) | v1 | Claude, prompt caching |
-| [google-gemini-api.md](ai/google-gemini-api.md) | v1 | Gemini Pro/Flash |
-| [litellm.md](ai/litellm.md) | 1.83.7 | Unified LLM interface |
-| [prompt-caching-strategies.md](ai/prompt-caching-strategies.md) | — | Cross-provider caching |
-| [token-optimization.md](ai/token-optimization.md) | — | Cost reduction techniques |
+### AI (6 files)
 
-## Integrations (6 docs)
+| File | Version (at research) | Summary |
+|------|-------------------------|---------|
+| [ai/openai-api.md](ai/openai-api.md) | OpenAI API v1 | Chat, stream, tools, JSON |
+| [ai/anthropic-api.md](ai/anthropic-api.md) | Anthropic Messages API | Stream events, cache |
+| [ai/google-gemini-api.md](ai/google-gemini-api.md) | Gemini API | `generateContent`, stream |
+| [ai/litellm-or-custom-adapter.md](ai/litellm-or-custom-adapter.md) | **LiteLLM** 1.83.10 | Unified SDK (ADR-003) |
+| [ai/prompt-caching-strategies.md](ai/prompt-caching-strategies.md) | — | Cross-provider caching |
+| [ai/token-optimization.md](ai/token-optimization.md) | — | Cost reduction patterns |
 
-| Doc | Version | Purpose |
-|-----|---------|---------|
-| [clerk.md](integrations/clerk.md) | latest | Auth, orgs, JWT, webhooks |
-| [resend.md](integrations/resend.md) | 2.x | Transactional email |
-| [google-calendar-api-python.md](integrations/google-calendar-api-python.md) | v3 | Calendar events, OAuth |
-| [google-oauth-setup.md](integrations/google-oauth-setup.md) | OAuth 2.0 | Consent screen setup |
-| [stripe-subscriptions.md](integrations/stripe-subscriptions.md) | 11.x | Billing, webhooks |
-| [sentry.md](integrations/sentry.md) | 2.x | Error tracking |
+### Integrations (6 files)
 
-## Infrastructure (5 docs)
+| File | Version (at research) | Summary |
+|------|-------------------------|---------|
+| [integrations/clerk-or-authjs.md](integrations/clerk-or-authjs.md) | **Clerk** `@clerk/nextjs` 7.2.3 | Auth + orgs (ADR-002) |
+| [integrations/resend.md](integrations/resend.md) | resend-py 2.x | Transactional email |
+| [integrations/google-calendar-api-python.md](integrations/google-calendar-api-python.md) | Calendar API v3 | Events, OAuth |
+| [integrations/google-oauth-setup.md](integrations/google-oauth-setup.md) | OAuth 2.0 | Consent screen |
+| [integrations/stripe-subscriptions.md](integrations/stripe-subscriptions.md) | Stripe API 11.x / SDK | Subscriptions, webhooks |
+| [integrations/sentry.md](integrations/sentry.md) | sentry-sdk 2.x | FastAPI + Next.js |
 
-| Doc | Version | Purpose |
-|-----|---------|---------|
-| [docker-best-practices.md](infrastructure/docker-best-practices.md) | 27.x | Multi-stage builds |
-| [docker-compose-production.md](infrastructure/docker-compose-production.md) | v2 | Dev/prod orchestration |
-| [railway-deployment.md](infrastructure/railway-deployment.md) | — | Cloud deployment |
-| [caddy-reverse-proxy.md](infrastructure/caddy-reverse-proxy.md) | 2.x | On-demand TLS, proxy |
-| [github-actions-ci.md](infrastructure/github-actions-ci.md) | — | CI pipeline |
+### Infrastructure (5 files)
 
-## Security (4 docs)
+| File | Summary |
+|------|---------|
+| [infrastructure/docker-best-practices.md](infrastructure/docker-best-practices.md) | Multi-stage, uv, Next standalone |
+| [infrastructure/docker-compose-production.md](infrastructure/docker-compose-production.md) | Dev vs prod Compose |
+| [infrastructure/railway-deployment.md](infrastructure/railway-deployment.md) | Railway services, env |
+| [infrastructure/caddy-reverse-proxy.md](infrastructure/caddy-reverse-proxy.md) | HTTPS, on-demand TLS |
+| [infrastructure/github-actions-ci.md](infrastructure/github-actions-ci.md) | Lint, typecheck, test, cache |
 
-| Doc | Version | Purpose |
-|-----|---------|---------|
-| [owasp-checklist.md](security/owasp-checklist.md) | 2021 | Top 10 mitigations |
-| [csp-for-generated-content.md](security/csp-for-generated-content.md) | — | Nonce-based CSP |
-| [file-upload-security.md](security/file-upload-security.md) | — | Multi-layer validation |
-| [rate-limiting-patterns.md](security/rate-limiting-patterns.md) | — | Redis rate limiter |
+### Security (4 files)
 
-## Total: 45 reference documents
+| File | Summary |
+|------|---------|
+| [security/owasp-checklist.md](security/owasp-checklist.md) | Top 10 → Forge mitigations |
+| [security/csp-for-generated-content.md](security/csp-for-generated-content.md) | CSP for public pages |
+| [security/file-upload-security.md](security/file-upload-security.md) | MIME, size, storage |
+| [security/rate-limiting-patterns.md](security/rate-limiting-patterns.md) | Redis limits |
+
+**Total:** 45 markdown references under `docs/external/`.
+
+## Which mission reads which doc (quick map)
+
+| Mission | Primary references |
+|---------|-------------------|
+| 01 Contracts & scaffold | `database/*`, `backend/fastapi.md`, `backend/pydantic-v2.md`, `architecture/DATA_MODEL_OVERVIEW.md`, ADRs |
+| 02 Foundation | `integrations/clerk-or-authjs.md`, `database/row-level-security.md`, `architecture/MULTI_TENANCY.md` |
+| 03 Studio & AI | `ai/*`, `backend/sse-starlette.md`, `frontend/fetch-event-source.md`, `architecture/AI_ORCHESTRATION.md` |
+| 04 Live pages | `security/*`, `database/postgres-16.md`, `infrastructure/caddy-reverse-proxy.md` |
+| 05 Automations | `integrations/resend.md`, `integrations/google-calendar-api-python.md`, `backend/arq-or-celery.md` |
+| 06 Analytics & billing | `integrations/stripe-subscriptions.md`, `database/pg-partman.md` |
+| 07 Polish | `security/owasp-checklist.md`, all frontend a11y-related docs |
+| 08 Railway | `infrastructure/railway-deployment.md`, `docs/runbooks/*` (Mission 08) |
+| 09 Templates | Reuses `frontend/shadcn-ui.md`, `architecture/DATA_MODEL_OVERVIEW.md` |
+
+## When to extend a doc
+
+If a downstream mission needs a detail that is missing, **add it here** (with version + date) instead of guessing in application code. Link the change in the relevant mission report.
+
+## Header convention
+
+Each reference file should start with:
+
+```markdown
+# <Name> — Reference for Forge
+
+**Version:** …
+**Last researched:** YYYY-MM-DD
+```
+
+If you add or substantially edit a file, bump **Last researched** and, when applicable, the **Version** line after checking npm/PyPI or the vendor’s docs.

@@ -1,11 +1,26 @@
-# arq — Background Jobs — Reference for Forge
+# arq vs Celery — Reference for Forge
 
-**Version:** 0.28.0
-**Last researched:** 2026-04-19
+**Version:** arq 0.28.0 (chosen); Celery 5.x (not used — comparison only)
+**Last researched:** 2026-04-18
 
-## What Forge Uses
+## Decision (ADR-001)
 
-arq for async background jobs: email notifications, confirmation emails, calendar event creation, old revision cleanup, analytics partition management. Chosen per ADR-001.
+Forge uses **arq** for Redis-backed async background jobs. **Celery** was evaluated and rejected for this codebase (see below). All implementation detail in this document refers to **arq**.
+
+## Why Not Celery?
+
+| Factor | arq | Celery |
+|--------|-----|--------|
+| Async model | Native `asyncio` jobs | Traditionally sync workers; async support is heavier |
+| Broker | Redis only (we already run Redis) | Redis/RabbitMQ — extra moving parts at our scale |
+| Ops surface | Small worker process + `arq` CLI | Workers + beat + optional Flower |
+| Fit for Forge | Email retries, calendar inserts, cron cleanups | Better when you need complex routing and huge distributed throughput |
+
+Celery remains a strong choice for large teams and complex task graphs. Forge’s queue is **notify → confirm → calendar** with idempotency — arq is sufficient and cheaper to operate.
+
+## What Forge Uses (arq)
+
+arq for async background jobs: email notifications, confirmation emails, calendar event creation, old revision cleanup, analytics partition management.
 
 ## Job Definitions
 
@@ -117,5 +132,7 @@ CMD ["uv", "run", "arq", "worker.WorkerSettings"]
 5. **No built-in dashboard**: Use structured logging + Sentry for monitoring.
 
 ## Links
+
 - [arq Docs](https://arq-docs.helpmanual.io/)
-- [GitHub](https://github.com/python-arq/arq)
+- [arq GitHub](https://github.com/python-arq/arq)
+- [Celery Documentation](https://docs.celeryq.dev/) (reference only)

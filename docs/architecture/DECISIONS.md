@@ -61,7 +61,7 @@
 **Date:** 2026-04-19
 **Context:** Forge needs a unified interface to call OpenAI, Anthropic, and Google Gemini with streaming, tool calling, and JSON mode support. Must be provider-swappable without changing application code.
 
-**Decision:** Use **LiteLLM v1.83.7** as SDK (not proxy mode).
+**Decision:** Use **LiteLLM v1.83.10** as SDK (not proxy mode), pinned in `uv.lock`.
 
 **Rationale:**
 - **Unified API:** OpenAI-compatible `completion()` interface that works with 100+ providers. We switch models by changing a string, not rewriting code.
@@ -71,7 +71,7 @@
 - **Day-0 model support:** New models from each provider are supported quickly.
 - **Mature:** 60k+ GitHub stars, actively developed, large community.
 
-**Security note:** LiteLLM had a supply chain compromise in March 2026 (versions 1.82.7-1.82.8). Current versions (1.83.0+) include security hardening. We pin to a known-good version and verify checksums.
+**Security note:** LiteLLM had a supply chain compromise in March 2026 (versions 1.82.7-1.82.8). Current patched lines (1.83.0+) include security hardening. We pin to **1.83.10** and verify checksums in CI.
 
 **Architecture:**
 - We use LiteLLM as a thin SDK layer inside our `app/services/ai/` module.
