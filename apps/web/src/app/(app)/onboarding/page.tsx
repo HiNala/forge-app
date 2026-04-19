@@ -2,16 +2,17 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { motion } from "framer-motion";
+import { CalendarClock, Check, FileSignature, Presentation, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { successSpring } from "@/lib/motion";
 import { markOnboardingSeen } from "@/components/chrome/onboarding-gate";
-import { patchOrg, postBrandLogo, putBrand } from "@/lib/api";
+import { patchOrg, patchUserPreferences, postBrandLogo, putBrand } from "@/lib/api";
+import { WORKFLOW_PRIMERS } from "@/lib/workflow-config";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
 
@@ -39,11 +40,29 @@ function suggestedWorkspaceName(email: string | undefined): string {
   return local ? `${local.charAt(0).toUpperCase()}${local.slice(1)}` : "My workspace";
 }
 
+type OnboardWf = "contact-form" | "proposal" | "pitch_deck" | "undecided";
+
 export default function OnboardingPage() {
   const session = useForgeSession();
   const { user, activeOrganizationId: activeOrgId } = session;
   const { getToken } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [step, setStep] = React.useState(0);
+  const [workflowChoice, setWorkflowChoice] = React.useState<OnboardWf | null>(null);
+
+  const workflowFromUrl = React.useMemo((): OnboardWf | null => {
+    const w = searchParams.get("workflow");
+    if (!w) return null;
+    const x = w.toLowerCase().replace(/_/g, "-");
+    if (x === "contact-form" || x === "contact") return "contact-form";
+    if (x === "proposal") return "proposal";
+    if (x === "pitch-deck" || x === "deck") return "pitch_deck";
+    return null;
+  }, [searchParams]);
+
+  const effectiveWorkflow = workflowChoice ?? workflowFromUrl;
 
   const first = user?.display_name?.split(/\s+/)[0] ?? "there";
   const suggested = React.useMemo(
@@ -95,11 +114,39 @@ export default function OnboardingPage() {
       }
       markOnboardingSeen(activeOrgId);
       setDone(true);
-      setTimeout(() => router.replace("/dashboard"), 700);
+      const wf =
+        effectiveWorkflow && effectiveWorkflow !== "undecided"
+          ? effectiveWorkflow === "contact-form"
+            ? "contact-form"
+            : effectiveWorkflow === "proposal"
+              ? "proposal"
+              : "pitch-deck"
+          : null;
+      const next = wf ? `/studio?workflow=${encodeURIComponent(wf)}` : "/dashboard";
+      setTimeout(() => router.replace(next), 700);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
     }
+  }
+
+  async function persistWorkflowPick(next: OnboardWf) {
+    setWorkflowChoice(next);
+    try {
+      await patchUserPreferences(getToken, {
+        onboarded_for_workflow:
+          next === "undecided"
+            ? "undecided"
+            : next === "contact-form"
+              ? "contact-form"
+              : next === "proposal"
+                ? "proposal"
+                : "pitch_deck",
+      });
+    } catch {
+      /* preferences are optional */
+    }
+    setStep(1);
   }
 
   return (
@@ -115,6 +162,75 @@ export default function OnboardingPage() {
         everything later in Settings.
       </p>
 
+      {step === 0 ? (
+        <div className="mt-10 space-y-6">
+          <div>
+            <h2 className="font-display text-lg font-semibold text-text">What do you want to build first?</h2>
+            <p className="mt-1 text-sm text-text-muted font-body">We&apos;ll tune Studio — you can change this anytime.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                ["contact-form", WORKFLOW_PRIMERS["contact-form"], CalendarClock],
+                ["proposal", WORKFLOW_PRIMERS.proposal, FileSignature],
+                ["pitch_deck", WORKFLOW_PRIMERS.pitch_deck, Presentation],
+              ] as const
+            ).map(([id, wf, Icon]) => (
+              <button
+                key={id}
+                type="button"
+                className={cn(
+                  "flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-colors",
+                  effectiveWorkflow === id
+                    ? "border-accent bg-accent-light"
+                    : "border-border bg-surface hover:border-accent/40",
+                )}
+                onClick={() => setWorkflowChoice(id)}
+              >
+                <Icon className="size-7 text-accent" aria-hidden />
+                <span className="font-medium text-text font-body">{wf.title}</span>
+                <span className="text-xs text-text-muted font-body">{wf.description}</span>
+              </button>
+            ))}
+            <button
+              type="button"
+              className={cn(
+                "flex flex-col items-start gap-2 rounded-xl border p-4 text-left sm:col-span-2",
+                workflowChoice === "undecided"
+                  ? "border-accent bg-accent-light"
+                  : "border-border bg-surface hover:border-accent/40",
+              )}
+              onClick={() => setWorkflowChoice("undecided")}
+            >
+              <Sparkles className="size-7 text-accent" aria-hidden />
+              <span className="font-medium text-text font-body">I&apos;ll figure it out</span>
+              <span className="text-xs text-text-muted font-body">
+                Start from a neutral Studio canvas — no pressure.
+              </span>
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              variant="primary"
+              disabled={effectiveWorkflow == null}
+              onClick={() => effectiveWorkflow && void persistWorkflowPick(effectiveWorkflow)}
+              style={{ backgroundColor: color, borderColor: "transparent" }}
+            >
+              Continue
+            </Button>
+            <button
+              type="button"
+              className="text-sm font-medium text-text-muted underline-offset-4 hover:underline font-body"
+              onClick={() => void persistWorkflowPick("undecided")}
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {step === 1 ? (
       <form className="mt-10 space-y-8" onSubmit={onSubmit}>
         {error ? (
           <p className="text-sm text-danger font-body" role="alert">
@@ -238,6 +354,7 @@ export default function OnboardingPage() {
           </Link>
         </div>
       </form>
+      ) : null}
 
       {done ? (
         <motion.div

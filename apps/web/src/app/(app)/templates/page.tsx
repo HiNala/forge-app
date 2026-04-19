@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { Search } from "lucide-react";
+import { CalendarClock, FileSignature, Presentation, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -114,6 +114,42 @@ export default function TemplatesGalleryPage() {
           className="text-sm font-medium text-accent underline-offset-4 hover:underline"
         >
           Back to Studio
+        </Link>
+      </div>
+
+      <div className="mt-10 grid gap-3 md:grid-cols-3">
+        <Link
+          href="/dashboard?workflow=contact"
+          className="rounded-[12px] border border-border bg-surface p-5 shadow-sm transition-colors hover:border-accent/40"
+        >
+          <CalendarClock className="size-8 text-accent" aria-hidden />
+          <h2 className="mt-3 font-display text-lg font-semibold text-text">Contact forms & bookings</h2>
+          <p className="mt-1 text-sm text-text-muted font-body">
+            RSVP, intake, and calendar-ready layouts — browse with contact-style results in mind.
+          </p>
+          <span className="mt-3 inline-block text-sm font-medium text-accent">Browse category →</span>
+        </Link>
+        <Link
+          href="/dashboard?workflow=proposal"
+          className="rounded-[12px] border border-border bg-surface p-5 shadow-sm transition-colors hover:border-accent/40"
+        >
+          <FileSignature className="size-8 text-accent" aria-hidden />
+          <h2 className="mt-3 font-display text-lg font-semibold text-text">Proposals & quotes</h2>
+          <p className="mt-1 text-sm text-text-muted font-body">
+            Signable scopes and tiered pricing — jump to proposal pages in your workspace.
+          </p>
+          <span className="mt-3 inline-block text-sm font-medium text-accent">See proposals →</span>
+        </Link>
+        <Link
+          href="/dashboard?workflow=deck"
+          className="rounded-[12px] border border-border bg-surface p-5 shadow-sm transition-colors hover:border-accent/40"
+        >
+          <Presentation className="size-8 text-accent" aria-hidden />
+          <h2 className="mt-3 font-display text-lg font-semibold text-text">Pitch decks</h2>
+          <p className="mt-1 text-sm text-text-muted font-body">
+            Narrative decks with presenter mode — filtered to deck pages you&apos;ve published.
+          </p>
+          <span className="mt-3 inline-block text-sm font-medium text-accent">See decks →</span>
         </Link>
       </div>
 

@@ -24,6 +24,7 @@ from app.services.orchestration.page_composer import (
     default_assembly_plan,
     render_section,
 )
+from app.services.orchestration.workflow_confidence import maybe_workflow_clarify
 from app.services.proposal_service import finalize_proposal_studio_html
 from app.utils.slug import slugify_page_title, unique_page_slug
 
@@ -63,6 +64,7 @@ async def stream_page_generation(
     prompt: str,
     provider: str | None,
     existing_page_id: UUID | None,
+    forced_workflow: str | None = None,
 ) -> AsyncIterator[bytes]:
     """Yield SSE chunks: intent → html.chunk (per section) → html.complete | error."""
     brand_row = (
@@ -101,6 +103,17 @@ async def stream_page_generation(
     except Exception as e:
         logger.exception("intent_fatal %s", e)
         intent = PageIntent(title_suggestion=prompt[:80] or "Page")
+
+    if forced_workflow in ("contact-form", "booking-form", "proposal", "pitch_deck"):
+        intent = intent.model_copy(
+            update={
+                "page_type": forced_workflow  # type: ignore[arg-type]
+            }
+        )
+
+    clarify = None if forced_workflow else maybe_workflow_clarify(prompt, intent)
+    if clarify:
+        yield _sse("workflow_clarify", clarify)
 
     yield _sse("intent", {"intent": intent.model_dump(mode="json")})
     yield _sse("html.start", {"status": "composing"})

@@ -6,6 +6,7 @@ import * as React from "react";
 
 const STORAGE_KEY = "forge.pendingTemplateId";
 const STORAGE_CHECKOUT = "forge.pendingCheckout";
+const STORAGE_WORKFLOW = "forge.pendingWorkflow";
 
 export function SignupClient() {
   const searchParams = useSearchParams();
@@ -15,6 +16,14 @@ export function SignupClient() {
     if (tid) {
       try {
         sessionStorage.setItem(STORAGE_KEY, tid);
+      } catch {
+        /* ignore */
+      }
+    }
+    const wf = searchParams.get("workflow");
+    if (wf) {
+      try {
+        sessionStorage.setItem(STORAGE_WORKFLOW, wf);
       } catch {
         /* ignore */
       }

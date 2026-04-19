@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 
 export const SHORTCUTS_HELP = [
   { keys: "⌘ K / Ctrl+K", action: "Command palette (search pages, people, settings)" },
+  { keys: "⌘⇧C / Ctrl+Shift+C", action: "Studio — new contact form prompt" },
+  { keys: "⌘⇧P / Ctrl+Shift+P", action: "Studio — new proposal prompt" },
+  { keys: "⌘⇧D / Ctrl+Shift+D", action: "Studio — new pitch deck prompt" },
   { keys: "G then D", action: "Go to Dashboard" },
   { keys: "G then S", action: "Go to Studio" },
   { keys: "G then A", action: "Go to Analytics" },
@@ -47,7 +50,27 @@ export function useAppShortcuts(
         return;
       }
 
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.metaKey || e.ctrlKey) {
+        if (e.shiftKey) {
+          const k = e.key.toLowerCase();
+          if (k === "c" || k === "p" || k === "d") {
+            const el = e.target as HTMLElement | null;
+            if (
+              el?.closest(
+                "input:not([readonly]), textarea, select, [contenteditable=true], [role=combobox]",
+              )
+            ) {
+              return;
+            }
+            e.preventDefault();
+            const wf =
+              k === "c" ? "contact-form" : k === "p" ? "proposal" : "pitch-deck";
+            router.push(`/studio?workflow=${wf}`);
+          }
+        }
+        return;
+      }
+      if (e.altKey) return;
       const el = e.target as HTMLElement | null;
       if (
         el?.closest(

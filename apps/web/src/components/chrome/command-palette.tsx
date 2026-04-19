@@ -8,10 +8,13 @@ import { Command } from "cmdk";
 import {
   BarChart3,
   CreditCard,
+  FileSignature,
+  CalendarClock,
   FileText,
   LayoutDashboard,
   LayoutTemplate,
   Plus,
+  Presentation,
   Settings,
   Sparkles,
   Users,
@@ -223,6 +226,53 @@ export function CommandPalette() {
             >
               <CreditCard className="size-4" aria-hidden />
               View billing
+            </Command.Item>
+
+            <Command.Group
+              heading="Workflows"
+              className="mt-2 px-1 py-1 text-xs font-semibold text-text-subtle uppercase tracking-wide"
+            />
+            <Command.Item
+              value="new contact form studio workflow"
+              onSelect={() =>
+                run("/studio?workflow=contact-form", "New contact form")
+              }
+              className={itemClass}
+            >
+              <CalendarClock className="size-4 text-accent" aria-hidden />
+              New contact form
+            </Command.Item>
+            <Command.Item
+              value="new proposal studio workflow"
+              onSelect={() => run("/studio?workflow=proposal", "New proposal")}
+              className={itemClass}
+            >
+              <FileSignature className="size-4 text-accent" aria-hidden />
+              New proposal
+            </Command.Item>
+            <Command.Item
+              value="new pitch deck studio workflow"
+              onSelect={() => run("/studio?workflow=pitch-deck", "New pitch deck")}
+              className={itemClass}
+            >
+              <Presentation className="size-4 text-accent" aria-hidden />
+              New pitch deck
+            </Command.Item>
+            <Command.Item
+              value="find proposals dashboard filter"
+              onSelect={() => run("/dashboard?workflow=proposal", "Proposals on Dashboard")}
+              className={itemClass}
+            >
+              <FileText className="size-4 text-accent" aria-hidden />
+              Find my proposals
+            </Command.Item>
+            <Command.Item
+              value="decks no views analytics"
+              onSelect={() => run("/analytics?range=30d", "Analytics — deck activity")}
+              className={itemClass}
+            >
+              <BarChart3 className="size-4 text-accent" aria-hidden />
+              Deck analytics
             </Command.Item>
           </Command.List>
           <div className="border-t border-border px-3 py-2 text-[11px] text-text-subtle">

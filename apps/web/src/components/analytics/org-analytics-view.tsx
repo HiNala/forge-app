@@ -22,6 +22,7 @@ import {
   type PageOut,
 } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
+import { getWorkflowFamily } from "@/lib/workflow-config";
 import {
   AnalyticsRangeSelector,
   ChartEmpty,
@@ -147,6 +148,22 @@ export function OrgAnalyticsView() {
   const selectedPage = pagesQ.data?.find((p: PageOut) => p.id === selectedPageId);
   const ps = pageSumQ.data as Record<string, unknown> | undefined;
 
+  const wfCounts = React.useMemo(() => {
+    const rows = pagesQ.data ?? [];
+    let contact = 0;
+    let proposal = 0;
+    let deck = 0;
+    let other = 0;
+    for (const p of rows) {
+      const f = getWorkflowFamily(p.page_type);
+      if (f === "contact") contact += 1;
+      else if (f === "proposal") proposal += 1;
+      else if (f === "deck") deck += 1;
+      else other += 1;
+    }
+    return { contact, proposal, deck, other };
+  }, [pagesQ.data]);
+
   if (orgQ.isLoading) {
     return <p className="text-sm text-text-muted font-body">Loading organization analytics…</p>;
   }
@@ -210,6 +227,72 @@ export function OrgAnalyticsView() {
         <KpiCard label="Views (range)" value={totalViews} />
         <KpiCard label="Submissions (range)" value={totalSubs} />
       </div>
+
+      {(pagesQ.data?.length ?? 0) > 0 ? (
+        <div>
+          <h2 className="mb-3 font-display text-sm font-semibold text-text">Workflow mix</h2>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Link
+              href="/dashboard?workflow=contact"
+              className="rounded-[12px] border border-border bg-surface p-4 text-sm shadow-sm transition-colors hover:border-accent/40 font-body"
+            >
+              <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted">Contact</p>
+              <p className="mt-1 font-display text-xl font-semibold text-text tabular-nums">
+                {wfCounts.contact}
+              </p>
+              <p className="mt-1 text-xs text-text-muted">pages · filtered dashboard →</p>
+            </Link>
+            <Link
+              href="/dashboard?workflow=proposal"
+              className="rounded-[12px] border border-border bg-surface p-4 text-sm shadow-sm transition-colors hover:border-accent/40 font-body"
+            >
+              <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted">Proposals</p>
+              <p className="mt-1 font-display text-xl font-semibold text-text tabular-nums">
+                {wfCounts.proposal}
+              </p>
+              <p className="mt-1 text-xs text-text-muted">
+                {wfCounts.proposal > 0 ? (
+                  <span className="text-accent">
+                    Pipeline view →
+                  </span>
+                ) : (
+                  "—"
+                )}
+              </p>
+            </Link>
+            <Link
+              href="/dashboard?workflow=deck"
+              className="rounded-[12px] border border-border bg-surface p-4 text-sm shadow-sm transition-colors hover:border-accent/40 font-body"
+            >
+              <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted">Decks</p>
+              <p className="mt-1 font-display text-xl font-semibold text-text tabular-nums">
+                {wfCounts.deck}
+              </p>
+              <p className="mt-1 text-xs text-text-muted">
+                {wfCounts.deck > 0 ? (
+                  <span className="text-accent">
+                    Engagement view →
+                  </span>
+                ) : (
+                  "—"
+                )}
+              </p>
+            </Link>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-text-muted font-body">
+            {wfCounts.proposal > 0 ? (
+              <Link href="/analytics/pipeline" className="text-accent underline-offset-4 hover:underline">
+                Open proposal pipeline
+              </Link>
+            ) : null}
+            {wfCounts.deck > 0 ? (
+              <Link href="/analytics/engagement" className="text-accent underline-offset-4 hover:underline">
+                Open deck engagement
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       {livePages === 0 ? (
         <div className="rounded-[12px] border border-dashed border-border bg-bg-elevated/40 p-6 text-center">

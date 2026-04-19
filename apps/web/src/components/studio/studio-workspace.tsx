@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth, useUser } from "@clerk/nextjs";
+import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { Monitor, PanelsTopLeft, Send } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +18,7 @@ import {
   getPage,
   getStudioConversation,
   getStudioUsage,
+  listPages,
   publishPage,
   type PageDetailOut,
   type StudioUsageOut,
@@ -28,10 +30,10 @@ import {
   DEFAULT_REFINE_CHIPS,
   SECTION_EDIT_QUICK_CHIPS,
   STUDIO_PLACEHOLDERS,
-  STUDIO_STARTER_CHIPS,
   resolveSurprisePrompt,
-  type StudioStarterChip,
 } from "@/lib/studio-content";
+import { STUDIO_SECONDARY_CHIPS } from "@/lib/studio-workflow-chips";
+import { WORKFLOW_PRIMERS, type FlagshipWorkflowId } from "@/lib/workflow-config";
 import { timeOfDayGreeting } from "@/lib/studio-greeting";
 import {
   ensureBridgeInFullDocument,
@@ -78,6 +80,7 @@ export function StudioWorkspace() {
   const searchParams = useSearchParams();
   const pageIdFromUrl = searchParams.get("pageId");
   const promptPrefill = searchParams.get("prompt");
+  const workflowFromUrl = searchParams.get("workflow");
   const { getToken } = useAuth();
   const { user } = useUser();
   const { activeOrganizationId, activeOrg } = useForgeSession();
@@ -104,7 +107,10 @@ export function StudioWorkspace() {
   const [streamPhase, setStreamPhase] = React.useState<"idle" | "intent" | "building">("idle");
   const [streamBanner, setStreamBanner] = React.useState<string | null>(null);
   const abortRef = React.useRef<AbortController | null>(null);
-  const lastStreamRef = React.useRef<{ kind: "generate" | "refine"; payload: Record<string, unknown> } | null>(null);
+  const lastStreamRef = React.useRef<{ kind: "generate" | "refine"; payload: Record<string, unknown> } | null>(
+    null,
+  );
+  const lastUserPromptRef = React.useRef("");
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
   const [refineChips, setRefineChips] = React.useState<string[]>([...DEFAULT_REFINE_CHIPS]);
@@ -170,6 +176,37 @@ export function StudioWorkspace() {
       setPromptEmpty(promptPrefill);
     }
   }, [promptPrefill]);
+
+  React.useEffect(() => {
+    if (!workflowFromUrl) return;
+    const w = workflowFromUrl.toLowerCase().replace(/_/g, "-");
+    if (w === "contact-form" || w === "contact") {
+      setPromptEmpty(WORKFLOW_PRIMERS["contact-form"].prime);
+    } else if (w === "proposal") {
+      setPromptEmpty(WORKFLOW_PRIMERS.proposal.prime);
+    } else if (w === "pitch-deck" || w === "deck") {
+      setPromptEmpty(WORKFLOW_PRIMERS.pitch_deck.prime);
+    }
+  }, [workflowFromUrl]);
+
+  const pagesForPrimersQ = useQuery({
+    queryKey: ["pages", activeOrganizationId],
+    queryFn: () => listPages(getToken, activeOrganizationId),
+    enabled: !!activeOrganizationId && !active,
+  });
+
+  const flagshipOrder = React.useMemo((): FlagshipWorkflowId[] => {
+    const base: FlagshipWorkflowId[] = ["contact-form", "proposal", "pitch_deck"];
+    const rows = pagesForPrimersQ.data ?? [];
+    const countContact = () =>
+      rows.filter((p) => ["contact-form", "booking-form", "rsvp"].includes(p.page_type)).length;
+    const count = (id: FlagshipWorkflowId) => {
+      if (id === "proposal") return rows.filter((p) => p.page_type === "proposal").length;
+      if (id === "pitch_deck") return rows.filter((p) => p.page_type === "pitch_deck").length;
+      return countContact();
+    };
+    return [...base].sort((a, b) => count(b) - count(a) || base.indexOf(a) - base.indexOf(b));
+  }, [pagesForPrimersQ.data]);
 
   React.useEffect(() => {
     if (emptyFocused) return;
@@ -385,6 +422,7 @@ export function StudioWorkspace() {
     setActive(true);
 
     if (kind === "generate") {
+      lastUserPromptRef.current = userText;
       streamAccRef.current = "";
       bufferRef.current.reset();
       setFinalHtml(null);
@@ -399,6 +437,27 @@ export function StudioWorkspace() {
         body,
         { getToken, activeOrgId: activeOrganizationId, signal: ac.signal },
         async (event, data) => {
+          if (event === "workflow_clarify" && data && typeof data === "object") {
+            const d = data as {
+              message?: string;
+              candidates?: { workflow: string; confidence: number; rationale: string }[];
+              default?: string;
+            };
+            setMessagesStore(null, (m) => [
+              ...m,
+              {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                kind: "workflow_clarify",
+                text: d.message ?? "Which workflow should I use?",
+                clarifyMeta: {
+                  message: d.message ?? "",
+                  candidates: Array.isArray(d.candidates) ? d.candidates : [],
+                  default: typeof d.default === "string" ? d.default : "custom",
+                },
+              },
+            ]);
+          }
           if (event === "intent") setStreamPhase("intent");
           if (event === "html.start") {
             setStreamPhase("building");
@@ -498,11 +557,23 @@ export function StudioWorkspace() {
     setPromptEmpty("");
   }
 
-  function onChip(s: StudioStarterChip) {
-    const prompt = s.id === "surprise" ? resolveSurprisePrompt() : s.prompt;
-    setPromptEmpty(prompt);
-    void runGenerateOrRefine("generate", { prompt, page_id: null, provider: "openai" }, prompt);
-    setPromptEmpty("");
+  function onPickWorkflowClarify(forced: string) {
+    const prompt = lastUserPromptRef.current.trim();
+    if (!prompt) return;
+    abortSse();
+    void runGenerateOrRefine(
+      "generate",
+      { prompt, page_id: null, provider: "openai", forced_workflow: forced },
+      prompt,
+    );
+  }
+
+  function primeSecondaryChip(prime: string) {
+    if (prime) {
+      setPromptEmpty(prime);
+      return;
+    }
+    setPromptEmpty(resolveSurprisePrompt());
   }
 
   function onSubmitChat(e?: React.FormEvent) {
@@ -653,7 +724,7 @@ export function StudioWorkspace() {
             transition={TRANSITION_PANEL}
             className="flex flex-1 flex-col items-center justify-center px-4 py-12"
           >
-            <motion.div layout transition={TRANSITION_PANEL} className="flex w-full max-w-lg flex-col items-center">
+            <motion.div layout transition={TRANSITION_PANEL} className="flex w-full max-w-3xl flex-col items-center">
               <ForgeLogo size="lg" className="mb-6" />
               <motion.p
                 layout
@@ -721,19 +792,66 @@ export function StudioWorkspace() {
                 </div>
               </form>
 
-              <motion.div layout transition={TRANSITION_PANEL} className="mt-6 flex flex-wrap justify-center gap-2">
-                {STUDIO_STARTER_CHIPS.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => onChip(c)}
-                    className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:border-accent hover:text-accent font-body"
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </motion.div>
+              <div className="mt-8 w-full">
+                <p className="mb-3 text-center text-xs font-medium uppercase tracking-wide text-text-muted font-body">
+                  Start from a workflow
+                </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {flagshipOrder.map((key) => {
+                    const wf = WORKFLOW_PRIMERS[key];
+                    const Icon = wf.icon;
+                    const top = flagshipOrder[0] === key && (pagesForPrimersQ.data?.length ?? 0) > 0;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        disabled={busy}
+                        onClick={() => setPromptEmpty(wf.prime)}
+                        className={cn(
+                          "flex flex-col items-start gap-3 rounded-2xl border p-4 text-left transition-all",
+                          "border-border bg-surface shadow-sm hover:border-accent/50 hover:shadow-md",
+                          top && "ring-2 ring-accent/30 ring-offset-2 ring-offset-bg",
+                        )}
+                      >
+                        <motion.span
+                          className="text-accent"
+                          whileHover={{
+                            rotate: [0, -5, 5, -3, 0],
+                            transition: { duration: 0.45, ease: "easeOut" },
+                          }}
+                        >
+                          <Icon className="size-8" aria-hidden />
+                        </motion.span>
+                        <span>
+                          <span className="block font-display text-sm font-semibold text-text">{wf.title}</span>
+                          <span className="mt-1 block text-xs leading-snug text-text-muted font-body">
+                            {wf.description}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-6 w-full">
+                <p className="mb-2 text-center text-[11px] text-text-muted font-body">
+                  More starting points — tap to add to your prompt
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {STUDIO_SECONDARY_CHIPS.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => primeSecondaryChip(c.prime)}
+                      className="rounded-full border border-border bg-bg-elevated px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:border-accent hover:text-accent font-body"
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <Link
                 href="/templates"
@@ -792,14 +910,23 @@ export function StudioWorkspace() {
                     data={messages}
                     followOutput="smooth"
                     itemContent={(_, msg) => (
-                      <ChatRow msg={msg} orgSlug={activeOrg?.organization_slug ?? ""} />
+                      <ChatRow
+                        msg={msg}
+                        orgSlug={activeOrg?.organization_slug ?? ""}
+                        onPickClarify={onPickWorkflowClarify}
+                      />
                     )}
                   />
                 ) : (
                   <div className="h-full overflow-y-auto px-4 py-4">
                     <AnimatePresence initial={false}>
                       {messages.map((msg) => (
-                        <ChatRow key={msg.id} msg={msg} orgSlug={activeOrg?.organization_slug ?? ""} />
+                        <ChatRow
+                          key={msg.id}
+                          msg={msg}
+                          orgSlug={activeOrg?.organization_slug ?? ""}
+                          onPickClarify={onPickWorkflowClarify}
+                        />
                       ))}
                     </AnimatePresence>
                   </div>
@@ -1056,8 +1183,60 @@ export function StudioWorkspace() {
   );
 }
 
-function ChatRow({ msg, orgSlug }: { msg: StudioChatMsg; orgSlug: string }) {
+function workflowClarifyLabel(w: string): string {
+  const m: Record<string, string> = {
+    "contact-form": "Contact / booking",
+    "booking-form": "Booking",
+    proposal: "Proposal",
+    pitch_deck: "Pitch deck",
+  };
+  return m[w] ?? w;
+}
+
+function ChatRow({
+  msg,
+  orgSlug,
+  onPickClarify,
+}: {
+  msg: StudioChatMsg;
+  orgSlug: string;
+  onPickClarify?: (workflow: string) => void;
+}) {
   const router = useRouter();
+
+  if (msg.kind === "workflow_clarify" && msg.clarifyMeta) {
+    const top = msg.clarifyMeta.candidates.slice(0, 2);
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={MOTION_TRANSITIONS.fadeUp}
+        className="mb-3 flex gap-2"
+      >
+        <ForgeLogo size="sm" className="mt-1 shrink-0 opacity-80" />
+        <div className="max-w-[95%] rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs text-white/90 font-body">
+          <p className="text-[13px] leading-relaxed">{msg.clarifyMeta.message}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {top.map((c) => (
+              <Button
+                key={c.workflow}
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="border-white/20 bg-white/10 text-white hover:bg-white/15"
+                onClick={() => onPickClarify?.(c.workflow)}
+              >
+                {workflowClarifyLabel(c.workflow)}
+              </Button>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-white/50">
+            Or keep typing — we’ll continue with the default ({workflowClarifyLabel(msg.clarifyMeta.default)}).
+          </p>
+        </div>
+      </motion.div>
+    );
+  }
 
   if (msg.kind === "artifact" && msg.artifactMeta) {
     const m = msg.artifactMeta;

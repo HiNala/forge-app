@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { patchPage, type PageOut } from "@/lib/api";
+import { getWorkflowFamily, workflowChipProps } from "@/lib/workflow-config";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useForgeSession } from "@/providers/session-provider";
@@ -32,6 +33,9 @@ function StatusDot({ status }: { status: string }) {
 
 function PageThumbnail({ page }: { page: PageOut }) {
   const src = page.preview_image_url?.trim();
+  const fam = getWorkflowFamily(page.page_type);
+  const objectPos =
+    fam === "proposal" ? "object-center" : fam === "deck" ? "object-top" : "object-top";
   return (
     <div className="relative h-[140px] overflow-hidden rounded-t-[14px] bg-gradient-to-br from-bg-elevated to-accent-light/30">
       {src ? (
@@ -40,7 +44,7 @@ function PageThumbnail({ page }: { page: PageOut }) {
           alt=""
           fill
           sizes="(max-width: 640px) 100vw, 33vw"
-          className="object-cover object-top"
+          className={cn("object-cover", objectPos)}
           unoptimized={/^https?:\/\//.test(src)}
         />
       ) : null}
@@ -75,6 +79,8 @@ export function DashboardPageCard({
   const { getToken } = useAuth();
   const { activeOrganizationId, activeOrg } = useForgeSession();
   const [hovered, setHovered] = React.useState(false);
+  const wf = workflowChipProps(page.page_type);
+  const WfIcon = wf.Icon;
 
   const openLive = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -183,7 +189,13 @@ export function DashboardPageCard({
             </p>
             <div className="flex items-center gap-2 text-[11px] text-text-muted font-body">
               <StatusDot status={page.status} />
-              <span className="rounded-md border border-border/80 bg-bg-elevated px-2 py-0.5 capitalize text-text-subtle">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-text-subtle capitalize",
+                  wf.className,
+                )}
+              >
+                <WfIcon className="size-3 shrink-0 opacity-90" aria-hidden />
                 {page.page_type.replace(/-/g, " ")}
               </span>
               <span>·</span>

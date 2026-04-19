@@ -12,6 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { STUDIO_STARTER_CHIPS, resolveSurprisePrompt } from "@/lib/studio-content";
+import {
+  type WorkflowFilter,
+  workflowFilterMatchesPage,
+} from "@/lib/workflow-config";
 import { getPageUnreadCounts, listPages } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
@@ -24,6 +28,11 @@ function parseFilter(s: string | null): Filter {
   return "all";
 }
 
+function parseWorkflow(s: string | null): WorkflowFilter {
+  if (s === "contact" || s === "proposal" || s === "deck" || s === "other") return s;
+  return "all";
+}
+
 export function DashboardView() {
   const router = useRouter();
   const pathname = usePathname();
@@ -32,6 +41,7 @@ export function DashboardView() {
   const { activeOrganizationId, user } = useForgeSession();
 
   const filter = parseFilter(searchParams.get("filter"));
+  const workflow = parseWorkflow(searchParams.get("workflow"));
   const qUrl = searchParams.get("q") ?? "";
 
   const [qInput, setQInput] = React.useState(qUrl);
@@ -60,6 +70,14 @@ export function DashboardView() {
     router.replace(`/dashboard?${next.toString()}`, { scroll: false });
   };
 
+  const setWorkflow = (w: WorkflowFilter) => {
+    const next = new URLSearchParams(searchParams.toString());
+    if (w === "all") next.delete("workflow");
+    else next.set("workflow", w);
+    const q = next.toString();
+    router.replace(q ? `/dashboard?${q}` : "/dashboard", { scroll: false });
+  };
+
   const pagesQ = useQuery({
     queryKey: ["pages", activeOrganizationId],
     queryFn: () => listPages(getToken, activeOrganizationId),
@@ -82,10 +100,22 @@ export function DashboardView() {
     if (filter === "live") rows = rows.filter((p) => p.status === "live");
     else if (filter === "draft") rows = rows.filter((p) => p.status === "draft");
     else if (filter === "archived") rows = rows.filter((p) => p.status === "archived");
+    if (workflow !== "all") {
+      rows = rows.filter((p) => workflowFilterMatchesPage(workflow, p.page_type));
+    }
     const qt = qUrl.trim().toLowerCase();
     if (qt) rows = rows.filter((p) => p.title.toLowerCase().includes(qt));
     return rows;
-  }, [pagesQ.data, filter, qUrl]);
+  }, [pagesQ.data, filter, qUrl, workflow]);
+
+  const searchWorkflowHint = React.useMemo((): { wf: WorkflowFilter; label: string } | null => {
+    const qt = qUrl.trim().toLowerCase();
+    if (!qt) return null;
+    if (/(proposal|quote|bid|estimate)/.test(qt)) return { wf: "proposal", label: "proposals" };
+    if (/(deck|pitch|slide|investor)/.test(qt)) return { wf: "deck", label: "decks" };
+    if (/(contact|booking|form\b|rsvp|calendar)/.test(qt)) return { wf: "contact", label: "contact forms" };
+    return null;
+  }, [qUrl]);
 
   const [visibleCount, setVisibleCount] = React.useState(24);
   const [cardFocus, setCardFocus] = React.useState(0);
@@ -94,7 +124,7 @@ export function DashboardView() {
     setVisibleCount(24);
     setCardFocus(0);
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [filter, qUrl]);
+  }, [filter, qUrl, workflow]);
 
   const slice = filtered.slice(0, visibleCount);
   const hasMore = filtered.length > visibleCount;
@@ -155,6 +185,14 @@ export function DashboardView() {
     { id: "live", label: "Live" },
     { id: "draft", label: "Drafts" },
     { id: "archived", label: "Archived" },
+  ];
+
+  const wfChips: { id: WorkflowFilter; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "contact", label: "Contact forms" },
+    { id: "proposal", label: "Proposals" },
+    { id: "deck", label: "Decks" },
+    { id: "other", label: "Other" },
   ];
 
   return (
@@ -230,35 +268,68 @@ export function DashboardView() {
         </div>
       ) : (
         <>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <p className="font-display text-xl text-text">
               Good to see you, {firstName}. Here&apos;s your workspace.
             </p>
-            <Input
-              className="max-w-sm"
-              placeholder="Search titles…"
-              value={qInput}
-              onChange={(e) => setQInput(e.target.value)}
-              aria-label="Search pages"
-            />
+            <div className="flex w-full max-w-md flex-col gap-2 sm:items-end">
+              <Input
+                className="w-full"
+                placeholder="Search titles…"
+                value={qInput}
+                onChange={(e) => setQInput(e.target.value)}
+                aria-label="Search pages"
+              />
+              {searchWorkflowHint && workflow !== searchWorkflowHint.wf ? (
+                <button
+                  type="button"
+                  className="self-end text-left text-sm font-medium text-accent underline-offset-4 hover:underline font-body"
+                  onClick={() => setWorkflow(searchWorkflowHint.wf)}
+                >
+                  See all {searchWorkflowHint.label} →
+                </button>
+              ) : null}
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {chips.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setFilter(c.id)}
-                className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-medium font-body transition-colors",
-                  filter === c.id
-                    ? "border-accent bg-accent-light text-accent"
-                    : "border-border bg-surface text-text-muted hover:border-accent/50",
-                )}
-              >
-                {c.label}
-              </button>
-            ))}
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
+              {chips.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setFilter(c.id)}
+                  className={cn(
+                    "rounded-full border px-4 py-2 text-sm font-medium font-body transition-colors",
+                    filter === c.id
+                      ? "border-accent bg-accent-light text-accent"
+                      : "border-border bg-surface text-text-muted hover:border-accent/50",
+                  )}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-text-subtle font-body">
+                Type
+              </span>
+              {wfChips.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setWorkflow(c.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium font-body transition-colors",
+                    workflow === c.id
+                      ? "border-accent bg-accent-light text-accent"
+                      : "border-border bg-surface text-text-muted hover:border-accent/50",
+                  )}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {slice.length === 0 ? (

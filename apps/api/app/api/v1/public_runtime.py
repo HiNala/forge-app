@@ -18,6 +18,10 @@ from app.schemas.page import PublicPageOut
 from app.services.deck_public_inject import inject_deck_public_runtime
 from app.services.forge_tracker import inject_forge_tracker
 from app.services.proposal_public_inject import inject_proposal_public_runtime
+from app.services.public_brand_badge import (
+    forge_branding_visible_for_plan,
+    inject_made_with_forge_badge,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +68,14 @@ async def get_public_page(
                         page_slug=data["slug"],
                         page_id=str(data.get("page_id", "")),
                     )
+                plan = str(data.get("org_plan") or "trial")
+                show_badge = forge_branding_visible_for_plan(plan)
+                data["html"] = inject_made_with_forge_badge(
+                    data["html"],
+                    show=show_badge,
+                    page_id=str(data.get("page_id", "")),
+                    forge_site_base=settings.APP_PUBLIC_URL,
+                )
                 return PublicPageOut(
                     html=data["html"],
                     title=data["title"],
@@ -71,6 +83,7 @@ async def get_public_page(
                     organization_slug=data["organization_slug"],
                     page_id=str(data.get("page_id", "")),
                     page_type=str(data.get("page_type", "landing")),
+                    show_forge_branding=show_badge,
                 )
         except Exception as e:
             logger.warning("public_page_cache_read %s", e)
@@ -128,6 +141,13 @@ async def get_public_page(
             page_slug=p.slug,
             page_id=str(p.id),
         )
+    show_badge = forge_branding_visible_for_plan(org.plan)
+    html_out = inject_made_with_forge_badge(
+        html_out,
+        show=show_badge,
+        page_id=str(p.id),
+        forge_site_base=settings.APP_PUBLIC_URL,
+    )
     return PublicPageOut(
         html=html_out,
         title=p.title,
@@ -135,4 +155,5 @@ async def get_public_page(
         organization_slug=org.slug,
         page_id=str(p.id),
         page_type=p.page_type,
+        show_forge_branding=show_badge,
     )

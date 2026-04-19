@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { duplicatePage, getPage, listPageSubmissions, patchPage } from "@/lib/api";
+import { getPageDetailConfig } from "@/lib/workflow-config";
 import { cn } from "@/lib/utils";
 import { PageDetailProvider } from "@/providers/page-detail-provider";
 import { useForgeSession } from "@/providers/session-provider";
@@ -90,7 +91,9 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
   const isOverview = pathname === base || pathname === `${base}/`;
   const isSubmissions = pathname.includes("/submissions");
   const isAutomations = pathname.includes("/automations");
+  const isExport = pathname.includes("/export");
   const isAnalytics = pathname.includes("/analytics");
+  const wfCfg = getPageDetailConfig(p.page_type);
 
   const subLabel = qSubCount.isLoading ? "…" : (qSubCount.data ?? "0");
 
@@ -107,10 +110,12 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
     { href: base, label: "Overview", active: isOverview },
     {
       href: `${base}/submissions`,
-      label: `Submissions (${subLabel})`,
+      label: `${wfCfg.submissionsTabLabel} (${subLabel})`,
       active: isSubmissions,
     },
-    { href: `${base}/automations`, label: "Automations", active: isAutomations },
+    wfCfg.exportTabInsteadOfAutomations
+      ? { href: `${base}/export`, label: "Export", active: isExport }
+      : { href: `${base}/automations`, label: "Automations", active: isAutomations },
     { href: `${base}/analytics`, label: "Analytics", active: isAnalytics },
   ];
 

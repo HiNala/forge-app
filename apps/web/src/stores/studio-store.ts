@@ -6,7 +6,12 @@ export type StudioChatMsg = {
   role: "user" | "assistant" | "system";
   text: string;
   /** Assistant card after generation */
-  kind?: "artifact" | "plain";
+  kind?: "artifact" | "plain" | "workflow_clarify";
+  clarifyMeta?: {
+    message: string;
+    candidates: { workflow: string; confidence: number; rationale: string }[];
+    default: string;
+  };
   artifactMeta?: {
     pageId: string;
     title: string;
