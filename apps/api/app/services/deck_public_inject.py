@@ -434,7 +434,7 @@ _PUBLIC_SLIDE_SCRIPT = """
   function endPresent(reason) {
     if (!present || presentEndedSent) return;
     presentEndedSent = true;
-    track("present_end", { reason: reason || "unknown" });
+    track("present_ended", { reason: reason || "unknown" });
   }
 
   window.addEventListener("beforeunload", function () { if (present) endPresent("beforeunload"); });
