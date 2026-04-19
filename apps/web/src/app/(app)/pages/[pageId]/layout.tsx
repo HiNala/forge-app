@@ -8,7 +8,6 @@ import * as React from "react";
 import { LayoutGroup, motion } from "framer-motion";
 import { ExternalLink, MoreHorizontal, Pencil, Presentation, Share2 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader } from "@/components/chrome/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -124,23 +123,29 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
   return (
     <PageDetailProvider page={p} refetch={refetch}>
       <div className="space-y-0 pb-10">
-        <PageHeader
-          breadcrumb={
-            <nav className="flex items-center gap-1.5 text-sm font-body" aria-label="Breadcrumb">
-              <Link href="/dashboard" className="text-text-muted hover:text-text">
-                Pages
-              </Link>
-              <span className="text-text-muted">/</span>
-              <span className="truncate text-text">{p.title}</span>
-            </nav>
-          }
-          title={p.title}
-          actions={
-            <div className="flex flex-wrap items-center gap-2">
+        {/* Page header */}
+        <div className="border-b border-border pb-5 pt-1">
+          <nav className="mb-3 flex items-center gap-1.5 font-body text-xs" aria-label="Breadcrumb">
+            <Link href="/dashboard" className="text-text-muted hover:text-text transition-colors">
+              Pages
+            </Link>
+            <span className="text-border-strong">/</span>
+            <span className="truncate text-text-subtle">{p.title}</span>
+          </nav>
+
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-text truncate">
+                {p.title}
+              </h1>
               <Badge variant={statusVariant(p.status)}>{p.status}</Badge>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
                 variant="secondary"
+                size="sm"
                 className="gap-1.5"
                 onClick={() => {
                   if (!activeOrg?.organization_slug) return;
@@ -150,7 +155,7 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
                   toast.success("Link copied");
                 }}
               >
-                <Share2 className="size-4" />
+                <Share2 className="size-3.5" />
                 Share
               </Button>
               {wf.headerActions === "deck" ? (
@@ -158,6 +163,7 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
                   <Button
                     type="button"
                     variant="secondary"
+                    size="sm"
                     className="gap-1.5"
                     onClick={() => {
                       if (!activeOrg?.organization_slug) return;
@@ -168,31 +174,38 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
                       );
                     }}
                   >
-                    <Presentation className="size-4" />
+                    <Presentation className="size-3.5" />
                     Present
                   </Button>
-                  <Button type="button" variant="secondary" asChild>
+                  <Button type="button" variant="secondary" size="sm" asChild>
                     <Link href={`${base}/export`}>Export</Link>
                   </Button>
                 </>
               ) : null}
               <Button
                 type="button"
+                variant="secondary"
+                size="sm"
+                onClick={openLive}
+                className="gap-1.5"
+              >
+                <ExternalLink className="size-3.5" />
+                {wf.headerActions === "proposal" ? "Share link" : "Open live"}
+              </Button>
+              <Button
+                type="button"
                 variant="primary"
+                size="sm"
                 onClick={() => router.push(`/studio?pageId=${pageId}`)}
                 className="gap-1.5"
               >
-                <Pencil className="size-4" />
+                <Pencil className="size-3.5" />
                 Edit in Studio
-              </Button>
-              <Button type="button" variant="secondary" onClick={openLive}>
-                <ExternalLink className="size-4" />
-                {wf.headerActions === "proposal" ? "Share link" : "Open live"}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button type="button" variant="secondary" size="md" className="px-2" aria-label="More page actions">
-                    <MoreHorizontal className="size-5" />
+                  <Button type="button" variant="secondary" size="sm" className="px-2" aria-label="More page actions">
+                    <MoreHorizontal className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -235,14 +248,14 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          }
-        />
+          </div>
+        </div>
 
         <LayoutGroup>
           <div
             role="tablist"
             aria-label="Page sections"
-            className="mb-8 flex w-full flex-wrap gap-1 border-b border-border"
+            className="mb-8 mt-1 flex w-full flex-wrap gap-1 border-b border-border"
           >
             {tabs.map((t) => (
               <Link
@@ -251,15 +264,15 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
                 role="tab"
                 aria-selected={t.active}
                 className={cn(
-                  "relative mb-[-1px] inline-flex rounded-t-md px-4 py-3 font-body text-sm transition-colors",
-                  t.active ? "font-semibold text-text" : "text-text-muted hover:text-text",
+                  "relative mb-[-1px] inline-flex px-3 py-2.5 font-body text-sm transition-colors",
+                  t.active ? "font-semibold text-text" : "font-medium text-text-muted hover:text-text",
                 )}
               >
                 {t.active ? (
                   <motion.span
                     layoutId="page-detail-tab-indicator"
-                    className="absolute inset-x-1 -bottom-px h-0.5 rounded-full bg-accent"
-                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-text"
+                    transition={{ type: "spring", stiffness: 400, damping: 34 }}
                   />
                 ) : null}
                 <span className="relative z-10">{t.label}</span>

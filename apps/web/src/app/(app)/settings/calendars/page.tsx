@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
-import { PageHeader } from "@/components/chrome/page-header";
+import { Check, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ import {
   type AvailabilityCalendarOut,
 } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
+import { cn } from "@/lib/utils";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
@@ -36,6 +37,18 @@ function formatSyncSummary(cal: AvailabilityCalendarOut): string {
     return `${busy} busy blocks · ${ms}ms`;
   }
   return "Synced";
+}
+
+function SettingRow({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-[200px_1fr] sm:gap-6">
+      <div className="pt-0.5">
+        <p className="font-body text-sm font-semibold text-text">{label}</p>
+        {hint ? <p className="mt-1 font-body text-xs leading-relaxed text-text-subtle">{hint}</p> : null}
+      </div>
+      <div>{children}</div>
+    </div>
+  );
 }
 
 export default function CalendarsSettingsPage() {
@@ -67,6 +80,7 @@ export default function CalendarsSettingsPage() {
   const [newName, setNewName] = React.useState("Work calendar");
   const [preview, setPreview] = React.useState<Record<string, unknown> | null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [savedTick, setSavedTick] = React.useState(false);
 
   const calendarList = calendars.data ?? [];
   const fallbackCalendarId = calendarList[0]?.id ?? null;
@@ -77,8 +91,11 @@ export default function CalendarsSettingsPage() {
   const patchMut = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) =>
       patchAvailabilityCalendar(getToken, activeOrganizationId, id, body),
-    onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: ["availability-calendars", activeOrganizationId] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["availability-calendars", activeOrganizationId] });
+      setSavedTick(true);
+      window.setTimeout(() => setSavedTick(false), 2500);
+    },
   });
 
   const queuePatch = React.useCallback(
@@ -105,55 +122,64 @@ export default function CalendarsSettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-10">
-      <PageHeader
-        title="Calendars"
-        description="Connect or import a calendar, set business hours, and Forge turns that into bookable slots on your live pages."
-      />
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-text">Calendars</h1>
+        <p className="mt-1.5 font-body text-sm text-text-muted">
+          Connect or import a calendar, set business hours, and Forge turns that into bookable slots on your live pages.
+        </p>
+      </div>
 
-      {!calendars.data?.length ? (
-        <div className="rounded-[12px] border border-dashed border-border bg-surface/80 p-10 text-center">
-          <p className="font-display text-lg text-text">Import a calendar to start offering appointment slots.</p>
-          <p className="mt-2 text-sm text-text-muted font-body">
+      {/* Empty state */}
+      {!calendars.isLoading && !calendarList.length ? (
+        <section className="rounded-2xl border border-dashed border-border bg-surface/60 p-10 text-center">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl border border-border bg-bg-elevated">
+            <Upload className="size-5 text-text-muted" aria-hidden />
+          </div>
+          <p className="font-display text-lg font-bold text-text">
+            Import a calendar to offer booking slots
+          </p>
+          <p className="mt-2 font-body text-sm font-light text-text-muted">
             Upload an .ics export from Google, Apple, or Outlook — then tune availability rules below.
           </p>
-          <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <Input
-              type="file"
-              accept=".ics,text/calendar"
-              className="max-w-xs"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void onFilePreview(f);
-              }}
-            />
-            <Button
-              type="button"
-              onClick={() => createMut.mutate(newName)}
-              disabled={createMut.isPending}
-              className="min-w-[8rem]"
-            >
-              Create calendar
-            </Button>
+          <div className="mt-6 space-y-3">
+            <div className="mx-auto max-w-xs">
+              <Label htmlFor="cal-name" className="sr-only">Calendar name</Label>
+              <Input
+                id="cal-name"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Calendar name"
+              />
+            </div>
+            <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+              <Input
+                type="file"
+                accept=".ics,text/calendar"
+                className="max-w-xs"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void onFilePreview(f);
+                }}
+              />
+              <Button
+                type="button"
+                onClick={() => createMut.mutate(newName)}
+                disabled={createMut.isPending}
+                className="min-w-[8rem]"
+              >
+                Create calendar
+              </Button>
+            </div>
           </div>
-          <div className="mx-auto mt-4 max-w-md">
-            <Label htmlFor="cal-name" className="sr-only">
-              Calendar name
-            </Label>
-            <Input
-              id="cal-name"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Calendar name"
-            />
-          </div>
-        </div>
+        </section>
       ) : null}
 
+      {/* ICS preview */}
       {preview && Object.keys(preview).length > 0 ? (
-        <div className="rounded-[10px] border border-border bg-surface p-4 text-left text-sm font-body">
-          <p className="font-medium text-text">ICS preview</p>
-          <p className="mt-1 text-text-muted">
-            Found {(preview as { event_count?: number }).event_count ?? "—"} expanded events ·{" "}
+        <section className="rounded-2xl border border-border bg-surface p-5">
+          <p className="font-display text-sm font-bold text-text">ICS preview</p>
+          <p className="mt-1 font-body text-sm text-text-muted">
+            {(preview as { event_count?: number }).event_count ?? "—"} expanded events ·{" "}
             {(preview as { busy_block_count?: number }).busy_block_count ?? "—"} busy blocks (
             {(preview as { duration_ms?: number }).duration_ms ?? "—"}ms)
           </p>
@@ -171,59 +197,73 @@ export default function CalendarsSettingsPage() {
           >
             Apply suggested rules
           </Button>
+        </section>
+      ) : null}
+
+      {calendars.isLoading ? (
+        <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-16 animate-pulse rounded-xl bg-bg-elevated" />
+          ))}
         </div>
       ) : null}
 
-      {calendars.isLoading ? <p className="text-sm text-text-muted">Loading calendars…</p> : null}
-      {calendars.data && calendars.data.length > 0 ? (
-        <div className="space-y-8">
-          <div className="flex flex-wrap gap-2">
-            {calendars.data.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setSelectedId(c.id)}
-                className={`rounded-full px-4 py-1.5 text-sm font-body transition-colors ${
-                  effectiveSelectedId === c.id
-                    ? "bg-accent text-accent-foreground"
-                    : "bg-surface-muted text-text-muted hover:bg-bg-elevated"
-                }`}
-              >
-                {c.name}
-              </button>
-            ))}
-          </div>
+      {calendarList.length > 0 ? (
+        <div className="space-y-6">
+          {/* Calendar selector */}
+          {calendarList.length > 1 ? (
+            <div className="flex flex-wrap gap-2">
+              {calendarList.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelectedId(c.id)}
+                  className={cn(
+                    "rounded-full px-4 py-1.5 font-body text-sm font-medium transition-colors",
+                    effectiveSelectedId === c.id
+                      ? "bg-text text-bg"
+                      : "bg-bg-elevated text-text-muted hover:text-text",
+                  )}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+          ) : null}
 
           {selected ? (
-            <div className="space-y-6 rounded-[12px] border border-border bg-surface p-6">
+            <section className="rounded-2xl border border-border bg-surface p-6 space-y-6">
+              {/* Calendar meta */}
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h2 className="font-display text-xl text-text">{selected.name}</h2>
-                  <p className="mt-1 text-xs text-text-muted font-body">
+                  <h2 className="font-display text-xl font-bold text-text">{selected.name}</h2>
+                  <p className="mt-1 font-body text-xs text-text-muted">
                     Source: {selected.source_type}
                     {selected.source_ref ? ` · ${selected.source_ref.slice(0, 48)}…` : ""}
                   </p>
-                  <p className="mt-1 text-xs text-text-muted font-body">
+                  <p className="mt-0.5 font-body text-xs text-text-subtle">
                     Last sync: {selected.last_synced_at ?? "never"} · {formatSyncSummary(selected)}
                   </p>
                 </div>
-                <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-200">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-0.5 font-body text-[11px] font-semibold text-success">
+                  <span className="size-1.5 rounded-full bg-success" aria-hidden />
                   live
                 </span>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="tz">Timezone</Label>
+              <div className="border-t border-border" />
+
+              {/* Timing settings */}
+              <div className="space-y-5">
+                <p className="section-label">Slot settings</p>
+                <SettingRow label="Timezone">
                   <Input
                     id="tz"
                     defaultValue={selected.timezone}
                     onBlur={(e) => queuePatch(selected.id, { timezone: e.target.value })}
-                    className="mt-1"
                   />
-                </div>
-                <div>
-                  <Label htmlFor="slot">Slot duration (minutes)</Label>
+                </SettingRow>
+                <SettingRow label="Slot duration" hint="Length of each bookable appointment (minutes)">
                   <Input
                     id="slot"
                     type="number"
@@ -232,11 +272,10 @@ export default function CalendarsSettingsPage() {
                     onBlur={(e) =>
                       queuePatch(selected.id, { slot_duration_minutes: Number(e.target.value) || 30 })
                     }
-                    className="mt-1"
+                    className="max-w-[120px]"
                   />
-                </div>
-                <div>
-                  <Label htmlFor="inc">Slot increment (minutes)</Label>
+                </SettingRow>
+                <SettingRow label="Slot increment" hint="How often slots start (e.g. every 15 min)">
                   <Input
                     id="inc"
                     type="number"
@@ -247,17 +286,10 @@ export default function CalendarsSettingsPage() {
                         slot_increment_minutes: Number(e.target.value) || 15,
                       })
                     }
-                    className="mt-1"
+                    className="max-w-[120px]"
                   />
-                </div>
-                <div className="flex items-end gap-2">
-                  <div className="flex-1">
-                    <Label>Notice / advance</Label>
-                    <p className="mt-1 text-xs text-text-muted">Min notice &amp; max advance edited below.</p>
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="minn">Min notice (minutes)</Label>
+                </SettingRow>
+                <SettingRow label="Min notice" hint="Minimum lead time before a booking (minutes)">
                   <Input
                     id="minn"
                     type="number"
@@ -265,11 +297,10 @@ export default function CalendarsSettingsPage() {
                     onBlur={(e) =>
                       queuePatch(selected.id, { min_notice_minutes: Number(e.target.value) || 0 })
                     }
-                    className="mt-1"
+                    className="max-w-[120px]"
                   />
-                </div>
-                <div>
-                  <Label htmlFor="maxd">Max advance (days)</Label>
+                </SettingRow>
+                <SettingRow label="Max advance" hint="How far ahead bookings are allowed (days)">
                   <Input
                     id="maxd"
                     type="number"
@@ -277,20 +308,34 @@ export default function CalendarsSettingsPage() {
                     onBlur={(e) =>
                       queuePatch(selected.id, { max_advance_days: Number(e.target.value) || 60 })
                     }
-                    className="mt-1"
+                    className="max-w-[120px]"
                   />
-                </div>
+                </SettingRow>
               </div>
 
-              <div>
-                <Label>Weekday hours (JSON)</Label>
-                <p className="mt-1 text-xs text-text-muted font-body">
-                  Keys are Python weekday: 0=Monday … 6=Sunday. Example:{" "}
+              <div className="border-t border-border" />
+
+              {/* Business hours */}
+              <div className="space-y-3">
+                <p className="section-label">Business hours</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {WEEKDAYS.map((d, i) => (
+                    <span
+                      key={d}
+                      className="rounded-lg border border-border px-2.5 py-1 font-body text-xs text-text-muted"
+                      title={`${i} = ${d}`}
+                    >
+                      {d}
+                    </span>
+                  ))}
+                </div>
+                <p className="font-body text-xs text-text-subtle">
+                  Keys are Python weekday: 0=Monday … 6=Sunday.{" "}
                   <code className="rounded bg-bg-elevated px-1">{`{"0":[["09:00","17:00"]]}`}</code>
                 </p>
                 <textarea
                   key={selected.id}
-                  className="mt-2 w-full min-h-[120px] rounded-md border border-border bg-bg px-3 py-2 font-mono text-xs"
+                  className="w-full min-h-[120px] rounded-xl border border-border bg-bg px-3 py-2 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-text/20 focus:border-text/40"
                   defaultValue={JSON.stringify(
                     selected.business_hours && Object.keys(selected.business_hours).length
                       ? selected.business_hours
@@ -309,12 +354,15 @@ export default function CalendarsSettingsPage() {
                 />
               </div>
 
-              <div>
-                <Label>Re-upload ICS</Label>
+              <div className="border-t border-border" />
+
+              {/* Re-upload */}
+              <div className="space-y-2">
+                <p className="section-label">Re-upload ICS</p>
                 <Input
                   type="file"
                   accept=".ics,text/calendar"
-                  className="mt-2 max-w-sm cursor-pointer"
+                  className="max-w-sm cursor-pointer"
                   onChange={(ev) => {
                     const f = ev.target.files?.[0];
                     if (f) void onUploadToCalendar(selected.id, f);
@@ -322,25 +370,16 @@ export default function CalendarsSettingsPage() {
                 />
               </div>
 
-              <div>
-                <p className="text-xs font-medium text-text">Quick weekday template</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {WEEKDAYS.map((d, i) => (
-                    <span
-                      key={d}
-                      className="rounded border border-border px-2 py-0.5 font-body text-xs text-text-muted"
-                      title={`${i} = ${d}`}
-                    >
-                      {d}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <p className="text-xs text-text-muted font-body" aria-live="polite">
-                {patchMut.isPending ? "Saving…" : patchMut.isSuccess ? "Saved" : null}
+              {/* Save indicator */}
+              <p className="font-body text-xs text-text-subtle" aria-live="polite">
+                {patchMut.isPending ? "Saving…" : savedTick ? (
+                  <span className="inline-flex items-center gap-1 text-accent">
+                    <Check className="size-3.5" aria-hidden />
+                    Saved
+                  </span>
+                ) : null}
               </p>
-            </div>
+            </section>
           ) : null}
         </div>
       ) : null}
