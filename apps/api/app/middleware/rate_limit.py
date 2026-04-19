@@ -14,8 +14,11 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
+from app.core.ip import get_client_ip
 
 logger = logging.getLogger(__name__)
+
+_RETRY_AFTER_SECONDS = 60
 
 _RL_AUTH_USER_PER_MIN = 120
 _RL_STUDIO_PER_MIN = 10
@@ -40,15 +43,6 @@ _EXEMPT_PATHS: frozenset[str] = frozenset(
 )
 
 
-def _client_ip(request: Request) -> str:
-    fwd = request.headers.get("x-forwarded-for")
-    if fwd:
-        return fwd.split(",")[0].strip()
-    if request.client:
-        return request.client.host
-    return "unknown"
-
-
 def _is_studio_post(request: Request) -> bool:
     return (
         request.method == "POST"
@@ -67,7 +61,7 @@ def _public_submit_keys(request: Request) -> tuple[str, str] | None:
     if len(parts) < 3:
         return None
     org_slug, page_slug = parts[0], parts[1]
-    ip = _client_ip(request)
+    ip = get_client_ip(request)
     return (
         f"rl:psubmit:ip:{ip}",
         f"rl:psubmit:page:{org_slug}:{page_slug}",
@@ -92,7 +86,7 @@ def _limit_key_and_max(request: Request) -> tuple[str | None, int]:
         and path.rstrip("/").endswith("/track")
         and request.method == "POST"
     ):
-        return f"rl:ptrack:{_client_ip(request)}", _RL_PUBLIC_TRACK_PER_MIN
+        return f"rl:ptrack:{get_client_ip(request)}", _RL_PUBLIC_TRACK_PER_MIN
 
     auth = request.headers.get("authorization") or ""
     if auth.lower().startswith("bearer ") and len(auth) > 24:
@@ -102,7 +96,7 @@ def _limit_key_and_max(request: Request) -> tuple[str | None, int]:
         return f"rl:user:tok:{h}", _RL_AUTH_USER_PER_MIN
 
     if path.startswith(settings.API_V1_STR):
-        return f"rl:api:{_client_ip(request)}", _RL_PUBLIC_IP_PER_MIN
+        return f"rl:api:{get_client_ip(request)}", _RL_PUBLIC_IP_PER_MIN
 
     return None, 0
 
@@ -139,15 +133,19 @@ async def _incr_redis(r: Any, key: str, limit: int) -> bool:
     return int(n) <= limit
 
 
-def _rate_limited_response() -> Response:
+def _rate_limited_response(retry_after_seconds: int = _RETRY_AFTER_SECONDS) -> Response:
     body = json.dumps(
-        {"code": "rate_limited", "retry_after_seconds": 60, "message": "Too many requests"}
+        {
+            "code": "rate_limited",
+            "retry_after_seconds": retry_after_seconds,
+            "message": "Too many requests",
+        }
     )
     return Response(
         content=body,
         status_code=429,
         media_type="application/json",
-        headers={"Retry-After": "60"},
+        headers={"Retry-After": str(retry_after_seconds)},
     )
 
 
@@ -155,8 +153,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        # Deterministic integration tests: ASGI client shares in-process limiter state.
-        if settings.ENVIRONMENT == "test":
+        # Integration tests: disable unless ``FORCE_RATE_LIMIT_IN_TESTS`` (see ``test_rate_limit.py``).
+        if settings.ENVIRONMENT == "test" and not settings.FORCE_RATE_LIMIT_IN_TESTS:
             return await call_next(request)
 
         submit_keys = _public_submit_keys(request)

@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import AnalyticsEvent, Page, Template
-from app.deps import get_db
+from app.deps import get_admin_db
 from app.deps.forge_operator import require_forge_operator
 from app.deps.tenant import TenantContext
 from app.schemas.common import StubResponse
@@ -38,7 +38,7 @@ def _normalize_slug(raw: str) -> str:
 
 @router.get("/organizations", response_model=StubResponse)
 async def admin_orgs(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_admin_db),
     _ctx: TenantContext = Depends(require_forge_operator),
 ) -> StubResponse:
     return StubResponse()
@@ -46,7 +46,7 @@ async def admin_orgs(
 
 @router.get("/usage", response_model=StubResponse)
 async def admin_usage(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_admin_db),
     _ctx: TenantContext = Depends(require_forge_operator),
 ) -> StubResponse:
     return StubResponse()
@@ -54,7 +54,7 @@ async def admin_usage(
 
 @router.get("/llm-stats")
 async def admin_llm_stats(
-    _db: AsyncSession = Depends(get_db),
+    _db: AsyncSession = Depends(get_admin_db),
     _ctx: TenantContext = Depends(require_forge_operator),
 ) -> dict[str, Any]:
     """In-memory LLM metrics (tokens/min, cache hits) — Mission 03."""
@@ -64,7 +64,7 @@ async def admin_llm_stats(
 
 @router.get("/templates", response_model=list[AdminTemplateOut])
 async def admin_list_templates(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_admin_db),
     _ctx: TenantContext = Depends(require_forge_operator),
 ) -> list[Template]:
     rows = (
@@ -77,7 +77,7 @@ async def admin_list_templates(
 async def admin_create_template(
     request: Request,
     body: AdminTemplateCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_admin_db),
     _ctx: TenantContext = Depends(require_forge_operator),
 ) -> Template:
     slug = _normalize_slug(body.slug)
@@ -109,7 +109,7 @@ async def admin_patch_template(
     request: Request,
     template_id: UUID,
     body: AdminTemplatePatch,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_admin_db),
     _ctx: TenantContext = Depends(require_forge_operator),
 ) -> Template:
     row = await db.get(Template, template_id)
@@ -151,7 +151,7 @@ async def admin_patch_template(
 @router.delete("/templates/{template_id}")
 async def admin_delete_template(
     template_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_admin_db),
     _ctx: TenantContext = Depends(require_forge_operator),
 ) -> dict[str, str]:
     row = await db.get(Template, template_id)
@@ -166,7 +166,7 @@ async def admin_delete_template(
 async def admin_template_from_page(
     request: Request,
     body: TemplateFromPageIn,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_admin_db),
     ctx: TenantContext = Depends(require_forge_operator),
 ) -> Template:
     page = await db.get(Page, body.page_id)
@@ -209,7 +209,7 @@ async def admin_template_from_page(
 async def admin_regenerate_template_preview(
     request: Request,
     template_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_admin_db),
     _ctx: TenantContext = Depends(require_forge_operator),
 ) -> Template:
     row = await db.get(Template, template_id)
@@ -221,7 +221,7 @@ async def admin_regenerate_template_preview(
 
 @router.get("/templates/stats", response_model=TemplateStatsOut)
 async def admin_template_stats(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_admin_db),
     _ctx: TenantContext = Depends(require_forge_operator),
 ) -> TemplateStatsOut:
     since = datetime.now(UTC) - timedelta(days=90)

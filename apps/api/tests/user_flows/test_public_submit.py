@@ -20,10 +20,15 @@ from tests.support.postgres import require_postgres
 
 
 @pytest.mark.asyncio
-async def test_submit_json_stores_submission_and_analytics_event() -> None:
+async def test_submit_json_stores_submission_and_analytics_event(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """After publish, a visitor POSTs JSON; row appears in submissions + analytics_events."""
     await require_postgres()
+    from app.config import settings
     from app.main import app
+
+    monkeypatch.setattr(settings, "TRUST_PROXY_HEADERS", True)
 
     uid = uuid.uuid4()
     oid = uuid.uuid4()

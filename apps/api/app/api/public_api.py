@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.ip import get_client_ip
 from app.db.models import AnalyticsEvent, Organization, Page, SlotHold, Submission
 from app.db.rls_context import set_active_organization
 from app.deps.db import get_db_public
@@ -72,15 +73,6 @@ def _trim_metadata(md: dict[str, Any] | None) -> dict[str, Any] | None:
     if len(raw) > 16000:
         return {"_truncated": True}
     return md
-
-
-def _client_ip(request: Request) -> str:
-    fwd = request.headers.get("x-forwarded-for")
-    if fwd:
-        return fwd.split(",")[0].strip()
-    if request.client:
-        return request.client.host
-    return "unknown"
 
 
 async def _parse_submit_body(request: Request) -> dict[str, Any]:
@@ -212,7 +204,7 @@ async def public_hold_create(
     ss = ss.astimezone(UTC)
     se = se.astimezone(UTC)
 
-    ip_raw = _client_ip(request)
+    ip_raw = get_client_ip(request)
     ua = request.headers.get("user-agent")
     fp = visitor_fingerprint(ip_raw, ua)
 
@@ -336,7 +328,7 @@ async def public_submit(
     if p is None:
         raise HTTPException(status_code=404, detail="Not found")
 
-    ip_raw = _client_ip(request)
+    ip_raw = get_client_ip(request)
     ip_anon = anonymize_ipv4_to_slash24(ip_raw)
     ua = request.headers.get("user-agent")
     fp = visitor_fingerprint(ip_raw, ua)
@@ -483,7 +475,7 @@ async def public_track(
     if p is None:
         raise HTTPException(status_code=404, detail="Not found")
 
-    ip_raw = _client_ip(request)
+    ip_raw = get_client_ip(request)
     ip_anon = anonymize_ipv4_to_slash24(ip_raw)
     ua = request.headers.get("user-agent")
     ref = request.headers.get("referer") or request.headers.get("referrer")
