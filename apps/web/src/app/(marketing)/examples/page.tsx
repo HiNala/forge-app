@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TemplateCard } from "@/components/marketing/template-card";
+import { GallerySection } from "@/components/marketing/gallery-section";
 import { Container } from "@/components/ui/container";
-import { SITE_URL, TEMPLATE_CARDS } from "@/lib/marketing-content";
+import { SITE_URL } from "@/lib/marketing-content";
 
 export const metadata: Metadata = {
   title: "Examples",
@@ -19,33 +19,53 @@ export const metadata: Metadata = {
 
 export default function ExamplesPage() {
   return (
-    <Container max="xl" className="py-12 sm:py-16">
-      <h1 className="font-display text-4xl font-semibold tracking-tight text-text sm:text-5xl">
-        Examples
-      </h1>
-      <p className="mt-4 max-w-[65ch] text-lg text-text-muted">
-        Curated starters — each card opens a live HTML preview backed by the template library API.
-      </p>
-      <ul className="mt-12 grid list-none gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
-        {TEMPLATE_CARDS.map((item) => (
-          <li key={item.slug}>
-            <TemplateCard
-              href={`/examples/${item.slug}`}
-              name={item.name}
-              tag={item.tag}
-              description={item.description}
-            />
-          </li>
-        ))}
-      </ul>
-      <p className="mt-12 text-center">
-        <Link
-          href="/signup?source=examples"
-          className="inline-flex min-h-11 items-center font-medium text-accent underline-offset-4 hover:underline"
-        >
-          Start free →
-        </Link>
-      </p>
-    </Container>
+    <>
+      {/* Header */}
+      <section className="border-b border-border pb-14 pt-20 sm:pb-16 sm:pt-28">
+        <Container max="xl">
+          <div className="max-w-[42ch]">
+            <span className="section-label mb-4">Examples</span>
+            <h1 className="font-display text-[clamp(40px,6vw,72px)] font-bold leading-[0.95] tracking-tight text-text">
+              Pages built
+              <br />
+              <span className="text-accent">in one sentence.</span>
+            </h1>
+            <p className="mt-5 font-body text-lg font-light leading-relaxed text-text-muted">
+              Each example below was generated from a single prompt. Open any card to see the live
+              HTML — then sign in to clone it into your workspace.
+            </p>
+          </div>
+        </Container>
+      </section>
+
+      {/* Gallery */}
+      <GallerySection />
+
+      {/* Bottom CTA */}
+      <section className="border-t border-border py-16 sm:py-20">
+        <Container max="xl" className="text-center">
+          <h2 className="font-display text-[clamp(28px,4vw,52px)] font-bold leading-[0.95] tracking-tight text-text">
+            Ready to build yours?
+          </h2>
+          <p className="mx-auto mt-4 max-w-[40ch] font-body text-base font-light text-text-muted">
+            Describe what you need in plain language. Forge builds and hosts it in seconds.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/signup?source=examples"
+              className="inline-flex min-h-11 items-center rounded-xl bg-text px-6 py-3 font-body text-sm font-semibold text-bg transition-opacity hover:opacity-80"
+            >
+              Start free →
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex min-h-11 items-center font-body text-sm font-medium text-text-muted underline-offset-4 hover:underline"
+            >
+              See how it works
+            </Link>
+          </div>
+        </Container>
+      </section>
+    </>
   );
 }
