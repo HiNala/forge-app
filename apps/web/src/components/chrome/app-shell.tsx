@@ -3,66 +3,18 @@
 import * as React from "react";
 import { useUser } from "@clerk/nextjs";
 import { motion } from "framer-motion";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { CommandPalette } from "@/components/chrome/command-palette";
 import { OnboardingGate } from "@/components/chrome/onboarding-gate";
+import { ShortcutsDialog } from "@/components/chrome/shortcuts-dialog";
 import { Sidebar } from "@/components/chrome/sidebar";
 import { TopBar } from "@/components/chrome/top-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fadeIn } from "@/lib/motion";
+import { useAppShortcuts } from "@/hooks/use-shortcuts";
 import { BrandThemeProvider } from "@/providers/brand-theme-provider";
 import { useForgeSession } from "@/providers/session-provider";
 import { useMediaQuery } from "@/hooks/use-media-query";
-
-/** Gmail-style: G then letter, only when focus is not in an editable field. */
-function useGoNavigation() {
-  const router = useRouter();
-  const armedRef = React.useRef(false);
-  React.useEffect(() => {
-    let clearTimer: ReturnType<typeof setTimeout>;
-    const disarm = () => {
-      armedRef.current = false;
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const el = e.target as HTMLElement | null;
-      if (
-        el?.closest(
-          "input:not([readonly]), textarea, select, [contenteditable=true], [role=combobox]",
-        )
-      ) {
-        return;
-      }
-      if (e.key === "g" || e.key === "G") {
-        armedRef.current = true;
-        clearTimeout(clearTimer);
-        clearTimer = setTimeout(disarm, 1200);
-        return;
-      }
-      if (!armedRef.current) return;
-      armedRef.current = false;
-      clearTimeout(clearTimer);
-      const map: Record<string, string> = {
-        d: "/dashboard",
-        p: "/pages",
-        s: "/studio",
-        a: "/analytics",
-        t: "/templates",
-        e: "/settings",
-      };
-      const href = map[e.key.toLowerCase()];
-      if (href) {
-        e.preventDefault();
-        router.push(href);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      clearTimeout(clearTimer);
-    };
-  }, [router]);
-}
 
 function AppChromeSkeleton() {
   return (
@@ -92,7 +44,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { isLoaded, isSignedIn } = useUser();
   const { isLoading } = useForgeSession();
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  useGoNavigation();
+  const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
+  useAppShortcuts(setShortcutsOpen);
 
   const showAppSkeleton =
     !isLoaded || (isSignedIn && isLoading);
@@ -104,6 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <BrandThemeProvider>
       <CommandPalette />
+      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
       <OnboardingGate />
       <div className="flex min-h-screen bg-bg">
         {isDesktop ? <Sidebar /> : null}
