@@ -4,7 +4,7 @@
 
 **Legend:** ✅ substantial · ⚠️ partial / stub · ❌ not started
 
-**Last audited:** 2026-04-20 — `apps/api` **170** pytest tests (`uv run pytest tests/` with Postgres + `alembic upgrade head`); `apps/web` `pnpm run typecheck` + `pnpm run lint` + `pnpm run test` + `pnpm run build` clean. On Windows, if `uv` hits `.venv` lock errors, set `UV_PROJECT_ENVIRONMENT=.venv-forge` (see `tests/README.md`) before `uv sync` / `uv run`. Apply DB migrations before API tests: `cd apps/api && uv run alembic upgrade head`.
+**Last audited:** 2026-04-20 — `apps/api` **171** pytest tests (`uv run pytest tests/` with Postgres + `alembic upgrade head`); `apps/web` `pnpm run typecheck` + `pnpm run lint` + `pnpm run test` + `pnpm run build` clean. On Windows, if `uv` hits `.venv` lock errors, set `UV_PROJECT_ENVIRONMENT=.venv-forge` (see `tests/README.md`) before `uv sync` / `uv run`. Apply DB migrations before API tests: `cd apps/api && uv run alembic upgrade head`.
 
 ---
 
