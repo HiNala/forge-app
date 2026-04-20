@@ -9,6 +9,7 @@ from app.api.v1 import (
     availability_calendars,
     billing,
     calendar,
+    e2e_bootstrap,
     notifications_center,
     organization,
     orgs_current_alias,
@@ -53,3 +54,4 @@ api_router.include_router(templates.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(admin_platform.router)
 api_router.include_router(admin.router)
+api_router.include_router(e2e_bootstrap.router)

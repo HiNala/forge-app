@@ -66,6 +66,8 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/forge_ci
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: test
+      AUTH_TEST_BYPASS: "true"
+      FORGE_E2E_TOKEN: "ci-forge-e2e-token"
       BACKEND_CORS_ORIGINS: '["http://localhost:3000"]'
       CORS_ORIGINS_EXTRA: ""
       APP_PUBLIC_URL: http://localhost:3000

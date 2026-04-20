@@ -1,0 +1,73 @@
+# GL-03 — Playwright against full docker-compose.ci stack (API + worker + web + deps).
+name: E2E
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "mission-gl-03-integration-testing"]
+  pull_request:
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start stack
+        run: docker compose -f docker-compose.ci.yml up --build -d
+
+      - name: Wait for health
+        run: bash scripts/ci/wait-for-stack.sh
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: cd apps/web && pnpm exec playwright install --with-deps chromium webkit firefox
+
+      - name: Run Playwright (CI smoke + stack)
+        working-directory: apps/web
+        env:
+          CI: "true"
+          PLAYWRIGHT_EXTERNAL_APP: "1"
+          PLAYWRIGHT_BASE_URL: "http://127.0.0.1:3000"
+          PLAYWRIGHT_API_URL: "http://127.0.0.1:8000"
+          FORGE_E2E_TOKEN: "ci-forge-e2e-token"
+        run: |
+          pnpm exec playwright test \
+            --project=chromium \
+            e2e/ci-stack-smoke.spec.ts
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 30
+
+      - name: Upload traces / screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: apps/web/test-results
+          retention-days: 30
+
+      - name: Stop stack
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down -v

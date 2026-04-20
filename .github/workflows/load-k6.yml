@@ -1,0 +1,18 @@
+# GL-03 — optional k6 smoke (manual / nightly). Point BASE_URL at staging.
+name: Load k6
+
+on:
+  workflow_dispatch:
+
+jobs:
+  k6-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: k6 installed (smoke)
+        run: docker run --rm grafana/k6 version
+
+      - name: Note
+        run: |
+          echo "Point K6_BASE_URL at a running API + real ORG_SLUG/PAGE_SLUG before enforcing thresholds in CI."

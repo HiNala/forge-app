@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Acme Contracting",
+    "archetype": "contractor",
+    "plan": "pro"
+  },
+  {
+    "name": "Harbor Bistro",
+    "archetype": "restaurant",
+    "plan": "starter"
+  }
+]

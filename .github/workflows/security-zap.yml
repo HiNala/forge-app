@@ -1,0 +1,18 @@
+# GL-03 — OWASP ZAP baseline (weekly). Tune target + auth when staging URL is stable.
+name: Security ZAP
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  zap-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ZAP baseline scan (local placeholder)
+        run: |
+          echo "Configure ZAP_TARGET_URL (staging) and ZAP_AUTH script before enforcing HIGH=fail."
+          docker run --rm -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t "${ZAP_TARGET_URL:-http://127.0.0.1:8000/health/live}" -I || true

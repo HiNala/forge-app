@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     CLERK_WEBHOOK_SECRET: str = ""
     # Dev/test: allow X-Forge-Test-User / tenant headers without JWT (never enable in prod)
     AUTH_TEST_BYPASS: bool = False
+    # CI/E2E only: ``POST /api/v1/__e2e__/seed-org`` requires ``X-Forge-E2e-Token`` matching this value.
+    # Leave empty to disable the route (production default).
+    FORGE_E2E_TOKEN: str = ""
 
     # Storage (MinIO / S3)
     S3_ENDPOINT: str = "http://localhost:9000"
