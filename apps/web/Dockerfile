@@ -4,6 +4,11 @@ WORKDIR /app
 RUN npm i -g pnpm@9
 
 FROM base AS builder
+# Baked at build time (set in CI / Railway to match public API origin).
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 COPY . .
 RUN pnpm install
 WORKDIR /app/apps/web
