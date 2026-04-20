@@ -121,7 +121,7 @@ export function TrendSparkline({
           <YAxis hide domain={[0, max * 1.1]} />
           <RTooltip
             contentStyle={{ fontSize: 12, borderRadius: 8 }}
-            formatter={(v: number) => [v, ""]}
+            formatter={(value) => [Number(value ?? 0), ""]}
           />
           <Line type="monotone" dataKey={key} stroke="var(--accent)" strokeWidth={2} dot={false} />
         </LineChart>
