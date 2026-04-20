@@ -1,12 +1,17 @@
+# Minimal production-style compose (GL-04). Web image requires monorepo root context (see apps/web/Dockerfile).
 services:
   web:
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+        NEXT_PUBLIC_APP_URL: http://localhost:3000
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - PORT=3000
 
   api:
     build:

@@ -3,6 +3,7 @@
 name: Deploy staging
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -37,7 +38,7 @@ jobs:
             echo "RAILWAY_SERVICE_ID_STAGING not set — skipping."
             exit 0
           fi
-          railway up --service "${{ secrets.RAILWAY_SERVICE_ID_STAGING }}" || true
+          railway up --service "${{ secrets.RAILWAY_SERVICE_ID_STAGING }}"
 
       - name: Post-deploy smoke (optional)
         env:
