@@ -49,6 +49,7 @@ export default async function ExampleDetailPage({ params }: Props) {
     t = await getPublicTemplateBySlug(slug);
   } catch {
     notFound();
+    return;
   }
 
   const jsonLd = {

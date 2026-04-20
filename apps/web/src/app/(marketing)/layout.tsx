@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   },
 };
 
+/** Avoid static prerender edge cases for marketing routes that share global providers. */
+export const dynamic = "force-dynamic";
+
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-full flex-col bg-bg">
