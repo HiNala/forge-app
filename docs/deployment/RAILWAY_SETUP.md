@@ -72,7 +72,7 @@ Full list: [ENV_MANIFEST.md](./ENV_MANIFEST.md). Audit:
 ## CI/CD
 
 - `.github/workflows/ci.yml` — lint, typecheck, API tests, RLS check.
-- `.github/workflows/deploy-staging.yml` — on push to `main` (filtered paths), optional `railway up` when `RAILWAY_TOKEN` and `RAILWAY_SERVICE_ID_STAGING` are set; otherwise rely on Railway’s GitHub integration.
+- `.github/workflows/deploy-staging.yml` — `workflow_dispatch` and (on push to `main`, filtered paths) optional `railway up` when `RAILWAY_TOKEN` and `RAILWAY_SERVICE_ID_STAGING` are set. If both secrets are set, a non-zero `railway up` **fails the job** (fix CLI project link or prefer Railway’s GitHub integration). If either secret is missing, the CLI step is skipped.
 - `.github/workflows/deploy-production.yml` — manual `workflow_dispatch` with confirmation input; uses `RAILWAY_SERVICE_ID_PRODUCTION` and GitHub Environment `production` (add required reviewers there).
 
 Secrets: `RAILWAY_TOKEN`, `RAILWAY_SERVICE_ID_STAGING`, `RAILWAY_SERVICE_ID_PRODUCTION`, optional `STAGING_BASE_URL` / `PRODUCTION_BASE_URL` for post-deploy `curl` smoke.
