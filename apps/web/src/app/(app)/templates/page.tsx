@@ -103,10 +103,10 @@ export default function TemplatesGalleryPage() {
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight text-text">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-text">
             Template gallery
           </h1>
-          <p className="mt-1 max-w-[60ch] text-sm text-text-muted">
+          <p className="mt-1.5 max-w-[60ch] font-body text-sm font-light text-text-muted">
             Start from a polished page — brand kit applies automatically.
           </p>
         </div>
@@ -195,12 +195,16 @@ export default function TemplatesGalleryPage() {
       </div>
 
       {loading ? (
-        <p className="mt-10 text-sm text-text-muted">Loading…</p>
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-56 animate-pulse rounded-2xl bg-bg-elevated" />
+          ))}
+        </div>
       ) : (
         <ul className="mt-10 grid list-none gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((t) => (
             <li key={t.id}>
-              <article className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm transition hover:border-accent/30">
+              <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:border-accent/30 hover:shadow-md">
                 <button
                   type="button"
                   className="relative aspect-[16/10] w-full overflow-hidden bg-bg-muted text-left"
@@ -218,7 +222,7 @@ export default function TemplatesGalleryPage() {
                       Preview pending
                     </div>
                   )}
-                  <span className="absolute left-2 top-2 rounded-full bg-surface/90 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-text">
+                  <span className="absolute left-2 top-2 rounded-full bg-surface/90 px-2.5 py-0.5 font-body text-[10px] font-semibold capitalize text-text-muted">
                     {t.category}
                   </span>
                   <span className="absolute inset-x-0 bottom-0 flex translate-y-full items-center justify-center bg-gradient-to-t from-black/50 to-transparent p-3 transition group-hover:translate-y-0">
@@ -266,7 +270,7 @@ export default function TemplatesGalleryPage() {
           ) : (
             <>
               {detailHtml ? (
-                <div className="overflow-hidden rounded-lg border border-border">
+                <div className="overflow-hidden rounded-2xl border border-border">
                   <iframe
                     title="Preview"
                     className="min-h-[320px] w-full border-0 bg-white"

@@ -27,9 +27,7 @@ export function HowItWorks() {
     <section id="how" className="scroll-mt-20 border-t border-border py-20 sm:py-24">
       <Container max="xl">
         <div className="mb-14">
-          <p className="font-body text-[11px] font-bold uppercase tracking-[0.12em] text-accent">
-            How it works
-          </p>
+          <span className="section-label">How it works</span>
           <h2 className="mt-2.5 font-display text-[clamp(28px,3.5vw,46px)] font-bold leading-[1] tracking-tight text-text">
             Three steps. One result.
           </h2>
