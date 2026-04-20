@@ -17,6 +17,7 @@ services:
         condition: service_started
     environment:
       # Do not set CI=true — pnpm treats CI as frozen-lockfile and our dev lock can lag package.json
+      - NEXT_TELEMETRY_DISABLED=1
       - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
       - NEXT_PUBLIC_APP_URL=http://localhost:3001
     command: >
@@ -75,6 +76,8 @@ services:
       - ./apps/api/app:/app/api/app
     environment:
       - REDIS_URL=redis://redis:6379/0
+      # Override host .env (localhost) so jobs can reach Postgres on the compose network.
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/forge_dev
 
   postgres:
     # pg_partman pre-installed (Mission BI-01 / ADR-004). See docs/architecture/PARTITIONING.md.
