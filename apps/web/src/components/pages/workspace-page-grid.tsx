@@ -101,7 +101,7 @@ function PageThumbnail({ page, hovered }: { page: PageOut; hovered: boolean }) {
             e.preventDefault();
             e.stopPropagation();
           }}
-          className="absolute right-2 top-2 flex items-center gap-1 rounded-[7px] bg-white/92 px-2 py-1.5 text-[10px] font-semibold text-text shadow-md backdrop-blur-sm"
+          className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-white/92 px-2 py-1.5 text-[10px] font-semibold text-text shadow-md backdrop-blur-sm"
           style={{ animation: "var(--animate-fade-in, fadeIn 0.15s ease)" }}
         >
           <ExternalLink className="size-[10px]" aria-hidden />
@@ -120,12 +120,12 @@ function PageCard({ page }: { page: PageOut }) {
     <li>
       <Link
         href={`/pages/${page.id}`}
-        className="block rounded-[14px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mid focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+        className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mid focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
         <div
-          className="flex flex-col overflow-hidden rounded-[14px] border bg-surface transition-all duration-200"
+          className="flex flex-col overflow-hidden rounded-2xl border bg-surface transition-all duration-200"
           style={{
             borderColor: hovered ? "var(--border-strong)" : "var(--border)",
             boxShadow: hovered
@@ -151,7 +151,7 @@ function PageCard({ page }: { page: PageOut }) {
               </div>
             </div>
             <span
-              className="shrink-0 rounded-[6px] border px-2 py-0.5 text-[11px] font-medium capitalize"
+              className="shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-medium capitalize"
               style={{
                 background: typeStyle.bg,
                 color: typeStyle.color,
@@ -189,7 +189,7 @@ export function WorkspacePageGrid({
             type="button"
             onClick={onNewPage}
             className={cn(
-              "group flex h-full min-h-[210px] w-full flex-col items-center justify-center gap-2 rounded-[14px]",
+              "group flex h-full min-h-[210px] w-full flex-col items-center justify-center gap-2 rounded-2xl",
               "border border-dashed border-border-strong/40 bg-transparent",
               "transition-all duration-200 hover:border-accent/50 hover:bg-accent-light",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mid",
@@ -197,7 +197,7 @@ export function WorkspacePageGrid({
           >
             <div
               className={cn(
-                "flex size-8 items-center justify-center rounded-[9px] bg-bg-elevated text-text-muted",
+                "flex size-8 items-center justify-center rounded-xl bg-bg-elevated text-text-muted",
                 "transition-colors group-hover:bg-accent-light group-hover:text-accent",
               )}
             >

@@ -27,7 +27,7 @@ export function EmptyState({
   return (
     <motion.div
       className={cn(
-        "flex flex-col items-center justify-center rounded-[10px] border border-dashed border-border bg-surface px-8 py-16 text-center shadow-sm",
+        "flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface px-8 py-16 text-center shadow-sm",
         className,
       )}
       variants={listStagger}
@@ -42,7 +42,7 @@ export function EmptyState({
       </motion.div>
       <motion.h2
         variants={listItem}
-        className="font-display text-2xl font-semibold text-text"
+        className="font-display text-2xl font-bold text-text"
       >
         {title}
       </motion.h2>

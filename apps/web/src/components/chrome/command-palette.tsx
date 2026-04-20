@@ -86,7 +86,7 @@ export function CommandPalette() {
           Search pages, team, settings, and navigation. Use arrow keys to move and Enter to open.
         </div>
         <h2 className="sr-only">Command palette</h2>
-        <Command className="rounded-[10px] bg-surface font-body" shouldFilter>
+        <Command className="rounded-2xl bg-surface font-body" shouldFilter>
           <div className="border-b border-border px-3 py-2">
             <Command.Input
               placeholder="Search pages, people, settings…"

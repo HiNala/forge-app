@@ -36,7 +36,7 @@ export function TestimonialsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-10%" }}
               transition={{ delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="flex flex-col rounded-[20px] border border-border bg-surface p-7"
+              className="flex flex-col rounded-2xl border border-border bg-surface p-7"
             >
               <blockquote className="flex-1 font-body text-sm font-light leading-[1.75] text-text">
                 {quote}

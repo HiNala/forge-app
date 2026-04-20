@@ -37,8 +37,8 @@ function AppChromeSkeleton() {
         <Skeleton className="h-14 w-full rounded-none border-b border-border" />
         <div className="flex-1 space-y-4 p-6 md:p-8">
           <Skeleton className="h-10 w-2/3 max-w-md rounded-lg" />
-          <Skeleton className="h-32 w-full rounded-[10px]" />
-          <Skeleton className="h-32 w-full rounded-[10px]" />
+          <Skeleton className="h-32 w-full rounded-2xl" />
+          <Skeleton className="h-32 w-full rounded-2xl" />
         </div>
       </div>
     </div>

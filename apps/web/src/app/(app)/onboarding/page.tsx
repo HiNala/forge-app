@@ -284,7 +284,7 @@ export default function OnboardingPage() {
           </p>
           <label
             htmlFor="logo"
-            className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-[10px] border border-dashed border-border bg-bg-elevated/50 px-6 py-8 text-center text-sm text-text-muted font-body hover:bg-bg-elevated"
+            className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-bg-elevated/50 px-6 py-8 text-center text-sm text-text-muted font-body hover:bg-bg-elevated"
           >
             <input
               id="logo"

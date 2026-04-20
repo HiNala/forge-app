@@ -55,7 +55,7 @@ function PageThumbnail({ page }: { page: PageOut }) {
 
   return (
     <div
-      className="relative h-[156px] overflow-hidden rounded-t-[14px]"
+      className="relative h-[156px] overflow-hidden rounded-t-2xl"
       style={{ background: `linear-gradient(135deg, ${palette.from} 0%, var(--bg-elevated) 70%)` }}
     >
       {src ? (
@@ -138,13 +138,13 @@ export function DashboardPageCard({
       <Link
         href={`/pages/${page.id}`}
         className={cn(
-          "block rounded-[14px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mid",
+          "block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mid",
           keyboardFocused && "ring-2 ring-accent-mid ring-offset-2 ring-offset-bg",
         )}
       >
         <div
           className={cn(
-            "flex flex-col overflow-hidden rounded-[14px] border bg-surface transition-all duration-[240ms] ease-out motion-reduce:transition-none",
+            "flex flex-col overflow-hidden rounded-2xl border bg-surface transition-all duration-[240ms] ease-out motion-reduce:transition-none",
             hovered
               ? "border-border-strong shadow-lg -translate-y-0.5 motion-reduce:translate-y-0 motion-reduce:shadow-md"
               : "border-border shadow-sm",

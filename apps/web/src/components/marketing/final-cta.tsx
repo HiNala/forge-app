@@ -43,7 +43,7 @@ export function FinalCta() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="rounded-[14px] border border-accent-bold bg-accent-light px-6 py-5 font-display text-base font-semibold text-accent"
+                className="rounded-2xl border border-accent-bold bg-accent-light px-6 py-5 font-display text-base font-semibold text-accent"
               >
                 ✓ You&apos;re in — check your inbox.
               </motion.div>
@@ -51,7 +51,7 @@ export function FinalCta() {
               <form
                 onSubmit={handleSubmit}
                 className={cn(
-                  "input-focus-ring flex overflow-hidden rounded-[14px] border border-border bg-surface",
+                  "input-focus-ring flex overflow-hidden rounded-2xl border border-border bg-surface",
                   "shadow-[0_4px_20px_rgba(0,0,0,0.06)]",
                 )}
               >

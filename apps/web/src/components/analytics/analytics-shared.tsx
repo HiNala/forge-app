@@ -132,7 +132,7 @@ export function TrendSparkline({
 
 export function ChartEmpty({ message }: { message: string }) {
   return (
-    <div className="flex min-h-[160px] flex-col items-center justify-center rounded-[10px] border border-dashed border-border bg-bg-elevated/50 px-4 py-8 text-center">
+    <div className="flex min-h-[160px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-bg-elevated/50 px-4 py-8 text-center">
       <p className="max-w-sm text-sm text-text-muted font-body">{message}</p>
     </div>
   );

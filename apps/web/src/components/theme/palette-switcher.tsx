@@ -90,7 +90,7 @@ export function PaletteSwitcher() {
       role="region"
       aria-label="Developer accent palette preview"
     >
-      <div className="text-text-subtle font-body text-[11px] uppercase tracking-wide">
+      <div className="section-label">
         Accent (dev) — ⌃⇧P
       </div>
       <div className="flex gap-2">

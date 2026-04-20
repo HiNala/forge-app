@@ -159,7 +159,7 @@ export function PricingPageClient() {
                 >
                   {plan.highlight && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="inline-block rounded-full bg-accent px-3 py-0.5 font-body text-[11px] font-bold uppercase tracking-widest text-bg">
+                      <span className="inline-block rounded-full bg-accent px-3 py-0.5 font-body text-[11px] font-semibold text-bg">
                         Most popular
                       </span>
                     </div>
