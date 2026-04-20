@@ -18,7 +18,7 @@ class Finding(BaseModel):
     specific_quote: str | None = None
     suggested_action: str
     auto_fixable: bool = False
-    confidence: float = Field(ge=0.0, le=1.0)
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
 
 
 class ReviewReport(BaseModel):

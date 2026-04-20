@@ -6,7 +6,7 @@ import json
 import logging
 import time
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
@@ -349,7 +349,8 @@ async def stream_page_generation(
             )
             break
         for f in findings_list:
-            fd = f.model_dump(mode="json") if hasattr(f, "model_dump") else f
+            raw = f.model_dump(mode="json") if hasattr(f, "model_dump") else f
+            fd = cast(dict[str, Any], raw)
             yield _sse("review.finding", fd)
         fixable_n = sum(1 for x in findings_list if getattr(x, "auto_fixable", False))
         sugg_n = sum(1 for x in findings_list if not getattr(x, "auto_fixable", False))

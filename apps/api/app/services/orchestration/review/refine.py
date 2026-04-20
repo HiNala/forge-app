@@ -9,13 +9,13 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from app.services.orchestration.review.models import Finding
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.orchestration.component_lib.render import render_full_document
 from app.services.orchestration.component_lib.schema import ComponentTree
 from app.services.orchestration.models import PageIntent
 from app.services.orchestration.planning_models import PagePlan
+from app.services.orchestration.review.models import Finding
 
 
 async def refine_component_tree_from_findings(

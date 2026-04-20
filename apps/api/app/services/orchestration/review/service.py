@@ -10,15 +10,6 @@ import time
 from typing import Any, cast
 from uuid import UUID
 
-from app.services.orchestration.review.a11y_checks import run_a11y_checks
-from app.services.orchestration.review.brand_voice import (
-    _brand_findings_for_html,
-    voice_drift_check,
-    voice_finding_from_result,
-)
-from app.services.orchestration.review.metrics import record_review_metrics
-from app.services.orchestration.review.models import Finding, ReviewReport, Severity, VoiceDriftResult
-from app.services.orchestration.review.workflow_weights import weights_for_workflow, weights_table_markdown
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.ai.exceptions import LLMConfigurationError
@@ -27,11 +18,20 @@ from app.services.llm.llm_router import structured_completion
 from app.services.orchestration.component_lib.schema import ProposalComponentTree
 from app.services.orchestration.models import PageIntent
 from app.services.orchestration.planning_models import PagePlan
+from app.services.orchestration.review.a11y_checks import run_a11y_checks
+from app.services.orchestration.review.brand_voice import (
+    _brand_findings_for_html,
+    voice_drift_check,
+    voice_finding_from_result,
+)
+from app.services.orchestration.review.metrics import record_review_metrics
+from app.services.orchestration.review.models import Finding, ReviewReport, Severity, VoiceDriftResult
 from app.services.orchestration.review.workflow_checks import (
     deck_completeness_checks,
     form_integrity_checks,
     proposal_structural_checks,
 )
+from app.services.orchestration.review.workflow_weights import weights_for_workflow, weights_table_markdown
 
 logger = logging.getLogger(__name__)
 
@@ -174,11 +174,11 @@ async def run_full_review(
             logger.warning("review_llm_task %s", lr)
             llm_report = ReviewReport(findings=[], overall_quality_score=88, summary="Review timed out or failed.")
         else:
-            llm_report = lr
+            llm_report = cast(ReviewReport, lr)
         if isinstance(vr, Exception):
             voice_res = VoiceDriftResult(voice_score=90, drift_examples=[], summary="Voice check skipped.")
         else:
-            voice_res = vr
+            voice_res = cast(VoiceDriftResult, vr)
     except LLMConfigurationError:
         llm_report = ReviewReport(findings=[], overall_quality_score=88, summary="No LLM keys.")
         voice_res = VoiceDriftResult(voice_score=90, drift_examples=[], summary="Voice check skipped.")

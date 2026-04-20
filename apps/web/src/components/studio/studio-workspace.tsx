@@ -109,6 +109,7 @@ export function StudioWorkspace() {
   const [streamPhase, setStreamPhase] = React.useState<"idle" | "intent" | "building">("idle");
   const [streamBanner, setStreamBanner] = React.useState<string | null>(null);
   const abortRef = React.useRef<AbortController | null>(null);
+  const reviewFindingBufferRef = React.useRef<StudioChatMsg[]>([]);
   const lastStreamRef = React.useRef<{ kind: "generate" | "refine"; payload: Record<string, unknown> } | null>(null);
   const lastGeneratePromptRef = React.useRef<string>("");
   const lastUserPromptRef = React.useRef<string>("");
@@ -420,6 +421,7 @@ export function StudioWorkspace() {
 
     if (kind === "generate") {
       lastUserPromptRef.current = userText;
+      reviewFindingBufferRef.current = [];
       streamAccRef.current = "";
       bufferRef.current.reset();
       setFinalHtml(null);
@@ -479,6 +481,38 @@ export function StudioWorkspace() {
               ]);
             }
           }
+          if (event === "review.finding" && data && typeof data === "object") {
+            const rf = data as {
+              expert?: string;
+              message?: string;
+              severity?: string;
+              suggested_action?: string;
+            };
+            const line = `${rf.expert ?? "Review"}: ${rf.message ?? ""}`.trim();
+            reviewFindingBufferRef.current.push({
+              id: crypto.randomUUID(),
+              role: "assistant",
+              kind: "review_finding",
+              text: line,
+              reviewMeta: {
+                expert: rf.expert,
+                severity: rf.severity,
+                message: rf.message,
+                suggested_action: rf.suggested_action,
+              },
+            });
+          }
+          if (event === "review.complete" && data && typeof data === "object") {
+            const rc = data as { summary?: string; quality_score?: number };
+            if (rc.summary && rc.summary.length > 0) {
+              reviewFindingBufferRef.current.push({
+                id: crypto.randomUUID(),
+                role: "assistant",
+                kind: "review_summary",
+                text: rc.summary,
+              });
+            }
+          }
           if (event === "html.start") {
             setStreamPhase("building");
             bufferRef.current.reset();
@@ -495,6 +529,9 @@ export function StudioWorkspace() {
               title?: string;
               refine_suggestions?: string[];
               page_type?: string;
+              quality_score?: number;
+              degraded_quality?: boolean;
+              publish_ack_required?: boolean;
             };
             if (d.page_id && activeOrganizationId) {
               const p = await getPage(getToken, activeOrganizationId, d.page_id);
@@ -518,6 +555,8 @@ export function StudioWorkspace() {
                 else if (pt === "proposal") recordWorkflowPageCreated("proposal");
                 else if (pt === "pitch_deck") recordWorkflowPageCreated("deck");
                 const fromEmpty = useStudioStore.getState().getSession(null).messages;
+                const pending = reviewFindingBufferRef.current;
+                reviewFindingBufferRef.current = [];
                 const artifact: StudioChatMsg = {
                   id: crypto.randomUUID(),
                   role: "assistant",
@@ -530,9 +569,16 @@ export function StudioWorkspace() {
                     slug: p.slug,
                     status: p.status,
                     summary: inferSummary(p),
+                    qualityScore: typeof d.quality_score === "number" ? d.quality_score : undefined,
+                    degradedQuality: !!d.degraded_quality,
                   },
                 };
-                setMessagesStore(p.id, [...fromEmpty, artifact]);
+                setMessagesStore(p.id, [...fromEmpty, ...pending, artifact]);
+                if (d.publish_ack_required) {
+                  toast.message("Low quality score", {
+                    description: "Forge suggests reviewing before publishing.",
+                  });
+                }
                 bootstrapSession(null, { messages: [], draftInput: "" });
               } else {
                 setMessagesStore(p.id, (m) => [
@@ -1172,6 +1218,40 @@ function ChatRow({
   onWorkflowClarifyPick: (workflow: string) => void;
 }) {
   const router = useRouter();
+
+  if (msg.kind === "review_finding") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={MOTION_TRANSITIONS.fadeUp}
+        className="mb-2 flex justify-start gap-2 opacity-90"
+      >
+        <ForgeLogo size="sm" className="mt-0.5 shrink-0 opacity-80" />
+        <div className="max-w-[95%] rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2 font-body text-xs text-white/90">
+          <p className="text-[11px] text-white/60 font-body">Design review</p>
+          <p className="mt-2 text-[11px] text-white/75 font-body">{msg.text}</p>
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (msg.kind === "review_summary") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={MOTION_TRANSITIONS.fadeUp}
+        className="mb-2 flex justify-start gap-2"
+      >
+        <ForgeLogo size="sm" className="mt-0.5 shrink-0 opacity-80" />
+        <div className="max-w-[95%] rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2 font-body text-xs text-white/90">
+          <p className="text-[11px] text-white/60 font-body">Review summary</p>
+          <p className="mt-2 text-white/80 font-body">{msg.text}</p>
+        </div>
+      </motion.div>
+    );
+  }
 
   if (msg.kind === "workflow_clarify" && msg.clarifyMeta) {
     const cm = msg.clarifyMeta;

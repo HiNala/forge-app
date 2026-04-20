@@ -11,10 +11,16 @@ _DEFAULT_WEIGHTS: dict[str, float] = {
     "Brand Consistency": 1.25,
     "Voice Consistency": 1.35,
     "Expert Reviewer": 1.0,
+    "Don Norman": 1.0,
+    "Dieter Rams": 1.0,
+    "Susan Kare": 1.0,
+    "Jakob Nielsen": 1.0,
+    "Margaret Calvert": 1.0,
+    "Paul Rand": 1.0,
 }
 
 _WORKFLOW_OVERRIDES: dict[str, dict[str, float]] = {
-    "proposal": {"Proposal Math Checker": 1.35},
+    "proposal": {"Proposal Math Checker": 1.35, "Don Norman": 1.35},
     "pitch_deck": {"Deck Completeness": 1.25},
     "contact_form": {"Form Integrity": 1.25},
 }
