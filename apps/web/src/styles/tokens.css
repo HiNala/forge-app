@@ -30,6 +30,12 @@
   --color-warning: oklch(72% 0.14 85);
   --color-danger: oklch(52% 0.18 25);
 
+  /*
+   * Font families: `--font-display` and `--font-body` are assigned on `<html>` by `next/font`
+   * in `app/fonts.ts` (Cormorant Garamond, Manrope). Use `.font-display` / `.font-body` or
+   * `font-family: var(--font-body)` in CSS; do not duplicate font stacks outside fallbacks.
+   */
+
   /* —— Typography scale (rem, ~1.25 modular) —— */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;

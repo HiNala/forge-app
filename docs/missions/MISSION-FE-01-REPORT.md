@@ -70,3 +70,5 @@ With `PLAYWRIGHT_NEXT_DEV=1`, `playwright.config.ts` runs `next dev` instead of 
 
 - **`Button` + `motion.button`:** `ButtonProps` omits HTML `onDrag` / `onDragStart` / `onDragEnd` / `onAnimationStart` / `onAnimationEnd` so they do not collide with Framer Motion’s prop types.
 - **Design system showcase `Select`:** `SelectTrigger` uses `aria-labelledby` pointing at the visible `<Label id="…">` so axe `button-name` passes.
+- **`EmptyState`:** lives in `components/ui/empty-state.tsx` (mission primitive location); optional `children` CTA slot; default icon stroke **1.75** to match the icon system spec.
+- **Design fetch cache:** `docs/design/raw/design-artifact-2026-04-20.json` records the latest 403 snapshot date for the Anthropic artifact URL.

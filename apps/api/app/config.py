@@ -1,47 +1,82 @@
-from pydantic import field_validator
+"""Application settings — environment-backed (see root ``.env.example``, PRD §9)."""
+
+from __future__ import annotations
+
+import json
+from typing import Any, Self
+
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Reject documented placeholders and other trivial secrets when ENVIRONMENT=production.
+_WEAK_SECRET_KEYS = frozenset(
+    {
+        "",
+        "secret",
+        "changeme",
+        "password",
+        "change-me-use-openssl-rand-hex-32",
+        "change-me-in-production-use-openssl-rand-hex-32",
+    }
+)
+
+_PRODUCTION_SECRET_KEY_MIN_LEN = 32
+
+
+def _parse_cors_origins(v: Any) -> list[str]:
+    """Split env string: single URL, CSV, or JSON array string (stored as ``str`` on Settings)."""
+    if v is None:
+        return ["http://localhost:3000", "http://localhost:3001"]
+    if isinstance(v, list):
+        return [str(x).strip().rstrip("/") for x in v if str(x).strip()]
+    s = str(v).strip()
+    if not s:
+        return ["http://localhost:3000", "http://localhost:3001"]
+    if s.startswith("["):
+        try:
+            data = json.loads(s)
+        except json.JSONDecodeError:
+            return ["http://localhost:3000", "http://localhost:3001"]
+        if isinstance(data, list):
+            return [str(x).strip().rstrip("/") for x in data if str(x).strip()]
+        return [s.rstrip("/")]
+    if "," in s:
+        return [p.strip().rstrip("/") for p in s.split(",") if p.strip()]
+    return [s.rstrip("/")]
 
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Forge API"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
-    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001"]
-    # Comma-separated extra origins (staging/prod frontends). Merged with BACKEND_CORS_ORIGINS (BI-02).
+    LOG_LEVEL: str = "INFO"
+
+    # Stored as str so dotenv can use a plain URL (``list`` fields are JSON-decoded before validators).
+    BACKEND_CORS_ORIGINS: str = Field(
+        default="http://localhost:3000,http://localhost:3001",
+    )
     CORS_ORIGINS_EXTRA: str = ""
-    # Comma-separated hosts for TrustedHostMiddleware; "*" allows any (development only).
     TRUSTED_HOSTS: str = "*"
-    # Subdomain tenant routing: ``{slug}.{APP_ROOT_DOMAIN}`` → resolve org by slug.
     APP_ROOT_DOMAIN: str = ""
-    # Non-production: allow ``?org=<uuid>`` for manual testing (BI-02).
     ALLOW_ORG_QUERY_PARAM: bool = False
-    # When true, use X-Forwarded-For for rate limits and public IP logging (set behind a trusted proxy).
     TRUST_PROXY_HEADERS: bool = False
-    # Optional second DB URL using a BYPASSRLS role — reserved for future admin tooling (BI-02).
     FORGE_ADMIN_DATABASE_URL: str | None = None
-    # pytest: allow ``monkeypatch.setattr(settings, "FORCE_RATE_LIMIT_IN_TESTS", True)`` to exercise 429 paths.
     FORCE_RATE_LIMIT_IN_TESTS: bool = False
+    RATE_LIMIT_IN_TESTS: bool = False
+
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/forge_dev"
     REDIS_URL: str = "redis://localhost:6379/0"
-    # Prefix for cache keys so dev/staging can share one Redis (BI-04).
     FORGE_CACHE_NS: str = "forge"
     SECRET_KEY: str = "change-me-in-production-use-openssl-rand-hex-32"
     SENTRY_DSN: str | None = None
-    # Run rate limiting during pytest (off by default so integration tests are deterministic).
-    RATE_LIMIT_IN_TESTS: bool = False
 
-    # Clerk (ADR-002)
     CLERK_JWKS_URL: str = ""
     CLERK_JWT_ISSUER: str = ""
     CLERK_AUDIENCE: str | None = None
     CLERK_WEBHOOK_SECRET: str = ""
-    # Dev/test: allow X-Forge-Test-User / tenant headers without JWT (never enable in prod)
     AUTH_TEST_BYPASS: bool = False
-    # CI/E2E only: ``POST /api/v1/__e2e__/seed-org`` requires ``X-Forge-E2e-Token`` matching this value.
-    # Leave empty to disable the route (production default).
     FORGE_E2E_TOKEN: str = ""
 
-    # Storage (MinIO / S3)
     S3_ENDPOINT: str = "http://localhost:9000"
     S3_BUCKET: str = "forge-uploads"
     S3_ACCESS_KEY: str = "minioadmin"
@@ -49,22 +84,18 @@ class Settings(BaseSettings):
     S3_REGION: str = "us-east-1"
     PUBLIC_ASSET_BASE_URL: str = "http://localhost:9000/forge-uploads"
 
-    # Email
     RESEND_API_KEY: str = ""
     RESEND_WEBHOOK_SECRET: str = ""
     EMAIL_FROM: str = "noreply@forge.app"
+    EMAIL_REPLY_TO: str = ""
     APP_PUBLIC_URL: str = "http://localhost:3000"
-    # Public API base (OAuth callbacks, webhooks) — no trailing slash
     API_BASE_URL: str = "http://localhost:8000"
 
-    # Google Calendar OAuth (web application)
     GOOGLE_OAUTH_CLIENT_ID: str = ""
     GOOGLE_OAUTH_CLIENT_SECRET: str = ""
 
-    # Rate limits
     TEAM_INVITE_RATE_LIMIT_PER_MINUTE: int = 10
 
-    # Stripe (Mission 06)
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_PRICE_PRO: str = ""
@@ -76,7 +107,6 @@ class Settings(BaseSettings):
     POSTHOG_API_KEY: str = ""
     POSTHOG_HOST: str = "https://us.i.posthog.com"
 
-    # LLM (LiteLLM — docs/plan/02_PRD.md, Mission 03)
     OPENAI_API_KEY: str = ""
     ANTHROPIC_API_KEY: str = ""
     GOOGLE_API_KEY: str = ""
@@ -87,63 +117,43 @@ class Settings(BaseSettings):
     LLM_TIMEOUT_SECONDS: float = 120.0
     LLM_FALLBACK_MODELS: str = ""
     LLM_LOG_METRICS: bool = True
-    # Mission O-03 — expert composer agents (ComponentTree + Jinja). Off by default for CI.
     USE_AGENT_COMPOSER: bool = False
 
-    # Mission 03 — Studio quotas & rate limits (per org / per user)
     PAGE_GENERATION_QUOTA_TRIAL: int = 100
     PAGE_GENERATION_QUOTA_PRO: int = 100_000
     STUDIO_GENERATE_PER_MINUTE_TRIAL: int = 5
     STUDIO_GENERATE_PER_MINUTE_PRO: int = 30
     UPGRADE_URL: str = "http://localhost:3000/settings/billing"
 
-    # Internal admin API (`/api/v1/admin/*`) — comma-separated org UUIDs (Mission 01)
     FORGE_OPERATOR_ORG_IDS: str = ""
-
-    # Caddy on-demand TLS `ask` — optional shared secret (set in prod if endpoint is exposed)
     CADDY_INTERNAL_TOKEN: str = ""
+    # If set in production, ``GET /metrics`` requires header ``X-Metrics-Token`` (use for public API URLs).
+    METRICS_TOKEN: str = ""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", "../.env", "../../.env"),
         case_sensitive=True,
         extra="ignore",
         env_ignore_empty=True,
     )
 
-    @field_validator("backend_cors_origins_raw", mode="before")
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
-    def _normalize_backend_cors_origins(cls, v: Any) -> str:
+    def _coerce_cors_origins_env(cls, v: Any) -> str:
         if v is None:
             return "http://localhost:3000,http://localhost:3001"
         if isinstance(v, list):
-            return ",".join(str(x).strip().rstrip("/") for x in v if str(x).strip())
+            parts = [str(x).strip().rstrip("/") for x in v if str(x).strip()]
+            return ",".join(parts) if parts else "http://localhost:3000,http://localhost:3001"
         s = str(v).strip()
         if not s:
             return "http://localhost:3000,http://localhost:3001"
-        if s.startswith("["):
-            try:
-                data = json.loads(s)
-            except json.JSONDecodeError:
-                return "http://localhost:3000,http://localhost:3001"
-            if isinstance(data, list):
-                return ",".join(str(x).strip().rstrip("/") for x in data if str(x).strip())
-            return s
         return s
 
-    @property
-    def BACKEND_CORS_ORIGINS(self) -> list[str]:
-        raw = self.backend_cors_origins_raw.strip()
-        if not raw:
-            return ["http://localhost:3000", "http://localhost:3001"]
-        if "," in raw:
-            return [p.strip().rstrip("/") for p in raw.split(",") if p.strip()]
-        return [raw.rstrip("/")]
-
     def effective_cors_origins(self) -> list[str]:
-        """Origins for CORSMiddleware: dev defaults plus optional ``CORS_ORIGINS_EXTRA`` (comma-separated)."""
         merged: list[str] = []
         seen: set[str] = set()
-        for raw in self.BACKEND_CORS_ORIGINS:
+        for raw in _parse_cors_origins(self.BACKEND_CORS_ORIGINS):
             o = str(raw).strip().rstrip("/")
             if o and o not in seen:
                 seen.add(o)
@@ -154,36 +164,61 @@ class Settings(BaseSettings):
                 if o and o not in seen:
                     seen.add(o)
                     merged.append(o)
-        return merged
-
-    def effective_cors_origins(self) -> list[str]:
-        """Origins for CORSMiddleware: dev defaults plus optional ``CORS_ORIGINS_EXTRA`` (comma-separated)."""
-        merged: list[str] = []
-        seen: set[str] = set()
-        for raw in self.BACKEND_CORS_ORIGINS:
-            o = str(raw).strip().rstrip("/")
-            if o and o not in seen:
-                seen.add(o)
-                merged.append(o)
-        if self.CORS_ORIGINS_EXTRA.strip():
-            for part in self.CORS_ORIGINS_EXTRA.split(","):
-                o = part.strip().rstrip("/")
-                if o and o not in seen:
-                    seen.add(o)
-                    merged.append(o)
-        return merged
-
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
-    @classmethod
-    def _split_csv_cors(cls, v: object) -> object:
-        if isinstance(v, str) and "," in v:
-            return [p.strip() for p in v.split(",") if p.strip()]
-        return v
+        return merged or ["http://localhost:3000"]
 
     def llm_fallback_model_list(self) -> list[str]:
         if not self.LLM_FALLBACK_MODELS.strip():
             return []
         return [m.strip() for m in self.LLM_FALLBACK_MODELS.split(",") if m.strip()]
+
+    @model_validator(mode="after")
+    def _require_secret_in_production(self) -> Self:
+        if self.ENVIRONMENT == "production":
+            sk = (self.SECRET_KEY or "").strip()
+            if not sk:
+                raise ValueError("SECRET_KEY must be set when ENVIRONMENT=production")
+            weak_lower = {k.lower() for k in _WEAK_SECRET_KEYS if k}
+            if sk.lower() in weak_lower:
+                raise ValueError(
+                    "SECRET_KEY must not use a documented or trivial placeholder in production"
+                )
+            if len(sk) < _PRODUCTION_SECRET_KEY_MIN_LEN:
+                raise ValueError(
+                    f"SECRET_KEY must be at least {_PRODUCTION_SECRET_KEY_MIN_LEN} characters in production"
+                )
+            if self.AUTH_TEST_BYPASS:
+                raise ValueError("AUTH_TEST_BYPASS must be false when ENVIRONMENT=production")
+            if (self.TRUSTED_HOSTS or "").strip() == "*":
+                raise ValueError(
+                    "TRUSTED_HOSTS must list real hostnames in production, not '*' (see TrustedHostMiddleware)"
+                )
+            if not (self.CLERK_JWKS_URL or "").strip():
+                raise ValueError("CLERK_JWKS_URL must be set when ENVIRONMENT=production")
+            if (self.FORGE_E2E_TOKEN or "").strip():
+                raise ValueError("FORGE_E2E_TOKEN must be empty in production (disable __e2e__ bootstrap)")
+            pub = (self.APP_PUBLIC_URL or "").strip()
+            api = (self.API_BASE_URL or "").strip()
+            if not pub.lower().startswith("https://"):
+                raise ValueError("APP_PUBLIC_URL must use https:// in production")
+            if not api.lower().startswith("https://"):
+                raise ValueError("API_BASE_URL must use https:// in production")
+            if not (self.CLERK_JWT_ISSUER or "").strip():
+                raise ValueError("CLERK_JWT_ISSUER must be set when ENVIRONMENT=production")
+            for origin in self.effective_cors_origins():
+                o = (origin or "").strip()
+                if o == "*":
+                    raise ValueError("CORS origins must not be wildcard in production")
+                if not o.lower().startswith("https://"):
+                    raise ValueError(
+                        f"CORS origin must use https:// in production (got {o!r}). "
+                        "Use a dedicated staging environment if you need non-TLS origins."
+                    )
+            if not (self.METRICS_TOKEN or "").strip():
+                raise ValueError(
+                    "METRICS_TOKEN must be set when ENVIRONMENT=production "
+                    "(GET /metrics requires header X-Metrics-Token; use a long random value)"
+                )
+        return self
 
 
 settings = Settings()

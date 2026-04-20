@@ -13,10 +13,13 @@ Authoritative names live in `.env.example` (root) and `apps/api/app/config.py`. 
 | `ENVIRONMENT` | `development` / `staging` / `production` | api, worker | config | `staging` / `production` |
 | `DATABASE_URL` | Async SQLAlchemy URL | api, worker | secret | `${{postgres.DATABASE_URL}}` reference |
 | `REDIS_URL` | Redis URL | api, worker | secret | `${{redis.REDIS_URL}}` reference |
-| `SECRET_KEY` | App signing / sessions | api | secret | random 32+ bytes |
+| `SECRET_KEY` | App signing / sessions | api | secret | `openssl rand -hex 32` (≥32 chars; known placeholders rejected when `ENVIRONMENT=production`) |
 | `BACKEND_CORS_ORIGINS` | Allowed browser origins (JSON array or CSV) | api | config | prod/staging app URLs |
 | `CORS_ORIGINS_EXTRA` | Extra origins (comma-separated) | api | config | previews, extra domains |
 | `TRUST_PROXY_HEADERS` | Trust `X-Forwarded-*` from edge | api | config | `true` behind Caddy/Railway |
+| `TRUSTED_HOSTS` | Allowed `Host` header values (comma-separated) | api | config | never `*` in production |
+| `APP_ROOT_DOMAIN` | Canonical app hostname for domain flows | api | config | e.g. `forge.app` |
+| `ALLOW_ORG_QUERY_PARAM` | `?org=` tenant switch | api | config | `false` in production |
 | `FORCE_RATE_LIMIT_IN_TESTS` | Enable 429 paths in pytest | api | config | `false` in deployed envs |
 | `APP_PUBLIC_URL` | Links in emails, Stripe return URLs | api, worker | config | public web URL |
 | `UPGRADE_URL` | Billing upgrade deep link | api | config | `/settings/billing` on app URL |
@@ -45,6 +48,7 @@ Authoritative names live in `.env.example` (root) and `apps/api/app/config.py`. 
 | `STRIPE_PRICE_PRO` / `STRIPE_PRICE_STARTER` | Price IDs | api | config | test vs live products |
 | `FORGE_OPERATOR_ORG_IDS` | Internal operator orgs | api | config | UUID list |
 | `SENTRY_DSN` | Error tracking | api, worker, web | secret | separate DSNs per service optional |
+| `METRICS_TOKEN` | Gate `GET /metrics` in production | api | secret | recommended in production; if unset, `/metrics` is public (see startup log warning) |
 | `LOG_LEVEL` | Logging | api, worker, web | config | `info` / `warning` |
 
 **Railway-only (commonly set by platform):** `PORT`, `RAILWAY_*`.

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Inbox } from "lucide-react";
 import { motion } from "framer-motion";
@@ -11,6 +12,8 @@ export type EmptyStateProps = {
   icon?: LucideIcon;
   title: string;
   description: string;
+  /** Optional extra actions or markup below the description (e.g. links, tertiary controls). */
+  children?: ReactNode;
   primaryAction?: { label: string; onClick: () => void };
   secondaryAction?: { label: string; onClick: () => void };
   className?: string;
@@ -20,6 +23,7 @@ export function EmptyState({
   icon: Icon = Inbox,
   title,
   description,
+  children,
   primaryAction,
   secondaryAction,
   className,
@@ -38,7 +42,7 @@ export function EmptyState({
         variants={listItem}
         className="mb-5 flex size-14 items-center justify-center rounded-full bg-accent-light text-accent ring-1 ring-border/50"
       >
-        <Icon className="size-7 stroke-[1.5]" aria-hidden />
+        <Icon className="size-7 stroke-[1.75]" aria-hidden />
       </motion.div>
       <motion.h2
         variants={listItem}
@@ -52,6 +56,11 @@ export function EmptyState({
       >
         {description}
       </motion.p>
+      {children ? (
+        <motion.div variants={listItem} className="mt-6">
+          {children}
+        </motion.div>
+      ) : null}
       <motion.div
         variants={listItem}
         className="mt-8 flex flex-wrap items-center justify-center gap-3"

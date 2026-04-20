@@ -17,12 +17,13 @@ from app.db.models import (
     User,
 )
 from app.deps import get_db, require_role, require_tenant
+from app.deps.api_scopes import require_api_scopes
 from app.deps.auth import require_user
 from app.deps.tenant import TenantContext
 from app.schemas.automation import SubmissionReplyBody
-from app.schemas.common import StubResponse
-from app.schemas.submission import DraftReplyOut, SubmissionOut, SubmissionPatchBody
+from app.schemas.submission import DraftReplyOut, PresignedFileDownloadOut, SubmissionOut, SubmissionPatchBody
 from app.services.email import email_service
+from app.services.storage_s3 import presigned_get_object
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
@@ -156,11 +157,29 @@ async def reply_submission(
     return {"ok": True, "resend_message_id": mid or ""}
 
 
-@router.get("/{submission_id}/files/{file_id}", response_model=StubResponse)
+@router.get("/{submission_id}/files/{file_id}", response_model=PresignedFileDownloadOut)
 async def presign_submission_file(
     submission_id: UUID,
     file_id: UUID,
     db: AsyncSession = Depends(get_db),
-    _ctx: TenantContext = Depends(require_tenant),
-) -> StubResponse:
-    return StubResponse()
+    _: None = Depends(require_api_scopes("read:submissions")),
+    ctx: TenantContext = Depends(require_tenant),
+) -> PresignedFileDownloadOut:
+    sub = (
+        await db.execute(select(Submission).where(Submission.id == submission_id))
+    ).scalar_one_or_none()
+    if sub is None or sub.organization_id != ctx.organization_id:
+        raise HTTPException(status_code=404, detail="not found")
+    row = (
+        await db.execute(
+            select(SubmissionFile).where(
+                SubmissionFile.id == file_id,
+                SubmissionFile.submission_id == submission_id,
+                SubmissionFile.organization_id == ctx.organization_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if row is None:
+        raise HTTPException(status_code=404, detail="not found")
+    url = presigned_get_object(key=row.storage_key, expires_in=900)
+    return PresignedFileDownloadOut(url=url, expires_in=900)

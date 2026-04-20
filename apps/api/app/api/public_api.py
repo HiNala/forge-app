@@ -15,13 +15,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.ip import get_client_ip
-from app.db.models import AnalyticsEvent, Organization, Page, SlotHold, Submission
+from app.db.models import AnalyticsEvent, Organization, Page, SlotHold, Submission, SubmissionFile
 from app.db.rls_context import set_active_organization
 from app.deps.db import get_db_public
 from app.schemas.availability_calendar import HoldCreateIn, HoldCreateOut, PublicAvailabilityOut
-from app.schemas.common import StubResponse
 from app.schemas.public_track import TrackBatchIn, TrackBatchOut
-from app.schemas.submission import PublicSubmitOut
+from app.schemas.submission import PublicSubmitOut, PublicUploadIn, PublicUploadOut
 from app.services.ai.usage import bump_submissions_received
 from app.services.analytics.track_public import handle_public_track_batch
 from app.services.billing_gate import check_quota
@@ -40,25 +39,30 @@ from app.services.public_submission import (
     visitor_fingerprint,
 )
 from app.services.queue import enqueue_run_automations
+from app.services.rate_limit import rate_limit_public_track_event_budget
+from app.services.storage_s3 import presigned_put_object, submission_upload_key
+from app.services.submission_attachments import (
+    collect_file_refs_from_payload,
+    field_def_for_name,
+    file_field_constraints,
+    is_file_field,
+    mime_allowed,
+    new_upload_token,
+    safe_filename,
+    upload_bytes_for_field,
+    verify_uploaded_file_ref,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/p", tags=["public"])
 
-def _trim_metadata(md: dict[str, Any] | None) -> dict[str, Any] | None:
-    if md is None:
-        return None
-    try:
-        raw = json.dumps(md)
-    except (TypeError, ValueError):
-        return None
-    if len(raw) > 16000:
-        return {"_truncated": True}
-    return md
 
-
-async def _parse_submit_body(request: Request) -> dict[str, Any]:
+async def _parse_submit_body_json_or_urlencoded(request: Request) -> dict[str, Any]:
+    """Parse JSON or ``application/x-www-form-urlencoded`` (not multipart)."""
     ct = (request.headers.get("content-type") or "").lower()
+    if "multipart/form-data" in ct:
+        raise HTTPException(status_code=500, detail="internal: use multipart handler")
     if ct.startswith("application/json"):
         try:
             raw = await request.json()
@@ -73,7 +77,7 @@ async def _parse_submit_body(request: Request) -> dict[str, Any]:
         if hasattr(v, "read"):
             raise HTTPException(
                 status_code=422,
-                detail="File uploads are not supported here yet.",
+                detail="File uploads require multipart/form-data.",
             )
         out[str(k)] = v if isinstance(v, str) else str(v)
     return out
@@ -277,19 +281,9 @@ async def public_submit(
     Accept a form submission for a **live** published page.
 
     Matches the public URL shape ``/p/{org}/{page}`` — same org and page slugs as publish.
-    Supports ``application/json`` or ``application/x-www-form-urlencoded``.
+    Supports ``application/json``, ``application/x-www-form-urlencoded``, or ``multipart/form-data``
+    (files upload to object storage server-side or via prior presigned PUT + JSON refs).
     """
-    raw = await _parse_submit_body(request)
-    hold_raw = raw.get("hold_id") or raw.get("forge_hold_id")
-    hold_uuid: uuid.UUID | None = None
-    if hold_raw:
-        try:
-            hold_uuid = uuid.UUID(str(hold_raw))
-        except ValueError:
-            hold_uuid = None
-
-    email, name, payload = normalize_submit_fields(raw)
-
     org = (
         await db.execute(select(Organization).where(Organization.slug == org_slug))
     ).scalar_one_or_none()
@@ -309,6 +303,49 @@ async def public_submit(
     ).scalar_one_or_none()
     if p is None:
         raise HTTPException(status_code=404, detail="Not found")
+
+    schema_pre = p.form_schema if isinstance(p.form_schema, dict) else None
+    ct_hdr = (request.headers.get("content-type") or "").lower()
+    if "multipart/form-data" in ct_hdr:
+        form = await request.form()
+        merged: dict[str, Any] = {}
+        file_items: list[tuple[str, Any]] = []
+        for key, val in form.multi_items():
+            ks = str(key)
+            if hasattr(val, "read"):
+                file_items.append((ks, val))
+            else:
+                merged[ks] = val if isinstance(val, str) else str(val)
+        for key_s, uv in file_items:
+            content = await uv.read()
+            if not content:
+                raise HTTPException(status_code=400, detail=f"Empty file: {key_s}")
+            try:
+                ref = upload_bytes_for_field(
+                    organization_id=org.id,
+                    page_id=p.id,
+                    field_name=key_s,
+                    content=content,
+                    original_filename=getattr(uv, "filename", None) or "upload",
+                    content_type=getattr(uv, "content_type", None),
+                    form_schema=schema_pre,
+                )
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+            merged[key_s] = ref
+        raw = merged
+    else:
+        raw = await _parse_submit_body_json_or_urlencoded(request)
+
+    hold_raw = raw.get("hold_id") or raw.get("forge_hold_id")
+    hold_uuid: uuid.UUID | None = None
+    if hold_raw:
+        try:
+            hold_uuid = uuid.UUID(str(hold_raw))
+        except ValueError:
+            hold_uuid = None
+
+    email, name, payload = normalize_submit_fields(raw)
 
     ip_raw = get_client_ip(request)
     ip_anon = anonymize_ipv4_to_slash24(ip_raw)
@@ -362,6 +399,18 @@ async def public_submit(
     if not ok:
         raise HTTPException(status_code=422, detail=reason)
 
+    file_refs = collect_file_refs_from_payload(payload)
+    for fname, ref in file_refs:
+        ok_f, err_f = verify_uploaded_file_ref(
+            organization_id=org.id,
+            page_id=p.id,
+            field_name=fname,
+            ref=ref,
+            form_schema=schema,
+        )
+        if not ok_f:
+            raise HTTPException(status_code=422, detail=err_f)
+
     booking_token = secrets.token_urlsafe(32) if payload.get("forge_booking") else None
 
     sub = Submission(
@@ -377,6 +426,21 @@ async def public_submit(
     )
     db.add(sub)
     await db.flush()
+
+    for fname, ref in file_refs:
+        db.add(
+            SubmissionFile(
+                submission_id=sub.id,
+                organization_id=org.id,
+                field_name=fname,
+                storage_key=str(ref["storage_key"]),
+                file_name=str(ref["file_name"]),
+                content_type=str(ref["content_type"]) if ref.get("content_type") else None,
+                size_bytes=int(ref["size_bytes"]) if ref.get("size_bytes") is not None else None,
+            )
+        )
+    if file_refs:
+        await db.flush()
 
     if hold_row is not None:
         hold_row.submission_id = sub.id
@@ -537,10 +601,51 @@ async def public_booking_cancel(
     return {"status": "cancelled"}
 
 
-@router.post("/{org_slug}/{page_slug}/upload", response_model=StubResponse)
-async def public_upload(org_slug: str, page_slug: str) -> StubResponse:
-    del org_slug, page_slug
-    return StubResponse()
+@router.post("/{org_slug}/{page_slug}/upload", response_model=PublicUploadOut)
+async def public_upload(
+    org_slug: str,
+    page_slug: str,
+    body: PublicUploadIn,
+    db: AsyncSession = Depends(get_db_public),
+) -> PublicUploadOut:
+    """Presigned PUT for direct browser → S3 upload (Mission 04)."""
+    org = (
+        await db.execute(select(Organization).where(Organization.slug == org_slug))
+    ).scalar_one_or_none()
+    if org is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    await set_active_organization(db, org.id)
+    p = (
+        await db.execute(
+            select(Page).where(
+                Page.organization_id == org.id,
+                Page.slug == page_slug,
+                Page.status == "live",
+            )
+        )
+    ).scalar_one_or_none()
+    if p is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    schema = p.form_schema if isinstance(p.form_schema, dict) else None
+    fd = field_def_for_name(schema, body.field_name)
+    if fd is None or not is_file_field(fd):
+        raise HTTPException(status_code=400, detail="Invalid or non-file field")
+    max_b, allowed = file_field_constraints(fd)
+    if body.size_bytes > max_b:
+        raise HTTPException(status_code=400, detail="File too large for this field")
+    ct = body.content_type.split(";")[0].strip()
+    if not mime_allowed(ct, None, allowed):
+        raise HTTPException(status_code=400, detail="Content type not allowed for this field")
+    token = new_upload_token()
+    fn = safe_filename(body.file_name)
+    key = submission_upload_key(
+        organization_id=org.id,
+        page_id=p.id,
+        upload_token=token,
+        filename=fn,
+    )
+    url = presigned_put_object(key=key, content_type=ct, expires_in=3600)
+    return PublicUploadOut(upload_url=url, storage_key=key, expires_in=3600)
 
 
 @router.post("/{org_slug}/{page_slug}/track", response_model=TrackBatchOut)
@@ -550,7 +655,7 @@ async def public_track(
     request: Request,
     db: AsyncSession = Depends(get_db_public),
 ) -> TrackBatchOut:
-    """Batch analytics beacon (up to 20 events) for a live published page."""
+    """Batch analytics beacon (up to 10 events per request) for a live published page."""
     try:
         raw = await request.json()
     except json.JSONDecodeError as e:
@@ -559,6 +664,8 @@ async def public_track(
         batch = TrackBatchIn.model_validate(raw)
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
+
+    await rate_limit_public_track_event_budget(request, len(batch.events))
 
     org = (
         await db.execute(select(Organization).where(Organization.slug == org_slug))
@@ -580,32 +687,6 @@ async def public_track(
     if p is None:
         raise HTTPException(status_code=404, detail="Not found")
 
-    ip_raw = get_client_ip(request)
-    ip_anon = anonymize_ipv4_to_slash24(ip_raw)
-    ua = request.headers.get("user-agent")
-    ref = request.headers.get("referer") or request.headers.get("referrer")
-    now = datetime.now(UTC)
-    rows: list[AnalyticsEvent] = []
-    for ev in batch.events:
-        if ev.event_type not in _ALLOWED_TRACK_EVENTS:
-            raise HTTPException(status_code=400, detail=f"Unsupported event_type: {ev.event_type}")
-        rows.append(
-            AnalyticsEvent(
-                id=uuid.uuid4(),
-                organization_id=org.id,
-                page_id=p.id,
-                event_type=ev.event_type,
-                visitor_id=ev.visitor_id[:200],
-                session_id=ev.session_id[:200],
-                metadata_=_trim_metadata(ev.metadata),
-                source_ip=ip_anon,
-                user_agent=(ua[:4000] if ua else None),
-                referrer=(ref[:2000] if ref else None),
-                created_at=now,
-            )
-        )
-    for row in rows:
-        db.add(row)
     try:
         return await handle_public_track_batch(
             db=db,

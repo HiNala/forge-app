@@ -16,3 +16,13 @@
 ## Monitoring
 
 Track cost per provider in their dashboards; correlate with `subscription_usage` token fields and internal metrics.
+
+## Rough monthly totals (planning)
+
+| Scale | Railway (compute + DB + Redis) | R2/S3 | Resend | LLM (high variance) |
+|-------|----------------------------------|-------|--------|---------------------|
+| ~100 orgs (MVP) | tens–low hundreds USD | few USD | tiered | often largest line item if heavy Studio |
+| ~1k | higher compute; storage growth | tens USD | higher | caps + quotas critical |
+| ~10k | dedicated DB tier; multiple replicas | significant | plan tier | **must** enforce per-tenant LLM limits |
+
+Replace with **actual** invoices after the first full month in production (`MISSION-08-REPORT.md`).

@@ -16,7 +16,7 @@ class TrackEventIn(BaseModel):
 
 
 class TrackBatchIn(BaseModel):
-    events: list[TrackEventIn] = Field(min_length=1, max_length=20)
+    events: list[TrackEventIn] = Field(min_length=1, max_length=10)
 
 
 class TrackBatchOut(BaseModel):

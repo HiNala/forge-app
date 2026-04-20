@@ -6,8 +6,17 @@ import csv
 import io
 from collections.abc import Iterator, Sequence
 from datetime import UTC
+from typing import Any
 
 from app.db.models.submission import Submission
+
+
+def _csv_cell(val: Any) -> str:
+    if isinstance(val, dict) and val.get("storage_key") and val.get("file_name"):
+        return str(val.get("file_name") or "")
+    if val is None:
+        return ""
+    return str(val)
 
 
 def iter_submission_csv_rows(rows: Sequence[Submission]) -> Iterator[bytes]:
@@ -50,6 +59,6 @@ def iter_submission_csv_rows(rows: Sequence[Submission]) -> Iterator[bytes]:
         ]
         for k in extra:
             v = s.payload.get(k)
-            row_vals.append("" if v is None else str(v))
+            row_vals.append(_csv_cell(v))
         w2.writerow(row_vals)
         yield buf2.getvalue().encode("utf-8")

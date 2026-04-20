@@ -1,6 +1,16 @@
+# Keep API image builds small and fast — do not send local virtualenvs to Docker.
 .venv
-__pycache__
-*.pyc
+.venv-ci
+**/.venv
+**/__pycache__
+*.py[cod]
 .pytest_cache
 .mypy_cache
 .ruff_cache
+.ruff_cache/
+tests/
+.git
+.gitignore
+*.md
+htmlcov/
+.coverage

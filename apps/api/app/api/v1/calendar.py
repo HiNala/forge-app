@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from google_auth_oauthlib.flow import Flow
@@ -25,7 +26,7 @@ from app.deps.redis_client import require_redis
 from app.deps.tenant import TenantContext
 from app.schemas.automation import CalendarConnectionOut, GoogleConnectBody
 from app.services.calendar import CALENDAR_SCOPE
-from app.services.token_crypto import encrypt_text
+from app.services.token_crypto import decrypt_text, encrypt_text
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +175,20 @@ async def delete_connection(
     row = await db.get(CalendarConnection, connection_id)
     if row is None or row.organization_id != ctx.organization_id:
         raise HTTPException(status_code=404, detail="Not found")
+    if row.provider == "google":
+        try:
+            tok = row.refresh_token_encrypted or row.access_token_encrypted
+            if tok:
+                token = decrypt_text(tok)
+                async with httpx.AsyncClient() as client:
+                    await client.post(
+                        "https://oauth2.googleapis.com/revoke",
+                        data={"token": token},
+                        headers={"Content-Type": "application/x-www-form-urlencoded"},
+                        timeout=20.0,
+                    )
+        except Exception as e:
+            logger.warning("google token revoke failed (continuing with delete): %s", e)
     await db.delete(row)
     await db.commit()
     return {"ok": True}

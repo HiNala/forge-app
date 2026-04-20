@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -13,6 +13,33 @@ class PublicSubmitOut(BaseModel):
     """Response to a successful public form POST."""
 
     ok: bool = True
+
+
+class PublicUploadIn(BaseModel):
+    """Request presigned PUT for a declared file field on a live page."""
+
+    field_name: str = Field(..., min_length=1, max_length=200)
+    file_name: str = Field(..., min_length=1, max_length=255)
+    content_type: str = Field(..., min_length=3, max_length=200)
+    size_bytes: int = Field(..., ge=1, le=52_428_800)
+
+
+class PublicUploadOut(BaseModel):
+    upload_url: str
+    storage_key: str
+    expires_in: int = 3600
+
+
+class PresignedFileDownloadOut(BaseModel):
+    """Short-lived GET URL for an attached file (admin only)."""
+
+    url: str
+    expires_in: int = 900
+
+
+class SubmissionBulkBody(BaseModel):
+    submission_ids: list[UUID] = Field(..., min_length=1, max_length=500)
+    action: Literal["mark_read", "archive"]
 
 
 class SubmissionOut(BaseModel):

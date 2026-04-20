@@ -2,15 +2,16 @@
 
 ## Ingress order
 
-Middleware is registered in `apps/api/app/main.py`. In Starlette, `app.user_middleware` lists **outermost first** (the first layer that sees an incoming request). Effective order on the wire:
+Middleware is registered in `apps/api/app/main.py`. `app.user_middleware` lists **outermost first** (Starlette prepends each `add_middleware`). Effective order on the wire:
 
-1. **`RequestContextMiddleware`** — `X-Request-ID`, :class:`~app.core.context.RequestContext`, structlog contextvars, `http.request.started` / `http.request.finished`.
-2. **`BodySizeLimitMiddleware`** — rejects bodies over 10 MiB (25 MiB for paths under `/api/v1/uploads/*`); streaming defense when `Content-Length` is absent.
+1. **`RequestContextMiddleware`** — `X-Request-ID`, request context, structlog contextvars, `http.request.*` logs.
+2. **`BodySizeLimitMiddleware`** — rejects bodies over 10 MiB (25 MiB for `/api/v1/uploads/*`).
 3. **`GZipMiddleware`** — compresses responses (`minimum_size=1024`).
-4. **`TrustedHostMiddleware`** — hosts from `TRUSTED_HOSTS` (`*` in dev).
-5. **`RateLimitMiddleware`** — Redis fixed windows with in-process fallback; webhooks and health exempt; see `FORCE_RATE_LIMIT_IN_TESTS` for pytest.
-6. **`TenantMiddleware`** — primes `request.state.tenant_id` when the org header is already a bare UUID (full resolution, membership, and single-org default run in `optional_tenant`).
-7. **`CORSMiddleware`** — origins from `settings.effective_cors_origins()` (`BACKEND_CORS_ORIGINS` + optional `CORS_ORIGINS_EXTRA`), exposes `X-Request-ID`.
+4. **`TrustedHostMiddleware`** — hosts from `TRUSTED_HOSTS` (`*` in dev only; production must list real hosts).
+5. **`RateLimitMiddleware`** — Redis fixed windows with in-process fallback; webhooks and health exempt; see rate-limit tests.
+6. **`TenantMiddleware`** — primes `request.state.tenant_id` when the org header is already a bare UUID.
+7. **`CORSMiddleware`** — origins from `settings.effective_cors_origins()`, exposes `X-Request-ID`.
+8. **`SecurityHeadersMiddleware`** — innermost: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS in production (response headers applied on the way out).
 
 Authentication and tenant membership run in **FastAPI dependencies** (`require_user`, `optional_tenant`, `require_tenant`), not in a separate JWT middleware, so verification stays aligned with Clerk JWKS in `app.security.clerk_jwt` and test bypass headers.
 

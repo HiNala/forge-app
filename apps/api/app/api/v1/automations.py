@@ -1,18 +1,85 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import AutomationRule, AutomationRun, Page
 from app.deps import get_db, require_role, require_tenant
+from app.deps.api_scopes import require_api_scopes
 from app.deps.tenant import TenantContext
-from app.schemas.automation import AutomationRuleOut, AutomationRuleUpdate, AutomationRunOut
+from app.schemas.automation import (
+    AutomationFailureRow,
+    AutomationRuleOut,
+    AutomationRuleUpdate,
+    AutomationRunOut,
+)
 from app.services.automations import AutomationEngine, get_or_create_rule
 
 router = APIRouter(tags=["automations"])
+
+
+@router.get("/automations/failure-summary")
+async def automation_failure_summary(
+    _: None = Depends(require_api_scopes("read:pages")),
+    db: AsyncSession = Depends(get_db),
+    ctx: TenantContext = Depends(require_tenant),
+) -> dict[str, Any]:
+    """Dashboard banner: count failed automation steps in the last 24h (Mission 05)."""
+    since = datetime.now(UTC) - timedelta(hours=24)
+    n = (
+        await db.execute(
+            select(func.count())
+            .select_from(AutomationRun)
+            .where(
+                AutomationRun.organization_id == ctx.organization_id,
+                AutomationRun.status == "failed",
+                AutomationRun.ran_at >= since,
+            )
+        )
+    ).scalar_one()
+    return {"failed_last_24h": int(n or 0)}
+
+
+@router.get("/automations/failures", response_model=list[AutomationFailureRow])
+async def list_org_automation_failures(
+    _: None = Depends(require_api_scopes("read:pages")),
+    db: AsyncSession = Depends(get_db),
+    ctx: TenantContext = Depends(require_tenant),
+    days: int = 30,
+    limit: int = 100,
+) -> list[AutomationFailureRow]:
+    since = datetime.now(UTC) - timedelta(days=min(days, 90))
+    rows = (
+        await db.execute(
+            select(AutomationRun, AutomationRule.page_id)
+            .join(AutomationRule, AutomationRun.automation_rule_id == AutomationRule.id)
+            .where(
+                AutomationRun.organization_id == ctx.organization_id,
+                AutomationRun.status == "failed",
+                AutomationRun.ran_at >= since,
+            )
+            .order_by(AutomationRun.ran_at.desc())
+            .limit(min(limit, 200))
+        )
+    ).all()
+    out: list[AutomationFailureRow] = []
+    for run, page_id in rows:
+        out.append(
+            AutomationFailureRow(
+                id=run.id,
+                page_id=page_id,
+                submission_id=run.submission_id,
+                step=run.step,
+                error_message=run.error_message,
+                ran_at=run.ran_at,
+            )
+        )
+    return out
 
 
 @router.get("/pages/{page_id}/automations", response_model=AutomationRuleOut)

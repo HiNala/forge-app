@@ -47,6 +47,19 @@ class AutomationRunOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class AutomationFailureRow(BaseModel):
+    """Failed run with page context for notifications UI."""
+
+    id: UUID
+    page_id: UUID
+    submission_id: UUID | None
+    step: str
+    error_message: str | None
+    ran_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class GoogleConnectBody(BaseModel):
     """Optional page to deep-link back after OAuth."""
 

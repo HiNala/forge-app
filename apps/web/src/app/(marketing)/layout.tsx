@@ -8,15 +8,15 @@ import { SITE_URL } from "@/lib/marketing-content";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Forge — Pages from a sentence",
+    default: "Forge — Describe what you need. Get a page.",
     template: "%s · Forge",
   },
   description:
-    "Describe what you need in plain English. Forge builds a branded, hosted page — forms, RSVPs, menus, and more.",
+    "Describe what you need — Forge streams a real page preview, then hosts it. Forms, RSVPs, menus, proposals.",
   openGraph: {
-    title: "Forge — Pages from a sentence",
+    title: "Forge — Describe what you need. Get a page.",
     description:
-      "AI-powered mini-app builder for teams. Describe a page, publish a link, collect responses.",
+      "Hosted mini-pages from one prompt. Live demo on the homepage; examples and pricing inside.",
     type: "website",
   },
 };

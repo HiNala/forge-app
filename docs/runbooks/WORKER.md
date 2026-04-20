@@ -7,7 +7,7 @@ Forge runs **arq** workers from `apps/worker/worker.py` (same Docker image as th
 | Setting | Value | Purpose |
 |---------|-------|---------|
 | `REDIS_URL` | Same DSN as API | Queue + optional Redis in job handlers |
-| `WorkerSettings` | `max_jobs=20`, `job_timeout=120`, `keep_result=3600`, `poll_delay=0.5` | Throughput and retention |
+| `WorkerSettings` | `max_jobs=20`, `job_timeout=300`, `max_tries=5`, `keep_result=3600`, `poll_delay=0.5` | Throughput, automation retries, retention |
 | Cron | See `WorkerSettings.cron_jobs` | Partman maintenance, invitation purge, calendar ICS refresh, holds, proposals, analytics partition cleanup |
 
 ## Deploy

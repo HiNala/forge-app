@@ -23,11 +23,9 @@ _RETRY_AFTER_SECONDS = 60
 _RL_AUTH_USER_PER_MIN = 120
 _RL_STUDIO_PER_MIN = 10
 _RL_PUBLIC_IP_PER_MIN = 60
-_RL_SUBMIT_IP_PER_MIN = 5
-_RL_SUBMIT_PAGE_PER_MIN = 30
-_RL_PUBLIC_TRACK_PER_MIN = 60
-_RL_ANALYTICS_TRACK_PER_MIN = 600
-
+_RL_SUBMIT_IP_PER_MIN = 10
+_RL_PUBLIC_UPLOAD_PER_MIN = 30
+_RL_SUBMIT_PAGE_PER_HOUR = 100
 _EXEMPT_PATH_PREFIXES: tuple[str, ...] = (
     "/health",
     "/docs",
@@ -82,12 +80,7 @@ def _limit_key_and_max(request: Request) -> tuple[str | None, int]:
         # handled in ``dispatch`` with two buckets — signal via sentinel
         return "__submit_dual__", 0
 
-    if (
-        path.startswith("/p/")
-        and path.rstrip("/").endswith("/track")
-        and request.method == "POST"
-    ):
-        return f"rl:ptrack:{get_client_ip(request)}", _RL_PUBLIC_TRACK_PER_MIN
+    # POST /p/{org}/{page}/track — rate-limited by event budget in ``public_track`` (60 events/min/IP).
 
     auth = request.headers.get("authorization") or ""
     if auth.lower().startswith("bearer ") and len(auth) > 24:
@@ -154,8 +147,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        # Integration tests: disable unless ``FORCE_RATE_LIMIT_IN_TESTS`` (see ``test_rate_limit.py``).
-        if settings.ENVIRONMENT == "test" and not settings.FORCE_RATE_LIMIT_IN_TESTS:
+        # Integration tests: disable unless ``FORCE_RATE_LIMIT_IN_TESTS`` or ``RATE_LIMIT_IN_TESTS`` (see tests).
+        if settings.ENVIRONMENT == "test" and not (
+            settings.FORCE_RATE_LIMIT_IN_TESTS or settings.RATE_LIMIT_IN_TESTS
+        ):
             return await call_next(request)
 
         submit_keys = _public_submit_keys(request)
@@ -163,24 +158,52 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             ip_key, page_key = submit_keys
             r: Any | None = getattr(request.app.state, "redis", None)
             minute = int(time.time() // 60)
+            hour = int(time.time() // 3600)
 
             async def check_pair() -> bool:
                 if r is not None:
                     ok_ip = await _incr_redis(r, f"{ip_key}:{minute}", _RL_SUBMIT_IP_PER_MIN)
-                    ok_page = await _incr_redis(r, f"{page_key}:{minute}", _RL_SUBMIT_PAGE_PER_MIN)
-                    return ok_ip and ok_page
-                return _local.allow(f"{ip_key}:{minute}", _RL_SUBMIT_IP_PER_MIN) and _local.allow(
-                    f"{page_key}:{minute}", _RL_SUBMIT_PAGE_PER_MIN
-                )
+                    if not ok_ip:
+                        return False
+                    hk = f"rl:psubmit:pagehour:{page_key}:{hour}"
+                    n = await r.incr(hk)
+                    if n == 1:
+                        await r.expire(hk, 7200)
+                    return int(n) <= _RL_SUBMIT_PAGE_PER_HOUR
+                ok_ip = _local.allow(f"{ip_key}:{minute}", _RL_SUBMIT_IP_PER_MIN)
+                ok_hour = _local.allow(f"{page_key}:hour:{hour}", _RL_SUBMIT_PAGE_PER_HOUR)
+                return ok_ip and ok_hour
 
             try:
                 ok = await check_pair()
             except Exception as e:
                 logger.warning("rate_limit redis fallback: %s", e)
                 ok = _local.allow(f"{ip_key}:{minute}", _RL_SUBMIT_IP_PER_MIN) and _local.allow(
-                    f"{page_key}:{minute}", _RL_SUBMIT_PAGE_PER_MIN
+                    f"{page_key}:hour:{hour}", _RL_SUBMIT_PAGE_PER_HOUR
                 )
             if not ok:
+                return _rate_limited_response()
+            return await call_next(request)
+
+        path = request.url.path
+        if (
+            request.method == "POST"
+            and path.startswith("/p/")
+            and path.rstrip("/").endswith("/upload")
+        ):
+            r_up: Any | None = getattr(request.app.state, "redis", None)
+            minute_u = int(time.time() // 60)
+            ip_u = get_client_ip(request)
+            ukey = f"rl:pupload:{ip_u}:{minute_u}"
+            try:
+                if r_up is not None:
+                    ok_u = await _incr_redis(r_up, ukey, _RL_PUBLIC_UPLOAD_PER_MIN)
+                else:
+                    ok_u = _local.allow(ukey, _RL_PUBLIC_UPLOAD_PER_MIN)
+            except Exception as e:
+                logger.warning("rate_limit upload fallback: %s", e)
+                ok_u = _local.allow(ukey, _RL_PUBLIC_UPLOAD_PER_MIN)
+            if not ok_u:
                 return _rate_limited_response()
             return await call_next(request)
 

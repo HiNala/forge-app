@@ -18,8 +18,12 @@ in ``users`` (no password column); document for E2E fixtures only.
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 import uuid
+
+# Subprocess (e.g. pytest) may inherit ENVIRONMENT=production from the shell; this script is dev-only.
+os.environ["ENVIRONMENT"] = "development"
 from datetime import UTC, datetime
 from pathlib import Path
 

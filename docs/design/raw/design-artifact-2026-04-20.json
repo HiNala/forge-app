@@ -1,0 +1,6 @@
+{
+  "fetched_at": "2026-04-20T00:00:00Z",
+  "url": "https://api.anthropic.com/v1/design/h/ZhxfTfNViMkEnjhpg1EkxA",
+  "status": 403,
+  "note": "Unauthenticated GET returns 403. Replace this snapshot with the full design payload when available (API key, manual export, or team cache). Styling in-repo remains driven by `apps/web/src/styles/tokens.css` and `docs/design/DESIGN_BRIEF.md` until then."
+}

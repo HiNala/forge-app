@@ -31,5 +31,8 @@ async def resend_webhook(
         raise HTTPException(status_code=401, detail="Invalid webhook signature") from None
 
     et = data.get("type") or data.get("event")
-    logger.info("resend webhook event=%s", et)
+    mid = None
+    if isinstance(data.get("data"), dict):
+        mid = data["data"].get("email_id") or data["data"].get("id")
+    logger.info("resend webhook event=%s message_id=%s", et, mid)
     return {"ok": True}

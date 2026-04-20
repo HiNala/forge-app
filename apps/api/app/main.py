@@ -31,12 +31,14 @@ from app.core.exception_handlers import (
     unhandled_exception_handler,
 )
 from app.core.logging import configure_logging
+from app.core.secret_compare import constant_time_str_equal
 from app.core.sentry import init_sentry
 from app.db.session import AsyncSessionLocal, engine
 from app.middleware import (
     BodySizeLimitMiddleware,
     RateLimitMiddleware,
     RequestContextMiddleware,
+    SecurityHeadersMiddleware,
     TenantMiddleware,
 )
 from app.middleware.body_size_limit import PayloadTooLarge
@@ -57,6 +59,12 @@ def _trusted_hosts() -> list[str]:
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.redis = None
     app.state.arq_pool = None
+    if settings.ENVIRONMENT == "production":
+        if not settings.TRUST_PROXY_HEADERS:
+            logger.warning(
+                "TRUST_PROXY_HEADERS is false in production: rate limits and client IP logs "
+                "use the reverse-proxy hop unless you set TRUST_PROXY_HEADERS=true behind a trusted load balancer."
+            )
     try:
         client = redis.from_url(settings.REDIS_URL, decode_responses=True)
         await client.ping()
@@ -96,11 +104,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             await engine.dispose()
 
 
+_prod = settings.ENVIRONMENT == "production"
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Forge backend — AI page builder (see docs/plan/02_PRD.md).",
     version="0.1.0",
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    openapi_url=None if _prod else f"{settings.API_V1_STR}/openapi.json",
+    docs_url=None if _prod else "/docs",
+    redoc_url=None if _prod else "/redoc",
     lifespan=lifespan,
     contact={"name": "Forge", "url": settings.APP_PUBLIC_URL},
     license_info={"name": "Proprietary"},
@@ -109,6 +120,8 @@ app = FastAPI(
     ],
 )
 
+# Outermost first: security headers applied last on the response path.
+app.add_middleware(SecurityHeadersMiddleware)
 # Last ``add_middleware`` wraps outermost (first to see the request). See ``docs/architecture/REQUEST_PIPELINE.md``.
 app.add_middleware(
     CORSMiddleware,
@@ -124,6 +137,7 @@ app.add_middleware(
         "x-active-org",
         "x-forge-test-user-id",
         "x-forwarded-for",
+        "x-metrics-token",
     ],
     expose_headers=["X-Request-ID"],
 )
@@ -157,7 +171,17 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 
 
 @app.get("/metrics")
-def metrics() -> Response:
+def metrics(request: Request) -> Response:
+    if settings.ENVIRONMENT == "production":
+        tok = (settings.METRICS_TOKEN or "").strip()
+        if not tok:
+            return Response(
+                status_code=503,
+                content="METRICS_TOKEN is not configured",
+            )
+        provided = request.headers.get("x-metrics-token") or ""
+        if not constant_time_str_equal(provided, tok):
+            return Response(status_code=401, content="Unauthorized")
     data = generate_latest()
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 
@@ -207,7 +231,7 @@ def health_legacy() -> dict[str, str]:
 
 @app.get("/health/deep")
 async def health_deep(request: Request) -> dict[str, Any]:
-    """Postgres + Redis probe (Mission 07). Optional integrations listed, non-blocking."""
+    """Postgres + Redis probe (Mission 07). Optional integrations listed in non-production only."""
     checks: dict[str, str] = {}
     try:
         async with AsyncSessionLocal() as session:
@@ -228,9 +252,11 @@ async def health_deep(request: Request) -> dict[str, Any]:
             logger.warning("health_deep redis: %s", e)
             checks["redis"] = "error"
 
-    checks["stripe_configured"] = "yes" if (settings.STRIPE_SECRET_KEY or "").strip() else "no"
-    checks["resend_configured"] = "yes" if (settings.RESEND_API_KEY or "").strip() else "no"
-    checks["openai_configured"] = "yes" if (settings.OPENAI_API_KEY or "").strip() else "no"
+    # Do not expose which third-party integrations are configured (minor reconnaissance leak).
+    if settings.ENVIRONMENT != "production":
+        checks["stripe_configured"] = "yes" if (settings.STRIPE_SECRET_KEY or "").strip() else "no"
+        checks["resend_configured"] = "yes" if (settings.RESEND_API_KEY or "").strip() else "no"
+        checks["openai_configured"] = "yes" if (settings.OPENAI_API_KEY or "").strip() else "no"
 
     critical_ok = checks.get("postgres") == "ok" and checks.get("redis") in ("ok", "unavailable")
     return {"status": "ok" if critical_ok else "degraded", "checks": checks}

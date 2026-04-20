@@ -18,6 +18,7 @@ from app.db.models import (
     User,
 )
 from app.db.session import AsyncSessionLocal
+from app.services.automation_transient import TransientAutomationError
 from app.services.automations import AutomationEngine
 from app.services.proposal_service import (
     assign_signed_proposal_pdf_storage_placeholder,
@@ -25,15 +26,36 @@ from app.services.proposal_service import (
 )
 from arq import cron
 from arq.connections import RedisSettings
+from arq.worker import Retry
 from sqlalchemy import delete, select, text, update
 
 logger = logging.getLogger(__name__)
 
+_redis_client = None
+
+
+async def _worker_redis():
+    """Shared async Redis for idempotent automation sends (Mission 05)."""
+    global _redis_client
+    if _redis_client is None:
+        import redis.asyncio as redis
+
+        _redis_client = redis.from_url(
+            os.environ.get("REDIS_URL", "redis://localhost:6379/0"),
+            decode_responses=True,
+        )
+    return _redis_client
+
+
+_BACKOFF_SEC = (5, 30, 120, 600)
+
 
 async def run_automations(ctx: object, submission_id: str) -> str:
     """Execute automation pipeline for a submission (notify, confirm, calendar)."""
-    del ctx
+    ctxd = ctx if isinstance(ctx, dict) else {}
+    job_try = int(ctxd.get("job_try", 1))
     sid = UUID(submission_id)
+    r = await _worker_redis()
     async with AsyncSessionLocal() as db:
         sub = (
             await db.execute(select(Submission).where(Submission.id == sid))
@@ -45,8 +67,13 @@ async def run_automations(ctx: object, submission_id: str) -> str:
             text("SELECT set_config('app.current_tenant_id', :t, true)"),
             {"t": str(sub.organization_id)},
         )
-        eng = AutomationEngine(db)
-        await eng.run_for_submission(sid)
+        eng = AutomationEngine(db, redis=r)
+        try:
+            await eng.run_for_submission(sid)
+        except TransientAutomationError as e:
+            defer_s = _BACKOFF_SEC[min(job_try - 1, len(_BACKOFF_SEC) - 1)]
+            logger.warning("run_automations transient, retry in %ss: %s", defer_s, e)
+            raise Retry(defer=defer_s) from e
     return "ok"
 
 
@@ -213,6 +240,11 @@ async def drop_old_analytics_partitions(ctx: object) -> None:
         await db.commit()
 
 
+async def purge_old_analytics(ctx: object) -> None:
+    """Mission 06 name — same retention delete as ``drop_old_analytics_partitions``."""
+    await drop_old_analytics_partitions(ctx)
+
+
 async def refresh_retention_views(ctx: object) -> None:
     """Nightly refresh of GL-01 retention materialized view."""
     del ctx
@@ -331,6 +363,7 @@ class WorkerSettings:
         page_screenshot,
         ai_cost_aggregate,
         purge_deleted_user,
+        purge_old_analytics,
         generate_template_preview,
         proposal_pdf_render,
         deck_export,
@@ -349,7 +382,9 @@ class WorkerSettings:
         os.environ.get("REDIS_URL", "redis://localhost:6379/0")
     )
     max_jobs = 20
-    job_timeout = 120
+    job_timeout = 300
+    max_tries = 5
+    retry_jobs = True
     keep_result = 3600
     poll_delay = 0.5
     timezone = UTC

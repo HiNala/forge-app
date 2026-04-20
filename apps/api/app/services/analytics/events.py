@@ -188,7 +188,14 @@ def _rows() -> list[tuple[str, str, Scope, list[str], list[str], str]]:
             studio_opt + ["submission_id"],
             "Reply sent.",
         ),
-        ("template_use_click", "studio", "authenticated", [], studio_opt + ["template_id"], "Template chosen."),
+        (
+            "template_use_click",
+            "studio",
+            "authenticated",
+            ["page_id"],
+            studio_opt + ["template_id"],
+            "Page created from a curated template (matches DB CHECK; legacy name was template_used).",
+        ),
         ("integration_connect", "studio", "authenticated", [], studio_opt + ["provider"], "Integration OAuth start."),
         ("settings_change", "studio", "authenticated", [], studio_opt + ["setting_name"], "Settings changed."),
         # Lifecycle

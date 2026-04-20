@@ -1,16 +1,13 @@
-# GL-04 — deploy staging when `main` is green (Railway GitHub-linked deploy is primary).
-# This workflow optionally triggers `railway up` if secrets are set; otherwise no-op.
+# Mission 08 — deploy staging only after CI succeeds on `main`, or via manual dispatch.
+# Railway GitHub-linked builds remain primary; this workflow optionally runs `railway up` when secrets are set.
 name: Deploy staging
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "apps/**"
-      - "infra/**"
-      - "packages/**"
-      - ".github/workflows/deploy-staging.yml"
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
 
 concurrency:
   group: deploy-staging-${{ github.ref }}
@@ -20,8 +17,15 @@ jobs:
   railway-staging:
     runs-on: ubuntu-latest
     environment: staging
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (github.event.workflow_run.conclusion == 'success'
+          && github.event.workflow_run.head_branch == 'main')
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
 
       - name: Install Railway CLI
         run: npm i -g @railway/cli@3
@@ -31,7 +35,7 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           if [ -z "$RAILWAY_TOKEN" ]; then
-            echo "RAILWAY_TOKEN not set — skipping CLI deploy (rely on Railway GitHub integration)."
+            echo "RAILWAY_TOKEN not set — skipping CLI deploy (use Railway GitHub integration)."
             exit 0
           fi
           if [ -z "${{ secrets.RAILWAY_SERVICE_ID_STAGING }}" ]; then
@@ -40,12 +44,17 @@ jobs:
           fi
           railway up --service "${{ secrets.RAILWAY_SERVICE_ID_STAGING }}"
 
-      - name: Post-deploy smoke (optional)
+      - name: Post-deploy smoke
         env:
           STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+          STAGING_API_URL: ${{ secrets.STAGING_API_URL }}
         run: |
           if [ -z "$STAGING_BASE_URL" ]; then
             echo "STAGING_BASE_URL not set — skip remote smoke."
             exit 0
           fi
-          curl -fsS -o /dev/null --max-time 30 "$STAGING_BASE_URL/" || exit 1
+          curl -fsS -o /dev/null --max-time 30 "$STAGING_BASE_URL/"
+          if [ -n "$STAGING_API_URL" ]; then
+            curl -fsS -o /dev/null --max-time 30 "$STAGING_API_URL/health/live"
+            curl -fsS -o /dev/null --max-time 30 "$STAGING_API_URL/health/ready" || true
+          fi

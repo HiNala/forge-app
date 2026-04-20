@@ -2,6 +2,16 @@
 
 Quick reference when something breaks in production.
 
+## Severity (examples)
+
+| Level | Meaning | Examples | Comms |
+|-------|---------|----------|--------|
+| **SEV1** | Full outage or data breach risk | API down for all; suspected cross-tenant leak | Status page + internal page; update every 30 min |
+| **SEV2** | Major degradation | Studio broken; webhooks failing broadly; email down | Internal channel; hourly updates |
+| **SEV3** | Partial / workaround exists | Single integration flaky; non-prod env | Ticket + next business day |
+
+**Template (internal):** what broke, impact, mitigations, ETA, owner — then **post-mortem**: root cause, fix, prevention ([FIRST_PRODUCTION_BUG.md](./FIRST_PRODUCTION_BUG.md)).
+
 ## LLM cost or error spike
 
 1. Check Sentry for provider errors and rate limits.

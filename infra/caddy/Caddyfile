@@ -1,19 +1,51 @@
-# Reference config — tune hostnames and upstreams per Railway private DNS.
-# Replace API_ASK_URL with your internal API base, e.g. http://api.railway.internal:8000
+# Forge edge — Railway private networking
+# Set in Railway (caddy service):
+#   WEB_UPSTREAM=web.railway.internal:3000
+#   CADDY_TLS_ASK_URL=http://api.railway.internal:8000/internal/caddy/validate
+# Optional: global option for ask request header if API uses CADDY_INTERNAL_TOKEN (requires Caddy exec or plugin; prefer private network + token on API only when exposed).
+#
+# Public HTTPS must terminate on this service; point Railway public networking here.
+
 {
-	# On-demand TLS: Caddy asks the API before issuing a cert for unknown hostnames.
-	# on_demand_tls {
-	# 	ask {$API_ASK_URL}/internal/caddy/validate
-	# 	interval 2m
-	# 	burst 5
-	# }
+	on_demand_tls {
+		ask {$CADDY_TLS_ASK_URL}
+		interval 2m
+		burst 5
+	}
 }
 
-# Example: workspace subdomains (managed TLS via Railway or DNS challenge — not on-demand)
-# *.forge.app {
-# 	reverse_proxy {$WEB_UPSTREAM}
-# }
+# Apex marketing site
+forge.app {
+	reverse_proxy {$WEB_UPSTREAM}
+}
 
+# PRD: www → apex
+www.forge.app {
+	redir https://forge.app{uri} permanent
+}
+
+# Workspace subdomains (*.forge.app)
+*.forge.app {
+	reverse_proxy {$WEB_UPSTREAM}
+}
+
+# Verified custom domains (not *.forge.app): on-demand TLS after API /internal/caddy/validate
+:443 {
+	tls {
+		on_demand
+	}
+	@customDomain {
+		not host forge.app
+		not host www.forge.app
+		not host *.forge.app
+	}
+	reverse_proxy @customDomain {$WEB_UPSTREAM}
+}
+
+# Health / Railway TCP probe (optional HTTP)
 :80 {
-	respond "Caddy placeholder — configure API_ASK_URL and upstreams (see docs/runbooks/DEPLOYMENT.md)" 200
+	handle /health {
+		respond 200
+	}
+	respond "Forge Caddy OK" 200
 }

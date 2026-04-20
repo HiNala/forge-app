@@ -56,7 +56,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/chrome/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Sparkles } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Stack } from "@/components/ui/stack";

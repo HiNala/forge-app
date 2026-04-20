@@ -76,3 +76,86 @@ def guess_ext(filename: str, content_type: str) -> str:
     if filename.lower().endswith((".png", ".jpg", ".jpeg", ".webp", ".svg")):
         return filename.rsplit(".", 1)[-1].lower()
     return "bin"
+
+
+def submission_upload_key(
+    *,
+    organization_id: UUID,
+    page_id: UUID,
+    upload_token: UUID,
+    filename: str,
+) -> str:
+    ext = guess_ext(filename, "application/octet-stream")
+    safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in filename)[:120]
+    if not safe:
+        safe = f"file.{ext}"
+    return f"org/{organization_id}/pages/{page_id}/uploads/{upload_token}/{safe}"
+
+
+def presigned_put_object(*, key: str, content_type: str, expires_in: int = 3600) -> str:
+    ensure_bucket()
+    c = _client()
+    return c.generate_presigned_url(
+        "put_object",
+        Params={
+            "Bucket": settings.S3_BUCKET,
+            "Key": key,
+            "ContentType": content_type.split(";")[0].strip(),
+        },
+        ExpiresIn=expires_in,
+    )
+
+
+def presigned_get_object(*, key: str, expires_in: int = 900) -> str:
+    ensure_bucket()
+    c = _client()
+    return c.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": settings.S3_BUCKET, "Key": key},
+        ExpiresIn=expires_in,
+    )
+
+
+def head_object(*, key: str) -> dict[str, Any]:
+    c = _client()
+    r = c.head_object(Bucket=settings.S3_BUCKET, Key=key)
+    return {
+        "ContentLength": int(r["ContentLength"]),
+        "ContentType": (r.get("ContentType") or "").split(";")[0].strip(),
+    }
+
+
+def get_object_prefix_bytes(*, key: str, max_bytes: int = 512) -> bytes:
+    c = _client()
+    o = c.get_object(
+        Bucket=settings.S3_BUCKET,
+        Key=key,
+        Range=f"bytes=0-{max_bytes - 1}",
+    )
+    return o["Body"].read()
+
+
+def put_object_bytes(*, key: str, body: bytes, content_type: str) -> None:
+    ensure_bucket()
+    c = _client()
+    c.put_object(
+        Bucket=settings.S3_BUCKET,
+        Key=key,
+        Body=body,
+        ContentType=content_type.split(";")[0].strip(),
+    )
+
+
+def sniff_bytes_mime(data: bytes) -> str | None:
+    """Magic-byte sniff for common upload types (PDF + images)."""
+    if len(data) >= 4 and data[:4] == b"%PDF":
+        return "application/pdf"
+    if len(data) >= 8 and data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if len(data) >= 3 and data[:2] == b"\xff\xd8":
+        return "image/jpeg"
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    if len(data) >= 6 and data[:6] in (b"GIF87a", b"GIF89a"):
+        return "image/gif"
+    return None

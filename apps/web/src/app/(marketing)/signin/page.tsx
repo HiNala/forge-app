@@ -5,10 +5,18 @@ import { ForgeMark } from "@/components/chrome/forge-logo";
 
 export const metadata: Metadata = {
   title: "Sign in | Forge",
-  robots: { index: false, follow: false },
+  description: "Sign in to Forge — Studio, dashboard, and hosted pages.",
+  alternates: { canonical: "/signin" },
 };
 
-export default function SignInPage() {
+type Props = { searchParams: Promise<{ redirect_url?: string }> };
+
+export default async function SignInPage({ searchParams }: Props) {
+  const sp = await searchParams;
+  const raw = (sp.redirect_url ?? "").trim();
+  const afterSignIn =
+    raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-bg px-4 py-12 sm:py-16">
       <div className="mb-8 flex flex-col items-center gap-3">
@@ -45,7 +53,7 @@ export default function SignInPage() {
             },
           }}
           signUpUrl="/signup"
-          forceRedirectUrl="/dashboard"
+          forceRedirectUrl={afterSignIn}
         />
       </div>
 

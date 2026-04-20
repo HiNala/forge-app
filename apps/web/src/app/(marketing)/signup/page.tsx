@@ -6,7 +6,8 @@ import { SignupClient } from "./signup-client";
 
 export const metadata: Metadata = {
   title: "Sign up | Forge",
-  robots: { index: false, follow: false },
+  description: "Create your Forge account — describe pages in plain English and publish hosted links.",
+  alternates: { canonical: "/signup" },
 };
 
 export default function SignUpPage() {

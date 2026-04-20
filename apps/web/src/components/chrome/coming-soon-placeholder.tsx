@@ -1,6 +1,6 @@
 "use client";
 
-import { EmptyState } from "@/components/chrome/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { LucideIcon } from "lucide-react";
 
 export function ComingSoonPlaceholder({

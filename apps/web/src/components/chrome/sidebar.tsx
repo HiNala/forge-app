@@ -7,6 +7,7 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
+  Bell,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -63,6 +64,7 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/studio", label: "Studio", icon: PlusCircle, primary: true as const },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/settings/profile", label: "Settings", icon: Settings },
 ] as const;
 

@@ -1,50 +1,65 @@
-# Mission FE-02 — Marketing surface — report
+# Mission FE-02 — Marketing surface (report)
 
-**Branch:** `mission-fe-02-marketing`  
-**Date:** 2026-04-19  
+## Summary
 
-Canonical detailed notes also appear in `docs/plan/MISSION-FE-02-REPORT.md` (same mission).
+Public marketing routes under `apps/web/src/app/(marketing)/` deliver a token-aligned, SEO-aware funnel: live hero demo (SSE to `POST /api/v1/public/demo` with `public/demo-cache/` fallback), honest proof section (no fabricated testimonials), pricing with comparison table + billing FAQ, gallery/examples, sign-in/up with Clerk, JSON-LD on the home page, sitemap + robots, and automated axe/hero E2E coverage.
 
-## Goal (recap)
+## Routes
 
-Public marketing routes (landing, pricing, examples gallery + detail, FAQ, signup funnel), SEO/metadata, live hero demo (`POST /api/v1/public/demo` with static fallback in `public/demo-cache/`), and automated tests (Playwright + axe).
+| Route | Notes |
+|-------|--------|
+| `/` | Landing: hero, ticker, qualitative highlights, how-it-works, gallery strip, honest proof, FAQ, final CTA |
+| `/pricing` | Three tiers, annual toggle, comparison table (15 rows), enterprise dialog → mailto |
+| `/examples`, `/examples/[slug]` | Gallery + per-slug preview (existing template mission wiring) |
+| `/signin`, `/signup` | Clerk; marketing chrome; signup stores plan/source in sessionStorage for continue flow |
+| `/terms`, `/privacy` | Legal |
 
-## What shipped
+## Hero demo
 
-| Area | Notes |
-|------|--------|
-| `(marketing)/` routes | Landing, pricing, examples + `[slug]`, signin, signup + `/signup/continue`, terms, privacy |
-| Chrome | Sticky nav (Forge logo, Pricing · Examples · Sign in, Start free), footer (DSL copyright, links, Contact `mailto:`, Status → `https://status.forge.app`) |
-| Hero | Lazy-loaded (`hero-demo-lazy`), rotating placeholders, chips, 15s autostart, SSE preview + carousel fallback, CTA → `/signup?source=hero_demo` |
-| Gallery | Six curated cards from `TEMPLATE_CARDS`, template thumbnail via `next/image` + `/marketing/template-thumb.svg`, hover crossfade overlay |
-| Pricing | Starter / Pro / Enterprise, annual toggle, 15-row comparison table, 8-item billing FAQ, Enterprise dialog + mailto |
-| Signup | Clerk `SignUp`; query params `plan`, `billing`, `source`, `template` persisted to `sessionStorage` for post-auth flows |
-| SEO | `generateMetadata`, `robots.ts`, `sitemap.ts` (marketing URLs + `/examples/*` slugs), JSON-LD on home, dynamic OG via `opengraph-image.tsx` |
-| Tests | `e2e/marketing-hero.spec.ts`, `e2e/marketing-a11y.spec.ts`, `e2e/marketing-visual.spec.ts` (example detail uses slug `contractor-small-jobs`) |
+- **Client:** `components/marketing/hero-demo.tsx` (code-split via `hero-demo-lazy.tsx`).
+- **API:** `apps/api/app/api/v1/public_demo.py` — rate-limited anonymous SSE; tests in `apps/api/tests/test_public_demo.py`.
+- **Fallback:** `public/demo-cache/{1,2,3}.html` + friendly inline HTML if fetch fails; no hard error surface in the hero.
+- **UX:** Rotating placeholders (4s, pause on focus), three chips (Booking / RSVP / Proposal), 15s autostart prompt, “Like what you see?” + `Start free` → `/signup?source=hero_demo`.
+- **Responsive:** Column stack on narrow screens; side-by-side input + preview from `lg` breakpoint.
 
-## Verification (`apps/web`)
+## SEO & metadata
+
+- Per-route `generateMetadata` / exports where applicable; home OG via `opengraph-image.tsx` (1200×630, warm cream + serif headline).
+- `MarketingJsonLd`: `Organization` + `SoftwareApplication`.
+- `src/app/sitemap.ts` lists marketing URLs + `/examples/*` slugs from `EXAMPLES_SLUGS`.
+- `src/app/robots.ts`: allows public marketing; disallows app shell and `/dev/`.
+
+## Honesty / compliance
+
+- Removed **fake metrics** (former stats) and **fabricated testimonials**; replaced with qualitative highlights and `HonestProofSection` pointing to the live demo + examples.
+
+## Performance notes
+
+- `Manrope` (`bodyFont`) uses `preload: false`; `Cormorant Garamond` remains the primary preloaded face (Mission FE-02 guidance).
+- Lighthouse targets (mobile ≥95, CLS 0) should be validated on a production build with real `NEXT_PUBLIC_*` URLs; marketing layout is `force-dynamic` for provider compatibility.
+
+## Tests
+
+| File | Purpose |
+|------|---------|
+| `e2e/marketing-hero.spec.ts` | Chip → preview iframe has body text; signup links carry `source` query params |
+| `e2e/marketing-a11y.spec.ts` | axe (`wcag2a`, `wcag2aa`, `wcag21aa`) on core marketing paths |
+| `e2e/marketing-pages.visual.spec.ts` | Full-page snapshots at 375 / 768 / 1280 — update baselines with `--update-snapshots` |
+
+Run (from `apps/web`, with dev server or Playwright webServer):
 
 ```bash
-pnpm run typecheck
-pnpm run lint
-pnpm run build
-pnpm run test:e2e
+pnpm exec playwright test e2e/marketing-hero.spec.ts e2e/marketing-a11y.spec.ts
 ```
 
-Playwright needs valid Clerk keys in `.env.local` for `/signin` and `/signup` to load (see plan report). Hero test stubs `**/public/demo` SSE.
+## Fixes (post-pass)
 
-**Visual baselines:** first run `pnpm exec playwright test e2e/marketing-visual.spec.ts --update-snapshots`.
+- **`getApiUrl()`** (`apps/web/src/lib/api.ts`) normalizes `NEXT_PUBLIC_API_URL` when it already ends with `/api/v1` (matches `.env.example` and Docker), so the hero demo and API client no longer hit `/api/v1/api/v1/...`. Unit tests: `apps/web/src/lib/api-url.test.ts`.
+- **CI E2E** (`.github/workflows/e2e.yml`) also runs `e2e/marketing-hero.spec.ts` and `e2e/marketing-a11y.spec.ts` against the docker-compose stack.
+- Removed duplicate unconditional **`marketing-visual.spec.ts`** (no snapshot baselines); use opt-in **`e2e/marketing-pages.visual.spec.ts`** with `SNAPSHOT_MARKETING=1`.
 
-## Manual / deferred
+## Follow-ups (optional)
 
-| Item | Notes |
-|------|--------|
-| Lighthouse mobile ≥95, desktop ≥98, CLS 0 | Chrome DevTools on production-like build |
-| JS budget &lt; 100 KB gzipped on `/` | Bundle analyzer / Lighthouse |
-| Stripe Checkout | Pricing CTAs land on signup with plan params; Stripe product wiring is backend/billing follow-up |
-| Cross-browser | Safari / Firefox spot-checks |
-
-## Honesty constraints
-
-- No fabricated testimonials; social-proof section omitted unless real quotes exist.
-- Pricing footer notes Stripe products may be finalized at launch.
+- Wire Stripe Checkout from pricing CTAs when billing endpoints are production-ready.
+- Replace gradient gallery thumbnails with real `next/image` assets per template when art exists.
+- Tune `force-dynamic` on `(marketing)/layout` if static marketing prerender becomes desirable.

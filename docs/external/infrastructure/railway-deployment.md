@@ -7,11 +7,15 @@
 
 | Service | Source | Build |
 |---------|--------|-------|
-| web | apps/web/Dockerfile | Node.js |
-| api | apps/api/Dockerfile | Python |
-| worker | apps/api/Dockerfile (different CMD) | Python |
-| postgres | Railway managed | PG 16 |
+| web | `apps/web/Dockerfile` (repo root context) | Node / Next standalone |
+| api | `apps/api/Dockerfile` | Python / FastAPI |
+| worker | `apps/worker/Dockerfile` (repo root) | arq |
+| caddy | `infra/caddy/Dockerfile` | Caddy 2 (custom domains + on-demand TLS) |
+| postgres | Railway managed | PG 16 (+ `pg_partman` when available) |
 | redis | Railway managed | Redis 7 |
+| object storage | **Cloudflare R2 or AWS S3** | Not Railway-native; set `S3_*` |
+
+See `docs/deployment/RAILWAY_SETUP.md` and `docs/missions/MISSION-08-REPORT.md`.
 
 ## railway.json
 

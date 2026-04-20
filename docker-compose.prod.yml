@@ -1,4 +1,6 @@
-# Minimal production-style compose (GL-04). Web image requires monorepo root context (see apps/web/Dockerfile).
+# Minimal production-*image* smoke (GL-04): builds run like CI; runtime env is not full public production.
+# For real internet deploys use `ENVIRONMENT=production` with all vars in `docs/runbooks/PRODUCTION_LAUNCH.md`.
+# Web image requires monorepo root context (see apps/web/Dockerfile).
 services:
   web:
     build:
@@ -20,4 +22,5 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - ENVIRONMENT=production
+      # Not `production` — that mode requires HTTPS URLs, Clerk issuer, CORS, etc. (see PRODUCTION_LAUNCH.md).
+      - ENVIRONMENT=development

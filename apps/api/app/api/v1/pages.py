@@ -7,7 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy import String, cast, func, select
+from sqlalchemy import String, cast, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -16,7 +16,6 @@ from app.deps import get_db, require_role, require_tenant
 from app.deps.api_scopes import require_api_scopes
 from app.deps.auth import require_user
 from app.deps.tenant import TenantContext
-from app.schemas.common import StubResponse
 from app.schemas.page import (
     PageCreate,
     PageDetailOut,
@@ -25,11 +24,12 @@ from app.schemas.page import (
     PageVersionOut,
     PublishOut,
 )
-from app.schemas.submission import SubmissionListOut, SubmissionOut
+from app.schemas.submission import SubmissionBulkBody, SubmissionListOut, SubmissionOut
 from app.services.analytics_cache import bust_page_and_org
 from app.services.orchestration.html_validate import validate_publishable_html
 from app.services.proposal_service import get_or_create_proposal_for_page
 from app.services.submissions_csv import iter_submission_csv_rows
+from app.utils.slug import unique_page_slug
 
 logger = logging.getLogger(__name__)
 
@@ -295,29 +295,149 @@ async def list_versions(
 
 @router.post(
     "/{page_id}/revert/{version_id}",
-    response_model=StubResponse,
+    response_model=PageDetailOut,
 )
 async def revert_page(
     page_id: UUID,
     version_id: UUID,
+    request: Request,
     _: None = Depends(require_api_scopes("write:pages")),
     db: AsyncSession = Depends(get_db),
-    _ctx: TenantContext = Depends(require_tenant),
-) -> StubResponse:
-    return StubResponse()
+    ctx: TenantContext = Depends(require_role("owner", "editor")),
+    user: User = Depends(require_user),
+) -> Page:
+    """Restore current draft from a historical snapshot; appends a new PageVersion row (Mission 04)."""
+    p = await db.get(Page, page_id)
+    if p is None or p.organization_id != ctx.organization_id:
+        raise HTTPException(status_code=404, detail="Not found")
+    ver = await db.get(PageVersion, version_id)
+    if (
+        ver is None
+        or ver.page_id != page_id
+        or ver.organization_id != ctx.organization_id
+    ):
+        raise HTTPException(status_code=404, detail="Version not found")
+
+    max_ver = (
+        await db.execute(
+            select(func.coalesce(func.max(PageVersion.version_number), 0)).where(
+                PageVersion.page_id == p.id
+            )
+        )
+    ).scalar_one()
+    vn = int(max_ver) + 1
+    rev = PageVersion(
+        page_id=p.id,
+        organization_id=ctx.organization_id,
+        version_number=vn,
+        html=ver.html,
+        form_schema=ver.form_schema,
+        brand_kit_snapshot=ver.brand_kit_snapshot,
+        published_by_user_id=user.id,
+    )
+    db.add(rev)
+    await db.flush()
+
+    p.current_html = ver.html or ""
+    p.form_schema = ver.form_schema
+    p.brand_kit_snapshot = ver.brand_kit_snapshot
+    await db.commit()
+    await db.refresh(p)
+
+    if p.status == "live":
+        org = await db.get(Organization, ctx.organization_id)
+        if org is not None:
+            payload = {
+                "html": p.current_html or "",
+                "title": p.title,
+                "slug": p.slug,
+                "organization_slug": org.slug,
+                "page_id": str(p.id),
+                "page_type": p.page_type,
+                "org_plan": org.plan,
+            }
+            r = getattr(request.app.state, "redis", None)
+            if r is not None:
+                try:
+                    await r.set(
+                        f"{_CACHE_PREFIX}{org.slug}:{p.slug}",
+                        json.dumps(payload),
+                    )
+                    await bust_page_and_org(
+                        r, page_id=p.id, organization_id=ctx.organization_id
+                    )
+                except Exception as e:
+                    logger.warning("revert_cache_write %s", e)
+    return p
 
 
 @router.post(
     "/{page_id}/duplicate",
-    response_model=StubResponse,
+    response_model=PageOut,
 )
 async def duplicate_page(
     page_id: UUID,
     _: None = Depends(require_api_scopes("write:pages")),
     db: AsyncSession = Depends(get_db),
-    _ctx: TenantContext = Depends(require_tenant),
-) -> StubResponse:
-    return StubResponse()
+    ctx: TenantContext = Depends(require_role("owner", "editor")),
+    user: User = Depends(require_user),
+) -> Page:
+    """Copy page content into a new draft with slug ``{slug}-copy`` (unique within org)."""
+    src = await db.get(Page, page_id)
+    if src is None or src.organization_id != ctx.organization_id:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    base = f"{src.slug}-copy"
+    new_slug = await unique_page_slug(db, ctx.organization_id, base)
+    title = f"{src.title} (copy)"
+    np = Page(
+        organization_id=ctx.organization_id,
+        slug=new_slug,
+        page_type=src.page_type,
+        title=title,
+        current_html=src.current_html or "",
+        form_schema=src.form_schema,
+        brand_kit_snapshot=src.brand_kit_snapshot,
+        intent_json=src.intent_json,
+        status="draft",
+        created_by_user_id=user.id,
+        published_version_id=None,
+        last_review_quality_score=None,
+        last_review_report=None,
+        review_degraded_quality=False,
+    )
+    db.add(np)
+    await db.commit()
+    await db.refresh(np)
+    return np
+
+
+@router.post(
+    "/{page_id}/submissions/bulk",
+)
+async def bulk_update_page_submissions(
+    page_id: UUID,
+    body: SubmissionBulkBody,
+    _: None = Depends(require_api_scopes("write:submissions")),
+    db: AsyncSession = Depends(get_db),
+    ctx: TenantContext = Depends(require_role("owner", "editor")),
+) -> dict[str, bool | int]:
+    """Mark many submissions read or archived (Mission 04)."""
+    p = await db.get(Page, page_id)
+    if p is None or p.organization_id != ctx.organization_id:
+        raise HTTPException(status_code=404, detail="Not found")
+    new_status = "read" if body.action == "mark_read" else "archived"
+    res = await db.execute(
+        update(Submission)
+        .where(
+            Submission.page_id == page_id,
+            Submission.organization_id == ctx.organization_id,
+            Submission.id.in_(body.submission_ids),
+        )
+        .values(status=new_status)
+    )
+    await db.commit()
+    return {"ok": True, "updated": int(res.rowcount or 0)}
 
 
 @router.get(

@@ -1,6 +1,7 @@
 /**
  * Route prefixes that require a signed-in Clerk session (see `src/middleware.ts`).
- * Kept in one place for tests and docs.
+ * Mission 02 refers to the “app shell” as `/app/*`; in the Next.js App Router we use
+ * a `(app)` route group so URLs stay `/dashboard`, `/settings`, etc. (no `/app` segment).
  */
 export const PROTECTED_PREFIXES = [
   "/dashboard",
@@ -13,6 +14,7 @@ export const PROTECTED_PREFIXES = [
   "/settings",
   "/automations",
   "/submissions",
+  "/notifications",
   "/oauth",
 ] as const;
 

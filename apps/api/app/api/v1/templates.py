@@ -89,7 +89,7 @@ async def get_template(
     template_id: UUID,
     db: AsyncSession = Depends(get_db_user_only),
     _user: User = Depends(require_user),
-) -> Template:
+) -> TemplateDetailOut:
     row = (
         await db.execute(
             select(Template).where(
@@ -100,7 +100,7 @@ async def get_template(
     ).scalar_one_or_none()
     if row is None:
         raise HTTPException(status_code=404, detail="Not found")
-    return row
+    return TemplateDetailOut.model_validate(row)
 
 
 @router.post("/{template_id}/use", response_model=UseTemplateOut)
@@ -207,6 +207,8 @@ async def use_template(
             "template_id": str(t.id),
             "template_slug": t.slug,
             "template_name": t.name,
+            "user_id": str(user.id),
+            "org_id": str(ctx.organization_id),
         },
     )
     db.add(ev)
@@ -220,6 +222,7 @@ async def use_template(
         {
             "template_id": str(t.id),
             "organization_id": str(ctx.organization_id),
+            "template_slug": t.slug,
         },
     )
 

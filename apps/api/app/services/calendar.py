@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db.models import CalendarConnection
+from app.services.automation_transient import TransientAutomationError
 from app.services.token_crypto import decrypt_text, encrypt_text
 
 logger = logging.getLogger(__name__)
@@ -163,6 +164,7 @@ async def create_event_for_submission(
     except HttpError as e:
         if e.resp.status in (429, 500, 503):
             logger.warning("google calendar transient %s", e)
+            raise TransientAutomationError(str(e)) from e
         raise
 
     return {

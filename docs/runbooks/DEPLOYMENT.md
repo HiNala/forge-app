@@ -13,7 +13,7 @@ Build from Dockerfiles:
 | Service | Build context | Dockerfile | Start |
 |---------|---------------|------------|--------|
 | web | **repo root** | `apps/web/Dockerfile` | Next standalone (`node apps/web/server.js`) |
-| api | `apps/api` | `Dockerfile` | Uvicorn on `$PORT` (migrations **not** on boot — GL-04) |
+| api | `apps/api` | `Dockerfile` | `alembic upgrade head` then Uvicorn on `$PORT` (see `apps/api/railway.json`) |
 | worker | **repo root** | `apps/worker/Dockerfile` | `arq worker.WorkerSettings` |
 | caddy | `infra/caddy` | `Dockerfile` | Caddy |
 
@@ -23,7 +23,7 @@ Use **private networking** between services (`*.railway.internal`).
 
 1. Provision Postgres 16 + Redis 7 (Railway plugins).
 2. Set env vars per environment ([ENV_MANIFEST.md](../deployment/ENV_MANIFEST.md)).
-3. Deploy **api**, then run migrations explicitly: `railway run --service api uv run alembic upgrade head` (or equivalent).
+3. Deploy **api** (migrations run automatically on boot per `railway.json`). For the **first** production migration or heavy DDL, prefer a one-off `railway run --service api uv run alembic upgrade head` and watch logs ([MIGRATIONS.md](./MIGRATIONS.md)).
 4. Deploy **worker** and **web**.
 5. Attach public domain to **Caddy** (or web directly if not using custom domains yet).
 6. Run smoke tests: `/health/live`, `/health/ready`, sign-in, Studio (staging first).

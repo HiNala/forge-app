@@ -110,17 +110,28 @@ export function GallerySection() {
         {/* Editorial header */}
         <div className="mb-14 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <span className="section-label mb-3">What you can build</span>
+            <span className="section-label mb-3">Template library</span>
             <h2 className="font-display text-[clamp(28px,3.5vw,46px)] font-bold leading-[1] tracking-tight text-text">
-              Six examples, ready now.
+              Start from something real.
             </h2>
+            <p className="mt-2 max-w-[52ch] font-body text-sm font-light text-text-muted">
+              30+ curated pages — forms, proposals, menus, and more. Preview any example, then sign up to use it in one click.
+            </p>
           </div>
-          <Link
-            href="/examples"
-            className="shrink-0 font-body text-sm font-medium text-accent underline-offset-4 hover:underline"
-          >
-            See all templates →
-          </Link>
+          <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+            <Link
+              href="/examples"
+              className="font-body text-sm font-medium text-accent underline-offset-4 hover:underline"
+            >
+              See all templates →
+            </Link>
+            <Link
+              href="/signin?redirect_url=/templates"
+              className="font-body text-sm font-medium text-text-muted underline-offset-4 hover:text-text hover:underline"
+            >
+              Open full gallery in the app →
+            </Link>
+          </div>
         </div>
 
         <ul className="grid list-none gap-5 p-0 sm:grid-cols-2 lg:grid-cols-3">

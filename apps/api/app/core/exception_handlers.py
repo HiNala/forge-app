@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+import sentry_sdk
 from fastapi import Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
@@ -132,13 +133,17 @@ async def payload_too_large_handler(request: Request, exc: Exception) -> JSONRes
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     logger.exception("unhandled: %s", exc)
     rid = _request_id(request)
+    event_id = sentry_sdk.capture_exception(exc)
     if settings.ENVIRONMENT == "production":
+        extra: dict[str, str] = {}
+        if event_id:
+            extra["sentry_id"] = str(event_id)
         return JSONResponse(
             status_code=500,
             content={
                 "code": "internal_error",
                 "message": "Something went wrong",
-                "extra": {},
+                "extra": extra,
                 "request_id": rid,
             },
         )

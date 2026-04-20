@@ -1,63 +1,28 @@
-import { test, expect, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Accept, Cache-Control",
-} as const;
+/**
+ * Hero demo: chip submit → preview iframe fills (live SSE or static demo-cache fallback).
+ */
+test("hero: booking chip fills preview and CTA links to signup", async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60_000 });
+  await page.getByRole("button", { name: "Booking form" }).click();
+  const iframe = page.locator('iframe[title="Page preview"]');
+  await expect(iframe).toBeVisible({ timeout: 90_000 });
+  const frame = page.frameLocator('iframe[title="Page preview"]');
+  await expect(frame.locator("body")).toBeVisible({ timeout: 30_000 });
+  await expect
+    .poll(async () => (await frame.locator("body").innerText()).trim().length)
+    .toBeGreaterThan(20);
 
-/** Stub anonymous demo SSE so E2E does not depend on the Python API. */
-function stubPublicDemo(page: Page) {
-  return page.route("**/public/demo", async (route) => {
-    const method = route.request().method();
-    if (method === "OPTIONS") {
-      await route.fulfill({ status: 204, headers: { ...cors } });
-      return;
-    }
-    if (method !== "POST") {
-      await route.continue();
-      return;
-    }
-    const html =
-      "<!DOCTYPE html><html><head><meta charset='utf-8'/></head><body><p>Playwright demo preview</p></body></html>";
-    const chunk = [
-      "event: html.complete",
-      `data: ${JSON.stringify({ html })}`,
-      "",
-      "",
-    ].join("\n");
-    await route.fulfill({
-      status: 200,
-      headers: {
-        ...cors,
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache",
-      },
-      body: chunk,
-    });
-  });
-}
+  const startFree = page.getByRole("link", { name: "Start free" }).first();
+  await expect(startFree).toBeVisible();
+  await expect(startFree).toHaveAttribute("href", /\/signup\?.*source=hero_demo/);
+});
 
-test.describe("Hero demo funnel", () => {
-  test("chip submit renders preview then Start free → signup", async ({ page }) => {
-    test.setTimeout(180_000);
-    await stubPublicDemo(page);
-
-    await page.goto("/", { waitUntil: "load" });
-
-    const bookingChip = page.getByRole("button", { name: "Booking form" });
-    await expect(bookingChip).toBeVisible({ timeout: 120_000 });
-    await bookingChip.click();
-
-    const preview = page.frameLocator('iframe[title="Page preview"]');
-    await expect(preview.getByText("Playwright demo preview")).toBeVisible({
-      timeout: 45_000,
-    });
-
-    await page
-      .getByRole("link", { name: "Like what you see? Start free" })
-      .click();
-
-    await expect(page).toHaveURL(/\/signup\?.*source=hero_demo/);
-  });
+test("final CTA links to signup", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60_000 });
+  await page.locator("#cta").scrollIntoViewIfNeeded();
+  const cta = page.getByRole("link", { name: "Start free" }).last();
+  await expect(cta).toHaveAttribute("href", /\/signup\?.*source=landing_footer/);
 });

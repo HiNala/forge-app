@@ -4,9 +4,10 @@ import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
+import Link from "next/link";
 import { LayoutGrid, Sparkles } from "lucide-react";
 import { DashboardTipBanner } from "@/components/chrome/dashboard-tip-banner";
-import { EmptyState } from "@/components/chrome/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +16,7 @@ import {
   type DashboardWorkflowFilter,
   pageMatchesWorkflowFilter,
 } from "@/lib/workflow-config";
-import { getPageUnreadCounts, listPages } from "@/lib/api";
+import { getAutomationFailureSummary, getPageUnreadCounts, listPages } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
 import { DashboardPageCard } from "./dashboard-page-card";
@@ -85,6 +86,12 @@ export function DashboardView() {
   const unreadQ = useQuery({
     queryKey: ["unread-counts", activeOrganizationId],
     queryFn: () => getPageUnreadCounts(getToken, activeOrganizationId),
+    enabled: !!activeOrganizationId,
+  });
+
+  const autoFailQ = useQuery({
+    queryKey: ["automation-failure-summary", activeOrganizationId],
+    queryFn: () => getAutomationFailureSummary(getToken, activeOrganizationId),
     enabled: !!activeOrganizationId,
   });
 
@@ -197,6 +204,17 @@ export function DashboardView() {
   return (
     <div className="space-y-8">
       <DashboardTipBanner />
+      {autoFailQ.data && autoFailQ.data.failed_last_24h > 0 ? (
+        <div
+          className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 font-body text-sm text-text"
+          role="status"
+        >
+          Some submissions didn&apos;t finish automated emails or calendar steps in the last 24 hours.{" "}
+          <Link href="/notifications" className="font-semibold underline-offset-4 hover:underline">
+            View details
+          </Link>
+        </div>
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight text-text">Pages</h1>

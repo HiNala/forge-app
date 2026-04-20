@@ -13,8 +13,17 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import escape
 
 from app.config import settings
+from app.services.automation_transient import TransientAutomationError
 
 logger = logging.getLogger(__name__)
+
+
+def _is_transient_send_failure(e: BaseException) -> bool:
+    sc = getattr(e, "status_code", None) or getattr(e, "status", None)
+    if isinstance(sc, int) and (sc == 429 or sc >= 500):
+        return True
+    s = str(e).lower()
+    return "429" in s or "503" in s or "timeout" in s or "rate limit" in s
 
 _TEMPLATES = Path(__file__).resolve().parent / "templates"
 _env = Environment(
@@ -65,6 +74,8 @@ async def _send_raw(
         out = await asyncio.to_thread(_sync)
     except Exception as e:
         logger.exception("resend send failed: %s", e)
+        if _is_transient_send_failure(e):
+            raise TransientAutomationError(str(e)) from e
         raise
     if isinstance(out, dict) and "id" in out:
         return str(out["id"])

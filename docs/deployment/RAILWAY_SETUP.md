@@ -37,7 +37,9 @@ Link GitHub for **GitHub-based builds** (recommended). Use `railway up` only as 
 
 ## Database
 
-Migrations **do not** run on API container boot in production (`apps/api/Dockerfile`). Apply explicitly:
+**Mission 08 default:** the API service `startCommand` in `apps/api/railway.json` runs `alembic upgrade head` before Uvicorn (Alembic holds an advisory lock). This keeps deploys one-step.
+
+**First production deploy / risky DDL:** still prefer a one-off job (`railway run --service api uv run alembic upgrade head`) so you can watch logs; see [MIGRATIONS.md](../runbooks/MIGRATIONS.md).
 
 ```bash
 railway environment use staging
@@ -72,10 +74,10 @@ Full list: [ENV_MANIFEST.md](./ENV_MANIFEST.md). Audit:
 ## CI/CD
 
 - `.github/workflows/ci.yml` — lint, typecheck, API tests, RLS check.
-- `.github/workflows/deploy-staging.yml` — `workflow_dispatch` and (on push to `main`, filtered paths) optional `railway up` when `RAILWAY_TOKEN` and `RAILWAY_SERVICE_ID_STAGING` are set. If both secrets are set, a non-zero `railway up` **fails the job** (fix CLI project link or prefer Railway’s GitHub integration). If either secret is missing, the CLI step is skipped.
-- `.github/workflows/deploy-production.yml` — manual `workflow_dispatch` with confirmation input; uses `RAILWAY_SERVICE_ID_PRODUCTION` and GitHub Environment `production` (add required reviewers there).
+- `.github/workflows/deploy-staging.yml` — runs after **CI succeeds** on `main` (`workflow_run`) or on manual `workflow_dispatch`; optional `railway up` when `RAILWAY_TOKEN` and `RAILWAY_SERVICE_ID_STAGING` are set. If secrets are missing, the CLI step is skipped (use Railway’s native GitHub deploy instead).
+- `.github/workflows/deploy-production.yml` — manual `workflow_dispatch` with `confirm: deploy`; GitHub Environment **`production`** should require reviewers. Post-deploy smoke hits web + optional `PRODUCTION_API_URL` health endpoints.
 
-Secrets: `RAILWAY_TOKEN`, `RAILWAY_SERVICE_ID_STAGING`, `RAILWAY_SERVICE_ID_PRODUCTION`, optional `STAGING_BASE_URL` / `PRODUCTION_BASE_URL` for post-deploy `curl` smoke.
+Secrets: `RAILWAY_TOKEN`, `RAILWAY_SERVICE_ID_STAGING`, `RAILWAY_SERVICE_ID_PRODUCTION`, `STAGING_BASE_URL`, optional `STAGING_API_URL`, `PRODUCTION_BASE_URL`, optional `PRODUCTION_API_URL`.
 
 ## DNS
 

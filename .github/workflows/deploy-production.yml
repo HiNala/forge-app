@@ -1,5 +1,4 @@
-# GL-04 — production deploy: manual gate + optional Railway CLI trigger.
-# Prefer GitHub Environment protection rules (required reviewers) on `production`.
+# Mission 08 — production: manual gate + GitHub Environment reviewers + smoke checks.
 name: Deploy production
 
 on:
@@ -42,12 +41,18 @@ jobs:
           fi
           railway up --service "${{ secrets.RAILWAY_SERVICE_ID_PRODUCTION }}"
 
-      - name: Post-deploy smoke (optional)
+      - name: Post-deploy smoke (web + API)
         env:
           PRODUCTION_BASE_URL: ${{ secrets.PRODUCTION_BASE_URL }}
+          PRODUCTION_API_URL: ${{ secrets.PRODUCTION_API_URL }}
         run: |
           if [ -z "$PRODUCTION_BASE_URL" ]; then
             echo "PRODUCTION_BASE_URL not set — skip."
             exit 0
           fi
-          curl -fsS -o /dev/null --max-time 30 "$PRODUCTION_BASE_URL/" || exit 1
+          curl -fsS -o /dev/null --max-time 30 "$PRODUCTION_BASE_URL/"
+          curl -fsS -o /dev/null --max-time 30 "$PRODUCTION_BASE_URL/robots.txt" || true
+          if [ -n "$PRODUCTION_API_URL" ]; then
+            curl -fsS -o /dev/null --max-time 30 "$PRODUCTION_API_URL/health/live"
+            curl -fsS --max-time 30 "$PRODUCTION_API_URL/health/deep" | head -c 2000
+          fi

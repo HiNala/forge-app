@@ -26,11 +26,20 @@ async def caddy_validate_domain(
     """
     Return **200** if ``domain`` is a verified custom hostname; **404** otherwise.
 
-    Caddy should call this over private networking. If ``CADDY_INTERNAL_TOKEN`` is set,
-    require header ``X-Forge-Caddy-Token`` to match.
+    In **production**, ``CADDY_INTERNAL_TOKEN`` must be set and every request must send
+    ``X-Forge-Caddy-Token``. In non-production, the token is optional (private dev networks).
     """
     tok = (settings.CADDY_INTERNAL_TOKEN or "").strip()
-    if tok:
+    if settings.ENVIRONMENT == "production":
+        if not tok:
+            raise HTTPException(
+                status_code=503,
+                detail="CADDY_INTERNAL_TOKEN must be set in production for on-demand TLS validation",
+            )
+        provided = request.headers.get("x-forge-caddy-token") or ""
+        if not constant_time_str_equal(provided, tok):
+            raise HTTPException(status_code=401, detail="Unauthorized")
+    elif tok:
         provided = request.headers.get("x-forge-caddy-token") or ""
         if not constant_time_str_equal(provided, tok):
             raise HTTPException(status_code=401, detail="Unauthorized")

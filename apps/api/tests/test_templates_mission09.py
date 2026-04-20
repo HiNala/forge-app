@@ -8,7 +8,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 
-from app.db.models import Page, PageRevision, Template
+from app.db.models import AnalyticsEvent, Page, PageRevision, Template
 from app.db.session import AsyncSessionLocal
 from tests.support.headers import forge_test_headers
 from tests.support.postgres import require_postgres
@@ -107,6 +107,18 @@ async def test_use_template_creates_page_and_revision() -> None:
             await s2.execute(select(PageRevision).where(PageRevision.page_id == pid))
         ).scalars().all()
         assert any(r.edit_type == "template_applied" for r in revs)
+        evs = (
+            await s2.execute(
+                select(AnalyticsEvent).where(
+                    AnalyticsEvent.page_id == pid,
+                    AnalyticsEvent.event_type == "template_use_click",
+                )
+            )
+        ).scalars().all()
+        assert len(evs) >= 1
+        md = evs[0].metadata_ or {}
+        assert md.get("template_id") == str(tid)
+        assert md.get("user_id") == str(uid)
 
 
 @pytest.mark.asyncio

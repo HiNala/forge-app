@@ -16,4 +16,5 @@ def test_middleware_stack_order() -> None:
         "RateLimitMiddleware",
         "TenantMiddleware",
         "CORSMiddleware",
+        "SecurityHeadersMiddleware",
     ]

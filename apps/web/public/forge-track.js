@@ -13,7 +13,7 @@
 
   var Q = [];
   var T = null;
-  var FLUSH_MS = 2000;
+  var FLUSH_MS = 3000;
   var MAX_BATCH = 10;
 
   function cid(k) {
@@ -121,27 +121,20 @@
     function (es) {
       es.forEach(function (e) {
         var el = e.target;
-        var se = el._fs || (el._fs = { v: false, t: 0, dwellTimer: null });
+        var se = el._fs || (el._fs = { v: false, t: 0 });
         if (e.isIntersecting) {
           se.v = true;
           if (!se.t) se.t = Date.now();
-          if (se.dwellTimer) clearTimeout(se.dwellTimer);
-          se.dwellTimer = setTimeout(function () {
-            if (se.v)
-              push("section_dwell", {
-                section_id: el.getAttribute("data-forge-section") || "",
-                dwell_ms: 3000,
-              });
-          }, 3000);
         } else if (se.v) {
           var d = se.t ? Date.now() - se.t : 0;
-          push("section_exit", {
-            section_id: el.getAttribute("data-forge-section") || "",
-            dwell_ms: d,
-          });
+          var sid = el.getAttribute("data-forge-section") || "";
+          if (sid)
+            push("section_dwell", {
+              section_id: sid,
+              dwell_ms: d,
+            });
           se.v = false;
           se.t = 0;
-          if (se.dwellTimer) clearTimeout(se.dwellTimer);
         }
       });
     },

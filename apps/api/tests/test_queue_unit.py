@@ -24,7 +24,11 @@ async def test_enqueue_run_automations_delegates_to_pool() -> None:
     state = MagicMock()
     state.arq_pool = pool
     await enqueue_run_automations(state, "abc-123")
-    pool.enqueue_job.assert_called_once_with("run_automations", "abc-123")
+    pool.enqueue_job.assert_called_once()
+    call = pool.enqueue_job.call_args
+    assert call[0][0] == "run_automations"
+    assert call[0][1] == "abc-123"
+    assert call[1].get("_job_id") == "forge:auto:sub:abc-123"
 
 
 @pytest.mark.asyncio

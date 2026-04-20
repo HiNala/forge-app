@@ -57,7 +57,7 @@ See respective files; **Tooltip** default delay 400ms via `TooltipProvider`.
 
 ## Empty state
 
-**File:** `components/chrome/empty-state.tsx` — icon, title, description, actions.
+**File:** `empty-state.tsx` — icon slot, title, description, optional `children` CTA area, `primaryAction` / `secondaryAction`.
 
 ## Icons
 

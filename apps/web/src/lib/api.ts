@@ -4,12 +4,11 @@
  */
 import { toast } from "sonner";
 
+import { getApiUrl } from "./get-api-url";
+
 export const FORGE_ACTIVE_ORG_HEADER = "x-forge-active-org-id";
 
-export function getApiUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-  return raw.replace(/\/?$/, "") + "/api/v1";
-}
+export { getApiUrl };
 
 export type MembershipOut = {
   organization_id: string;
@@ -890,6 +889,29 @@ export async function getAdminOrganization(
   });
 }
 
+export type AdminOrganizationListItem = {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  account_status: string;
+  stripe_customer_id: string | null;
+  member_count: number;
+  created_at: string | null;
+};
+
+export async function listAdminOrganizations(
+  getToken: () => Promise<string | null>,
+  q?: string,
+): Promise<{ items: AdminOrganizationListItem[]; next_cursor: string | null }> {
+  const qs = q ? `?limit=50&q=${encodeURIComponent(q)}` : "?limit=50";
+  return apiRequest(`/admin/organizations${qs}`, {
+    method: "GET",
+    getToken,
+    activeOrgId: null,
+  });
+}
+
 export type AdminTemplateRow = {
   id: string;
   slug: string;
@@ -1116,6 +1138,39 @@ export async function postAutomationRunRetry(
   });
 }
 
+export async function getAutomationFailureSummary(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<{ failed_last_24h: number }> {
+  return apiRequest<{ failed_last_24h: number }>("/automations/failure-summary", {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export type AutomationFailureRow = {
+  id: string;
+  page_id: string;
+  submission_id: string | null;
+  step: string;
+  error_message: string | null;
+  ran_at: string;
+};
+
+export async function listAutomationFailures(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  days?: number,
+): Promise<AutomationFailureRow[]> {
+  const q = typeof days === "number" ? `?days=${days}` : "";
+  return apiRequest<AutomationFailureRow[]>(`/automations/failures${q}`, {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
 export type CalendarConnectionOut = {
   id: string;
   provider: string;
@@ -1271,8 +1326,8 @@ export async function duplicatePage(
   getToken: () => Promise<string | null>,
   activeOrgId: string | null,
   pageId: string,
-): Promise<{ ok: boolean; id?: string }> {
-  return apiRequest(`/pages/${pageId}/duplicate`, {
+): Promise<PageOut> {
+  return apiRequest<PageOut>(`/pages/${pageId}/duplicate`, {
     method: "POST",
     getToken,
     activeOrgId,
@@ -1338,119 +1393,5 @@ export async function deleteCalendarConnection(
     method: "DELETE",
     getToken,
     activeOrgId,
-  });
-}
-
-/** GL-02 — platform admin (no active org header). */
-export type PlatformSession = {
-  user_id: string;
-  permissions: string[];
-  platform_roles: string[];
-  legacy_is_admin: boolean;
-};
-
-export async function getPlatformSession(
-  getToken: () => Promise<string | null>,
-): Promise<PlatformSession> {
-  return apiRequest<PlatformSession>("/admin/platform/session", {
-    method: "GET",
-    getToken,
-    activeOrgId: null,
-  });
-}
-
-export async function postPlatformVisit(
-  getToken: () => Promise<string | null>,
-): Promise<{ status: string }> {
-  return apiRequest<{ status: string }>("/admin/platform/visit", {
-    method: "POST",
-    getToken,
-    activeOrgId: null,
-    body: JSON.stringify({}),
-  });
-}
-
-export type AdminOverviewSummary = {
-  totals: {
-    users: number;
-    organizations: number;
-    active_users_7d: number;
-    llm_cost_cents_today: number;
-  };
-  generated_at: string;
-};
-
-export async function getAdminOverviewSummary(
-  getToken: () => Promise<string | null>,
-): Promise<AdminOverviewSummary> {
-  return apiRequest<AdminOverviewSummary>("/admin/overview/summary", {
-    method: "GET",
-    getToken,
-    activeOrgId: null,
-  });
-}
-
-export type AdminLlmSummary = {
-  window_days: number;
-  total_cost_cents: number;
-  run_count: number;
-  runs_by_status: Record<string, number>;
-};
-
-export async function getAdminLlmSummary(
-  getToken: () => Promise<string | null>,
-  days = 30,
-): Promise<AdminLlmSummary> {
-  return apiRequest<AdminLlmSummary>(`/admin/llm/summary?days=${days}`, {
-    method: "GET",
-    getToken,
-    activeOrgId: null,
-  });
-}
-
-export type AdminOrganizationListItem = {
-  id: string;
-  name: string;
-  slug: string;
-  plan: string;
-  account_status: string;
-  stripe_customer_id: string | null;
-  member_count: number;
-  created_at: string | null;
-};
-
-export async function listAdminOrganizations(
-  getToken: () => Promise<string | null>,
-  q?: string,
-): Promise<{ items: AdminOrganizationListItem[]; next_cursor: string | null }> {
-  const qs = q ? `?limit=50&q=${encodeURIComponent(q)}` : "?limit=50";
-  return apiRequest(`/admin/organizations${qs}`, {
-    method: "GET",
-    getToken,
-    activeOrgId: null,
-  });
-}
-
-export type AdminOrganizationDetail = {
-  id: string;
-  name: string;
-  slug: string;
-  plan: string;
-  account_status: string;
-  stripe_customer_id: string | null;
-  stripe_subscription_id?: string | null;
-  member_count: number;
-  created_at: string | null;
-  org_settings: Record<string, unknown>;
-};
-
-export async function getAdminOrganization(
-  getToken: () => Promise<string | null>,
-  orgId: string,
-): Promise<AdminOrganizationDetail> {
-  return apiRequest<AdminOrganizationDetail>(`/admin/organizations/${encodeURIComponent(orgId)}`, {
-    method: "GET",
-    getToken,
-    activeOrgId: null,
   });
 }

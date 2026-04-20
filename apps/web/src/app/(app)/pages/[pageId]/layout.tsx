@@ -213,8 +213,8 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
                     onClick={async () => {
                       try {
                         const r = await duplicatePage(getToken, activeOrganizationId, pageId);
-                        if ((r as { id?: string }).id) {
-                          router.push(`/studio?pageId=${(r as { id: string }).id}`);
+                        if (r.id) {
+                          router.push(`/studio?pageId=${r.id}`);
                         } else {
                           toast.message("Duplicate is not available yet.");
                         }

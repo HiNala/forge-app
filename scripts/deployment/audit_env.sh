@@ -77,7 +77,18 @@ done
 
 if [[ $missing -eq 0 ]]; then
   echo "OK: every .env.example key appears in Railway ($ENV_NAME)."
-  exit 0
+else
+  echo "Audit failed: add missing variables in Railway (environment: $ENV_NAME)." >&2
+  exit 1
 fi
-echo "Audit failed: add missing variables in Railway (environment: $ENV_NAME)." >&2
-exit 1
+
+if [[ "$ENV_NAME" == "production" ]]; then
+  echo ""
+  echo "Production manual gates (not auto-verified by this script):"
+  echo "  - ENVIRONMENT=production"
+  echo "  - TRUSTED_HOSTS = comma-separated API hostnames (never *)"
+  echo "  - AUTH_TEST_BYPASS=false, FORGE_E2E_TOKEN empty"
+  echo "  - SECRET_KEY unique and not the dev placeholder in .env.example"
+  echo "  - Optional: METRICS_TOKEN if /metrics is reachable from untrusted networks"
+fi
+exit 0

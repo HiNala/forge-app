@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { streamPublicDemo } from "@/lib/public-demo";
 
 const PLACEHOLDERS = [
-  "a booking page for my construction business",
+  "a booking page for my small construction business",
   "a contact form with file uploads for photographers",
-  "a one-page sales proposal with accept and decline",
+  "a one-page sales proposal with accept/decline",
   "an RSVP page for a company holiday party",
   "a daily specials menu for our café",
 ] as const;
@@ -27,14 +27,9 @@ const CHIPS = [
     label: "Sales proposal",
     prompt: "A one-page proposal with pricing tiers and a clear call to action.",
   },
-  {
-    label: "Daily menu",
-    prompt: "A café daily specials board with items, prices, and a table reservation link.",
-  },
 ] as const;
 
-const AUTO_PROMPT =
-  "A small jobs booking page for a contractor with name, phone, job description, and preferred date.";
+const AUTO_PROMPT = "a small jobs booking page for a contractor";
 
 async function loadDemoFallback(): Promise<string> {
   try {
@@ -152,7 +147,8 @@ export function HeroDemo() {
   const iframeDoc = fallbackMode ? carouselHtml || previewHtml : previewHtml;
 
   return (
-    <div className="animate-fade-up-d2 mx-auto mt-10 w-full max-w-2xl px-4 sm:px-6 lg:mt-12">
+    <div className="animate-fade-up-d2 mx-auto mt-10 flex w-full max-w-6xl flex-col gap-10 px-4 sm:px-6 lg:mt-12 lg:flex-row lg:items-start lg:gap-12">
+      <div className="mx-auto w-full max-w-2xl shrink-0 lg:mx-0 lg:w-[min(100%,42rem)]">
       {/* Prompt input */}
       <div className="input-focus-ring relative overflow-hidden rounded-2xl border border-border bg-surface shadow-md">
         <label className="sr-only" htmlFor="hero-prompt">
@@ -228,9 +224,10 @@ export function HeroDemo() {
           </button>
         ))}
       </div>
+      </div>
 
-      {/* Browser preview */}
-      <div className="animate-fade-up-d3 mx-auto mt-10 max-w-4xl lg:mt-12">
+      {/* Browser preview — stacks under input on narrow viewports */}
+      <div className="animate-fade-up-d3 mx-auto w-full min-w-0 max-w-4xl flex-1 lg:mx-0 lg:mt-0">
         <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-lg">
           {/* Browser chrome */}
           <div className="flex items-center gap-2 border-b border-border bg-bg-elevated px-4 py-3">
@@ -279,10 +276,16 @@ export function HeroDemo() {
           </p>
         )}
 
+        {phase === "done" && iframeDoc ? (
+          <p className="mt-6 text-center font-display text-lg font-semibold text-text">
+            Like what you see?
+          </p>
+        ) : null}
+
         {/* Post-demo CTAs */}
-        <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+        <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Button asChild size="lg" className="min-h-11 min-w-[10rem]">
-            <Link href="/signup?source=hero_demo">Start building free</Link>
+            <Link href="/signup?source=hero_demo">Start free</Link>
           </Button>
           <Link
             href="/examples"

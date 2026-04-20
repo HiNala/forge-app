@@ -23,8 +23,12 @@ def validate_payload_against_form_schema(
         if key not in payload:
             return False, f"Missing field: {key}"
         val = payload[key]
-        if val is None or (isinstance(val, str) and not val.strip()):
+        if val is None:
             return False, f"Invalid field: {key}"
+        if isinstance(val, str) and not val.strip():
+            return False, f"Invalid field: {key}"
+        if isinstance(val, dict) and val.get("storage_key"):
+            continue
     return True, ""
 
 

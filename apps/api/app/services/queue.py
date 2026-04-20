@@ -26,7 +26,11 @@ async def enqueue_run_automations(app_state: Any, submission_id: str) -> None:
     if pool is None:
         return
     try:
-        await pool.enqueue_job("run_automations", submission_id)
+        await pool.enqueue_job(
+            "run_automations",
+            submission_id,
+            _job_id=f"forge:auto:sub:{submission_id}",
+        )
     except Exception as e:
         logger.warning("enqueue_run_automations failed: %s", e)
 

@@ -39,6 +39,22 @@ from app.utils.slug import slugify_page_title, unique_page_slug
 logger = logging.getLogger(__name__)
 
 
+def _studio_pipeline_breadcrumb(message: str, **data: Any) -> None:
+    """Sentry breadcrumbs for Studio stages (Mission 03 observability) — no-op if Sentry inactive."""
+    try:
+        import sentry_sdk
+
+        safe = {k: (str(v)[:400] if v is not None else "") for k, v in data.items()}
+        sentry_sdk.add_breadcrumb(
+            category="studio.pipeline",
+            message=message,
+            level="info",
+            data=safe,
+        )
+    except Exception:
+        pass
+
+
 def _refine_suggestions_for_page_type(page_type: str) -> list[str]:
     """Context-aware quick refinements for Studio chips (FE-04)."""
     core = [
@@ -105,6 +121,12 @@ async def stream_page_generation(
         yield _sse("error", {"code": "not_found", "message": "Organization not found"})
         return
 
+    _studio_pipeline_breadcrumb(
+        "context_ready",
+        organization_id=str(ctx.organization_id),
+        user_id=str(user.id),
+    )
+
     run_id = uuid4()
     pipeline_started = time.perf_counter()
     node_timings: dict[str, int] = {}
@@ -165,6 +187,13 @@ async def stream_page_generation(
         logger.exception("intent_fatal %s", e)
         intent = PageIntent(title_suggestion=prompt[:80] or "Page")
     node_timings["intent_parser"] = int((time.perf_counter() - t_intent0) * 1000)
+
+    _studio_pipeline_breadcrumb(
+        "intent_parsed",
+        workflow=intent.workflow,
+        page_type=intent.page_type,
+        confidence=str(intent.confidence),
+    )
 
     yield _sse(
         "intent",
@@ -257,6 +286,7 @@ async def stream_page_generation(
                 "agent": True,
             },
         )
+        _studio_pipeline_breadcrumb("compose_complete", path="agent_composer", html_length=len(html))
     else:
         for i, sec in enumerate(plan.sections):
             sid = f"{sec.component}-{i}"
@@ -280,6 +310,7 @@ async def stream_page_generation(
             "compose.complete",
             {"html_length": len(html), "duration_ms": node_timings.get("composer", 0)},
         )
+        _studio_pipeline_breadcrumb("compose_complete", path="template_assembler", html_length=len(html))
 
     requires_form = intent.page_type in ("contact-form", "booking-form", "rsvp")
     ok, reason = validate_generated_html(html)
@@ -397,6 +428,7 @@ async def stream_page_generation(
             logger.warning("post_refine_validate %s", reason_r)
             break
     yield _sse("validate.complete", {"valid": True})
+    _studio_pipeline_breadcrumb("html_validated", requires_form=requires_form)
 
     review_report_blob: dict[str, Any] | None = None
     quality_score_out = 88
@@ -444,6 +476,7 @@ async def stream_page_generation(
             form_schema["forge_booking"] = fb_m
 
     if existing is not None:
+        _studio_pipeline_breadcrumb("persist", mode="update", page_id=str(existing.id), slug=slug)
         page = existing
         page.title = title
         page.page_type = intent.page_type
@@ -538,6 +571,7 @@ async def stream_page_generation(
         db.add(page)
         await db.flush()
         pid = page.id
+        _studio_pipeline_breadcrumb("persist", mode="create", page_id=str(pid), slug=slug)
         html = await finalize_proposal_studio_html(
             db,
             page=page,

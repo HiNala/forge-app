@@ -1,30 +1,31 @@
 # Google Calendar OAuth
 
-## Google Cloud Console
+## Console setup
 
-1. Create an OAuth **Web application** client (not desktop).
-2. Authorized redirect URIs must include:
-   - Production: `https://api.forge.app/api/v1/calendar/callback/google` (replace host with your API public URL)
-   - Local: `http://localhost:8000/api/v1/calendar/callback/google`
-3. Enable the **Google Calendar API** for the project.
+1. In Google Cloud Console, create OAuth **Web application** credentials.
+2. Authorized redirect URI (production):  
+   `https://<your-api-host>/api/v1/calendar/callback/google`
+3. Local development:  
+   `http://localhost:8000/api/v1/calendar/callback/google`
+4. Enable the **Google Calendar API** for the project.
 
-## Forge configuration
-
-Set on the API:
+## Environment
 
 - `GOOGLE_OAUTH_CLIENT_ID`
 - `GOOGLE_OAUTH_CLIENT_SECRET`
-- `API_BASE_URL` — public origin of the API (used for OAuth redirect and must match the redirect URI host)
-- `APP_PUBLIC_URL` — where the browser returns after OAuth (Next app)
+- `API_BASE_URL` — must match the redirect URI host the user hits during OAuth.
+- `APP_PUBLIC_URL` — used for the post-OAuth redirect to the web app popup close page.
 
-## User flow
+## Scopes
 
-1. User opens **Page → Automations** (or Settings) and clicks **Connect Google Calendar**.
-2. API stores short-lived OAuth state in Redis and returns Google’s authorize URL.
-3. After consent, Google redirects to `/api/v1/calendar/callback/google`; tokens are encrypted with `SECRET_KEY` and stored in `calendar_connections`.
-4. The user selects a connection on the automation rule when **Calendar sync** is enabled.
+- `https://www.googleapis.com/auth/calendar.events` — create/update events (see `app/services/calendar.py`).
 
-## Troubleshooting
+## Token storage
 
-- **`invalid_grant` / refresh failures**: connection is marked with `last_error`; user should reconnect.
-- **Redirect mismatch**: `API_BASE_URL` and Google Console redirect URI must match exactly (scheme, host, path).
+- Access and refresh tokens are **encrypted at rest** (`SECRET_KEY` + AES-GCM).
+- **Revocation:** Deleting a connection in Forge calls Google’s revoke endpoint, then removes the row.
+
+## Debugging
+
+- **`invalid_grant` after refresh:** User revoked access in Google; reconnect from **Automations** or **Settings → Calendars**.
+- **429 from Google:** Calendar create uses retries via the automation worker (`TransientAutomationError` → arq `Retry` with backoff).

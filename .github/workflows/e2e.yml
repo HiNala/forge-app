@@ -50,7 +50,9 @@ jobs:
         run: |
           pnpm exec playwright test \
             --project=chromium \
-            e2e/ci-stack-smoke.spec.ts
+            e2e/ci-stack-smoke.spec.ts \
+            e2e/marketing-hero.spec.ts \
+            e2e/marketing-a11y.spec.ts
 
       - name: Upload Playwright report
         if: failure()

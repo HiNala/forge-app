@@ -2,7 +2,8 @@
 
 **Status:** Complete (Mission 02 acceptance + security tests 34–36)  
 **Branch:** `mission-02-foundation`  
-**Date:** 2026-04-19
+**Date:** 2026-04-19  
+**Re-verified:** 2026-04-20 — codebase audit against mission TODO 1–40; no functional gaps found. README onboarding path corrected (`/onboarding`); `app/middleware/auth.py` documents JWT entry points.
 
 ## Summary
 

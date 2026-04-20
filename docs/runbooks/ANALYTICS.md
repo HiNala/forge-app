@@ -13,8 +13,8 @@
 
 ## Debugging missing events
 
-1. **Public track**: `POST /p/{org_slug}/{page_slug}/track` accepts batches (max 10). Rate limit: 60 events/min/IP on track; POST submit/upload use a separate bucket (see `middleware/rate_limit.py`).
-2. **Published HTML**: the tracker is injected at serve time (`forge_tracker.js`); stored HTML in the database stays script-free.
+1. **Public track**: `POST /p/{org_slug}/{page_slug}/track` accepts batches (max 10). Rate limit: 60 events/min/IP (Redis counter in `app/services/rate_limit.py` — `rate_limit_public_track_event_budget`). Submit/upload use separate middleware buckets.
+2. **Published HTML**: the tracker is injected at serve time (`forge-track.js` via `inject_forge_tracker`); stored HTML in the database stays script-free.
 3. **Visitor/session**: first-party cookie for `visitor_id`; session rotation and event types are documented in Mission 06 / `forge_tracker` source.
 4. **DB**: query `analytics_events` for `organization_id`, `page_id`, `event_type`, and `created_at`. Ensure RLS tenant context matches when using the app DB console.
 

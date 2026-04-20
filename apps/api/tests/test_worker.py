@@ -24,7 +24,9 @@ def test_worker_settings_match_runbook() -> None:
     mod = _load_worker_module()
     ws = mod.WorkerSettings
     assert ws.max_jobs == 20
-    assert ws.job_timeout == 120
+    assert ws.job_timeout == 300
+    assert ws.max_tries == 5
+    assert ws.retry_jobs is True
     assert ws.keep_result == 3600
     assert ws.poll_delay == 0.5
     names = {f.__name__ for f in ws.functions}

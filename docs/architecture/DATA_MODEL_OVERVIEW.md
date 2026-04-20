@@ -28,9 +28,15 @@ Each Page has a **Conversation** — the Studio chat history. **Messages** withi
 
 ### Submissions & Files
 
-When an end customer fills out a form on a live page, a **Submission** is created. The payload (all field values) is stored as JSONB. Uploaded files become **SubmissionFiles** linking to S3/MinIO storage keys. **SubmissionReplies** track emails sent back to the submitter.
+When an end customer fills out a form on a live page, a **Submission** is created. The payload (all field values) is stored as JSONB. File fields store a small JSON object (`storage_key`, `file_name`, `size_bytes`, `content_type`) after the object exists in blob storage; **SubmissionFile** rows mirror that for admin download and auditing. **SubmissionReplies** track emails sent back to the submitter.
+
+**Lifecycle:** `new` → `read` (opened) → `replied` (email sent) or `archived` (bulk or manual). Quotas enforce monthly submission limits per plan.
 
 Submissions are partitioned by month (range partitioning on `created_at`) because they grow unboundedly and we need efficient time-range queries.
+
+### Custom domains
+
+A **CustomDomain** ties a verified DNS hostname to an organization (and optionally a specific page). Verification uses a DNS TXT/CNAME workflow; `verified_at` must be set before the edge proxy will obtain a certificate and route traffic. This keeps TLS issuance aligned with tenants you actually serve.
 
 ### Automations
 
@@ -74,4 +80,5 @@ User ──< CalendarConnection
 AutomationRule ──< AutomationRun
 Page ──< AnalyticsEvent (partitioned)
 Organization ──< SubscriptionUsage
+Organization ──< CustomDomain
 ```

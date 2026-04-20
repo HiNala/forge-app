@@ -12,4 +12,6 @@ export const bodyFont = Manrope({
   weight: ["300", "400", "500", "600"],
   variable: "--font-body",
   display: "swap",
+  /** Prefer preloading display only (Mission FE-02); body uses swap + system fallbacks first paint. */
+  preload: false,
 });

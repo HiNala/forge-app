@@ -69,7 +69,8 @@ services:
       AUTH_TEST_BYPASS: "true"
       FORGE_E2E_TOKEN: "ci-forge-e2e-token"
       BACKEND_CORS_ORIGINS: '["http://localhost:3000"]'
-      CORS_ORIGINS_EXTRA: ""
+      # Playwright defaults to 127.0.0.1:3000 — browsers treat that as a distinct origin from localhost.
+      CORS_ORIGINS_EXTRA: "http://127.0.0.1:3000"
       APP_PUBLIC_URL: http://localhost:3000
       API_BASE_URL: http://localhost:8000
       UPGRADE_URL: http://localhost:3000/settings/billing
