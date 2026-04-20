@@ -50,6 +50,7 @@ _FULL_LEGACY_PLATFORM_PERMISSIONS: frozenset[str] = frozenset(
         "users:edit_platform_roles",
         "users:reset_email",
         "users:force_mfa",
+        "users:force_logout",
         "users:terminate",
         "billing:read_mrr",
         "billing:read_invoices",
@@ -89,31 +90,39 @@ async def _perms_from_db(user_id: UUID) -> tuple[set[str], list[str]]:
             return set(rows) | _FULL_LEGACY_PLATFORM_PERMISSIONS, ["legacy_is_admin"]
 
         rkeys = (
-            await session.execute(
-                select(PlatformUserRole.role_key).where(
-                    PlatformUserRole.user_id == user_id,
-                    or_(PlatformUserRole.expires_at.is_(None), PlatformUserRole.expires_at > func.now()),
+            (
+                await session.execute(
+                    select(PlatformUserRole.role_key).where(
+                        PlatformUserRole.user_id == user_id,
+                        or_(PlatformUserRole.expires_at.is_(None), PlatformUserRole.expires_at > func.now()),
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         role_list = list(rkeys)
         if not role_list:
             return set(), []
 
         prow = (
-            await session.execute(
-                text(
-                    """
+            (
+                await session.execute(
+                    text(
+                        """
                     SELECT DISTINCT prp.permission_key
                     FROM platform_user_roles pur
                     JOIN platform_role_permissions prp ON prp.role_key = pur.role_key
                     WHERE pur.user_id = CAST(:uid AS uuid)
                       AND (pur.expires_at IS NULL OR pur.expires_at > now())
                     """
-                ),
-                {"uid": str(user_id)},
+                    ),
+                    {"uid": str(user_id)},
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return set(prow), role_list
 
 

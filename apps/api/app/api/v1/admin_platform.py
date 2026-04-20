@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.errors import NotFound
 from app.core.platform_auth import (
     load_platform_permissions,
     require_any_platform_access,
@@ -31,8 +32,8 @@ async def platform_session(
     """Permissions and roles for building the admin shell (nav visibility)."""
     perms = await load_platform_permissions(request, user.id)
     roles = (
-        await db.execute(select(PlatformUserRole.role_key).where(PlatformUserRole.user_id == user.id))
-    ).scalars().all()
+        (await db.execute(select(PlatformUserRole.role_key).where(PlatformUserRole.user_id == user.id))).scalars().all()
+    )
     role_keys = list(roles)
     if user.is_admin and not role_keys:
         role_keys = ["legacy_is_admin"]
@@ -49,6 +50,7 @@ async def platform_record_visit(
     user: User = Depends(require_any_platform_access),
     db: AsyncSession = Depends(get_admin_db),
 ) -> dict[str, str]:
+    """Update last platform admin visit time (Pulse "since last visit")."""
     row = await db.get(User, user.id)
     if row:
         row.platform_last_visit_at = datetime.now(UTC)
@@ -65,9 +67,7 @@ async def admin_overview_summary(
     del request
     now = datetime.now(UTC)
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    user_total = (
-        await db.execute(select(func.count(User.id)).where(User.deleted_at.is_(None)))
-    ).scalar_one()
+    user_total = (await db.execute(select(func.count(User.id)).where(User.deleted_at.is_(None)))).scalar_one()
     org_total = (
         await db.execute(select(func.count(Organization.id)).where(Organization.deleted_at.is_(None)))
     ).scalar_one()
@@ -127,9 +127,7 @@ async def admin_list_organizations(
     out: list[dict[str, Any]] = []
     for org in rows:
         mc = (
-            await db.execute(
-                select(func.count(Membership.id)).where(Membership.organization_id == org.id)
-            )
+            await db.execute(select(func.count(Membership.id)).where(Membership.organization_id == org.id))
         ).scalar_one()
         out.append(
             {
@@ -152,14 +150,10 @@ async def admin_get_organization(
     _u: User = Depends(require_platform_permission("orgs:read_detail")),
     db: AsyncSession = Depends(get_admin_db),
 ) -> dict[str, Any]:
-    from app.core.errors import NotFound
-
     org = await db.get(Organization, org_id)
     if org is None or org.deleted_at is not None:
         raise NotFound("Organization not found")
-    mc = (
-        await db.execute(select(func.count(Membership.id)).where(Membership.organization_id == org.id))
-    ).scalar_one()
+    mc = (await db.execute(select(func.count(Membership.id)).where(Membership.organization_id == org.id))).scalar_one()
     return {
         "id": str(org.id),
         "name": org.name,
@@ -191,9 +185,7 @@ async def admin_llm_summary(
         )
     ).scalar_one()
     total_runs = (
-        await db.execute(
-            select(func.count(OrchestrationRun.id)).where(OrchestrationRun.created_at >= since)
-        )
+        await db.execute(select(func.count(OrchestrationRun.id)).where(OrchestrationRun.created_at >= since))
     ).scalar_one()
     by_status = (
         await db.execute(
@@ -216,8 +208,6 @@ async def admin_orchestration_run_detail(
     _u: User = Depends(require_platform_permission("llm:read_run_traces")),
     db: AsyncSession = Depends(get_admin_db),
 ) -> dict[str, Any]:
-    from app.core.errors import NotFound
-
     row = await db.get(OrchestrationRun, run_id)
     if row is None:
         raise NotFound("Run not found")
