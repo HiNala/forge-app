@@ -335,7 +335,7 @@ function BrandSettingsInner() {
                 <img src={draft.logo_url} alt="" className="mb-4 h-10 w-auto object-contain" />
               ) : null}
               <p
-                className="font-semibold text-2xl leading-tight"
+                className="font-bold text-2xl leading-tight"
                 style={{ fontFamily: `"${draft.display_font || "Fraunces"}", serif` }}
               >
                 Your next launch

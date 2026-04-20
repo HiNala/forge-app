@@ -31,11 +31,11 @@ export default function OrchestrationQualityPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Orchestration quality</h1>
-      <p className="text-muted-foreground text-sm">
+      <h1 className="font-display text-2xl font-bold tracking-tight text-text">Orchestration quality</h1>
+      <p className="text-sm text-text-muted">
         Aggregates from persisted review runs (Mission O-04). Requires Forge operator access.
       </p>
-      {err && <p className="text-destructive text-sm">{err}</p>}
+      {err && <p className="text-sm text-danger">{err}</p>}
       {data && (
         <Card>
           <CardHeader>
@@ -43,18 +43,18 @@ export default function OrchestrationQualityPage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>
-              <span className="text-muted-foreground">Samples:</span> {data.samples_with_review}
+              <span className="text-text-muted">Samples:</span> {data.samples_with_review}
             </p>
             <p>
-              <span className="text-muted-foreground">Avg quality score:</span>{" "}
+              <span className="text-text-muted">Avg quality score:</span>{" "}
               {data.avg_quality_score != null ? data.avg_quality_score.toFixed(1) : "—"}
             </p>
             <p>
-              <span className="text-muted-foreground">Total orchestration runs:</span>{" "}
+              <span className="text-text-muted">Total orchestration runs:</span>{" "}
               {data.orchestration_runs_total}
             </p>
             <div className="pt-2">
-              <p className="text-muted-foreground mb-1">By workflow</p>
+              <p className="text-text-muted mb-1">By workflow</p>
               <ul className="list-inside list-disc space-y-1">
                 {Object.entries(data.avg_by_workflow).map(([k, v]) => (
                   <li key={k}>

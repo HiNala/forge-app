@@ -265,7 +265,7 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
                 aria-selected={t.active}
                 className={cn(
                   "relative mb-[-1px] inline-flex px-3 py-2.5 font-body text-sm transition-colors",
-                  t.active ? "font-semibold text-text" : "font-medium text-text-muted hover:text-text",
+                  t.active ? "font-bold text-text" : "font-medium text-text-muted hover:text-text",
                 )}
               >
                 {t.active ? (

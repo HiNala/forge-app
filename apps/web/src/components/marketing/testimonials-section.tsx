@@ -42,7 +42,7 @@ export function TestimonialsSection() {
                 {quote}
               </blockquote>
               <footer className="mt-5 border-t border-border pt-4">
-                <p className="font-body text-[13px] font-semibold text-text">{name}</p>
+                <p className="font-body text-[13px] font-bold text-text">{name}</p>
                 <p className="font-body text-[12px] text-text-muted">{role}</p>
               </footer>
             </motion.li>

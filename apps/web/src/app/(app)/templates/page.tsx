@@ -121,7 +121,7 @@ export default function TemplatesGalleryPage() {
       <div className="mt-10 grid gap-4 sm:grid-cols-3">
         <Link
           href="/templates?q=contact"
-          className="rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:border-teal-500/40"
+          className="rounded-2xl border border-border bg-surface p-5 shadow-sm transition hover:border-teal-500/40"
         >
           <p className="font-display text-lg font-bold text-text">Contact forms &amp; bookings</p>
           <p className="mt-1 text-sm text-text-muted font-body">Lead capture and scheduling templates.</p>
@@ -129,7 +129,7 @@ export default function TemplatesGalleryPage() {
         </Link>
         <Link
           href="/templates?q=proposal"
-          className="rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:border-amber-500/40"
+          className="rounded-2xl border border-border bg-surface p-5 shadow-sm transition hover:border-amber-500/40"
         >
           <p className="font-display text-lg font-bold text-text">Proposals &amp; quotes</p>
           <p className="mt-1 text-sm text-text-muted font-body">Client-ready bids and estimates.</p>
@@ -137,7 +137,7 @@ export default function TemplatesGalleryPage() {
         </Link>
         <Link
           href="/templates?q=deck"
-          className="rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:border-indigo-500/40"
+          className="rounded-2xl border border-border bg-surface p-5 shadow-sm transition hover:border-indigo-500/40"
         >
           <p className="font-display text-lg font-bold text-text">Pitch decks</p>
           <p className="mt-1 text-sm text-text-muted font-body">Investor and launch narratives.</p>

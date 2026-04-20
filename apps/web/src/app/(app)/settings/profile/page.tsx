@@ -179,10 +179,10 @@ export default function SettingsProfilePage() {
               return (
                 <li
                   key={a.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-bg px-4 py-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-bg px-4 py-3"
                 >
                   <div>
-                    <p className="font-body text-sm font-semibold text-text">{providerName}</p>
+                    <p className="font-body text-sm font-bold text-text">{providerName}</p>
                     <p className="font-body text-xs text-text-muted">{a.emailAddress}</p>
                   </div>
                   <Button

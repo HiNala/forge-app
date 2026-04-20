@@ -105,7 +105,7 @@ export default function PageOverviewTab() {
               {recentItems.map((s) => (
                 <li key={s.id} className="flex items-center justify-between gap-4 px-4 py-3">
                   <div className="min-w-0">
-                    <p className="truncate font-body text-sm font-semibold text-text">
+                    <p className="truncate font-body text-sm font-bold text-text">
                       {s.submitter_name ?? "Anonymous"}
                     </p>
                     <p className="truncate font-body text-xs text-text-muted">{s.submitter_email ?? "—"}</p>
@@ -133,7 +133,7 @@ export default function PageOverviewTab() {
           </div>
           <div className="border-t border-border pt-4">
             <dt className="text-xs text-text-subtle">Last submission</dt>
-            <dd className="mt-0.5 text-sm font-semibold text-text">
+            <dd className="mt-0.5 text-sm font-bold text-text">
               {recentItems[0]
                 ? formatDistanceToNow(new Date(recentItems[0].created_at), { addSuffix: true })
                 : "—"}

@@ -111,7 +111,7 @@ export default function BillingSettingsPage() {
           className="rounded-2xl border border-danger/40 bg-danger/10 px-5 py-4 text-sm text-danger"
           role="alert"
         >
-          <p className="font-body font-semibold">Payment failed — update your payment method to keep your pages live.</p>
+          <p className="font-body font-bold">Payment failed — update your payment method to keep your pages live.</p>
           <Button type="button" size="sm" variant="secondary" className="mt-3" onClick={() => void openPortal()}>
             Open billing portal
           </Button>

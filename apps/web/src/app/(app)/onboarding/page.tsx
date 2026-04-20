@@ -180,7 +180,7 @@ export default function OnboardingPage() {
       </p>
 
       <div className="mt-10 space-y-3">
-        <p className="font-body text-sm font-semibold text-text">What will you build first?</p>
+        <p className="font-body text-sm font-bold text-text">What will you build first?</p>
         <div className="grid gap-2 sm:grid-cols-2">
           {WORKFLOW_CARDS.map((c) => (
             <button
