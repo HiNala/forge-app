@@ -26,6 +26,12 @@ from app.db.models.outbound_webhook import OutboundWebhook
 from app.db.models.page import Page
 from app.db.models.page_revision import PageRevision
 from app.db.models.page_version import PageVersion
+from app.db.models.platform_rbac import (
+    PlatformPermission,
+    PlatformRole,
+    PlatformRolePermission,
+    PlatformUserRole,
+)
 from app.db.models.proposal import (
     OrgTestimonial,
     Proposal,
@@ -65,6 +71,10 @@ __all__ = [
     "Notification",
     "OrchestrationRun",
     "Organization",
+    "PlatformPermission",
+    "PlatformRole",
+    "PlatformRolePermission",
+    "PlatformUserRole",
     "OrgTestimonial",
     "OrgFeatureFlag",
     "OutboundWebhook",

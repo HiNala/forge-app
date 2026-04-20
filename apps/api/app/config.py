@@ -1,3 +1,6 @@
+import json
+from typing import Any
+
 from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -6,8 +9,9 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Forge API"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
-    BACKEND_CORS_ORIGINS: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:3001"],
+    # Env: comma-separated, JSON array, or a single URL (list[str] in env required JSON).
+    backend_cors_origins_raw: str = Field(
+        default="http://localhost:3000,http://localhost:3001",
         validation_alias=AliasChoices("BACKEND_CORS_ORIGINS", "CORS_ORIGINS"),
     )
     # Comma-separated extra origins (staging/prod frontends). Merged with BACKEND_CORS_ORIGINS (BI-02).
@@ -103,7 +107,41 @@ class Settings(BaseSettings):
     # Caddy on-demand TLS `ask` — optional shared secret (set in prod if endpoint is exposed)
     CADDY_INTERNAL_TOKEN: str = ""
 
-    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",
+        env_ignore_empty=True,
+    )
+
+    @field_validator("backend_cors_origins_raw", mode="before")
+    @classmethod
+    def _normalize_backend_cors_origins(cls, v: Any) -> str:
+        if v is None:
+            return "http://localhost:3000,http://localhost:3001"
+        if isinstance(v, list):
+            return ",".join(str(x).strip().rstrip("/") for x in v if str(x).strip())
+        s = str(v).strip()
+        if not s:
+            return "http://localhost:3000,http://localhost:3001"
+        if s.startswith("["):
+            try:
+                data = json.loads(s)
+            except json.JSONDecodeError:
+                return "http://localhost:3000,http://localhost:3001"
+            if isinstance(data, list):
+                return ",".join(str(x).strip().rstrip("/") for x in data if str(x).strip())
+            return s
+        return s
+
+    @property
+    def BACKEND_CORS_ORIGINS(self) -> list[str]:
+        raw = self.backend_cors_origins_raw.strip()
+        if not raw:
+            return ["http://localhost:3000", "http://localhost:3001"]
+        if "," in raw:
+            return [p.strip().rstrip("/") for p in raw.split(",") if p.strip()]
+        return [raw.rstrip("/")]
 
     def effective_cors_origins(self) -> list[str]:
         """Origins for CORSMiddleware: dev defaults plus optional ``CORS_ORIGINS_EXTRA`` (comma-separated)."""
@@ -121,13 +159,6 @@ class Settings(BaseSettings):
                     seen.add(o)
                     merged.append(o)
         return merged
-
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
-    @classmethod
-    def _split_csv_cors(cls, v: object) -> object:
-        if isinstance(v, str) and "," in v:
-            return [p.strip() for p in v.split(",") if p.strip()]
-        return v
 
     def llm_fallback_model_list(self) -> list[str]:
         if not self.LLM_FALLBACK_MODELS.strip():
