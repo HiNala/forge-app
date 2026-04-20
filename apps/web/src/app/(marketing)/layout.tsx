@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   },
 };
 
+/** Client routes that import `@/lib/api` + Clerk cannot be statically prerendered on Next 16 without workStore errors. */
+export const dynamic = "force-dynamic";
+
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-full flex-col bg-bg">

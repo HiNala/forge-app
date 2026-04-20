@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Self-contained root error boundary — no `globals.css` import (avoids Next 16 prerender workStore
- * issues during `next build` when CSS pipeline touches the request store).
+ * Root-level error UI — no globals.css / theme imports: Next 16 can prerender `/_global-error`
+ * during `next build` and importing the full CSS pipeline has caused framework issues in some versions.
  */
 export default function GlobalError({
   error,
@@ -24,19 +24,19 @@ export default function GlobalError({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "3rem 1rem",
+          padding: "2rem",
           fontFamily: "system-ui, sans-serif",
-          background: "#f9f7f3",
-          color: "#1a1714",
+          background: "#faf8f5",
+          color: "#1c1917",
         }}
       >
         <p style={{ fontSize: "1.5rem", fontWeight: 700 }}>We hit a wall</p>
-        <p style={{ marginTop: "0.75rem", maxWidth: "28rem", textAlign: "center", fontSize: "0.875rem", color: "#5c5348" }}>
+        <p style={{ marginTop: "0.75rem", maxWidth: "28rem", textAlign: "center", fontSize: "0.875rem", color: "#57534e" }}>
           Something went wrong while loading the app. Try reloading — if it keeps happening, contact support and share
-          the error reference below.
+          the error reference below (we use it the same way as a Sentry event ID).
         </p>
         {digest ? (
-          <p style={{ marginTop: "1rem", fontFamily: "ui-monospace, monospace", fontSize: "11px", color: "#6b6560" }}>
+          <p style={{ marginTop: "1rem", fontFamily: "ui-monospace, monospace", fontSize: "11px", color: "#78716c" }}>
             Error reference: <span style={{ userSelect: "all" }}>{digest}</span>
           </p>
         ) : null}
@@ -44,14 +44,14 @@ export default function GlobalError({
           type="button"
           style={{
             marginTop: "2rem",
-            padding: "0.75rem 1.5rem",
             borderRadius: "0.75rem",
             border: "none",
-            background: "#1a1714",
-            color: "#f9f7f3",
+            padding: "0.75rem 1.5rem",
             fontSize: "0.875rem",
             fontWeight: 600,
             cursor: "pointer",
+            background: "#1c1917",
+            color: "#faf8f5",
           }}
           onClick={() => reset()}
         >

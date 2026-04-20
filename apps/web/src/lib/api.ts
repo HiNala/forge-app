@@ -799,6 +799,52 @@ export type AdminTemplateRow = {
   updated_at: string;
 };
 
+export type PlatformSession = {
+  user_id: string;
+  permissions: string[];
+  platform_roles: string[];
+  legacy_is_admin: boolean;
+};
+
+export async function getPlatformSession(
+  getToken: () => Promise<string | null>,
+): Promise<PlatformSession> {
+  return apiRequest<PlatformSession>("/admin/platform/session", {
+    method: "GET",
+    getToken,
+    activeOrgId: null,
+  });
+}
+
+export async function postPlatformVisit(getToken: () => Promise<string | null>): Promise<{ status: string }> {
+  return apiRequest<{ status: string }>("/admin/platform/visit", {
+    method: "POST",
+    getToken,
+    activeOrgId: null,
+    body: JSON.stringify({}),
+  });
+}
+
+export type AdminOverviewSummary = {
+  totals: {
+    users: number;
+    organizations: number;
+    active_users_7d: number;
+    llm_cost_cents_today: number;
+  };
+  generated_at: string;
+};
+
+export async function getAdminOverviewSummary(
+  getToken: () => Promise<string | null>,
+): Promise<AdminOverviewSummary> {
+  return apiRequest<AdminOverviewSummary>("/admin/overview/summary", {
+    method: "GET",
+    getToken,
+    activeOrgId: null,
+  });
+}
+
 export async function adminListTemplates(
   getToken: () => Promise<string | null>,
   activeOrgId: string,

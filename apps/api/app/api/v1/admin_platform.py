@@ -15,10 +15,9 @@ from app.core.platform_auth import (
     require_any_platform_access,
     require_platform_permission,
 )
-from app.db.models import Membership, Organization, OrchestrationRun, User
+from app.db.models import Membership, OrchestrationRun, Organization, User
 from app.db.models.platform_rbac import PlatformUserRole
 from app.deps import get_admin_db
-from app.deps.auth import require_user
 
 router = APIRouter(prefix="/admin", tags=["admin-platform"])
 
@@ -34,10 +33,9 @@ async def platform_session(
     roles = (
         await db.execute(select(PlatformUserRole.role_key).where(PlatformUserRole.user_id == user.id))
     ).scalars().all()
-    if user.is_admin:
-        role_keys = list(roles) if roles else ["legacy_is_admin"]
-    else:
-        role_keys = list(roles)
+    role_keys = list(roles)
+    if user.is_admin and not role_keys:
+        role_keys = ["legacy_is_admin"]
     return {
         "user_id": str(user.id),
         "permissions": sorted(perms),
@@ -68,8 +66,12 @@ async def admin_overview_summary(
     del request
     now = datetime.now(UTC)
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    user_total = (await db.execute(select(func.count(User.id)).where(User.deleted_at.is_(None)))).scalar_one()
-    org_total = (await db.execute(select(func.count(Organization.id)).where(Organization.deleted_at.is_(None)))).scalar_one()
+    user_total = (
+        await db.execute(select(func.count(User.id)).where(User.deleted_at.is_(None)))
+    ).scalar_one()
+    org_total = (
+        await db.execute(select(func.count(Organization.id)).where(Organization.deleted_at.is_(None)))
+    ).scalar_one()
     week_ago = now - timedelta(days=7)
     active_users = (
         await db.execute(
@@ -107,7 +109,12 @@ async def admin_list_organizations(
     db: AsyncSession = Depends(get_admin_db),
 ) -> dict[str, Any]:
     del request, cursor
-    stmt = select(Organization).where(Organization.deleted_at.is_(None)).order_by(Organization.created_at.desc()).limit(limit)
+    stmt = (
+        select(Organization)
+        .where(Organization.deleted_at.is_(None))
+        .order_by(Organization.created_at.desc())
+        .limit(limit)
+    )
     if q:
         like = f"%{q.strip()}%"
         stmt = stmt.where(
