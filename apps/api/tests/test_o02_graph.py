@@ -1,8 +1,8 @@
 """Mission O-02 — graph runtime."""
 
-import pytest
-
 from uuid import uuid4
+
+import pytest
 
 from app.services.orchestration.graph import Graph, GraphEdge, GraphNode
 from app.services.orchestration.graph_state import GraphState

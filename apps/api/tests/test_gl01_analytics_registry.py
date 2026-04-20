@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from app.services.analytics.events import EVENTS, is_valid_event_type, validate_event_payload
 
 

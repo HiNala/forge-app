@@ -1,6 +1,10 @@
 """Mission O-03 — component catalog size."""
 
-from app.services.orchestration.component_lib.catalog import COMPONENT_CATALOG, catalog_markdown_summary, component_names
+from app.services.orchestration.component_lib.catalog import (
+    COMPONENT_CATALOG,
+    catalog_markdown_summary,
+    component_names,
+)
 
 
 def test_at_least_forty_components() -> None:
