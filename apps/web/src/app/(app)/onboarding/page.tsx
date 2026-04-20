@@ -2,10 +2,10 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { motion } from "framer-motion";
+import { CalendarClock, Check, FileSignature, Presentation, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,6 +67,8 @@ function suggestedWorkspaceName(email: string | undefined): string {
   const local = email.split("@")[0] ?? "";
   return local ? `${local.charAt(0).toUpperCase()}${local.slice(1)}` : "My workspace";
 }
+
+type OnboardWf = "contact-form" | "proposal" | "pitch_deck" | "undecided";
 
 export default function OnboardingPage() {
   const session = useForgeSession();
@@ -162,6 +164,25 @@ export default function OnboardingPage() {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
     }
+  }
+
+  async function persistWorkflowPick(next: OnboardWf) {
+    setWorkflowChoice(next);
+    try {
+      await patchUserPreferences(getToken, {
+        onboarded_for_workflow:
+          next === "undecided"
+            ? "undecided"
+            : next === "contact-form"
+              ? "contact-form"
+              : next === "proposal"
+                ? "proposal"
+                : "pitch_deck",
+      });
+    } catch {
+      /* preferences are optional */
+    }
+    setStep(1);
   }
 
   return (
@@ -340,6 +361,7 @@ export default function OnboardingPage() {
           </Link>
         </div>
       </form>
+      ) : null}
 
       {done ? (
         <motion.div

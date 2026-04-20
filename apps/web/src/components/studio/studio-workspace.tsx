@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth, useUser } from "@clerk/nextjs";
+import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { Monitor, PanelsTopLeft, Send } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +18,7 @@ import {
   getPage,
   getStudioConversation,
   getStudioUsage,
+  listPages,
   publishPage,
   type PageDetailOut,
   type StudioUsageOut,
@@ -418,6 +420,7 @@ export function StudioWorkspace() {
     setActive(true);
 
     if (kind === "generate") {
+      lastUserPromptRef.current = userText;
       streamAccRef.current = "";
       bufferRef.current.reset();
       setFinalHtml(null);
@@ -432,6 +435,27 @@ export function StudioWorkspace() {
         body,
         { getToken, activeOrgId: activeOrganizationId, signal: ac.signal },
         async (event, data) => {
+          if (event === "workflow_clarify" && data && typeof data === "object") {
+            const d = data as {
+              message?: string;
+              candidates?: { workflow: string; confidence: number; rationale: string }[];
+              default?: string;
+            };
+            setMessagesStore(null, (m) => [
+              ...m,
+              {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                kind: "workflow_clarify",
+                text: d.message ?? "Which workflow should I use?",
+                clarifyMeta: {
+                  message: d.message ?? "",
+                  candidates: Array.isArray(d.candidates) ? d.candidates : [],
+                  default: typeof d.default === "string" ? d.default : "custom",
+                },
+              },
+            ]);
+          }
           if (event === "intent") setStreamPhase("intent");
           if (event === "workflow_clarify" && data && typeof data === "object") {
             const d = data as {
@@ -719,7 +743,7 @@ export function StudioWorkspace() {
             transition={TRANSITION_PANEL}
             className="flex flex-1 flex-col items-center justify-center px-4 py-12"
           >
-            <motion.div layout transition={TRANSITION_PANEL} className="flex w-full max-w-lg flex-col items-center">
+            <motion.div layout transition={TRANSITION_PANEL} className="flex w-full max-w-3xl flex-col items-center">
               <ForgeLogo size="lg" className="mb-6" />
               <motion.p
                 layout

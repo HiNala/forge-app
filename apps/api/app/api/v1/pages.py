@@ -221,6 +221,7 @@ async def publish_page(
         "organization_slug": org.slug,
         "page_id": str(p.id),
         "page_type": p.page_type,
+        "org_plan": org.plan,
     }
     r = getattr(request.app.state, "redis", None)
     if r is not None:

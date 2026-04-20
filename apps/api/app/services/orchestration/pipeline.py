@@ -69,6 +69,7 @@ async def stream_page_generation(
     prompt: str,
     provider: str | None,
     existing_page_id: UUID | None,
+    forced_workflow: str | None = None,
 ) -> AsyncIterator[bytes]:
     """Yield SSE chunks: intent → html.chunk (per section) → html.complete | error."""
     brand_row = (

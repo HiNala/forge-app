@@ -64,3 +64,4 @@ class PublicPageOut(BaseModel):
     organization_slug: str
     page_id: str
     page_type: str = "landing"
+    show_forge_branding: bool = True

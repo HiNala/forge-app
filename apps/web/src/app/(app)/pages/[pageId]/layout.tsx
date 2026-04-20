@@ -93,6 +93,7 @@ export default function PageDetailLayout({ children }: { children: React.ReactNo
   const isAutomations = pathname.includes("/automations");
   const isExport = pathname.includes("/export");
   const isAnalytics = pathname.includes("/analytics");
+  const wfCfg = getPageDetailConfig(p.page_type);
 
   const subLabel = qSubCount.isLoading ? "…" : (qSubCount.data ?? "0");
 

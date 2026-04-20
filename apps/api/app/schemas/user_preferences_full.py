@@ -32,6 +32,9 @@ class UserNotificationPreferencesPartial(BaseModel):
 class UserPreferencesPartial(BaseModel):
     """PATCH body — omitted fields preserved."""
 
+    onboarded_for_workflow: (
+        Literal["contact-form", "proposal", "pitch_deck", "undecided"] | None
+    ) = None
     sidebar_collapsed: bool | None = None
     theme: Literal["light", "dark", "system"] | None = None
     reduced_motion: bool | None = None
@@ -52,6 +55,9 @@ class UserPreferencesPartial(BaseModel):
 class UserPreferences(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
+    onboarded_for_workflow: Literal[
+        "contact-form", "proposal", "pitch_deck", "undecided"
+    ] = "undecided"
     sidebar_collapsed: bool = False
     theme: Literal["light", "dark", "system"] = "light"
     reduced_motion: bool = False

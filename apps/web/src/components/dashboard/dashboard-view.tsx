@@ -186,6 +186,14 @@ export function DashboardView() {
     { id: "archived", label: "Archived" },
   ];
 
+  const wfChips: { id: WorkflowFilter; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "contact", label: "Contact forms" },
+    { id: "proposal", label: "Proposals" },
+    { id: "deck", label: "Decks" },
+    { id: "other", label: "Other" },
+  ];
+
   return (
     <div className="space-y-8">
       <DashboardTipBanner />

@@ -95,6 +95,7 @@ async def studio_generate(
             prompt=body.prompt,
             provider=body.provider,
             existing_page_id=body.page_id,
+            forced_workflow=body.forced_workflow,
         ):
             yield chunk
 
@@ -147,6 +148,7 @@ async def studio_refine(
             prompt=merged,
             provider=body.provider,
             existing_page_id=page.id,
+            forced_workflow=None,
         ):
             yield chunk
 
