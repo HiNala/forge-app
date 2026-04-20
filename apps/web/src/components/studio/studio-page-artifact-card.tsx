@@ -42,8 +42,8 @@ export function StudioPageArtifactCard({
     >
       <p className="font-display text-sm font-semibold text-white">{meta.title}</p>
       <div className="mt-1 flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/70 font-body">
-          {meta.pageType.replace("-", " ")}
+        <span className="rounded-full bg-white/10 px-2 py-0.5 font-body text-[10px] font-semibold capitalize text-white/60">
+          {meta.pageType.replace(/-/g, " ")}
         </span>
         <span className="text-xs text-white/60 font-body line-clamp-2">{meta.summary}</span>
       </div>

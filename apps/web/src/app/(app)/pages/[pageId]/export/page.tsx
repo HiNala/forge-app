@@ -18,7 +18,7 @@ export default function PageExportTab() {
 
   if (page.page_type !== "pitch_deck") {
     return (
-      <div className="rounded-[10px] border border-border bg-surface p-6 text-sm text-text-muted font-body">
+      <div className="rounded-2xl border border-border bg-surface p-6 text-sm text-text-muted font-body">
         Export is available for pitch deck pages.{" "}
         <button type="button" className="text-accent underline" onClick={() => router.push(`/pages/${page.id}/automations`)}>
           Open automations
@@ -44,8 +44,8 @@ export default function PageExportTab() {
   }
 
   return (
-    <div className="max-w-lg space-y-4 rounded-[10px] border border-border bg-surface p-6 shadow-sm">
-      <h2 className="font-display text-lg font-semibold text-text">Export deck</h2>
+    <div className="max-w-lg space-y-4 rounded-2xl border border-border bg-surface p-6 shadow-sm">
+      <h2 className="font-display text-lg font-bold text-text">Export deck</h2>
       <p className="text-sm text-text-muted font-body">
         Generate a traditional file for email or offline presenting. Large exports run in the background.
       </p>

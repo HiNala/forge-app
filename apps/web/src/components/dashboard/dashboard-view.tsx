@@ -7,7 +7,6 @@ import * as React from "react";
 import { LayoutGrid, Sparkles } from "lucide-react";
 import { DashboardTipBanner } from "@/components/chrome/dashboard-tip-banner";
 import { EmptyState } from "@/components/chrome/empty-state";
-import { PageHeader } from "@/components/chrome/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -173,8 +172,7 @@ export function DashboardView() {
     return (
       <div className="space-y-8">
         <DashboardTipBanner />
-        <PageHeader title="Pages" description="Your workspace pages." />
-        <p className="text-sm text-danger font-body" role="alert">
+        <p className="font-body text-sm text-danger" role="alert">
           {pagesQ.error instanceof Error ? pagesQ.error.message : "Could not load pages."}
         </p>
       </div>
@@ -191,27 +189,29 @@ export function DashboardView() {
   return (
     <div className="space-y-8">
       <DashboardTipBanner />
-      <PageHeader
-        title="Pages"
-        description="Every live page collects submissions and runs automations from one place."
-        actions={
-          <Button
-            type="button"
-            variant="primary"
-            className="gap-1.5"
-            onClick={() => router.push("/studio")}
-          >
-            <Sparkles className="size-4" aria-hidden />
-            Open Studio ↗
-          </Button>
-        }
-      />
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-text">Pages</h1>
+          <p className="mt-1.5 font-body text-sm text-text-muted">
+            Every live page collects submissions and runs automations from one place.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="primary"
+          className="gap-1.5"
+          onClick={() => router.push("/studio")}
+        >
+          <Sparkles className="size-4" aria-hidden />
+          Open Studio ↗
+        </Button>
+      </div>
 
       {pagesQ.isLoading && pagesQ.data === undefined ? (
         <ul className="grid list-none gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-hidden>
           {Array.from({ length: 6 }).map((_, i) => (
             <li key={i} className="list-none">
-              <div className="overflow-hidden rounded-[14px] border border-border bg-surface shadow-sm">
+              <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
                 <Skeleton className="h-[140px] w-full rounded-none" />
                 <div className="space-y-2 p-4">
                   <Skeleton className="h-5 w-3/4" />
@@ -349,7 +349,7 @@ export function DashboardView() {
           </div>
 
           {slice.length === 0 ? (
-            <p className="rounded-[10px] border border-dashed border-border px-6 py-8 text-center text-sm text-text-muted font-body">
+            <p className="rounded-2xl border border-dashed border-border px-6 py-8 text-center font-body text-sm text-text-muted">
               No pages match this filter. Try another tab or clear search.
             </p>
           ) : (

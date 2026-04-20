@@ -265,7 +265,7 @@ function BrandSettingsInner() {
         ) : null}
         <div
           className={cn(
-            "flex cursor-pointer flex-col items-center justify-center rounded-[10px] border border-dashed border-border bg-bg-elevated/50 px-6 py-10 text-center text-sm text-text-muted font-body transition-colors",
+            "flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-bg-elevated/50 px-6 py-10 text-center font-body text-sm text-text-muted transition-colors",
             dragOver && "border-accent bg-accent-light/30",
             !canEdit && "pointer-events-none opacity-50",
           )}
