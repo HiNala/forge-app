@@ -112,7 +112,7 @@ docker compose exec web sh -c "corepack enable && corepack prepare pnpm@9 --acti
 
 | File | Use |
 |------|-----|
-| `docker-compose.prod.yml` | Minimal **production-style** build (baked Next image, API image). Not the default dev workflow. |
+| `docker-compose.prod.yml` | Smoke **production Docker builds** locally (`ENVIRONMENT=development` for API so strict prod validation does not apply). Not the default dev workflow. |
 | `docker-compose.ci.yml` | CI-oriented overrides (see repo workflows). |
 
 ---
@@ -144,9 +144,14 @@ Run the API on the host from `apps/api` (see `apps/api/pyproject.toml`): typical
 ## Smoke checks after boot
 
 1. **Marketing:** http://localhost:3001 (Docker) or http://localhost:3000 (local `pnpm dev`) — landing page loads.
-2. **App shell:** http://localhost:3001/dashboard — redirects to Clerk **sign-in** when unauthenticated (`/app` also routes to `/dashboard`).
+2. **App shell:** http://localhost:3001/dashboard — redirects to Clerk **sign-in** when unauthenticated (authenticated UI lives under the Next.js `(app)` **route group**; URLs are `/dashboard`, `/settings`, … — not a literal `/app` prefix).
 3. **API:** `curl -s http://localhost:8000/health` → JSON with healthy status.
 4. **Deep health:** `curl -s http://localhost:8000/health/deep` → DB + Redis OK when configured.
+5. **Quick script (optional):** `pwsh -File scripts/verify_local_stack.ps1` — hits `/health` and the marketing URL on `:3001`.
+
+### Going live on the internet
+
+Set `ENVIRONMENT=production` only on real deploys: the API **refuses to boot** with weak `SECRET_KEY`, wildcard `TRUSTED_HOSTS`, missing Clerk config, non-HTTPS public URLs/CORS, or `AUTH_TEST_BYPASS` / `FORGE_E2E_TOKEN` enabled. Use **`METRICS_TOKEN`** for Prometheus, **`TRUST_PROXY_HEADERS=true`** behind your load balancer, and rotate secrets per environment. Full checklist: **`docs/runbooks/PRODUCTION_LAUNCH.md`**.
 
 ---
 
@@ -155,7 +160,7 @@ Run the API on the host from `apps/api` (see `apps/api/pyproject.toml`): typical
 ### Signup → onboarding → brand
 
 1. **Sign up** with Clerk (`/signup`); the app calls `POST /api/v1/auth/signup` to create the Forge **User**, default **Organization**, and **Owner** membership.
-2. **Onboarding** (`/workspace` / onboarding routes) for workspace name and brand hints (skippable).
+2. **Onboarding** at **`/onboarding`** — workspace name, primary color, optional logo (skippable); see `OnboardingGate` + `sessionStorage` per org.
 3. **Brand** under **Settings → Brand** (`/settings/brand`); API persists **BrandKit** and optional logo to S3-compatible storage.
 
 The browser sends **`Authorization: Bearer`** (Clerk JWT) and **`x-forge-active-org-id`** on API calls; Postgres **RLS** enforces tenant isolation. See **`docs/runbooks/TENANT_ISOLATION.md`**.

@@ -7,3 +7,13 @@
 **/.ruff_cache
 **/dist
 **/.next
+
+# Worker image uses build context repo root — exclude paths not copied by apps/worker/Dockerfile
+apps/web
+docs
+load
+infra
+packages
+**/.turbo
+**/coverage
+**/htmlcov
