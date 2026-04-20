@@ -9,13 +9,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.platform_auth import require_any_platform_access
 from app.db.models import AnalyticsEvent, OrchestrationRun, Page, Template
 from app.db.models import User as UserModel
 from app.deps import get_admin_db
 from app.deps.forge_operator import require_forge_operator
-from app.deps.platform_admin import require_platform_admin
 from app.deps.tenant import TenantContext
-from app.schemas.common import StubResponse
 from app.schemas.template import (
     AdminTemplateCreate,
     AdminTemplateOut,
@@ -36,14 +35,6 @@ def _normalize_slug(raw: str) -> str:
     if not s:
         raise HTTPException(status_code=400, detail="Invalid slug")
     return s[:120]
-
-
-@router.get("/usage", response_model=StubResponse)
-async def admin_usage(
-    db: AsyncSession = Depends(get_admin_db),
-    _ctx: TenantContext = Depends(require_forge_operator),
-) -> StubResponse:
-    return StubResponse()
 
 
 @router.get("/orchestration-quality")
@@ -291,7 +282,7 @@ async def admin_template_stats(
 
 @router.get("/platform/health")
 async def platform_admin_health(
-    _u: UserModel = Depends(require_platform_admin),
+    _u: UserModel = Depends(require_any_platform_access),
 ) -> dict[str, bool]:
-    """Confirms JWT belongs to a user with ``is_admin`` (Digital Studio Labs operators)."""
+    """Confirms the caller has at least one platform permission (including legacy ``is_admin``)."""
     return {"ok": True}
