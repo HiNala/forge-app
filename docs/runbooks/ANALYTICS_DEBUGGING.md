@@ -2,21 +2,20 @@
 
 ## Events not appearing
 
-1. Confirm the request returns 200 and `accepted` matches non-deduped events.
-2. Check validation error (400) — missing required `metadata` keys for the `event_type`.
-3. **Test environment**: ingestion uses synchronous inserts; production uses the background consumer — verify the FastAPI process is healthy and not logging `analytics batch flush failed`.
-4. **Redis dedupe**: duplicate `client_event_id` values within ~25h are skipped silently.
-5. **DNT**: `Dnt: 1` on public track returns `accepted: 0`.
+1. **400 on ingest** — Read the response body. Common causes: unknown `event_type`, missing required metadata (see `EventDefinition.required_properties` in `apps/api/app/services/analytics/events.py`), or invalid `page_id` for the active org on authenticated track.
+2. **Rate limit (429)** — Public track is limited per IP; authenticated per user. Response may include `Retry-After`.
+3. **Dedupe** — Same `client_event_id` within the Redis TTL is skipped silently.
+4. **Backpressure** — Under extreme load the ingestion queue may drop; check logs/metrics for `analytics.backpressure_drop` pattern.
 
-## Queue / backpressure
+## Database
 
-- Metric: `analytics_backpressure_drop_total`.
-- Logs: `analytics ingestion queue full; dropped oldest event`.
+- Confirm migration `g101_gl01_engagement_analytics` (or later head) is applied: `alembic current` from `apps/api`.
+- Partitioned table: time-range queries must include `created_at` predicates for planner efficiency.
 
-## Retention MV stale
+## Redis
 
-- Worker job `refresh_retention_views` runs daily (arq cron). Manual SQL: `REFRESH MATERIALIZED VIEW retention_signup_weekly;` (superuser / maintenance role).
+- Dedupe keys are date-scoped; if Redis is empty, dedupe is skipped (duplicates possible).
 
 ## Reprocessing
 
-No automatic re-ingest from access logs today; replay would require raw request bodies. For recovery, use org-scoped exports once implemented.
+- There is no automatic re-ingest from access logs; fix forward at the client or backfill with a one-off script scoped by org (respect RLS).

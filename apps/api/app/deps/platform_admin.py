@@ -1,4 +1,4 @@
-"""Platform operators (Forge staff) — ``users.is_admin`` set in the database; no self-service."""
+"""Legacy helper: ``users.is_admin`` (BI-04). Prefer :mod:`app.core.platform_auth` (GL-02)."""
 
 from __future__ import annotations
 
