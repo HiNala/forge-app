@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import UTC, date, datetime
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -51,8 +51,8 @@ async def test_studio_quota_returns_402(monkeypatch: pytest.MonkeyPatch) -> None
         await s.flush()
         s.add(Membership(user_id=uid, organization_id=oid, role="owner"))
         await s.flush()
-        today = date.today()
-        period_start = date(today.year, today.month, 1)
+        ud = datetime.now(UTC).date()
+        period_start = date(ud.year, ud.month, 1)
         s.add(
             SubscriptionUsage(
                 organization_id=oid,
@@ -74,4 +74,5 @@ async def test_studio_quota_returns_402(monkeypatch: pytest.MonkeyPatch) -> None
         )
     assert r.status_code == 402
     body = r.json()
-    assert body["detail"]["code"] == "quota_exceeded"
+    assert body["code"] == "quota_exceeded"
+    assert body["extra"].get("metric") == "pages_generated"

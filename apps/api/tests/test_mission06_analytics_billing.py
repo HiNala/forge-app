@@ -237,9 +237,9 @@ async def test_submission_quota_402_skips_write(monkeypatch: pytest.MonkeyPatch)
             json={"email": "blocked@e.com"},
         )
         assert r402.status_code == 402
-        detail = r402.json()["detail"]
-        assert detail["code"] == "quota_exceeded"
-        assert detail["metric"] == "submissions"
+        body = r402.json()
+        assert body["code"] == "quota_exceeded"
+        assert body["extra"]["metric"] == "submissions"
 
     async with AsyncSessionLocal() as s3:
         await set_active_organization(s3, oid)

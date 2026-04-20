@@ -86,7 +86,7 @@ export async function apiRequest<T>(
   }
 
   if (res.status === 402) {
-    toast.error("Plan limit reached. Upgrade to keep going.");
+    toast.error("Plan limit reached. Raise limits under Settings → Billing.");
     throw new ApiError("Payment required", 402, json);
   }
 

@@ -23,6 +23,7 @@ import {
   type AutomationRunOut,
   type CalendarConnectionOut,
 } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { useForgeSession } from "@/providers/session-provider";
 
 function emailsToText(emails: string[]) {

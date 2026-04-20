@@ -22,7 +22,14 @@ from app.api.public_api import router as public_router
 from app.api.public_proposal import router as public_proposal_router
 from app.api.v1 import api_router
 from app.config import settings
-from app.core.errors import Conflict, ForgeError
+from app.core.errors import ForgeError
+from app.core.exception_handlers import (
+    forge_http_exception_handler,
+    integrity_error_handler,
+    payload_too_large_handler,
+    request_validation_handler,
+    unhandled_exception_handler,
+)
 from app.core.logging import configure_logging
 from app.core.sentry import init_sentry
 from app.db.session import AsyncSessionLocal, engine
@@ -32,6 +39,7 @@ from app.middleware import (
     RequestContextMiddleware,
     TenantMiddleware,
 )
+from app.middleware.body_size_limit import PayloadTooLarge
 
 configure_logging()
 init_sentry()
@@ -96,12 +104,15 @@ app = FastAPI(
     lifespan=lifespan,
     contact={"name": "Forge", "url": settings.APP_PUBLIC_URL},
     license_info={"name": "Proprietary"},
+    servers=[
+        {"url": settings.API_BASE_URL, "description": settings.ENVIRONMENT},
+    ],
 )
 
-# Last ``add_middleware`` runs first on ingress (Starlette). Order: RequestContext → … → CORS → app.
+# Last ``add_middleware`` wraps outermost (first to see the request). See ``docs/architecture/REQUEST_PIPELINE.md``.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+    allow_origins=settings.effective_cors_origins(),
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=[
@@ -112,11 +123,12 @@ app.add_middleware(
         "x-forge-tenant-id",
         "x-active-org",
         "x-forge-test-user-id",
+        "x-forwarded-for",
     ],
     expose_headers=["X-Request-ID"],
 )
-app.add_middleware(RateLimitMiddleware)
 app.add_middleware(TenantMiddleware)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=_trusted_hosts())
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(BodySizeLimitMiddleware)
@@ -124,7 +136,7 @@ app.add_middleware(RequestContextMiddleware)
 
 
 @app.exception_handler(ForgeError)
-async def forge_exception_handler(request: Request, exc: ForgeError) -> JSONResponse:
+async def forge_error_handler(request: Request, exc: ForgeError) -> JSONResponse:
     rid = getattr(request.state, "request_id", None)
     return JSONResponse(
         status_code=exc.http_status,
@@ -137,66 +149,11 @@ async def forge_exception_handler(request: Request, exc: ForgeError) -> JSONResp
     )
 
 
-@app.exception_handler(RequestValidationError)
-async def validation_error_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
-    rid = getattr(request.state, "request_id", None)
-    flattened: list[dict[str, str]] = []
-    for err in exc.errors():
-        loc = err.get("loc") or ()
-        field = ".".join(str(x) for x in loc if str(x) != "body")
-        flattened.append({"field": field or "body", "message": err.get("msg", "invalid")})
-    return JSONResponse(
-        status_code=422,
-        content={
-            "code": "validation_error",
-            "message": "Request validation failed",
-            "errors": flattened,
-            "request_id": rid,
-        },
-    )
-
-
-@app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
-    rid = getattr(request.state, "request_id", None)
-    body: dict[str, Any] = {"request_id": rid}
-    detail = exc.detail
-    if isinstance(detail, dict):
-        body["detail"] = detail
-    else:
-        body["detail"] = detail
-    return JSONResponse(status_code=exc.status_code, content=body)
-
-
-@app.exception_handler(IntegrityError)
-async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
-    logger.warning("db integrity error: %s", exc)
-    return await forge_exception_handler(request, Conflict("Constraint violation"))
-
-
-@app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    logger.exception("unhandled error", exc_info=exc)
-    rid = getattr(request.state, "request_id", None)
-    if settings.ENVIRONMENT == "production":
-        return JSONResponse(
-            status_code=500,
-            content={
-                "code": "internal_error",
-                "message": "An unexpected error occurred",
-                "request_id": rid,
-            },
-        )
-    return JSONResponse(
-        status_code=500,
-        content={
-            "code": "internal_error",
-            "message": str(exc) or "internal error",
-            "request_id": rid,
-        },
-    )
+app.add_exception_handler(StarletteHTTPException, forge_http_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(RequestValidationError, request_validation_handler)  # type: ignore[arg-type]
+app.add_exception_handler(IntegrityError, integrity_error_handler)  # type: ignore[arg-type]
+app.add_exception_handler(PayloadTooLarge, payload_too_large_handler)
+app.add_exception_handler(Exception, unhandled_exception_handler)
 
 
 @app.get("/metrics")

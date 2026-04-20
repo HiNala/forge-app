@@ -16,12 +16,12 @@ Every response includes `X-Request-ID` (also mirrored from `X-Request-ID` on the
 | `400` + `org_not_specified` | Multi-org user without `x-forge-active-org-id` | Frontend org switcher |
 | `403` + `not_a_member` | User not in org from header | `memberships` row, invitations |
 | `429` + `rate_limited` | Redis-backed limiter (or in-process fallback) | Per-user bearer hash, per-IP for anonymous `/api/v1/*` |
-| `422` + `validation_error` | Pydantic body/query | Flattened `errors[]` in response body |
+| `422` + `validation_error` | Pydantic body/query | Flattened `extra.fields` in response body |
 | `413` | Body over 10 MiB (25 MiB for `/api/v1/uploads/*`) | Large uploads; use presigned multipart |
 
 ## Sentry scrubbing
 
-`Authorization`, `Cookie`, and header keys matching password/secret/token are redacted in `app/core/sentry.py` `before_send`. Do not paste raw tokens into tickets.
+If `SENTRY_DSN` is set (recommended in production), `app.core.sentry.init_sentry` registers FastAPI/Starlette integrations. `before_send` scrubs `Authorization`, `Cookie`, and header keys matching password/secret/token/api key patterns. User id and `organization_id` are set when `get_db` runs. Do not paste raw tokens into tickets.
 
 ## Local reproduction
 
@@ -33,3 +33,14 @@ curl -i http://127.0.0.1:8000/health/live -H "X-Request-ID: debug-1"
 ```
 
 Use `ENVIRONMENT=test` + `AUTH_TEST_BYPASS=true` + `x-forge-test-user-id` only in automated tests — never in production deployments.
+
+## OpenAPI / types
+
+Regenerate the committed snapshot after API changes:
+
+```bash
+cd apps/api && uv run python scripts/export_openapi.py openapi.json
+cd ../web && pnpm run codegen:api
+```
+
+CI fails if generated output drifts from what is committed.

@@ -1,4 +1,4 @@
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,12 +10,20 @@ class Settings(BaseSettings):
         default=["http://localhost:3000", "http://localhost:3001"],
         validation_alias=AliasChoices("BACKEND_CORS_ORIGINS", "CORS_ORIGINS"),
     )
+    # Comma-separated extra origins (staging/prod frontends). Merged with BACKEND_CORS_ORIGINS (BI-02).
+    CORS_ORIGINS_EXTRA: str = ""
     # Comma-separated hosts for TrustedHostMiddleware; "*" allows any (development only).
     TRUSTED_HOSTS: str = "*"
     # Subdomain tenant routing: ``{slug}.{APP_ROOT_DOMAIN}`` → resolve org by slug.
     APP_ROOT_DOMAIN: str = ""
     # Non-production: allow ``?org=<uuid>`` for manual testing (BI-02).
     ALLOW_ORG_QUERY_PARAM: bool = False
+    # When true, use X-Forwarded-For for rate limits and public IP logging (set behind a trusted proxy).
+    TRUST_PROXY_HEADERS: bool = False
+    # Optional second DB URL using a BYPASSRLS role — reserved for future admin tooling (BI-02).
+    FORGE_ADMIN_DATABASE_URL: str | None = None
+    # pytest: allow ``monkeypatch.setattr(settings, "FORCE_RATE_LIMIT_IN_TESTS", True)`` to exercise 429 paths.
+    FORCE_RATE_LIMIT_IN_TESTS: bool = False
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/forge_dev"
     REDIS_URL: str = "redis://localhost:6379/0"
     # Prefix for cache keys so dev/staging can share one Redis (BI-04).
@@ -24,8 +32,6 @@ class Settings(BaseSettings):
     SENTRY_DSN: str | None = None
     # Run rate limiting during pytest (off by default so integration tests are deterministic).
     RATE_LIMIT_IN_TESTS: bool = False
-    # Optional async URL for forge_admin (BYPASSRLS). Not wired yet — see BI-02 mission report.
-    FORGE_ADMIN_DATABASE_URL: str | None = None
 
     # Clerk (ADR-002)
     CLERK_JWKS_URL: str = ""
@@ -98,6 +104,30 @@ class Settings(BaseSettings):
     CADDY_INTERNAL_TOKEN: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
+
+    def effective_cors_origins(self) -> list[str]:
+        """Origins for CORSMiddleware: dev defaults plus optional ``CORS_ORIGINS_EXTRA`` (comma-separated)."""
+        merged: list[str] = []
+        seen: set[str] = set()
+        for raw in self.BACKEND_CORS_ORIGINS:
+            o = str(raw).strip().rstrip("/")
+            if o and o not in seen:
+                seen.add(o)
+                merged.append(o)
+        if self.CORS_ORIGINS_EXTRA.strip():
+            for part in self.CORS_ORIGINS_EXTRA.split(","):
+                o = part.strip().rstrip("/")
+                if o and o not in seen:
+                    seen.add(o)
+                    merged.append(o)
+        return merged
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
+    def _split_csv_cors(cls, v: object) -> object:
+        if isinstance(v, str) and "," in v:
+            return [p.strip() for p in v.split(",") if p.strip()]
+        return v
 
     def llm_fallback_model_list(self) -> list[str]:
         if not self.LLM_FALLBACK_MODELS.strip():

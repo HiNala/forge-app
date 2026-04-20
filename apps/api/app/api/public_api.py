@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.ip import get_client_ip
 from app.db.models import AnalyticsEvent, Organization, Page, SlotHold, Submission
 from app.db.rls_context import set_active_organization
 from app.deps.db import get_db_public
@@ -54,15 +55,6 @@ def _trim_metadata(md: dict[str, Any] | None) -> dict[str, Any] | None:
     if len(raw) > 16000:
         return {"_truncated": True}
     return md
-
-
-def _client_ip(request: Request) -> str:
-    fwd = request.headers.get("x-forwarded-for")
-    if fwd:
-        return fwd.split(",")[0].strip()
-    if request.client:
-        return request.client.host
-    return "unknown"
 
 
 async def _parse_submit_body(request: Request) -> dict[str, Any]:
@@ -194,7 +186,7 @@ async def public_hold_create(
     ss = ss.astimezone(UTC)
     se = se.astimezone(UTC)
 
-    ip_raw = _client_ip(request)
+    ip_raw = get_client_ip(request)
     ua = request.headers.get("user-agent")
     fp = visitor_fingerprint(ip_raw, ua)
 
@@ -318,7 +310,7 @@ async def public_submit(
     if p is None:
         raise HTTPException(status_code=404, detail="Not found")
 
-    ip_raw = _client_ip(request)
+    ip_raw = get_client_ip(request)
     ip_anon = anonymize_ipv4_to_slash24(ip_raw)
     ua = request.headers.get("user-agent")
     fp = visitor_fingerprint(ip_raw, ua)
@@ -420,6 +412,129 @@ async def public_submit(
     await enqueue_run_automations(request.app.state, str(sub.id))
 
     return PublicSubmitOut()
+
+
+@router.get("/{org_slug}/{page_slug}/bookings/{booking_token}")
+async def public_booking_detail(
+    org_slug: str,
+    page_slug: str,
+    booking_token: str,
+    db: AsyncSession = Depends(get_db_public),
+) -> dict[str, Any]:
+    """Resolve booking details for a magic-link token (W-01)."""
+    org = (
+        await db.execute(select(Organization).where(Organization.slug == org_slug))
+    ).scalar_one_or_none()
+    if org is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    await set_active_organization(db, org.id)
+
+    p = (
+        await db.execute(
+            select(Page).where(
+                Page.organization_id == org.id,
+                Page.slug == page_slug,
+                Page.status == "live",
+            )
+        )
+    ).scalar_one_or_none()
+    if p is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    sub = (
+        await db.execute(
+            select(Submission).where(
+                Submission.organization_id == org.id,
+                Submission.page_id == p.id,
+                Submission.booking_token == booking_token,
+            )
+        )
+    ).scalar_one_or_none()
+    if sub is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    fb = sub.payload.get("forge_booking") if isinstance(sub.payload, dict) else None
+    if not isinstance(fb, dict):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    hold = (
+        await db.execute(
+            select(SlotHold).where(
+                SlotHold.submission_id == sub.id,
+                SlotHold.organization_id == org.id,
+            )
+        )
+    ).scalar_one_or_none()
+
+    return {
+        "page_title": p.title,
+        "submitter_email": sub.submitter_email,
+        "slot_start": fb.get("slot_start"),
+        "slot_end": fb.get("slot_end"),
+        "hold_status": hold.status if hold else None,
+        "reschedule_url": f"/p/{org_slug}/{page_slug}",
+        "cancel_url": f"/p/{org_slug}/{page_slug}/bookings/{booking_token}/cancel",
+    }
+
+
+@router.post("/{org_slug}/{page_slug}/bookings/{booking_token}/cancel")
+async def public_booking_cancel(
+    org_slug: str,
+    page_slug: str,
+    booking_token: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db_public),
+) -> dict[str, str]:
+    """Cancel a confirmed booking (magic link)."""
+    org = (
+        await db.execute(select(Organization).where(Organization.slug == org_slug))
+    ).scalar_one_or_none()
+    if org is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    await set_active_organization(db, org.id)
+
+    p = (
+        await db.execute(
+            select(Page).where(
+                Page.organization_id == org.id,
+                Page.slug == page_slug,
+                Page.status == "live",
+            )
+        )
+    ).scalar_one_or_none()
+    if p is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    sub = (
+        await db.execute(
+            select(Submission).where(
+                Submission.organization_id == org.id,
+                Submission.page_id == p.id,
+                Submission.booking_token == booking_token,
+            )
+        )
+    ).scalar_one_or_none()
+    if sub is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    hold = (
+        await db.execute(
+            select(SlotHold).where(
+                SlotHold.submission_id == sub.id,
+                SlotHold.organization_id == org.id,
+                SlotHold.status == "confirmed",
+            )
+        )
+    ).scalar_one_or_none()
+    if hold is not None:
+        hold.status = "cancelled"
+        await invalidate_calendar_availability(
+            getattr(request.app.state, "redis", None), hold.calendar_id
+        )
+    await db.commit()
+    return {"status": "cancelled"}
 
 
 @router.post("/{org_slug}/{page_slug}/upload", response_model=StubResponse)

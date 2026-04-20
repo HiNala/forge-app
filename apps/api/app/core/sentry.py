@@ -1,4 +1,4 @@
-"""Sentry SDK initialization (BI-02)."""
+"""Sentry SDK initialization (BI-02) — scrub secrets; tag environment."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from app.config import settings
 
-_SENSITIVE_KEY = re.compile(r"(password|secret|token|authorization|cookie)", re.I)
+_SENSITIVE_KEY = re.compile(r"(password|secret|token|authorization|cookie|api[_-]?key)", re.I)
 
 
 def _scrub_event(event: dict[str, Any], _hint: dict[str, Any]) -> dict[str, Any] | None:
@@ -42,7 +42,7 @@ def init_sentry() -> None:
             StarletteIntegration(transaction_style="endpoint"),
             FastApiIntegration(transaction_style="endpoint"),
         ],
-        traces_sample_rate=0.1,
+        traces_sample_rate=0.1 if settings.ENVIRONMENT == "production" else 1.0,
         send_default_pii=False,
         before_send=_scrub_event,  # type: ignore[arg-type]
     )

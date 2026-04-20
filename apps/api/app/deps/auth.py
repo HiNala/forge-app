@@ -115,6 +115,22 @@ async def require_user(request: Request) -> User:
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token") from None
 
+    jti = payload.get("jti")
+    if isinstance(jti, str) and jti.strip():
+        rc = getattr(request.app.state, "redis", None)
+        if rc is not None:
+            key = f"{settings.FORGE_CACHE_NS}:jti_revoked:{jti.strip()}"
+            try:
+                if await rc.get(key):
+                    raise HTTPException(
+                        status_code=401,
+                        detail={"code": "unauthenticated", "message": "Token revoked"},
+                    )
+            except HTTPException:
+                raise
+            except Exception:
+                pass
+
     sub = payload.get("sub")
     if not sub or not isinstance(sub, str):
         raise HTTPException(status_code=401, detail="Invalid token payload")

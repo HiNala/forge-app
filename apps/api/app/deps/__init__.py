@@ -5,6 +5,7 @@ from app.deps.db import (
     get_db_no_auth,
     get_db_public,
     get_db_user_only,
+    get_public_db,
     get_tenant_db,
 )
 from app.deps.forge_operator import require_forge_operator
@@ -17,6 +18,7 @@ __all__ = [
     "get_db_no_auth",
     "get_db_public",
     "get_db_user_only",
+    "get_public_db",
     "get_tenant_db",
     "optional_tenant",
     "raw_active_organization_id",
