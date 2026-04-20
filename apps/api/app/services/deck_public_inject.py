@@ -176,13 +176,13 @@ _PUBLIC_SLIDE_SCRIPT = """
   }
 
   if (present) {
-    track("present_started", { slide_count: slideNodes.length });
+    track("present_start", { slide_count: slideNodes.length });
   }
 
   function onSlideVisible(i) {
     if (!present || i === lastTrackedSlide) return;
     lastTrackedSlide = i;
-    track("present_slide_viewed", { slide_index: i, slide_id: slideNodes[i] ? slideNodes[i].id : "" });
+    track("present_slide_view", { slide_index: i, slide_id: slideNodes[i] ? slideNodes[i].id : "" });
   }
 
   var io = null;
@@ -431,7 +431,7 @@ _PUBLIC_SLIDE_SCRIPT = """
   );
 
   function endPresent(reason) {
-    track("present_ended", { reason: reason || "unknown" });
+    track("present_end", { reason: reason || "unknown" });
   }
 
   window.addEventListener("beforeunload", function () { if (present) endPresent("beforeunload"); });

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 from typing import Any, TypeVar
 
@@ -37,10 +38,8 @@ async def wait_with_budget(
                 out[name] = None
         else:
             t.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await t
-            except asyncio.CancelledError:
-                pass
             out[name] = None
     elapsed = loop.time() - t0
     if pending_set:

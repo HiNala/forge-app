@@ -74,3 +74,46 @@ END:VCALENDAR
         window_end=datetime(2027, 1, 1, tzinfo=UTC),
     )
     assert summary.get("event_count", 0) <= MAX_EXPANSIONS + 1
+
+
+def test_weekly_rrule_twelve_weeks_expands() -> None:
+    """Mission W-01 §39 — weekly RRULE yields multiple instances in window."""
+    ics = """BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:weekly1
+DTSTART:20260202T140000Z
+DTEND:20260202T150000Z
+RRULE:FREQ=WEEKLY;COUNT=12
+END:VEVENT
+END:VCALENDAR
+"""
+    intervals, summary = parse_ics_to_busy_intervals(
+        ics,
+        window_start=datetime(2026, 2, 1, tzinfo=UTC),
+        window_end=datetime(2026, 8, 1, tzinfo=UTC),
+    )
+    assert len(intervals) == 12
+    assert summary.get("busy_block_count") == 12
+
+
+def test_exdate_excludes_one_instance() -> None:
+    """Mission W-01 §40 — EXDATE removes a recurrence instance when supported by expansion."""
+    ics = """BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:weeklyex
+DTSTART:20260202T140000Z
+DTEND:20260202T150000Z
+RRULE:FREQ=WEEKLY;COUNT=5
+EXDATE:20260209T140000Z
+END:VEVENT
+END:VCALENDAR
+"""
+    intervals, _summary = parse_ics_to_busy_intervals(
+        ics,
+        window_start=datetime(2026, 2, 1, tzinfo=UTC),
+        window_end=datetime(2026, 4, 1, tzinfo=UTC),
+    )
+    # Expect 4 busy intervals (second Tuesday excluded)
+    assert len(intervals) == 4

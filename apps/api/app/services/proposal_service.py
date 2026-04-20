@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Organization, Page, Proposal, ProposalSequence
@@ -277,3 +277,43 @@ async def get_or_create_proposal_for_page(db: AsyncSession, *, page: Page) -> Pr
     db.add(row)
     await db.flush()
     return row
+
+
+async def assign_signed_proposal_pdf_storage_placeholder(
+    db: AsyncSession,
+    *,
+    page_id: UUID,
+) -> str | None:
+    """Set deterministic ``signed_pdf_storage_key`` (binary PDF via Playwright is not implemented yet)."""
+    prop = await db.get(Proposal, page_id)
+    if prop is None:
+        return None
+    await db.execute(
+        text("SELECT set_config('app.current_tenant_id', :t, true)"),
+        {"t": str(prop.organization_id)},
+    )
+    await ensure_proposal_number(db, proposal=prop)
+    num = (prop.proposal_number or str(prop.page_id))[:120]
+    prop.signed_pdf_storage_key = f"{prop.organization_id}/signed_proposals/{num}.pdf"
+    return prop.signed_pdf_storage_key
+
+
+async def expire_due_proposals(db: AsyncSession) -> None:
+    """Mark open proposals past ``expires_at`` as ``expired`` (cron + tests)."""
+    now = datetime.now(UTC)
+    oids = (await db.execute(select(Organization.id))).scalars().all()
+    for oid in oids:
+        await db.execute(
+            text("SELECT set_config('app.current_tenant_id', :t, true)"),
+            {"t": str(oid)},
+        )
+        await db.execute(
+            update(Proposal)
+            .where(
+                Proposal.organization_id == oid,
+                Proposal.expires_at.isnot(None),
+                Proposal.expires_at < now,
+                Proposal.status.in_(("sent", "viewed", "questioned")),
+            )
+            .values(status="expired")
+        )

@@ -60,7 +60,7 @@ function CardTitle({
   return (
     <h3
       data-slot="card-title"
-      className={cn("font-display text-xl font-semibold leading-tight text-text", className)}
+      className={cn("font-display text-xl font-bold leading-tight text-text", className)}
       {...props}
     />
   );

@@ -1,0 +1,6 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-form">
+  <form method="post" action="{{ form_action | e }}" class="forge-form-inner">
+    {{ children_html | safe }}
+    <button type="submit" class="forge-submit">{{ (props.submit_label or 'Submit') | e }}</button>
+  </form>
+</section>

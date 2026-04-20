@@ -11,12 +11,15 @@ from app.db.models.calendar_busy_block import CalendarBusyBlock
 from app.db.models.calendar_connection import CalendarConnection
 from app.db.models.conversation import Conversation
 from app.db.models.custom_domain import CustomDomain
+from app.db.models.custom_event_definition import CustomEventDefinition
 from app.db.models.deck import Deck
 from app.db.models.email_template_override import EmailTemplateOverride
+from app.db.models.identity_merge import IdentityMerge
 from app.db.models.invitation import Invitation
 from app.db.models.membership import Membership
 from app.db.models.message import Message
 from app.db.models.notification import Notification
+from app.db.models.orchestration_run import OrchestrationRun
 from app.db.models.org_feature_flag import OrgFeatureFlag
 from app.db.models.organization import Organization
 from app.db.models.outbound_webhook import OutboundWebhook
@@ -54,10 +57,13 @@ __all__ = [
     "Deck",
     "EmailTemplateOverride",
     "Conversation",
+    "CustomEventDefinition",
+    "IdentityMerge",
     "Invitation",
     "Membership",
     "Message",
     "Notification",
+    "OrchestrationRun",
     "Organization",
     "OrgTestimonial",
     "OrgFeatureFlag",

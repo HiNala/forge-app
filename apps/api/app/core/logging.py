@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from collections.abc import MutableMapping
 from typing import Any
 
 import structlog
@@ -13,8 +14,8 @@ from app.core.context import try_get_request_context
 
 
 def _merge_request_ctx(
-    logger: object, method_name: str, event_dict: dict[str, object]
-) -> dict[str, object]:
+    logger: Any, method_name: str, event_dict: MutableMapping[str, Any]
+) -> MutableMapping[str, Any]:
     ctx = try_get_request_context()
     if ctx is not None:
         if ctx.user_id is not None:

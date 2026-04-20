@@ -191,11 +191,12 @@ def apply_plan_constraints(intent: PageIntent, plan: AssemblyPlan) -> AssemblyPl
 
 
 def default_assembly_plan(intent: PageIntent) -> AssemblyPlan:
-    sub = f"A {intent.tone} page — {intent.title_suggestion}"
+    headline = (intent.headline or intent.title_suggestion or "Untitled").strip()
+    sub = intent.subheadline or f"A {intent.tone} page — {intent.title_suggestion}"
     sections: list[SectionPlan] = [
         SectionPlan(
             component="hero-centered",
-            props={"headline": intent.title_suggestion, "subhead": sub},
+            props={"headline": headline, "subhead": sub},
         ),
     ]
     if intent.fields:

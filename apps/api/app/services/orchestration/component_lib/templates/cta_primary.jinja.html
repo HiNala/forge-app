@@ -1,0 +1,4 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-cta" style="text-align:center;padding:2rem 1rem;">
+  <a href="{{ props.href | default('#') | e }}" class="forge-submit" style="display:inline-block;text-decoration:none;padding:0.75rem 1.5rem;border-radius:6px;background:var(--brand-primary);color:#fff;">{{ props.text | e }}</a>
+  {% if props.subtext %}<p style="margin-top:0.75rem;font-size:0.9rem;opacity:0.85;">{{ props.subtext | e }}</p>{% endif %}
+</section>

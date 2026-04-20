@@ -43,6 +43,7 @@ dependencies = [
     "icalendar>=6.1.1",
     "recurring-ical-events>=3.0.0",
     "pyyaml>=6.0.2",
+    "user-agents>=2.2.0",
 ]
 
 [dependency-groups]

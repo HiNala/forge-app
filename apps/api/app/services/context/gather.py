@@ -18,6 +18,7 @@ from app.services.context.models import (
     ContextBundle,
     PageSummary,
     SiteBrand,
+    VoiceProfile,
 )
 from app.services.context.site_extract import (
     extract_site_brand,
@@ -152,9 +153,6 @@ async def gather_context(
     }
 
     primary = await wait_with_budget(tasks, budget_seconds=time_budget_seconds)
-    for k, v in primary.items():
-        if v is None and k in tasks:
-            incomplete.append(k)
 
     bundle = ContextBundle(
         brand_kit=primary.get("brand_kit"),
@@ -166,8 +164,6 @@ async def gather_context(
     )
     uv = primary.get("user_voice")
     if isinstance(uv, dict):
-        from app.services.context.models import VoiceProfile
-
         try:
             bundle.user_voice = VoiceProfile.model_validate(uv)
         except Exception:

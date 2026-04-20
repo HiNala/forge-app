@@ -1,40 +1,52 @@
-# Background worker (arq)
+# arq background worker
 
-## What runs
+Forge runs **arq** workers from `apps/worker/worker.py` (same Docker image as the API, different command — see `docker-compose.yml` `worker` service).
 
-- **Image / command:** same Python env as the API; `Dockerfile` in `apps/worker` runs:
+## Configuration
 
-  `uv run --no-dev arq worker.WorkerSettings`
-
-- **Module:** `apps/worker/worker.py` defines `WorkerSettings` with:
-  - **Redis:** `REDIS_URL` (same Redis as rate limiting / queue).
-  - **Functions:** automation pipeline (`run_automations`), email/calendar/ICS/screenshot/cost **stubs**, `purge_deleted_user` (PII scrub after account deletion), `generate_template_preview`, plus partition cleanup helpers.
-  - **Worker tuning:** `max_jobs=20`, `job_timeout=120`, `keep_result=3600`, `poll_delay=0.5`, `timezone=UTC` (cron alignment).
-  - **Cron:** revision cleanup, analytics partition TTL, **partman** placeholder (no-op without `pg_partman`), expired invitation purge, calendar **refresh** hook every six hours.
-
-## Configure
-
-| Concern | Where |
-|--------|--------|
-| Redis DSN | `REDIS_URL` |
-| Job timeout / result TTL | `WorkerSettings` class vars (`job_timeout`, `keep_result`) |
-| Retries | Implement per-job; arq default `max_tries` applies when enqueueing |
+| Setting | Value | Purpose |
+|---------|-------|---------|
+| `REDIS_URL` | Same DSN as API | Queue + optional Redis in job handlers |
+| `WorkerSettings` | `max_jobs=20`, `job_timeout=120`, `keep_result=3600`, `poll_delay=0.5` | Throughput and retention |
+| Cron | See `WorkerSettings.cron_jobs` | Partman maintenance, invitation purge, calendar ICS refresh, holds, proposals, analytics partition cleanup |
 
 ## Deploy
 
-- **Docker Compose:** `worker` service should track the API image; scale replicas only if jobs are CPU-bound and Redis can handle concurrent workers (watch duplicate cron).
+- **Docker:** build `apps/worker/Dockerfile`; `CMD` runs `arq worker.WorkerSettings`.
+- **Scale:** horizontally safe — jobs are single-consumer per Redis key; add replicas for throughput.
+- **Env:** match API `DATABASE_URL`, `REDIS_URL`, AWS/S3 keys, email keys as needed for jobs that touch external services.
 
-## Debug stuck jobs
+## Operations
 
-1. **Redis:** inspect keys under `arq:` (arq default prefix) — job id, results.
-2. **Logs:** worker process stderr; search for `run_automations`, job name, submission id.
-3. **Re-enqueue:** API or shell can call `enqueue_job("run_automations", submission_id=...)` via `arq` CLI or a small script using `create_pool`.
+- **Stuck jobs:** Inspect Redis keys or arq’s result backend; cancel via Redis CLI if needed (advanced).
+- **Replay submission automations:** Enqueue `run_automations` with submission UUID (same helper as API `enqueue_run_automations`).
+- **Manual calendar sync:** Enqueue `ics_calendar_sync` with `calendar_id`.
+- **Partman:** Cron `partman_maintenance` at 02:00 UTC — no-op if `pg_partman` missing (logs debug).
 
-## Drain queue
+## RLS in workers
 
-- Stop publishing new work; scale worker to 0 after queue depth is 0, or pause producers.
+Jobs that touch tenant data call `set_config('app.current_tenant_id', ...)` (and related helpers) on the session **before** queries so Row-Level Security matches API behavior.
 
-## Idempotency
+## Local
 
-- **Automations:** engine should tolerate duplicate submissions (check automation run rows).
-- **Stripe / webhooks:** use `stripe_events_processed` in the API path, not the generic worker queue for payment idempotency.
+```bash
+# from repo root, with Redis + Postgres up
+cd apps/api && uv sync
+set PYTHONPATH=apps/api
+cd ../worker && arq worker.WorkerSettings
+```
+
+On Windows, run `arq` from the same environment as `apps/api` so `app.*` imports resolve.
+
+## Job inventory (non-exhaustive)
+
+| Job | Role |
+|-----|------|
+| `run_automations` | Email/calendar pipeline for new submissions |
+| `purge_deleted_user` | Deferred PII scrub (30 days after soft delete) |
+| `ics_calendar_sync` / `refresh_calendar_syncs` | ICS URL → busy blocks |
+| `generate_template_preview` | Template thumbnail |
+| `partman_maintenance` | Monthly partition management |
+| `deck_export` / `proposal_pdf_render` | Deck/proposal assets (stubs polish in W tracks) |
+
+See `apps/worker/worker.py` for the full `functions` and `cron_jobs` lists.

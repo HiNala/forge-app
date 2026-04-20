@@ -6,7 +6,6 @@ Prefer Brand.dev / Firecrawl in production; this uses httpx + HTML meta fallback
 from __future__ import annotations
 
 import re
-from typing import Any
 
 import httpx
 

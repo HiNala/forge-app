@@ -228,7 +228,7 @@ async def page_funnel(
                 select(func.count()).where(
                     AnalyticsEvent.organization_id == organization_id,
                     AnalyticsEvent.page_id == page_id,
-                    AnalyticsEvent.event_type == "form_submit",
+                    AnalyticsEvent.event_type == "form_submit_success",
                     AnalyticsEvent.created_at >= start,
                 )
             )
@@ -351,7 +351,7 @@ async def page_engagement(
                 select(func.count()).where(
                     AnalyticsEvent.organization_id == organization_id,
                     AnalyticsEvent.page_id == page_id,
-                    AnalyticsEvent.event_type == "proposal_accept",
+                    AnalyticsEvent.event_type == "proposal_accept_click",
                     AnalyticsEvent.created_at >= start,
                 )
             )

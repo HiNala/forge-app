@@ -1,0 +1,7 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-proposal-cover" style="padding:2rem 0;">
+  <h1 style="margin:0 0 0.5rem;">{{ props.title | e }}</h1>
+  {% if props.proposal_number %}<p style="margin:0.25rem 0;"><strong>Proposal #</strong> {{ props.proposal_number | e }}</p>{% endif %}
+  {% if props.client_name %}<p style="margin:0.25rem 0;"><strong>Prepared for</strong> {{ props.client_name | e }}</p>{% endif %}
+  {% if props.date %}<p style="margin:0.25rem 0;"><strong>Date</strong> {{ props.date | e }}</p>{% endif %}
+  {% if props.expiration %}<p style="margin:0.25rem 0;"><strong>Valid through</strong> {{ props.expiration | e }}</p>{% endif %}
+</section>

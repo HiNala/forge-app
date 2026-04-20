@@ -45,6 +45,35 @@ def validate_publishable_html(html: str) -> tuple[bool, str]:
     return True, ""
 
 
+def validate_compose_graph(
+    html: str,
+    *,
+    requires_form: bool,
+) -> tuple[bool, str]:
+    """Graph validator — stricter checks before persistence (O-02)."""
+    ok, reason = validate_generated_html(html)
+    if not ok:
+        return False, reason
+    if "{{" in html and "}}" in html:
+        return False, "Unresolved template tokens"
+    if 'data-forge-section="' not in html.lower():
+        return False, "Missing data-forge-section hooks"
+    if requires_form and "<form" not in html.lower():
+        return False, "Workflow requires a form element"
+    if (
+        requires_form
+        and "type=\"submit\"" not in html.lower()
+        and "type='submit'" not in html.lower()
+        and "<button" not in html.lower()
+    ):
+        return False, "Workflow requires a submit control"
+    for m in re.finditer(r"<img\b[^>]*>", html, re.IGNORECASE):
+        tag = m.group(0)
+        if re.search(r"\balt\s*=", tag, re.IGNORECASE) is None:
+            return False, "Images must include alt text"
+    return True, ""
+
+
 def validate_section_html(fragment: str) -> tuple[bool, str]:
     f = fragment.strip()
     if len(f) < 10:

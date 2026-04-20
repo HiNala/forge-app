@@ -13,6 +13,16 @@ class StudioGenerateRequest(BaseModel):
     provider: Literal["openai", "anthropic", "gemini"] = Field(default="openai")
 
 
+class StudioGenerateContinueRequest(BaseModel):
+    """Non-blocking clarify follow-up (F-04 session wiring)."""
+
+    workflow: str = Field(
+        description="User-selected workflow key from clarify chips",
+        examples=["contact_form"],
+    )
+    session_id: UUID | None = Field(default=None, description="Optional Studio session id when available")
+
+
 class StudioRefineRequest(BaseModel):
     message: str = Field(examples=["Make the hero more minimal"])
     page_id: UUID = Field(examples=["00000000-0000-4000-8000-000000000002"])

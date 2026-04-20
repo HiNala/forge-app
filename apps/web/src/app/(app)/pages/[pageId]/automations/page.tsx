@@ -189,15 +189,15 @@ function AutomationsEditor({
   return (
     <div className="mx-auto max-w-2xl space-y-10">
       {connected ? (
-        <p className="rounded-lg border border-border-subtle bg-surface-muted px-4 py-3 text-sm text-text">
+        <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-text">
           Google Calendar connected. Pick this calendar below if you want events on submissions.
         </p>
       ) : null}
 
-      <section className="space-y-4">
+      <section className="space-y-4 rounded-2xl border border-border bg-surface p-6">
         <div>
-          <h2 className="font-display text-lg font-semibold text-text">Notify on submission</h2>
-          <p className="mt-1 text-sm text-text-muted">
+          <h2 className="font-display text-lg font-bold text-text">Notify on submission</h2>
+          <p className="mt-1 font-body text-sm text-text-muted">
             One email per line — we&apos;ll email owners when a form is submitted.
           </p>
         </div>
@@ -213,11 +213,11 @@ function AutomationsEditor({
         />
       </section>
 
-      <section className="space-y-4">
+      <section className="space-y-4 rounded-2xl border border-border bg-surface p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="font-display text-lg font-semibold text-text">Confirmation email</h2>
-            <p className="mt-1 text-sm text-text-muted">Send a branded thank-you to the submitter.</p>
+            <h2 className="font-display text-lg font-bold text-text">Confirmation email</h2>
+            <p className="mt-1 font-body text-sm text-text-muted">Send a branded thank-you to the submitter.</p>
           </div>
           <Switch
             checked={draft.confirm_submitter}
@@ -256,11 +256,11 @@ function AutomationsEditor({
         ) : null}
       </section>
 
-      <section className="space-y-4">
+      <section className="space-y-4 rounded-2xl border border-border bg-surface p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="font-display text-lg font-semibold text-text">Google Calendar</h2>
-            <p className="mt-1 text-sm text-text-muted">
+            <h2 className="font-display text-lg font-bold text-text">Google Calendar</h2>
+            <p className="mt-1 font-body text-sm text-text-muted">
               Create a hold when a submission arrives (optional).
             </p>
           </div>
@@ -273,7 +273,7 @@ function AutomationsEditor({
           />
         </div>
         {draft.calendar_sync_enabled ? (
-          <div className="space-y-4 rounded-lg border border-border-subtle p-4">
+          <div className="space-y-4 rounded-2xl border border-border p-4">
             <div className="flex flex-wrap items-center gap-2">
               <Button type="button" variant="secondary" size="sm" onClick={() => void onConnectGoogle()}>
                 Connect Google Calendar
@@ -324,8 +324,8 @@ function AutomationsEditor({
         ) : null}
       </section>
 
-      <section className="space-y-3">
-        <h2 className="font-display text-lg font-semibold text-text">Recent runs</h2>
+      <section className="space-y-3 rounded-2xl border border-border bg-surface p-6">
+        <h2 className="font-display text-lg font-bold text-text">Recent runs</h2>
         <RunsList
           runs={qRuns.data ?? []}
           loading={qRuns.isLoading}
@@ -401,19 +401,20 @@ function RunsList({
     return <p className="text-sm text-text-muted">No automation runs yet for this page.</p>;
   }
   return (
-    <ul className="divide-y divide-border-subtle rounded-lg border border-border-subtle">
+    <ul className="divide-y divide-border rounded-2xl border border-border">
       {runs.map((r) => (
         <li key={r.id} className="flex flex-wrap items-start justify-between gap-2 px-3 py-2 text-sm">
           <div className="min-w-0 flex-1">
             <span className="font-mono text-xs text-text-muted">{r.step}</span>
             <span
-              className={`ml-2 inline-flex rounded-full px-2 py-0.5 text-xs ${
+              className={cn(
+                "ml-2 inline-flex rounded-md px-2 py-0.5 text-xs font-medium",
                 r.status === "success"
                   ? "bg-emerald-500/15 text-emerald-800"
                   : r.status === "skipped"
                     ? "bg-zinc-500/15 text-zinc-700"
-                    : "bg-rose-500/15 text-rose-800"
-              }`}
+                    : "bg-rose-500/15 text-rose-800",
+              )}
             >
               {r.status}
             </span>

@@ -9,10 +9,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import AnalyticsEvent, Page, Template, User as UserModel
+from app.db.models import AnalyticsEvent, Page, Template
+from app.db.models import User as UserModel
 from app.deps import get_db
-from app.deps.platform_admin import require_platform_admin
 from app.deps.forge_operator import require_forge_operator
+from app.deps.platform_admin import require_platform_admin
 from app.deps.tenant import TenantContext
 from app.schemas.common import StubResponse
 from app.schemas.template import (

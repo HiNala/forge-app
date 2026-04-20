@@ -34,7 +34,7 @@
 | **Mission 08 — Railway deploy** | ⚠️ 20% | Docker/compose; Railway runbooks/CI breadth varies by branch |
 | **Mission 09 — Templates** | ⚠️ 15% | Templates route placeholder; marketplace out of 1.0 scope per PRD |
 | **W-02 — Contractor proposal** | ⚠️ partial | `proposals` + questions + templates + numbering + deterministic render + public view/Q&A/accept/decline + change orders; emails, signed PDF worker fidelity, Studio line editor, org analytics dashboard, expiration job + E2E still open — see `MISSION_W02_REPORT.md` |
-| **W-03 — Pitch deck** | ⚠️ partial | Deck model + frameworks + builder + render + public runtime (present/keys/Chart.js) + iframe query forward + composer stub; full LLM Stage A/B, image gen, PPTX/PDF fidelity, Studio rail, E2E still open — see `MISSION-W03-REPORT.md` |
+| **W-03 — Pitch deck** | ⚠️ partial | Deck model + frameworks + builder + render + public runtime (present/keys/Chart.js) + API + `deck_edit` revisions + tests (`test_w03_*`); full LLM Stage A/B, image gen, PPTX/PDF bytes, Studio rail, E2E still open — see `MISSION_W03_REPORT.md` |
 
 **Overall vs. PRD 1.0:** roughly **55–63%** — publish + public HTML + tenant analytics/billing UI path is much further along; **automations reliability**, **custom domain**, and **production polish / a11y proof** remain the largest gaps.
 

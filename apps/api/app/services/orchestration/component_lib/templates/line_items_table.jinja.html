@@ -1,0 +1,10 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-line-items">
+  <table style="width:100%;border-collapse:collapse;">
+    <thead><tr><th style="text-align:left;">Description</th><th>Qty</th><th>Rate</th><th>Total</th></tr></thead>
+    <tbody>
+    {% for row in props.rows %}
+      <tr><td>{{ row.description | e }}</td><td>{{ row.qty | e }}</td><td>{{ row.rate | e }}</td><td>{{ row.total | e }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>

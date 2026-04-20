@@ -15,6 +15,7 @@ from app.db.models import Organization, Page, PageVersion
 from app.db.rls_context import set_active_organization
 from app.deps.db import get_db_public
 from app.schemas.page import PublicPageOut
+from app.services.booking_slot_inject import inject_booking_slot_runtime
 from app.services.deck_public_inject import inject_deck_public_runtime
 from app.services.forge_tracker import inject_forge_tracker
 from app.services.proposal_public_inject import inject_proposal_public_runtime
@@ -64,6 +65,7 @@ async def get_public_page(
                         page_slug=data["slug"],
                         page_id=str(data.get("page_id", "")),
                     )
+                data["html"] = inject_booking_slot_runtime(data["html"])
                 return PublicPageOut(
                     html=data["html"],
                     title=data["title"],
@@ -128,6 +130,7 @@ async def get_public_page(
             page_slug=p.slug,
             page_id=str(p.id),
         )
+    html_out = inject_booking_slot_runtime(html_out)
     return PublicPageOut(
         html=html_out,
         title=p.title,

@@ -30,7 +30,7 @@ export class AppErrorBoundary extends React.Component<Props, State> {
           className="flex min-h-[40vh] flex-col items-center justify-center rounded-[var(--radius-lg)] border border-border bg-bg-elevated/50 px-4 py-12 text-center"
           role="alert"
         >
-          <p className="font-display text-xl font-semibold text-text">Something broke here</p>
+          <p className="font-display text-xl font-bold text-text">Something broke here</p>
           <p className="mt-2 max-w-md text-sm text-text-muted font-body">
             This panel crashed unexpectedly. Your other tabs are fine — reload this view to keep going.
           </p>

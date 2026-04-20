@@ -52,6 +52,7 @@ async def test_completion_text_returns_text_and_metadata(
     assert meta["model"] == "gpt-4o-mini"
     assert meta["latency_ms"] >= 0
     assert meta.get("total_tokens") == 3
+    assert "cost_cents" in meta
     mock.assert_awaited_once()
     call_kw = mock.await_args.kwargs
     assert call_kw["model"] == "gpt-4o-mini"

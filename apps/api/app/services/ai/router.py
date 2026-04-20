@@ -15,6 +15,7 @@ from app.config import settings
 from app.services.ai.exceptions import LLMConfigurationError, LLMProviderError
 from app.services.ai.metrics import record_llm_metric
 from app.services.ai.usage import record_llm_usage
+from app.services.llm.pricing import estimate_cost_cents
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +152,12 @@ async def completion_text(
             text = response.choices[0].message.content or ""
         usage = _usage_dict(response)
         ch = _cache_hit_from_response(response)
-        meta = {"model": model, "latency_ms": latency_ms, "cache_hit": ch, **usage}
+        cost = estimate_cost_cents(
+            model,
+            input_tokens=usage.get("prompt_tokens"),
+            output_tokens=usage.get("completion_tokens"),
+        )
+        meta = {"model": model, "latency_ms": latency_ms, "cache_hit": ch, "cost_cents": cost, **usage}
         if settings.LLM_LOG_METRICS:
             logger.info(
                 json.dumps(

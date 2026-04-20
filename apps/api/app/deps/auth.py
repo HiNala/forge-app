@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import HTTPException, Request
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.config import settings
 from app.db.models import ApiToken, User
@@ -41,15 +41,32 @@ async def _authenticate_api_token(request: Request, bearer: str) -> User:
     prefix = body[:8]
 
     async with AsyncSessionLocal() as session:
-        rows = (
-            await session.execute(
-                select(ApiToken).where(
-                    ApiToken.prefix == prefix,
-                    ApiToken.token_hash == digest,
-                    ApiToken.revoked_at.is_(None),
+        # RLS: tenant GUC is not set yet; allow SELECT by prefix+hash (see migration n2b3i405).
+        await session.execute(
+            text("SELECT set_config('app.api_token_lookup_prefix', :p, true)"),
+            {"p": prefix},
+        )
+        await session.execute(
+            text("SELECT set_config('app.api_token_lookup_hash', :h, true)"),
+            {"h": digest},
+        )
+        try:
+            rows = (
+                await session.execute(
+                    select(ApiToken).where(
+                        ApiToken.prefix == prefix,
+                        ApiToken.token_hash == digest,
+                        ApiToken.revoked_at.is_(None),
+                    )
                 )
+            ).scalars().all()
+        finally:
+            await session.execute(
+                text("SELECT set_config('app.api_token_lookup_prefix', '', true)")
             )
-        ).scalars().all()
+            await session.execute(
+                text("SELECT set_config('app.api_token_lookup_hash', '', true)")
+            )
         if not rows:
             raise HTTPException(status_code=401, detail="Invalid API token")
         tok = rows[0]
@@ -70,6 +87,10 @@ async def _authenticate_api_token(request: Request, bearer: str) -> User:
 
 async def require_user(request: Request) -> User:
     """Load user from ``Authorization: Bearer`` (API token, Clerk JWT, or test headers)."""
+    token = _bearer_token(request)
+    if token and token.startswith(FORGE_LIVE_PREFIX):
+        return await _authenticate_api_token(request, token)
+
     if settings.AUTH_TEST_BYPASS and settings.ENVIRONMENT == "test":
         raw_uid = request.headers.get("x-forge-test-user-id")
         if raw_uid:
@@ -86,12 +107,8 @@ async def require_user(request: Request) -> User:
                 return user
         raise HTTPException(status_code=401, detail="Missing test user header")
 
-    token = _bearer_token(request)
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-
-    if token.startswith(FORGE_LIVE_PREFIX):
-        return await _authenticate_api_token(request, token)
 
     try:
         payload = verify_clerk_jwt(token)

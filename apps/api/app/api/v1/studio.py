@@ -15,6 +15,7 @@ from app.deps import get_db, require_role, require_tenant, require_user
 from app.deps.tenant import TenantContext
 from app.schemas.studio import (
     StudioConversationResponse,
+    StudioGenerateContinueRequest,
     StudioGenerateRequest,
     StudioMessageCreateRequest,
     StudioMessageOut,
@@ -101,6 +102,17 @@ async def studio_generate(
         gen(),
         media_type="text/event-stream",
         headers=_SSE_HEADERS,
+    )
+
+
+@router.post("/generate/continue")
+async def studio_generate_continue(
+    _body: StudioGenerateContinueRequest,
+) -> dict[str, str]:
+    """Placeholder for clarify chip follow-up (session + graph re-entry in F-04)."""
+    raise HTTPException(
+        status_code=501,
+        detail="Workflow continuation is not wired yet — use refine or regenerate.",
     )
 
 

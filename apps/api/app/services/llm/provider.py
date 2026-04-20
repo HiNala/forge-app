@@ -12,7 +12,6 @@ from typing import Any, Protocol, runtime_checkable
 
 from litellm import acompletion
 
-from app.config import settings
 from app.services.llm.pricing import estimate_cost_cents
 from app.services.llm.types import (
     CompletionChunk,

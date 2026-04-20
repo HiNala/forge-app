@@ -1,0 +1,20 @@
+<div
+  class="forge-slot-picker"
+  data-forge-slot-picker
+  data-duration="{{ (props.duration_minutes | default(30)) | int }}"
+  data-forge-section="{{ section_id | e }}"
+  style="margin:1rem 0;padding:1rem;border:1px dashed color-mix(in srgb, var(--forge-secondary, #334155) 25%, transparent);border-radius:8px;background:rgba(15,23,42,0.02)"
+>
+  <strong>{{ (props.label | default('Choose a time')) | e }}</strong>
+  <p style="margin:0.35rem 0 0.75rem;font-size:0.9rem;opacity:0.85;">
+    {{ (props.hint | default('Pick an open slot — loads from your connected calendar.')) | e }}
+  </p>
+  <p class="forge-slot-tz-hint" style="font-size:0.8rem;margin:0 0 0.5rem" aria-live="polite"></p>
+  <div class="forge-slot-date-strip" style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.75rem" role="tablist" aria-label="Dates"></div>
+  <div class="forge-slot-times" style="display:flex;flex-wrap:wrap;gap:0.35rem" role="group" aria-label="Available times"></div>
+  <p class="forge-slot-selected" style="margin:0.75rem 0 0;font-weight:600;color:var(--forge-primary, #0d9488)"></p>
+  <p class="forge-slot-status" style="margin:0.35rem 0 0;font-size:0.85rem" aria-live="polite"></p>
+  <input type="hidden" name="hold_id" value="" autocomplete="off" />
+  <input type="hidden" name="forge_hold_id" value="" autocomplete="off" />
+  <input type="hidden" name="__selected_slot" value="" autocomplete="off" />
+</div>

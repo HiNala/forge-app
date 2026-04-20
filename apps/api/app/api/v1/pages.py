@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.db.models import Organization, Page, PageVersion, Submission, User
 from app.deps import get_db, require_role, require_tenant
+from app.deps.api_scopes import require_api_scopes
 from app.deps.auth import require_user
 from app.deps.tenant import TenantContext
 from app.schemas.common import StubResponse
@@ -39,6 +40,7 @@ router = APIRouter(prefix="/pages", tags=["pages"])
 
 @router.get("/unread-counts", response_model=dict[str, int])
 async def page_unread_counts(
+    _scopes: None = Depends(require_api_scopes("read:pages")),
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_tenant),
 ) -> dict[str, int]:
@@ -55,8 +57,12 @@ async def page_unread_counts(
     return {str(pid): int(cnt) for pid, cnt in rows}
 
 
-@router.get("", response_model=list[PageOut])
+@router.get(
+    "",
+    response_model=list[PageOut],
+)
 async def list_pages(
+    _: None = Depends(require_api_scopes("read:pages")),
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_tenant),
 ) -> list[Page]:
@@ -69,6 +75,7 @@ async def list_pages(
 @router.post("", response_model=PageOut)
 async def create_page(
     body: PageCreate,
+    _: None = Depends(require_api_scopes("write:pages")),
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_role("owner", "editor")),
 ) -> Page:
@@ -94,9 +101,13 @@ async def create_page(
     return p
 
 
-@router.get("/{page_id}", response_model=PageDetailOut)
+@router.get(
+    "/{page_id}",
+    response_model=PageDetailOut,
+)
 async def get_page(
     page_id: UUID,
+    _: None = Depends(require_api_scopes("read:pages")),
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_tenant),
 ) -> Page:
@@ -106,10 +117,14 @@ async def get_page(
     return p
 
 
-@router.patch("/{page_id}", response_model=PageOut)
+@router.patch(
+    "/{page_id}",
+    response_model=PageOut,
+)
 async def patch_page(
     page_id: UUID,
     body: PagePatch,
+    _: None = Depends(require_api_scopes("write:pages")),
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_role("owner", "editor")),
 ) -> Page:
@@ -130,6 +145,7 @@ async def patch_page(
 @router.delete("/{page_id}")
 async def delete_page(
     page_id: UUID,
+    _: None = Depends(require_api_scopes("write:pages")),
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_role("owner", "editor")),
 ) -> dict[str, bool]:
@@ -141,10 +157,14 @@ async def delete_page(
     return {"ok": True}
 
 
-@router.post("/{page_id}/publish", response_model=PublishOut)
+@router.post(
+    "/{page_id}/publish",
+    response_model=PublishOut,
+)
 async def publish_page(
     page_id: UUID,
     request: Request,
+    _: None = Depends(require_api_scopes("write:pages")),
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_role("owner", "editor")),
     user: User = Depends(require_user),
@@ -219,10 +239,13 @@ async def publish_page(
     )
 
 
-@router.post("/{page_id}/unpublish")
+@router.post(
+    "/{page_id}/unpublish",
+)
 async def unpublish_page(
     page_id: UUID,
     request: Request,
+    _: None = Depends(require_api_scopes("write:pages")),
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_role("owner", "editor")),
 ) -> dict[str, bool | str]:
@@ -246,9 +269,13 @@ async def unpublish_page(
     return {"ok": True, "status": "draft"}
 
 
-@router.get("/{page_id}/versions", response_model=list[PageVersionOut])
+@router.get(
+    "/{page_id}/versions",
+    response_model=list[PageVersionOut],
+)
 async def list_versions(
     page_id: UUID,
+    _: None = Depends(require_api_scopes("read:pages")),
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_tenant),
 ) -> list[PageVersion]:
@@ -265,28 +292,40 @@ async def list_versions(
     return list(rows)
 
 
-@router.post("/{page_id}/revert/{version_id}", response_model=StubResponse)
+@router.post(
+    "/{page_id}/revert/{version_id}",
+    response_model=StubResponse,
+)
 async def revert_page(
     page_id: UUID,
     version_id: UUID,
+    _: None = Depends(require_api_scopes("write:pages")),
     db: AsyncSession = Depends(get_db),
     _ctx: TenantContext = Depends(require_tenant),
 ) -> StubResponse:
     return StubResponse()
 
 
-@router.post("/{page_id}/duplicate", response_model=StubResponse)
+@router.post(
+    "/{page_id}/duplicate",
+    response_model=StubResponse,
+)
 async def duplicate_page(
     page_id: UUID,
+    _: None = Depends(require_api_scopes("write:pages")),
     db: AsyncSession = Depends(get_db),
     _ctx: TenantContext = Depends(require_tenant),
 ) -> StubResponse:
     return StubResponse()
 
 
-@router.get("/{page_id}/submissions", response_model=SubmissionListOut)
+@router.get(
+    "/{page_id}/submissions",
+    response_model=SubmissionListOut,
+)
 async def list_page_submissions(
     page_id: UUID,
+    _: None = Depends(require_api_scopes("read:submissions")),
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_tenant),
     limit: int = Query(50, ge=1, le=100),
@@ -315,9 +354,12 @@ async def list_page_submissions(
     return SubmissionListOut(items=items, next_before=next_before)
 
 
-@router.get("/{page_id}/submissions/export")
+@router.get(
+    "/{page_id}/submissions/export",
+)
 async def export_submissions_csv(
     page_id: UUID,
+    _: None = Depends(require_api_scopes("read:submissions")),
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_tenant),
     status: str | None = Query(None, description="Filter: new | read | replied | archived"),

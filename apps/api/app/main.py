@@ -13,9 +13,9 @@ from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.caddy_internal import router as caddy_internal_router
 from app.api.public_api import router as public_router
@@ -64,8 +64,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     else:
         app.state.arq_pool = None
     try:
+        from app.services.analytics.ingestion import start_consumer
+
+        start_consumer()
+    except Exception as e:
+        logger.warning("analytics ingestion consumer: %s", e)
+    try:
         yield
     finally:
+        try:
+            from app.services.analytics.ingestion import shutdown_consumer
+
+            await shutdown_consumer()
+        except Exception as e:
+            logger.warning("analytics ingestion shutdown: %s", e)
         pool = getattr(app.state, "arq_pool", None)
         if pool is not None:
             await pool.close()

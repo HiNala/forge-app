@@ -10,6 +10,7 @@ from app.api.v1 import (
     calendar,
     notifications_center,
     organization,
+    orgs_current_alias,
     page_deck,
     page_proposal,
     pages,
@@ -32,6 +33,7 @@ api_router.include_router(public_demo.router)
 api_router.include_router(public_runtime.router)
 api_router.include_router(public_templates.router)
 api_router.include_router(organization.router)
+api_router.include_router(orgs_current_alias.router)
 api_router.include_router(settings_surfaces.router)
 api_router.include_router(notifications_center.router)
 api_router.include_router(team.router)

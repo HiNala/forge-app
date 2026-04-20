@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.ai import router as ai_router
+from app.services.ai.exceptions import LLMSchemaError
 from app.services.llm.pricing import estimate_cost_cents
 from app.services.llm.types import Message
 
@@ -69,14 +70,7 @@ ROUTES: dict[str, ModelRoute] = {
     ),
 }
 
-T = TypeVar("T", bound=BaseModel)
-
-
-class LLMSchemaError(RuntimeError):
-    """Structured output failed validation after retry."""
-
-
-async def structured_completion(
+async def structured_completion[T: BaseModel](
     *,
     role: str,
     schema: type[T],
@@ -136,6 +130,28 @@ async def structured_completion(
             )
         except Exception as e2:
             raise LLMSchemaError(f"Structured output failed after retry: {e2}") from e2
+
+
+async def structured_stream[T: BaseModel](
+    *,
+    role: str,
+    schema: type[T],
+    system_prompt: str,
+    user_prompt: str,
+    provider: str | None = None,
+    db: AsyncSession | None = None,
+    organization_id: UUID | None = None,
+) -> T:
+    """Single-shot structured output (Mission O-03). Streaming partials deferred to provider work."""
+    return await structured_completion(
+        role=role,
+        schema=schema,
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        provider=provider,
+        db=db,
+        organization_id=organization_id,
+    )
 
 
 def record_fallback_metric(primary: str, fallback: str) -> None:

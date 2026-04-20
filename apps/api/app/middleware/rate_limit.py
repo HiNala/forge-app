@@ -23,6 +23,7 @@ _RL_PUBLIC_IP_PER_MIN = 60
 _RL_SUBMIT_IP_PER_MIN = 5
 _RL_SUBMIT_PAGE_PER_MIN = 30
 _RL_PUBLIC_TRACK_PER_MIN = 60
+_RL_ANALYTICS_TRACK_PER_MIN = 600
 
 _EXEMPT_PATH_PREFIXES: tuple[str, ...] = (
     "/health",
@@ -93,6 +94,12 @@ def _limit_key_and_max(request: Request) -> tuple[str | None, int]:
         and request.method == "POST"
     ):
         return f"rl:ptrack:{_client_ip(request)}", _RL_PUBLIC_TRACK_PER_MIN
+
+    if request.method == "POST" and path.rstrip("/") == f"{settings.API_V1_STR}/analytics/track":
+        auth = request.headers.get("authorization") or ""
+        if auth.lower().startswith("bearer ") and len(auth) > 24:
+            h = hashlib.sha256(auth.encode()).hexdigest()[:32]
+            return f"rl:atrack:tok:{h}", _RL_ANALYTICS_TRACK_PER_MIN
 
     auth = request.headers.get("authorization") or ""
     if auth.lower().startswith("bearer ") and len(auth) > 24:

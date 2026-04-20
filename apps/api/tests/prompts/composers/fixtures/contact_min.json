@@ -1,0 +1,7 @@
+{
+  "plan": {"workflow": "contact_form"},
+  "expected_properties": {
+    "has_form": true,
+    "hero_exists": true
+  }
+}

@@ -81,6 +81,8 @@ class Settings(BaseSettings):
     LLM_TIMEOUT_SECONDS: float = 120.0
     LLM_FALLBACK_MODELS: str = ""
     LLM_LOG_METRICS: bool = True
+    # Mission O-03 — expert composer agents (ComponentTree + Jinja). Off by default for CI.
+    USE_AGENT_COMPOSER: bool = False
 
     # Mission 03 — Studio quotas & rate limits (per org / per user)
     PAGE_GENERATION_QUOTA_TRIAL: int = 100

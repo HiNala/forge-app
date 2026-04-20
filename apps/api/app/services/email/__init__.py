@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import logging
 from pathlib import Path
 from typing import Any, cast
@@ -35,6 +36,7 @@ async def _send_raw(
     html: str,
     text: str,
     headers: dict[str, str] | None = None,
+    attachments: list[tuple[str, bytes]] | None = None,
 ) -> str | None:
     if not settings.RESEND_API_KEY:
         logger.warning("RESEND_API_KEY not set; skipping email send")
@@ -49,6 +51,11 @@ async def _send_raw(
     }
     if headers:
         payload["headers"] = headers
+    if attachments:
+        payload["attachments"] = [
+            {"filename": fn, "content": base64.b64encode(raw).decode("ascii")}
+            for fn, raw in attachments
+        ]
 
     def _sync() -> Any:
         # Resend SDK typings expect SendParams; our dict matches at runtime.
@@ -79,6 +86,8 @@ class EmailService:
         primary_color: str | None,
         logo_url: str | None,
         voice_note: str | None,
+        subject: str | None = None,
+        attachments: list[tuple[str, bytes]] | None = None,
     ) -> str | None:
         ctx = {
             "org_name": org_name,
@@ -91,9 +100,10 @@ class EmailService:
         html, text = _render_pair("notification", ctx)
         return await _send_raw(
             to=[to_email],
-            subject=f"New submission on {page_title}",
+            subject=subject or f"New submission on {page_title}",
             html=html,
             text=text,
+            attachments=attachments,
         )
 
     async def send_confirmation(
@@ -104,6 +114,7 @@ class EmailService:
         body_plain: str,
         primary_color: str | None,
         logo_url: str | None,
+        attachments: list[tuple[str, bytes]] | None = None,
     ) -> str | None:
         body_html = escape(body_plain).replace("\n", "<br />\n")
         ctx = {
@@ -119,6 +130,7 @@ class EmailService:
             subject=subject_line,
             html=html,
             text=text,
+            attachments=attachments,
         )
 
     async def send_reply(

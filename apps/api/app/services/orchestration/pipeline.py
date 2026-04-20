@@ -4,27 +4,32 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from collections.abc import AsyncIterator
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.db.models import BrandKit, Organization, Page, PageRevision, User
 from app.deps.tenant import TenantContext
 from app.services.ai.usage import increment_pages_generated
+from app.services.context.gather import gather_context
 from app.services.deck_service import finalize_deck_studio_html
-from app.services.orchestration.html_validate import validate_generated_html
-from app.services.orchestration.intent_parser import compose_assembly_plan, parse_intent
+from app.services.orchestration.component_lib.render import render_top_level_component
+from app.services.orchestration.html_validate import validate_compose_graph, validate_generated_html
+from app.services.orchestration.intent_parser import parse_intent
 from app.services.orchestration.models import PageIntent
+from app.services.orchestration.orchestration_recorder import record_run
 from app.services.orchestration.page_composer import (
     apply_plan_constraints,
     assemble_html,
     default_assembly_plan,
     render_section,
 )
-from app.services.context.gather import gather_context
+from app.services.orchestration.plan_to_assembly import build_assembly_from_intent
 from app.services.proposal_service import finalize_proposal_studio_html
 from app.utils.slug import slugify_page_title, unique_page_slug
 
@@ -96,6 +101,11 @@ async def stream_page_generation(
         yield _sse("error", {"code": "not_found", "message": "Organization not found"})
         return
 
+    run_id = uuid4()
+    pipeline_started = time.perf_counter()
+    node_timings: dict[str, int] = {}
+    composed = None
+
     yield _sse("context", {"phase": "started"})
     bundle = await gather_context(db=db, org=org_row, user=user, prompt=prompt, time_budget_seconds=3.0)
     yield _sse(
@@ -120,20 +130,24 @@ async def stream_page_generation(
             brand_hint = {}
         if sb.primary_color and not brand_hint.get("primary_color"):
             brand_hint["primary_color"] = sb.primary_color
+            primary = sb.primary_color
         if sb.secondary_color and not brand_hint.get("secondary_color"):
             brand_hint["secondary_color"] = sb.secondary_color
-        if sb.display_font and brand_snapshot is not None:
-            brand_snapshot = dict(brand_snapshot)
-            brand_snapshot["display_font"] = brand_snapshot.get("display_font") or sb.display_font
-        if sb.body_font and brand_snapshot is not None:
-            brand_snapshot = dict(brand_snapshot)
-            brand_snapshot["body_font"] = brand_snapshot.get("body_font") or sb.body_font
+            secondary = sb.secondary_color
+        if sb.display_font or sb.body_font:
+            snap = dict(brand_snapshot) if brand_snapshot else {}
+            if sb.display_font:
+                snap["display_font"] = snap.get("display_font") or sb.display_font
+            if sb.body_font:
+                snap["body_font"] = snap.get("body_font") or sb.body_font
+            brand_snapshot = snap or brand_snapshot
     if bundle.site_voice:
         yield _sse("context.voice.inferred", {"summary": bundle.site_voice.persona_summary[:200]})
     if bundle.site_products:
         yield _sse("context.products.found", {"count": len(bundle.site_products)})
 
     ctx_block = bundle.to_prompt_context().strip()
+    t_intent0 = time.perf_counter()
     try:
         intent = await parse_intent(
             prompt,
@@ -146,8 +160,25 @@ async def stream_page_generation(
     except Exception as e:
         logger.exception("intent_fatal %s", e)
         intent = PageIntent(title_suggestion=prompt[:80] or "Page")
+    node_timings["intent_parser"] = int((time.perf_counter() - t_intent0) * 1000)
 
-    yield _sse("intent", {"intent": intent.model_dump(mode="json")})
+    yield _sse(
+        "intent",
+        {
+            "workflow": intent.workflow,
+            "confidence": intent.confidence,
+            "alternatives": [a.model_dump(mode="json") for a in intent.alternatives],
+            "intent": intent.model_dump(mode="json"),
+        },
+    )
+    if intent.confidence < 0.85:
+        clarify_cands: list[dict[str, Any]] = [
+            {"workflow": intent.workflow, "confidence": intent.confidence},
+        ]
+        for a in intent.alternatives[:2]:
+            clarify_cands.append({"workflow": a.workflow, "confidence": a.confidence})
+        yield _sse("clarify", {"candidates": clarify_cands[:3]})
+
     yield _sse("html.start", {"status": "composing"})
 
     title = intent.title_suggestion or "Untitled"
@@ -167,37 +198,100 @@ async def stream_page_generation(
     org_slug = org_row.slug
     form_action = f"/p/{org_slug}/{slug}/submit"
 
-    plan = await compose_assembly_plan(
-        intent,
-        provider=provider,
-        db=db,
-        organization_id=ctx.organization_id,
+    t_plan0 = time.perf_counter()
+    plan, page_plan = build_assembly_from_intent(intent, bundle)
+    node_timings["planner"] = int((time.perf_counter() - t_plan0) * 1000)
+
+    yield _sse(
+        "plan",
+        {
+            "sections": [s.id for s in page_plan.sections],
+            "voice": page_plan.voice_profile.tone,
+        },
     )
-    plan = apply_plan_constraints(intent, plan)
+    yield _sse("compose.start", {})
+    t_comp0 = time.perf_counter()
 
-    for i, sec in enumerate(plan.sections):
-        sid = f"{sec.component}-{i}"
-        frag = render_section(sec, form_action=form_action, section_id=sid)
-        yield _sse("html.chunk", {"index": i, "component": sec.component, "fragment": frag})
+    if settings.USE_AGENT_COMPOSER and intent.page_type not in ("pitch_deck", "proposal"):
+        try:
+            from app.services.orchestration.composer.registry import compose_with_best_agent
 
-    html = assemble_html(
-        plan,
-        title=title,
-        org_slug=org_slug,
-        page_slug=slug,
-        primary=primary,
-        secondary=secondary,
-    )
+            composed = await compose_with_best_agent(
+                plan=page_plan,
+                bundle=bundle,
+                intent=intent,
+                user_prompt=prompt,
+                provider=provider,
+                db=db,
+                organization_id=ctx.organization_id,
+                form_action=form_action,
+                org_slug=org_slug,
+                page_slug=slug,
+            )
+        except Exception as e:
+            logger.warning("agent_compose_fallback %s", e)
 
+    if composed is not None:
+        for i, node in enumerate(composed.tree.components):
+            frag = render_top_level_component(
+                node,
+                page_plan.brand_tokens,
+                form_action=form_action,
+            )
+            yield _sse("html.chunk", {"index": i, "component": node.name, "fragment": frag})
+            yield _sse(
+                "compose.section",
+                {"section": node.name, "html": frag[:2000]},
+            )
+        html = composed.html
+        node_timings["composer"] = int((time.perf_counter() - t_comp0) * 1000)
+        yield _sse(
+            "compose.complete",
+            {
+                "html_length": len(html),
+                "duration_ms": node_timings.get("composer", 0),
+                "agent": True,
+            },
+        )
+    else:
+        for i, sec in enumerate(plan.sections):
+            sid = f"{sec.component}-{i}"
+            frag = render_section(sec, form_action=form_action, section_id=sid)
+            yield _sse("html.chunk", {"index": i, "component": sec.component, "fragment": frag})
+            yield _sse(
+                "compose.section",
+                {"section": sec.component, "html": frag[:2000]},
+            )
+
+        html = assemble_html(
+            plan,
+            title=title,
+            org_slug=org_slug,
+            page_slug=slug,
+            primary=primary,
+            secondary=secondary,
+        )
+        node_timings["composer"] = int((time.perf_counter() - t_comp0) * 1000)
+        yield _sse(
+            "compose.complete",
+            {"html_length": len(html), "duration_ms": node_timings.get("composer", 0)},
+        )
+
+    requires_form = intent.page_type in ("contact-form", "booking-form", "rsvp")
     ok, reason = validate_generated_html(html)
+    if ok:
+        ok, reason = validate_compose_graph(html, requires_form=requires_form)
     if not ok:
         logger.warning("html_validate_retry %s", reason)
+        composed = None
         plan2 = apply_plan_constraints(intent, default_assembly_plan(intent))
+        yield _sse("compose.start", {"retry": True})
         for i, sec in enumerate(plan2.sections):
             sid = f"{sec.component}-{i}"
             frag = render_section(sec, form_action=form_action, section_id=sid)
             payload = {"index": i, "component": sec.component, "fragment": frag, "retry": True}
             yield _sse("html.chunk", payload)
+            yield _sse("compose.section", {"section": sec.component, "html": frag[:2000], "retry": True})
         html = assemble_html(
             plan2,
             title=title,
@@ -206,10 +300,17 @@ async def stream_page_generation(
             primary=primary,
             secondary=secondary,
         )
-        ok2, _ = validate_generated_html(html)
+        yield _sse("compose.complete", {"html_length": len(html), "retry": True})
+        ok2, r2 = validate_generated_html(html)
+        if ok2:
+            ok2, r2 = validate_compose_graph(html, requires_form=requires_form)
         if not ok2:
-            yield _sse("error", {"code": "validation_failed", "message": reason})
+            yield _sse("error", {"code": "validation_failed", "message": r2 or reason})
             return
+
+    yield _sse("review.start", {})
+    yield _sse("review.complete", {"fixable_count": 0, "suggestions_count": 0})
+    yield _sse("validate.complete", {"valid": True})
 
     form_schema: dict[str, Any] | None = None
     if intent.fields:
@@ -224,6 +325,21 @@ async def stream_page_generation(
                 for f in intent.fields
             ]
         }
+    elif composed is not None and composed.metadata.get("form_schema_hints"):
+        form_schema = composed.metadata["form_schema_hints"]
+
+    if intent.booking and intent.booking.enabled:
+        form_schema = dict(form_schema) if form_schema else {}
+        fb_m: dict[str, Any] = {"enabled": True}
+        if intent.booking.duration_minutes:
+            fb_m["duration_minutes"] = int(intent.booking.duration_minutes)
+        if intent.booking.calendar_id:
+            fb_m["calendar_id"] = str(intent.booking.calendar_id)
+        prev = form_schema.get("forge_booking")
+        if isinstance(prev, dict):
+            form_schema["forge_booking"] = {**prev, **fb_m}
+        else:
+            form_schema["forge_booking"] = fb_m
 
     if existing is not None:
         page = existing
@@ -277,6 +393,24 @@ async def stream_page_generation(
                 llm_model=None,
             )
         )
+        total_ms = int((time.perf_counter() - pipeline_started) * 1000)
+        try:
+            await record_run(
+                db,
+                run_id=run_id,
+                organization_id=ctx.organization_id,
+                user_id=user.id,
+                page_id=page.id,
+                graph_name="generate",
+                prompt=prompt,
+                intent=intent.model_dump(mode="json"),
+                plan=page_plan.model_dump(mode="json"),
+                node_timings=node_timings,
+                status="completed",
+                total_duration_ms=total_ms,
+            )
+        except Exception:
+            logger.exception("orchestration_run_record_failed")
         await db.commit()
         await db.refresh(page)
         pid = page.id
@@ -340,10 +474,32 @@ async def stream_page_generation(
                 llm_model=None,
             )
         )
+        total_ms = int((time.perf_counter() - pipeline_started) * 1000)
+        try:
+            await record_run(
+                db,
+                run_id=run_id,
+                organization_id=ctx.organization_id,
+                user_id=user.id,
+                page_id=pid,
+                graph_name="generate",
+                prompt=prompt,
+                intent=intent.model_dump(mode="json"),
+                plan=page_plan.model_dump(mode="json"),
+                node_timings=node_timings,
+                status="completed",
+                total_duration_ms=total_ms,
+            )
+        except Exception:
+            logger.exception("orchestration_run_record_failed")
         await db.commit()
         await db.refresh(page)
         await increment_pages_generated(db, ctx.organization_id)
 
+    yield _sse(
+        "persist",
+        {"page_id": str(pid), "slug": slug, "run_id": str(run_id)},
+    )
     yield _sse(
         "html.complete",
         {
@@ -352,5 +508,14 @@ async def stream_page_generation(
             "title": title,
             "refine_suggestions": _refine_suggestions_for_page_type(intent.page_type),
             "page_type": intent.page_type,
+            "run_id": str(run_id),
+        },
+    )
+    yield _sse(
+        "done",
+        {
+            "page_id": str(pid),
+            "url": f"/pages/{slug}",
+            "run_id": str(run_id),
         },
     )

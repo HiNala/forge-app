@@ -4,12 +4,9 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import UTC, datetime, timezone as dt_timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
-from arq import cron
-from arq.connections import RedisSettings
-from sqlalchemy import delete, select, text, update
 from app.db.models import (
     AvailabilityCalendar,
     Deck,
@@ -22,6 +19,13 @@ from app.db.models import (
 )
 from app.db.session import AsyncSessionLocal
 from app.services.automations import AutomationEngine
+from app.services.proposal_service import (
+    assign_signed_proposal_pdf_storage_placeholder,
+    expire_due_proposals,
+)
+from arq import cron
+from arq.connections import RedisSettings
+from sqlalchemy import delete, select, text, update
 
 logger = logging.getLogger(__name__)
 
@@ -156,6 +160,18 @@ async def purge_deleted_user(ctx: object, user_id: str) -> str:
         u.avatar_url = None
         u.auth_provider_id = None
         u.user_preferences = None
+        await db.execute(
+            text(
+                """
+                UPDATE analytics_events
+                SET user_id = NULL,
+                    metadata = COALESCE(metadata, '{}'::jsonb)
+                        || jsonb_build_object('pii_scrubbed', true)
+                WHERE user_id = CAST(:uid AS uuid)
+                """
+            ),
+            {"uid": str(uid)},
+        )
         await db.commit()
     return "scrubbed"
 
@@ -195,6 +211,18 @@ async def drop_old_analytics_partitions(ctx: object) -> None:
             )
         )
         await db.commit()
+
+
+async def refresh_retention_views(ctx: object) -> None:
+    """Nightly refresh of GL-01 retention materialized view."""
+    del ctx
+    async with AsyncSessionLocal() as db:
+        try:
+            await db.execute(text("REFRESH MATERIALIZED VIEW retention_signup_weekly"))
+            await db.commit()
+        except Exception as e:  # noqa: BLE001
+            logger.debug("refresh_retention_views: %s", e)
+            await db.rollback()
 
 
 async def partman_maintenance(ctx: object) -> None:
@@ -275,12 +303,7 @@ async def proposal_pdf_render(ctx: object, page_id: str) -> str:
         prop = await db.get(Proposal, pid)
         if prop is None:
             return "missing"
-        await db.execute(
-            text("SELECT set_config('app.current_tenant_id', :t, true)"),
-            {"t": str(prop.organization_id)},
-        )
-        num = (prop.proposal_number or str(prop.page_id))[:120]
-        prop.signed_pdf_storage_key = f"{prop.organization_id}/signed_proposals/{num}.pdf"
+        await assign_signed_proposal_pdf_storage_placeholder(db, page_id=pid)
         await db.commit()
     return "ok"
 
@@ -288,24 +311,8 @@ async def proposal_pdf_render(ctx: object, page_id: str) -> str:
 async def expire_proposals(ctx: object) -> None:
     """Mark open proposals past expires_at as expired (W-02)."""
     del ctx
-    now = datetime.now(UTC)
     async with AsyncSessionLocal() as db:
-        oids = (await db.execute(select(Organization.id))).scalars().all()
-        for oid in oids:
-            await db.execute(
-                text("SELECT set_config('app.current_tenant_id', :t, true)"),
-                {"t": str(oid)},
-            )
-            await db.execute(
-                update(Proposal)
-                .where(
-                    Proposal.organization_id == oid,
-                    Proposal.expires_at.isnot(None),
-                    Proposal.expires_at < now,
-                    Proposal.status.in_(("sent", "viewed", "questioned")),
-                )
-                .values(status="expired")
-            )
+        await expire_due_proposals(db)
         await db.commit()
 
 
@@ -336,6 +343,7 @@ class WorkerSettings:
         cron(refresh_calendar_syncs, hour={0, 6, 12, 18}, minute=0),
         cron(expire_pending_holds, minute=list(range(0, 60, 2))),
         cron(expire_proposals, hour=7, minute=30),
+        cron(refresh_retention_views, hour=6, minute=30),
     ]
     redis_settings = RedisSettings.from_dsn(
         os.environ.get("REDIS_URL", "redis://localhost:6379/0")
@@ -344,4 +352,4 @@ class WorkerSettings:
     job_timeout = 120
     keep_result = 3600
     poll_delay = 0.5
-    timezone = dt_timezone.utc
+    timezone = UTC

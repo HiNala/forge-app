@@ -50,8 +50,7 @@ async def stream_demo_page(
     slug = _DEMO_SLUG
     form_action = f"/p/{_DEMO_ORG}/{slug}/submit"
 
-    plan = await compose_assembly_plan(intent, provider=provider)
-    plan = apply_plan_constraints(intent, plan)
+    plan = await compose_assembly_plan(intent, provider=provider, bundle=None)
 
     for i, sec in enumerate(plan.sections):
         sid = f"{sec.component}-{i}"

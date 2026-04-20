@@ -1,0 +1,10 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-hero forge-hero-split" style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:center;padding:3rem 1.5rem;">
+  <div>
+    <h1 class="forge-h1" style="font-size:2rem;margin:0 0 0.5rem;">{{ (props.title or props.headline or 'Hello') | e }}</h1>
+    {% if props.subtitle %}<p class="forge-sub" style="opacity:0.9;margin:0;">{{ props.subtitle | e }}</p>{% endif %}
+    {% if props.cta and props.cta.text %}
+    <p style="margin-top:1rem;"><a href="{{ props.cta.anchor | default('#') | e }}" class="forge-cta-link">{{ props.cta.text | e }}</a></p>
+    {% endif %}
+  </div>
+  <div class="forge-hero-media" aria-hidden="true" style="min-height:8rem;background:linear-gradient(135deg, var(--brand-primary)22, transparent);border-radius:8px;"></div>
+</section>

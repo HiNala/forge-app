@@ -21,3 +21,4 @@ Forge can attach **real calendar availability** to a public contact flow: visito
 - Slots are computed in **UTC** and labeled with the calendar’s IANA timezone id for display.
 - Double booking is prevented by a **PostgreSQL `EXCLUDE`** constraint on overlapping pending/confirmed holds for the same calendar.
 - See `docs/runbooks/CALENDAR_DEBUGGING.md` when something looks wrong.
+- Implementation status and test notes: `docs/plan/MISSION_W01_REPORT.md`.

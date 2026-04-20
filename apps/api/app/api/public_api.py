@@ -22,6 +22,7 @@ from app.schemas.common import StubResponse
 from app.schemas.public_track import TrackBatchIn, TrackBatchOut
 from app.schemas.submission import PublicSubmitOut
 from app.services.ai.usage import bump_submissions_received
+from app.services.analytics.track_public import handle_public_track_batch
 from app.services.billing_gate import check_quota
 from app.services.booking_calendar.availability import ComputeParams, compute_slots
 from app.services.booking_calendar.cache import (
@@ -42,25 +43,6 @@ from app.services.queue import enqueue_run_automations
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/p", tags=["public"])
-
-_ALLOWED_TRACK_EVENTS = frozenset(
-    {
-        "page_view",
-        "section_dwell",
-        "cta_click",
-        "form_start",
-        "form_field_touch",
-        "form_abandon",
-        "form_submit",
-        "proposal_accept",
-        "proposal_decline",
-        "scroll_depth",
-        "present_started",
-        "present_slide_viewed",
-        "present_ended",
-    }
-)
-
 
 def _trim_metadata(md: dict[str, Any] | None) -> dict[str, Any] | None:
     if md is None:
@@ -417,7 +399,7 @@ async def public_submit(
     ev = AnalyticsEvent(
         organization_id=org.id,
         page_id=p.id,
-        event_type="form_submit",
+        event_type="form_submit_success",
         visitor_id=vid,
         session_id=uuid.uuid4().hex,
         metadata_={"submission_id": str(sub.id)},
@@ -453,7 +435,7 @@ async def public_track(
     request: Request,
     db: AsyncSession = Depends(get_db_public),
 ) -> TrackBatchOut:
-    """Batch analytics beacon (up to 10 events) for a live published page."""
+    """Batch analytics beacon (up to 20 events) for a live published page."""
     try:
         raw = await request.json()
     except json.JSONDecodeError as e:
@@ -483,36 +465,17 @@ async def public_track(
     if p is None:
         raise HTTPException(status_code=404, detail="Not found")
 
-    ip_raw = _client_ip(request)
-    ip_anon = anonymize_ipv4_to_slash24(ip_raw)
-    ua = request.headers.get("user-agent")
-    ref = request.headers.get("referer") or request.headers.get("referrer")
-    now = datetime.now(UTC)
-    rows: list[AnalyticsEvent] = []
-    for ev in batch.events:
-        if ev.event_type not in _ALLOWED_TRACK_EVENTS:
-            raise HTTPException(status_code=400, detail=f"Unsupported event_type: {ev.event_type}")
-        rows.append(
-            AnalyticsEvent(
-                id=uuid.uuid4(),
-                organization_id=org.id,
-                page_id=p.id,
-                event_type=ev.event_type,
-                visitor_id=ev.visitor_id[:200],
-                session_id=ev.session_id[:200],
-                metadata_=_trim_metadata(ev.metadata),
-                source_ip=ip_anon,
-                user_agent=(ua[:4000] if ua else None),
-                referrer=(ref[:2000] if ref else None),
-                created_at=now,
-            )
-        )
-    for row in rows:
-        db.add(row)
     try:
-        await db.commit()
+        return await handle_public_track_batch(
+            db=db,
+            request=request,
+            org=org,
+            page=p,
+            batch=batch,
+            redis=getattr(request.app.state, "redis", None),
+        )
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.exception("public_track_commit %s", e)
-        await db.rollback()
+        logger.exception("public_track %s", e)
         raise HTTPException(status_code=500, detail="Could not save events") from e
-    return TrackBatchOut(accepted=len(rows))

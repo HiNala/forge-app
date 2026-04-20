@@ -1,0 +1,7 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-generic" data-component="{{ name | e }}">
+  {% if props.headline or props.title %}<h2 class="forge-h2">{{ (props.headline or props.title) | e }}</h2>{% endif %}
+  {% if props.subtitle %}<p class="forge-sub">{{ props.subtitle | e }}</p>{% endif %}
+  {% if props.body %}<div class="forge-body">{{ props.body | e }}</div>{% endif %}
+  {% if props.html %}<div class="forge-html">{{ props.html | safe }}</div>{% endif %}
+  {{ children_html | safe }}
+</section>

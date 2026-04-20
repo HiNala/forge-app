@@ -32,10 +32,11 @@ def _scrub_event(event: dict[str, Any], _hint: dict[str, Any]) -> dict[str, Any]
 
 
 def init_sentry() -> None:
-    if not (settings.SENTRY_DSN or "").strip():
+    dsn = (settings.SENTRY_DSN or "").strip()
+    if not dsn:
         return
     sentry_sdk.init(
-        dsn=settings.SENTRY_DSN.strip(),
+        dsn=dsn,
         environment=settings.ENVIRONMENT,
         integrations=[
             StarletteIntegration(transaction_style="endpoint"),
@@ -43,5 +44,5 @@ def init_sentry() -> None:
         ],
         traces_sample_rate=0.1,
         send_default_pii=False,
-        before_send=_scrub_event,
+        before_send=_scrub_event,  # type: ignore[arg-type]
     )

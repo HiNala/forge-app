@@ -1,148 +1,55 @@
-# Forge API overview
+# Forge API overview (REST + public HTML)
 
-Base URL: **`/api/v1`** (versioned). Public pretty URLs: **`/p/{org_slug}/{page_slug}`** (see `public_api`, `public_runtime`).
+**Base paths**
 
-For machine-readable discovery, use **`GET /api/v1/openapi.json`** (FastAPI). This page is a **human map** for onboarding.
+- **Versioned JSON API:** `/api/v1/...` — requires `Authorization: Bearer` (Clerk JWT or `forge_live_*` API token) unless marked public below.
+- **Tenant context:** `x-forge-active-org-id` (or `x-forge-tenant-id` / `x-active-org`) on authenticated, org-scoped routes. See [REQUEST_PIPELINE.md](./REQUEST_PIPELINE.md).
+- **Public browser pages (pretty URLs):** `/p/{org_slug}/{page_slug}/...` — submit, track, booking, proposal flows (no org header; org resolved from URL + page lookup).
+- **Health / ops:** `/health/*`, `/metrics` — unauthenticated where deployed.
 
-## Auth & identity
+**Discoverability**
 
-| Method | Path | Notes |
-|--------|------|--------|
-| POST | `/api/v1/auth/signup` | Clerk JWT; creates user/org bootstrap |
-| GET | `/api/v1/auth/me` | User + memberships + active org hints |
-| PATCH | `/api/v1/auth/me` | Profile fields (`display_name`, `avatar_url`) |
-| PATCH | `/api/v1/auth/me/preferences` | JSONB UI preferences |
-| POST | `/api/v1/auth/preferences` | Same as preferences upsert (BI-03 alias) |
-| POST | `/api/v1/auth/switch-org` | Validates membership; returns active org id |
-| POST | `/api/v1/auth/signout` | Client-side sign-out hook |
-| POST | `/api/v1/auth/webhook` | Clerk events (svix) |
-
-## Organization & brand
-
-| Method | Path | Notes |
-|--------|------|--------|
-| POST | `/api/v1/org/workspaces` | Additional workspace |
-| GET | `/api/v1/org` | Current org (tenant header) |
-| PATCH | `/api/v1/org` | Update org |
-| DELETE | `/api/v1/org` | Soft delete workspace |
-| GET | `/api/v1/org/brand` | Brand kit |
-| PUT | `/api/v1/org/brand` | Replace brand kit |
-| POST | `/api/v1/org/brand/logo` | Logo upload |
-| GET | `/api/v1/org/notifications/unread-count` | Stub / count |
-
-## Team, members, invitations
-
-| Method | Path | Notes |
-|--------|------|--------|
-| GET | `/api/v1/team/members` | Roster |
-| GET | `/api/v1/team/invitations/pending` | Pending invites |
-| DELETE | `/api/v1/team/invitations/{id}` | Cancel |
-| POST | `/api/v1/team/invite` | Create invitation |
-| POST | `/api/v1/team/transfer-ownership` | Owner transfer |
-| POST | `/api/v1/team/invitations/{token}/accept` | Accept (user-only session) |
-| PATCH | `/api/v1/team/members/{member_id}` | Role change |
-| DELETE | `/api/v1/team/members/{member_id}` | Remove member |
-
-## Pages, publish, submissions (nested)
-
-| Method | Path | Notes |
-|--------|------|--------|
-| GET | `/api/v1/pages` | List pages |
-| POST | `/api/v1/pages` | Create page |
-| GET | `/api/v1/pages/{page_id}` | Detail |
-| PATCH | `/api/v1/pages/{page_id}` | Update |
-| DELETE | `/api/v1/pages/{page_id}` | Delete |
-| POST | `/api/v1/pages/{page_id}/publish` | Publish |
-| POST | `/api/v1/pages/{page_id}/unpublish` | Unpublish |
-| GET | `/api/v1/pages/{page_id}/versions` | Versions / revisions |
-| POST | `/api/v1/pages/{page_id}/revert/{version_id}` | Revert stub |
-| POST | `/api/v1/pages/{page_id}/duplicate` | Duplicate stub |
-| GET | `/api/v1/pages/{page_id}/submissions` | List submissions |
-| GET | `/api/v1/pages/{page_id}/submissions/export` | CSV export |
-| * | `/api/v1/submissions/...` | Mounted under `submissions` router for detail/reply/files |
-
-## Studio (SSE + chat)
-
-| Method | Path | Notes |
-|--------|------|--------|
-| GET | `/api/v1/studio/usage` | Quota snapshot |
-| POST | `/api/v1/studio/generate` | SSE generation |
-| POST | `/api/v1/studio/refine` | SSE refine |
-| POST | `/api/v1/studio/sections/edit` | Section edit |
-| GET/POST | `/api/v1/studio/conversations/...` | Conversation + messages |
-
-## Automations
-
-| Method | Path | Notes |
-|--------|------|--------|
-| GET/PUT | `/api/v1/pages/{page_id}/automations` | Rule config |
-| GET | `/api/v1/pages/{page_id}/automations/runs` | Run history |
-| POST | `/api/v1/pages/{page_id}/automations/runs/{run_id}/retry` | Retry |
-
-## Calendar integrations
-
-| Method | Path | Notes |
-|--------|------|--------|
-| POST | `/api/v1/calendar/connect/google` | OAuth start |
-| GET | `/api/v1/calendar/callback/google` | OAuth callback |
-| GET | `/api/v1/calendar/connections` | List connections |
-| DELETE | `/api/v1/calendar/connections/{id}` | Disconnect |
-
-## Analytics
-
-| Method | Path | Notes |
-|--------|------|--------|
-| GET | `/api/v1/pages/{page_id}/analytics/summary` | Summary |
-| GET | `/api/v1/pages/{page_id}/analytics/funnel` | Funnel |
-| GET | `/api/v1/pages/{page_id}/analytics/engagement` | Engagement |
-| GET | `/api/v1/pages/{page_id}/analytics/events` | Raw events |
-| GET | `/api/v1/analytics/summary` | Org-wide |
-
-## Billing (Stripe)
-
-| Method | Path | Notes |
-|--------|------|--------|
-| GET | `/api/v1/billing/plan` | Plan + subscription fields |
-| GET | `/api/v1/billing/usage` | Usage meters |
-| POST | `/api/v1/billing/checkout` | Checkout session URL |
-| POST | `/api/v1/billing/portal` | Portal URL |
-| POST | `/api/v1/billing/webhook` | Stripe webhook |
-| GET | `/api/v1/billing/invoices` | Invoice list |
-
-## Templates
-
-| Method | Path | Notes |
-|--------|------|--------|
-| GET | `/api/v1/templates` | Published templates |
-| GET | `/api/v1/templates/{id}` | Detail |
-| POST | `/api/v1/templates/{id}/use` | Clone into org |
-| * | `/api/v1/admin/templates/...` | Admin CRUD (`admin.py`) |
-| GET | `/api/v1/public-templates/slugs` | Public slugs |
-| GET | `/api/v1/public-templates/by-slug/{slug}` | Public template |
-
-## Public & demos
-
-| Method | Path | Notes |
-|--------|------|--------|
-| POST | `/api/v1/public/demo` | Anonymous SSE demo |
-| GET | `/api/v1/public/pages/{org}/{page}` | Published page payload |
-| POST | `/p/{org}/{page}/submit` | Public submit (`public_api`) |
-| POST | `/p/{org}/{page}/track` | Analytics batch (`public_api`) |
-
-## Webhooks & internal
-
-| Method | Path | Notes |
-|--------|------|--------|
-| POST | `/api/v1/webhooks/resend` | Resend events |
-| GET | `/internal/caddy/validate` | Caddy on-demand TLS (`caddy_internal`) |
-
-## Ops
-
-| Method | Path | Notes |
-|--------|------|--------|
-| GET | `/health`, `/health/live`, `/health/ready`, `/health/deep` | Health |
-| GET | `/metrics` | Prometheus |
+1. Open **`/api/v1/openapi.json`** (or `/docs`) while the API is running for the authoritative contract and schemas.
+2. Regenerate a path list anytime: `cd apps/api && uv run python scripts/dump_openapi_paths.py` (groups routes by OpenAPI tag).
+3. Frontend TypeScript types: generate with `pnpm dlx openapi-typescript <url>/api/v1/openapi.json -o apps/web/src/lib/api/schema.ts` when you wire CI (BI-03 follow-up).
 
 ---
 
-**Naming note:** Mission BI-03 described `/orgs/current/*`; the codebase uses **`/org`** (singular) mounted without redundant `current` — same intent, shorter paths.
+## Resource map (where to look in code)
+
+| Product area | Router package / prefix | Notes |
+|----------------|-------------------------|--------|
+| Auth, me, preferences, switch org, Clerk webhook | `app/api/v1/auth.py` `/auth` | Signup creates user+org via `ensure_user_org_signup`; `DELETE /auth/me` schedules `purge_deleted_user` |
+| Organization, brand, settings, custom domains, API tokens | `app/api/v1/organization.py` `/org` | “Current org” = tenant from header |
+| Team: members, invites, accept token | `app/api/v1/team.py` `/team` | Accept uses `app.invitation_token` RLS escape hatch |
+| Pages, publish, versions, CSV export | `app/api/v1/pages.py` `/pages` | Submissions also under `/pages/{id}/submissions` |
+| Proposal / deck sub-resources | `app/api/v1/page_proposal.py`, `page_deck.py` | Mounted under `/pages` |
+| Studio (SSE generate/refine, section edit) | `app/api/v1/studio.py` `/studio` | LLM orchestration in `services/orchestration/` |
+| Submissions (detail, reply, file URL) | `app/api/v1/submissions.py` `/submissions` | |
+| Automations config + retry | `app/api/v1/automations.py` | Per-page automation rules + runs |
+| Calendar OAuth + connections | `app/api/v1/calendar.py` | Google connect/callback |
+| Availability + ICS | `app/api/v1/availability_calendars.py` | Parse/sync in `services/booking_calendar/` |
+| Analytics | `app/api/v1/analytics.py` | Org + per-page summaries |
+| Billing / Stripe | `app/api/v1/billing.py` | Checkout, portal, webhook |
+| Templates (catalog + use) | `app/api/v1/templates.py` | Admin templates under `/admin` |
+| Public runtime (Next can also call) | `app/api/v1/public_runtime.py` `/api/v1/public/pages` | Cached HTML for `/p/...` in Next |
+| Public visitor API | `app/api/public_api.py` `/p/...` | Submit, track, upload, availability |
+| Webhooks (Resend) | `app/api/v1/webhooks.py` | |
+| Internal (Caddy TLS ask) | `app/api/caddy_internal.py` `/internal/caddy` | |
+
+---
+
+## REST shape conventions
+
+- **Thin routes** — Pydantic bodies, `Depends(get_db)` + `require_tenant` / `require_role`, delegate to `app/services/*`.
+- **Pagination** — mix of limit/offset and cursor-style query params depending on route; OpenAPI lists exact parameters.
+- **Errors** — `application/json` with `code`, `message`, `request_id` (see BI-02 exception handlers in `app/main.py`).
+- **Idempotency** — signup and webhooks use natural keys / Stripe event ids; background jobs use deterministic `_job_id` where applicable (`purge_deleted_user`).
+
+---
+
+## Divergence from early BI-03 draft specs
+
+- **URL naming:** Org routes use **`/api/v1/org`** (not `/orgs/current`); team routes use **`/api/v1/team`** (members, invitations). Behavior matches the mission intent (current org from tenant context).
+- **Studio:** Full SSE pipelines exist where the mission described stubs; quota + rate limits still apply.
+- **Dedicated `/api/v1/uploads/presign`:** Presign flows may live under feature-specific routes (e.g. brand logo, submission files); consolidate under a single uploads router in a follow-up if product wants one affordance.

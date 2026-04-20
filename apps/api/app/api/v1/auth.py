@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from svix.webhooks import Webhook
 
 from app.config import settings
-from app.db.models import Membership, Organization, User
+from app.db.models import AuditLog, Membership, Organization, User
 from app.deps import get_db, require_user
 from app.deps.db import get_db_no_auth
 from app.deps.tenant import TenantContext, raw_active_organization_id, require_tenant
@@ -29,6 +29,7 @@ from app.schemas.user_preferences_full import UserPreferences, UserPreferencesPa
 from app.security.clerk_jwt import verify_clerk_jwt
 from app.services.audit_log import write_audit
 from app.services.bootstrap import clerk_email_from_payload, ensure_user_org_signup
+from app.services.profile_validate import validate_display_name, validate_timezone_iana
 from app.services.queue import enqueue_purge_deleted_user
 from app.services.settings_cache import cache_delete, cache_get_json, cache_set_json, prefs_key
 from app.services.user_prefs_merge import (
@@ -145,11 +146,13 @@ async def patch_me(
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
     if body.display_name is not None:
-        user.display_name = body.display_name
+        validate_display_name(body.display_name)
+        user.display_name = body.display_name.strip()
     if body.avatar_url is not None:
         user.avatar_url = body.avatar_url
     prefs = dict(merged_user_preferences(user.user_preferences).model_dump(mode="json"))
     if body.timezone is not None:
+        validate_timezone_iana(body.timezone)
         prefs["timezone"] = body.timezone
     if body.locale is not None:
         prefs["locale"] = body.locale
@@ -189,6 +192,10 @@ async def patch_user_preferences(
     ctx: TenantContext = Depends(require_tenant),
 ) -> dict[str, bool]:
     """Merge partial preferences; audit + cache invalidation."""
+    if body.timezone is not None:
+        validate_timezone_iana(body.timezone)
+    if body.workspace_timezone is not None:
+        validate_timezone_iana(body.workspace_timezone)
     uid = getattr(request.state, "user_id", None)
     if uid is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -223,6 +230,39 @@ async def post_user_preferences(
 ) -> dict[str, bool]:
     """Alias for PATCH /me/preferences."""
     return await patch_user_preferences(body, request, db, ctx)
+
+
+@router.get("/me/activity")
+async def list_my_security_activity(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    limit: int = 50,
+) -> dict[str, Any]:
+    """Recent audit events where this user was the actor (Settings → Security)."""
+    uid = getattr(request.state, "user_id", None)
+    if uid is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    q = (
+        select(AuditLog)
+        .where(AuditLog.actor_user_id == uid)
+        .order_by(AuditLog.id.desc())
+        .limit(min(limit, 100))
+    )
+    rows = (await db.execute(q)).scalars().all()
+    return {
+        "items": [
+            {
+                "id": r.id,
+                "organization_id": str(r.organization_id),
+                "action": r.action,
+                "resource_type": r.resource_type,
+                "resource_id": str(r.resource_id) if r.resource_id else None,
+                "changes": r.changes,
+                "created_at": r.created_at.isoformat(),
+            }
+            for r in rows
+        ]
+    }
 
 
 @router.delete("/me", response_model=DeleteMeResponse)
