@@ -30,6 +30,19 @@ class PlatformRole(Base):
     system: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
 
 
+class PlatformRolePermission(Base):
+    """Join: which permissions each platform role grants."""
+
+    __tablename__ = "platform_role_permissions"
+
+    role_key: Mapped[str] = mapped_column(
+        Text, ForeignKey("platform_roles.key", ondelete="CASCADE"), primary_key=True
+    )
+    permission_key: Mapped[str] = mapped_column(
+        Text, ForeignKey("platform_permissions.key", ondelete="CASCADE"), primary_key=True
+    )
+
+
 class PlatformUserRole(Base):
     __tablename__ = "platform_user_roles"
 

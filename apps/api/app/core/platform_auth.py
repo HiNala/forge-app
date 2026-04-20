@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Annotated
 from uuid import UUID
 
@@ -136,7 +136,7 @@ def _jwt_age_seconds(request: Request) -> float | None:
     return max(0.0, time.time() - float(iat))
 
 
-def require_platform_permission(permission: str) -> Callable:
+def require_platform_permission(permission: str) -> Callable[..., Awaitable[User]]:
     """FastAPI dependency: current user must hold ``permission`` (or legacy ``is_admin``)."""
 
     async def _dep(request: Request, user: Annotated[User, Depends(require_user)]) -> User:
@@ -153,7 +153,7 @@ def require_platform_permission(permission: str) -> Callable:
     return _dep
 
 
-def require_fresh_platform_auth(permission: str) -> Callable:
+def require_fresh_platform_auth(permission: str) -> Callable[..., Awaitable[User]]:
     """Like ``require_platform_permission`` but enforces recent primary auth for sensitive perms."""
 
     async def _dep(request: Request, user: Annotated[User, Depends(require_user)]) -> User:
