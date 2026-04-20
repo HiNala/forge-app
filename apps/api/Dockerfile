@@ -1,6 +1,6 @@
+# syntax=docker/dockerfile:1
 # GL-04 — multi-stage API image (slim runtime, deps baked in builder).
 # Migrations: run explicitly (`railway run -- alembic upgrade head`), not on container start.
-# syntax=docker/dockerfile:1
 FROM python:3.12-slim AS builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 WORKDIR /app
