@@ -9,6 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.core.secret_compare import constant_time_str_equal
 from app.deps.db import get_db_public
 
 logger = logging.getLogger(__name__)
@@ -29,8 +30,10 @@ async def caddy_validate_domain(
     require header ``X-Forge-Caddy-Token`` to match.
     """
     tok = (settings.CADDY_INTERNAL_TOKEN or "").strip()
-    if tok and request.headers.get("x-forge-caddy-token") != tok:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    if tok:
+        provided = request.headers.get("x-forge-caddy-token") or ""
+        if not constant_time_str_equal(provided, tok):
+            raise HTTPException(status_code=401, detail="Unauthorized")
 
     raw = (domain or "").strip().lower()
     host = raw.split(":")[0].strip(".")
