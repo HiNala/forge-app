@@ -36,6 +36,7 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
 FRESH_AUTH_MAX_AGE_SECONDS = 15 * 60
 
 # Legacy ``users.is_admin`` unioned with DB rows (partial seed safe).
+# Keep keys aligned with ``platform_permissions`` seeds in migration ``gl02_platform_rbac``.
 _FULL_LEGACY_PLATFORM_PERMISSIONS: frozenset[str] = frozenset(
     {
         "orgs:read_list",
