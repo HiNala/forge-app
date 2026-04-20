@@ -6,7 +6,7 @@ export type StudioChatMsg = {
   role: "user" | "assistant" | "system";
   text: string;
   /** Assistant card after generation */
-  kind?: "artifact" | "plain" | "workflow_clarify";
+  kind?: "artifact" | "plain" | "workflow_clarify" | "review_finding" | "review_summary";
   artifactMeta?: {
     pageId: string;
     title: string;
@@ -14,6 +14,14 @@ export type StudioChatMsg = {
     slug: string;
     summary: string;
     status: string;
+    qualityScore?: number;
+    degradedQuality?: boolean;
+  };
+  reviewMeta?: {
+    expert?: string;
+    severity?: string;
+    message?: string;
+    suggested_action?: string;
   };
   clarifyMeta?: {
     candidates: { workflow: string; confidence: number; rationale: string }[];

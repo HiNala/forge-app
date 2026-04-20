@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import delete as sql_delete
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,7 +48,7 @@ async def delete_submission(
     submission_id: UUID,
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_role("owner", "editor")),
-) -> None:
+) -> Response:
     sub = (
         await db.execute(select(Submission).where(Submission.id == submission_id))
     ).scalar_one_or_none()
@@ -63,6 +63,7 @@ async def delete_submission(
     await db.execute(sql_delete(AutomationRun).where(AutomationRun.submission_id == submission_id))
     await db.delete(sub)
     await db.commit()
+    return Response(status_code=204)
 
 
 @router.patch("/{submission_id}", response_model=SubmissionOut)

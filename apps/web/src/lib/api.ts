@@ -825,6 +825,24 @@ export async function adminListTemplates(
   });
 }
 
+export type OrchestrationQualityOut = {
+  samples_with_review: number;
+  avg_quality_score: number | null;
+  avg_by_workflow: Record<string, number>;
+  orchestration_runs_total: number;
+};
+
+export async function adminOrchestrationQuality(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string,
+): Promise<OrchestrationQualityOut> {
+  return apiRequest<OrchestrationQualityOut>("/admin/orchestration-quality", {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
 export async function adminRegenerateTemplatePreview(
   getToken: () => Promise<string | null>,
   activeOrgId: string,

@@ -12,6 +12,8 @@ export type ArtifactMeta = {
   slug: string;
   summary: string;
   status: string;
+  qualityScore?: number;
+  degradedQuality?: boolean;
 };
 
 type StudioPageArtifactCardProps = {
@@ -45,6 +47,23 @@ export function StudioPageArtifactCard({
         <span className="rounded-full bg-white/10 px-2 py-0.5 font-body text-[10px] font-semibold capitalize text-white/60">
           {meta.pageType.replace(/-/g, " ")}
         </span>
+        {typeof meta.qualityScore === "number" ? (
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 font-body text-[10px] font-semibold",
+              meta.qualityScore >= 90
+                ? "bg-emerald-500/20 text-emerald-300"
+                : meta.qualityScore >= 75
+                  ? "bg-amber-500/20 text-amber-200"
+                  : meta.qualityScore >= 60
+                    ? "bg-orange-500/20 text-orange-200"
+                    : "bg-red-500/20 text-red-200",
+            )}
+            title="Design review quality score"
+          >
+            Quality {meta.qualityScore}
+          </span>
+        ) : null}
         <span className="text-xs text-white/60 font-body line-clamp-2">{meta.summary}</span>
       </div>
       <div className="mt-3 flex flex-wrap gap-1.5">

@@ -12,14 +12,6 @@ export function SignupClient() {
   const searchParams = useSearchParams();
 
   React.useEffect(() => {
-    const wf = searchParams.get("workflow");
-    if (wf) {
-      try {
-        sessionStorage.setItem("forge.pendingWorkflow", wf);
-      } catch {
-        /* ignore */
-      }
-    }
     const tid = searchParams.get("template");
     if (tid) {
       try {

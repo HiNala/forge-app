@@ -6,10 +6,10 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import AnalyticsEvent, Page, Template
+from app.db.models import AnalyticsEvent, OrchestrationRun, Page, Template
 from app.db.models import User as UserModel
 from app.deps import get_admin_db
 from app.deps.forge_operator import require_forge_operator
@@ -52,6 +52,46 @@ async def admin_usage(
     _ctx: TenantContext = Depends(require_forge_operator),
 ) -> StubResponse:
     return StubResponse()
+
+
+@router.get("/orchestration-quality")
+async def admin_orchestration_quality(
+    db: AsyncSession = Depends(get_admin_db),
+    _ctx: TenantContext = Depends(require_forge_operator),
+) -> dict[str, Any]:
+    """Aggregate review scores from recent orchestration runs (O-04)."""
+    del _ctx
+    rows = (
+        await db.execute(
+            select(OrchestrationRun)
+            .where(OrchestrationRun.review_findings.isnot(None))
+            .order_by(OrchestrationRun.created_at.desc())
+            .limit(800)
+        )
+    ).scalars().all()
+    scores: list[int] = []
+    by_workflow: dict[str, list[int]] = {}
+    for r in rows:
+        rf = r.review_findings
+        if not isinstance(rf, dict):
+            continue
+        qs = rf.get("quality_score")
+        if not isinstance(qs, (int, float)):
+            continue
+        qv = int(qs)
+        scores.append(qv)
+        intent = r.intent or {}
+        wf = str(intent.get("workflow") or intent.get("page_type") or "unknown")
+        by_workflow.setdefault(wf, []).append(qv)
+    avg = sum(scores) / len(scores) if scores else None
+    wf_avg = {k: sum(v) / len(v) for k, v in by_workflow.items() if v}
+    total = (await db.execute(select(func.count(OrchestrationRun.id)))).scalar_one()
+    return {
+        "samples_with_review": len(scores),
+        "avg_quality_score": avg,
+        "avg_by_workflow": wf_avg,
+        "orchestration_runs_total": int(total),
+    }
 
 
 @router.get("/llm-stats")

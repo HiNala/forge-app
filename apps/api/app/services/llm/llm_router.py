@@ -17,13 +17,14 @@ from app.services.llm.types import Message
 
 logger = logging.getLogger(__name__)
 
-TaskName = Literal["intent", "compose", "section_edit"]
+TaskName = Literal["intent", "compose", "section_edit", "review"]
 
 ROLE_TO_TASK: dict[str, TaskName] = {
     "intent_parser": "intent",
     "composer": "compose",
     "section_editor": "section_edit",
     "voice_inferrer": "intent",
+    "reviewer": "review",
 }
 
 
@@ -67,6 +68,16 @@ ROUTES: dict[str, ModelRoute] = {
         ],
         temperature=0.5,
         max_tokens=2000,
+    ),
+    "reviewer": ModelRoute(
+        role="reviewer",
+        primary=("openai", "gpt-4o"),
+        fallbacks=[
+            ("anthropic", "anthropic/claude-3-5-sonnet-20241022"),
+            ("gemini", "gemini/gemini-2.0-flash"),
+        ],
+        temperature=0.3,
+        max_tokens=6000,
     ),
 }
 

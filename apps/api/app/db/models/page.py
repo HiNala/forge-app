@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -40,6 +40,12 @@ class Page(Base, UUIDPrimaryKeyMixin):
     )
     created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id")
+    )
+    # O-04 — last expert review snapshot (optional; cleared when regenerated)
+    last_review_quality_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    last_review_report: Mapped[Any] = mapped_column(JSONB, nullable=True)
+    review_degraded_quality: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false"
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

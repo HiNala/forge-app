@@ -186,9 +186,9 @@ export function DashboardView() {
     { id: "archived", label: "Archived" },
   ];
 
-  const wfChips: { id: WorkflowFilter; label: string }[] = [
-    { id: "all", label: "All" },
-    { id: "contact", label: "Contact forms" },
+  const wfChips: { id: DashboardWorkflowFilter; label: string }[] = [
+    { id: "all", label: "All types" },
+    { id: "contact", label: "Contact" },
     { id: "proposal", label: "Proposals" },
     { id: "deck", label: "Decks" },
     { id: "other", label: "Other" },
@@ -330,15 +330,7 @@ export function DashboardView() {
               ))}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(
-                [
-                  { id: "all" as const, label: "All types" },
-                  { id: "contact" as const, label: "Contact" },
-                  { id: "proposal" as const, label: "Proposals" },
-                  { id: "deck" as const, label: "Decks" },
-                  { id: "other" as const, label: "Other" },
-                ] satisfies { id: DashboardWorkflowFilter; label: string }[]
-              ).map((c) => (
+              {wfChips.map((c) => (
                 <button
                   key={c.id}
                   type="button"

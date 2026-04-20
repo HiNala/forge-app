@@ -64,7 +64,7 @@ function PageThumbnail({ page }: { page: PageOut }) {
           alt=""
           fill
           sizes="(max-width: 640px) 100vw, 33vw"
-          className={cn("object-cover", objectPos)}
+          className="object-cover object-top"
           unoptimized={/^https?:\/\//.test(src)}
         />
       ) : (

@@ -19,6 +19,7 @@ from app.services.ai.usage import increment_pages_generated
 from app.services.context.gather import gather_context
 from app.services.deck_service import finalize_deck_studio_html
 from app.services.orchestration.component_lib.render import render_top_level_component
+from app.services.orchestration.component_lib.schema import ProposalComponentTree
 from app.services.orchestration.html_validate import validate_compose_graph, validate_generated_html
 from app.services.orchestration.intent_parser import parse_intent
 from app.services.orchestration.models import PageIntent
@@ -30,6 +31,8 @@ from app.services.orchestration.page_composer import (
     render_section,
 )
 from app.services.orchestration.plan_to_assembly import build_assembly_from_intent
+from app.services.orchestration.review.refine import refine_component_tree_from_findings
+from app.services.orchestration.review.service import run_full_review
 from app.services.proposal_service import finalize_proposal_studio_html
 from app.utils.slug import slugify_page_title, unique_page_slug
 
@@ -310,8 +313,105 @@ async def stream_page_generation(
             return
 
     yield _sse("review.start", {})
-    yield _sse("review.complete", {"fixable_count": 0, "suggestions_count": 0})
+    booking_enabled = intent.booking is not None and intent.booking.enabled
+    merged_final: list[Any] = []
+    report_final: Any = None
+    voice_res_final: Any = None
+    review_iterations_done = 0
+    for iteration in range(2):
+        try:
+            tree_dict = composed.tree.model_dump(mode="json") if composed is not None else None
+            prop_tree: ProposalComponentTree | None = None
+            if composed is not None and isinstance(composed.tree, ProposalComponentTree):
+                prop_tree = composed.tree
+            report_final, voice_res_final, merged_final = await run_full_review(
+                component_tree=tree_dict,
+                html=html,
+                page_plan=page_plan,
+                intent=intent,
+                user_prompt=prompt,
+                provider=provider,
+                db=db,
+                organization_id=ctx.organization_id,
+                proposal_tree=prop_tree,
+                booking_enabled=booking_enabled,
+            )
+        except Exception as e:
+            logger.warning("review_pipeline_soft_fail %s", e)
+            report_final = None
+            merged_final = []
+        review_iterations_done = iteration + 1
+        findings_list = merged_final or []
+        if report_final is None:
+            yield _sse(
+                "review.complete",
+                {"fixable_count": 0, "suggestions_count": 0, "quality_score": 88, "iteration": iteration},
+            )
+            break
+        for f in findings_list:
+            fd = f.model_dump(mode="json") if hasattr(f, "model_dump") else f
+            yield _sse("review.finding", fd)
+        fixable_n = sum(1 for x in findings_list if getattr(x, "auto_fixable", False))
+        sugg_n = sum(1 for x in findings_list if not getattr(x, "auto_fixable", False))
+        yield _sse(
+            "review.complete",
+            {
+                "fixable_count": fixable_n,
+                "suggestions_count": sugg_n,
+                "quality_score": report_final.overall_quality_score,
+                "summary": report_final.summary[:1200],
+                "iteration": iteration,
+            },
+        )
+        if iteration == 1:
+            break
+        fixables = [
+            f
+            for f in findings_list
+            if getattr(f, "auto_fixable", False) and getattr(f, "severity", "") in ("critical", "major")
+        ]
+        if composed is None or not fixables:
+            break
+        t_ref0 = time.perf_counter()
+        try:
+            composed.tree, html = await refine_component_tree_from_findings(
+                tree=composed.tree,
+                fixables=fixables[:24],
+                plan=page_plan,
+                intent=intent,
+                user_prompt=prompt,
+                provider=provider,
+                db=db,
+                organization_id=ctx.organization_id,
+                form_action=form_action,
+            )
+            node_timings["review_refine"] = int((time.perf_counter() - t_ref0) * 1000)
+        except Exception as e:
+            logger.warning("review_refine_failed %s", e)
+            break
+        ok_r, reason_r = validate_generated_html(html)
+        if ok_r and requires_form:
+            ok_r, reason_r = validate_compose_graph(html, requires_form=requires_form)
+        if not ok_r:
+            logger.warning("post_refine_validate %s", reason_r)
+            break
     yield _sse("validate.complete", {"valid": True})
+
+    review_report_blob: dict[str, Any] | None = None
+    quality_score_out = 88
+    degraded_q = False
+    if report_final is not None:
+        quality_score_out = int(report_final.overall_quality_score)
+        review_report_blob = {
+            "quality_score": report_final.overall_quality_score,
+            "summary": report_final.summary,
+            "findings": [f.model_dump(mode="json") for f in merged_final],
+            "voice": voice_res_final.model_dump(mode="json") if voice_res_final else {},
+            "iterations": review_iterations_done,
+        }
+        degraded_q = any(f.severity == "critical" for f in merged_final) or (
+            report_final.overall_quality_score < 55
+        )
 
     form_schema: dict[str, Any] | None = None
     if intent.fields:
@@ -382,6 +482,9 @@ async def stream_page_generation(
         page.form_schema = form_schema
         page.intent_json = intent.model_dump(mode="json")
         page.brand_kit_snapshot = brand_snapshot
+        page.last_review_quality_score = quality_score_out if review_report_blob else None
+        page.last_review_report = review_report_blob
+        page.review_degraded_quality = degraded_q
         db.add(
             PageRevision(
                 page_id=page.id,
@@ -409,6 +512,7 @@ async def stream_page_generation(
                 node_timings=node_timings,
                 status="completed",
                 total_duration_ms=total_ms,
+                review_findings=review_report_blob,
             )
         except Exception:
             logger.exception("orchestration_run_record_failed")
@@ -426,6 +530,9 @@ async def stream_page_generation(
             intent_json=intent.model_dump(mode="json"),
             brand_kit_snapshot=brand_snapshot,
             created_by_user_id=user.id,
+            last_review_quality_score=quality_score_out if review_report_blob else None,
+            last_review_report=review_report_blob,
+            review_degraded_quality=degraded_q,
         )
         db.add(page)
         await db.flush()
@@ -463,6 +570,9 @@ async def stream_page_generation(
                 yield _sse("error", {"code": "validation_failed", "message": reasond})
                 return
         page.current_html = html
+        page.last_review_quality_score = quality_score_out if review_report_blob else None
+        page.last_review_report = review_report_blob
+        page.review_degraded_quality = degraded_q
         db.add(
             PageRevision(
                 page_id=pid,
@@ -490,6 +600,7 @@ async def stream_page_generation(
                 node_timings=node_timings,
                 status="completed",
                 total_duration_ms=total_ms,
+                review_findings=review_report_blob,
             )
         except Exception:
             logger.exception("orchestration_run_record_failed")
@@ -510,6 +621,10 @@ async def stream_page_generation(
             "refine_suggestions": _refine_suggestions_for_page_type(intent.page_type),
             "page_type": intent.page_type,
             "run_id": str(run_id),
+            "quality_score": quality_score_out,
+            "review_summary": (report_final.summary[:800] if report_final else ""),
+            "degraded_quality": degraded_q,
+            "publish_ack_required": bool(report_final and report_final.overall_quality_score < 50),
         },
     )
     yield _sse(

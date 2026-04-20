@@ -70,6 +70,16 @@ async def get_public_page(
                         page_id=str(data.get("page_id", "")),
                     )
                 data["html"] = inject_booking_slot_runtime(data["html"])
+                raw_plan = data.get("org_plan")
+                plan_str = str(raw_plan) if raw_plan is not None else None
+                show_badge = forge_branding_visible_for_plan(plan_str)
+                if show_badge:
+                    data["html"] = inject_made_with_forge_badge(
+                        data["html"],
+                        show=True,
+                        page_id=str(data.get("page_id", "")),
+                        forge_site_base=settings.APP_PUBLIC_URL,
+                    )
                 return PublicPageOut(
                     html=data["html"],
                     title=data["title"],
@@ -136,6 +146,14 @@ async def get_public_page(
             page_id=str(p.id),
         )
     html_out = inject_booking_slot_runtime(html_out)
+    show_badge = forge_branding_visible_for_plan(str(org.plan) if org.plan is not None else None)
+    if show_badge:
+        html_out = inject_made_with_forge_badge(
+            html_out,
+            show=True,
+            page_id=str(p.id),
+            forge_site_base=settings.APP_PUBLIC_URL,
+        )
     return PublicPageOut(
         html=html_out,
         title=p.title,

@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth, useUser } from "@clerk/nextjs";
-import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { Monitor, PanelsTopLeft, Send } from "lucide-react";
 import Link from "next/link";
@@ -18,7 +17,6 @@ import {
   getPage,
   getStudioConversation,
   getStudioUsage,
-  listPages,
   publishPage,
   type PageDetailOut,
   type StudioUsageOut,
@@ -113,6 +111,7 @@ export function StudioWorkspace() {
   const abortRef = React.useRef<AbortController | null>(null);
   const lastStreamRef = React.useRef<{ kind: "generate" | "refine"; payload: Record<string, unknown> } | null>(null);
   const lastGeneratePromptRef = React.useRef<string>("");
+  const lastUserPromptRef = React.useRef<string>("");
   const workflowHintRef = React.useRef<string | null>(null);
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
 

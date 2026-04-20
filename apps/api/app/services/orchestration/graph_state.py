@@ -23,11 +23,14 @@ class RunBudget(BaseModel):
 
 
 class ReviewResult(BaseModel):
-    """Output of the review agent (O-04 will enrich)."""
+    """Output of the review agent (O-04)."""
 
     fixable_count: int = 0
     suggestions_count: int = 0
+    quality_score: int = 0
+    summary: str = ""
     findings: list[dict[str, Any]] = Field(default_factory=list)
+    iteration: int = 0
 
 
 class GraphState(BaseModel):

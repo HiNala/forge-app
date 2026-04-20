@@ -56,4 +56,6 @@ async def test_validation_error_flattens_fields() -> None:
     data = r.json()
     assert data.get("code") == "validation_error"
     assert data.get("request_id") == "val-1"
-    assert isinstance(data.get("errors"), list)
+    fields = data.get("extra", {}).get("fields")
+    assert isinstance(fields, list)
+    assert any(f.get("field") == "slug" for f in fields)

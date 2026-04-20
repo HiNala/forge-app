@@ -25,6 +25,7 @@ async def record_run(
     status: str,
     total_duration_ms: int,
     error_message: str | None = None,
+    review_findings: dict[str, Any] | None = None,
 ) -> None:
     row = OrchestrationRun(
         id=run_id,
@@ -35,7 +36,7 @@ async def record_run(
         prompt=prompt[:8000],
         intent=intent,
         plan=plan,
-        review_findings=None,
+        review_findings=review_findings,
         node_timings=node_timings,
         total_duration_ms=total_duration_ms,
         status=status,
