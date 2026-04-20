@@ -1,59 +1,78 @@
 #!/usr/bin/env bash
-# Compare required keys from .env.example with Railway variables (GL-04 Phase 5).
-# Usage:
-#   ./scripts/deployment/audit_env.sh                    # list keys from .env.example
-#   ./scripts/deployment/audit_env.sh staging            # same + try `railway variables`
-#   ENV_FILE=.env.staging ./scripts/deployment/audit_env.sh staging
+# GL-04 — compare `.env.example` keys with Railway variables for an environment.
+# Usage: ./scripts/deployment/audit_env.sh staging|production
+#
+# Requires: Railway CLI (`npm i -g @railway/cli`) and `RAILWAY_TOKEN` in the environment.
+# If the CLI is unavailable, prints the expected keys only (exit 0).
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-ENV_FILE="${ENV_FILE:-$REPO_ROOT/.env.example}"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 ENV_NAME="${1:-}"
 
-if [[ ! -f "$ENV_FILE" ]]; then
-  echo "Missing env template: $ENV_FILE" >&2
-  exit 1
-fi
-
-# Keys only — ignore comments and empty values
-mapfile -t KEYS < <(grep -E '^[A-Z][A-Z0-9_]+=' "$ENV_FILE" | sed 's/=.*//' | sort -u)
-
-echo "Source: $ENV_FILE"
-echo "Variables: ${#KEYS[@]}"
-if [[ -z "$ENV_NAME" ]]; then
-  printf '%s\n' "${KEYS[@]}"
-  exit 0
-fi
-
-if ! command -v railway >/dev/null 2>&1; then
-  echo "railway CLI not found — install: https://docs.railway.com/develop/cli" >&2
-  echo "Required keys from $ENV_FILE:" >&2
-  printf '%s\n' "${KEYS[@]}" >&2
+if [[ "$ENV_NAME" != "staging" && "$ENV_NAME" != "production" ]]; then
+  echo "Usage: $0 staging|production" >&2
   exit 2
 fi
 
-echo "Railway environment: $ENV_NAME (set RAILWAY_TOKEN and run from a linked project directory)"
-TMP="$(mktemp)"
-# railway variables output format varies by CLI version — best-effort parse of KEY=
-if railway variables --environment "$ENV_NAME" 2>/dev/null | tee "$TMP" | grep -qE '^[A-Z0-9_]+='; then
-  :
-else
-  echo "Could not list variables (link project: \`railway link\`) or empty." >&2
-  rm -f "$TMP"
-  exit 3
-fi
-
-MISSING=0
-for k in "${KEYS[@]}"; do
-  if ! grep -E "^${k}=" "$TMP" >/dev/null 2>&1; then
-    echo "MISSING in Railway: $k"
-    MISSING=$((MISSING + 1))
-  fi
-done
-rm -f "$TMP"
-
-if [[ "$MISSING" -gt 0 ]]; then
-  echo "Audit failed: $MISSING variables from $ENV_FILE not set in Railway ($ENV_NAME)." >&2
+EXPECTED_FILE="$ROOT/.env.example"
+if [[ ! -f "$EXPECTED_FILE" ]]; then
+  echo "Missing $EXPECTED_FILE" >&2
   exit 1
 fi
-echo "Audit OK: all ${#KEYS[@]} keys present in Railway ($ENV_NAME)."
+
+mapfile -t EXPECTED_KEYS < <(
+  grep -E '^[A-Z][A-Z0-9_]*[[:space:]]*=' "$EXPECTED_FILE" 2>/dev/null \
+    | cut -d= -f1 | tr -d ' ' | sort -u
+)
+
+echo "Expected $((${#EXPECTED_KEYS[@]})) keys from .env.example (environment: $ENV_NAME)"
+
+if ! command -v railway >/dev/null 2>&1; then
+  echo "railway CLI not found — install: npm i -g @railway/cli" >&2
+  echo "Expected keys:" >&2
+  printf '  %s\n' "${EXPECTED_KEYS[@]}" >&2
+  exit 0
+fi
+
+if [[ -z "${RAILWAY_TOKEN:-}" ]]; then
+  echo "RAILWAY_TOKEN not set — cannot query Railway. Export token and re-run." >&2
+  exit 0
+fi
+
+export RAILWAY_TOKEN
+# Select target env (CLI varies; these patterns work on common Railway CLI versions).
+railway environment use "$ENV_NAME" 2>/dev/null || true
+export RAILWAY_ENVIRONMENT="$ENV_NAME"
+
+# Railway CLI output format varies by version — extract KEY= lines where possible.
+ACTUAL_RAW="$(railway variables 2>/dev/null || true)"
+mapfile -t ACTUAL_KEYS < <(
+  echo "$ACTUAL_RAW" | grep -oE '^[A-Z][A-Z0-9_]+' | sort -u
+)
+
+if [[ ${#ACTUAL_KEYS[@]} -eq 0 ]]; then
+  echo "No variables parsed from 'railway variables' — check CLI login and permissions." >&2
+  exit 1
+fi
+
+missing=0
+for key in "${EXPECTED_KEYS[@]}"; do
+  found=0
+  for ak in "${ACTUAL_KEYS[@]}"; do
+    if [[ "$ak" == "$key" ]]; then
+      found=1
+      break
+    fi
+  done
+  if [[ $found -eq 0 ]]; then
+    echo "MISSING in Railway: $key"
+    missing=1
+  fi
+done
+
+if [[ $missing -eq 0 ]]; then
+  echo "OK: every .env.example key appears in Railway ($ENV_NAME)."
+  exit 0
+fi
+echo "Audit failed: add missing variables in Railway (environment: $ENV_NAME)." >&2
+exit 1

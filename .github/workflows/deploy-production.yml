@@ -1,0 +1,53 @@
+# GL-04 — production deploy: manual gate + optional Railway CLI trigger.
+# Prefer GitHub Environment protection rules (required reviewers) on `production`.
+name: Deploy production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type deploy to confirm"
+        required: true
+        default: ""
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  railway-production:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guard
+        run: |
+          test "${{ github.event.inputs.confirm }}" = "deploy" || { echo "Set confirm to 'deploy'"; exit 1; }
+
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli@3
+
+      - name: Deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "RAILWAY_TOKEN not set."
+            exit 1
+          fi
+          if [ -z "${{ secrets.RAILWAY_SERVICE_ID_PRODUCTION }}" ]; then
+            echo "RAILWAY_SERVICE_ID_PRODUCTION not set."
+            exit 1
+          fi
+          railway up --service "${{ secrets.RAILWAY_SERVICE_ID_PRODUCTION }}"
+
+      - name: Post-deploy smoke (optional)
+        env:
+          PRODUCTION_BASE_URL: ${{ secrets.PRODUCTION_BASE_URL }}
+        run: |
+          if [ -z "$PRODUCTION_BASE_URL" ]; then
+            echo "PRODUCTION_BASE_URL not set — skip."
+            exit 0
+          fi
+          curl -fsS -o /dev/null --max-time 30 "$PRODUCTION_BASE_URL/" || exit 1

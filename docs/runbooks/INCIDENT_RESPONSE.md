@@ -1,47 +1,34 @@
-# Incident response
+# Incident response (GL-04)
 
-## Is production healthy?
+Quick reference when something breaks in production.
 
-1. **App URL** — open the marketing and app URLs; confirm 200 responses.
-2. **API** — `GET /health` returns `{"status":"healthy"}`; `GET /health/deep` confirms Postgres and Redis (and lists whether Stripe/Resend/OpenAI keys are present — not live calls).
-3. **Worker** — confirm the worker container/process is running and processing Redis queue jobs (arq).
-4. **Database** — connect with read-only credentials; check recent errors in Postgres logs.
+## LLM cost or error spike
 
-## Roll back a bad deploy
+1. Check Sentry for provider errors and rate limits.
+2. In Railway logs, filter `llm` / `openai` / `anthropic`.
+3. Toggle `LLM_FALLBACK_MODELS` or reduce `STUDIO_GENERATE_PER_MINUTE_*` via env (requires redeploy).
+4. If abuse suspected: tighten WAF/rate limits at Caddy or API middleware.
 
-1. **Railway / CI** — redeploy the previous successful Git revision (git SHA) from the hosting dashboard or pipeline.
-2. **Database** — if a migration ran, evaluate whether to run `alembic downgrade` for the specific revision (coordinate with engineering; never downgrade blindly if data depends on new columns).
+## Email not delivering (Resend)
 
-## Logs
+1. Verify domain DNS (SPF, DKIM, DMARC) in Resend dashboard.
+2. Check `RESEND_API_KEY` and `EMAIL_FROM` in Railway.
+3. Inspect worker logs for automation/email jobs.
 
-- **API / worker** — platform logs (Railway, Docker, or `docker compose logs -f api worker`).
-- **Frontend** — Vercel/Railway build logs; browser DevTools for client-only issues.
+## Webhooks flapping (Stripe)
 
-## Pause email (Resend compromised or abuse)
+1. Stripe Dashboard → Webhooks → delivery logs.
+2. Confirm `STRIPE_WEBHOOK_SECRET` matches the endpoint signing secret.
+3. Check API logs for `stripe` / `webhook` and 4xx/5xx.
 
-1. Remove or rotate `RESEND_API_KEY` in the API environment; restart API so sends fail closed or no-op per code paths.
-2. In Resend dashboard: pause domain or revoke API keys.
-3. Communicate to users if outbound mail was affected.
+## Elevated 5xx
 
-## Security incident
+1. Railway service health and recent deploys — **rollback** if correlated.
+2. Postgres connection saturation: scale API replicas or pool size (careful).
+3. Redis down: API may degrade; restore Redis plugin.
 
-1. Rotate `SECRET_KEY`, Clerk secrets, Stripe keys, database passwords.
-2. Review audit logs and Sentry for unusual spikes.
-3. Follow `docs/security/IMPLEMENTATION.md` for control verification after recovery.
+## Customer-reported tenant data leak (suspected)
 
-## Severity levels
-
-| Level | Meaning | Example |
-|-------|---------|---------|
-| **SEV1** | Full outage or data loss risk | API down, DB unreachable |
-| **SEV2** | Major feature broken | Sign-in, payments, all emails |
-| **SEV3** | Degraded / workaround | Single integration, slow Studio |
-| **SEV4** | Minor | UI glitch, non-blocking bug |
-
-**Communication:** post to internal channel with summary + ETA; use status page for customer-visible SEV1/2. After resolution, short post-mortem using [FIRST_PRODUCTION_BUG.md](./FIRST_PRODUCTION_BUG.md).
-
-## Related runbooks
-
-- [ONCALL.md](./ONCALL.md) — routing and response times  
-- [ROLLBACK.md](./ROLLBACK.md) — deploy rollback  
-- [DEPLOYMENT.md](./DEPLOYMENT.md) — normal releases  
+1. Treat as **P0**: preserve logs, avoid destructive changes.
+2. Run RLS audit scripts and isolate affected org IDs.
+3. Follow legal/comms process per company policy.

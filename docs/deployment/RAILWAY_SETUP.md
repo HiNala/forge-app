@@ -19,7 +19,7 @@ Set **Root Directory** in Railway:
 | web | *(repo root)* | `apps/web/Dockerfile` |
 | caddy | `infra/caddy` | `Dockerfile` |
 
-`railway.json` files in this repo mirror the above; align Railway UI if the platform does not auto-detect them.
+Templates: `apps/api/railway.json`, `apps/web/railway.json`, `infra/caddy/railway.json`, and **`infra/railway.worker.json`** for the worker (service root = repo root). Do not add a `railway.json` under `apps/worker/` with a wrong Dockerfile path.
 
 ## CLI bootstrap
 
@@ -71,7 +71,11 @@ Full list: [ENV_MANIFEST.md](./ENV_MANIFEST.md). Audit:
 
 ## CI/CD
 
-Existing workflows: `.github/workflows/ci.yml` (tests), `.github/workflows/deploy-railway.yml` (optional Railway deploy when secrets are set). Extend per GL-04 Phase 12 (staging auto, production gated).
+- `.github/workflows/ci.yml` — lint, typecheck, API tests, RLS check.
+- `.github/workflows/deploy-staging.yml` — on push to `main` (filtered paths), optional `railway up` when `RAILWAY_TOKEN` and `RAILWAY_SERVICE_ID_STAGING` are set; otherwise rely on Railway’s GitHub integration.
+- `.github/workflows/deploy-production.yml` — manual `workflow_dispatch` with confirmation input; uses `RAILWAY_SERVICE_ID_PRODUCTION` and GitHub Environment `production` (add required reviewers there).
+
+Secrets: `RAILWAY_TOKEN`, `RAILWAY_SERVICE_ID_STAGING`, `RAILWAY_SERVICE_ID_PRODUCTION`, optional `STAGING_BASE_URL` / `PRODUCTION_BASE_URL` for post-deploy `curl` smoke.
 
 ## DNS
 

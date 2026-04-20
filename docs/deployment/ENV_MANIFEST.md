@@ -21,15 +21,15 @@ Authoritative names live in `.env.example` (root) and `apps/api/app/config.py`. 
 | `APP_PUBLIC_URL` | Links in emails, Stripe return URLs | api, worker | config | public web URL |
 | `UPGRADE_URL` | Billing upgrade deep link | api | config | `/settings/billing` on app URL |
 | `CADDY_INTERNAL_TOKEN` | Shared secret for `/internal/caddy/validate` | api, caddy | secret | random string; match on both |
-| `AUTH_PROVIDER` | e.g. `clerk` | api | config | `clerk` |
-| `CLERK_SECRET_KEY` | Clerk backend | api | secret | per environment |
+| `CLERK_JWKS_URL` | Clerk JWKS URL | api | config | from Clerk dashboard |
+| `CLERK_JWT_ISSUER` | Expected JWT issuer | api | config | Clerk instance |
+| `CLERK_AUDIENCE` | Optional audience | api | config | if used |
 | `CLERK_WEBHOOK_SECRET` | Clerk webhook signing | api | secret | per environment |
 | `LLM_*` / provider keys | Router + models (see `config.py`) | api, worker | secret / config | staging keys vs live keys |
 | `USE_AGENT_COMPOSER` | Expert composer agents | api | config | `true` when ready in prod |
 | `OPENAI_API_KEY` | OpenAI | api, worker | secret | |
 | `ANTHROPIC_API_KEY` | Anthropic | api, worker | secret | |
 | `GOOGLE_API_KEY` | Gemini / Google AI | api, worker | secret | |
-| `STORAGE_PROVIDER` | `minio` / `s3` / R2-compatible | api, worker | config | `s3` in cloud |
 | `S3_ENDPOINT` | Object storage endpoint | api, worker | config | R2 or MinIO |
 | `S3_BUCKET` | Bucket name | api, worker | config | `forge-staging` / `forge-production` |
 | `S3_ACCESS_KEY` / `S3_SECRET_KEY` | Credentials | api, worker | secret | |

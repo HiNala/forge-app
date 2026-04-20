@@ -11,7 +11,7 @@
 | **Infra** | `infra/caddy/Dockerfile`, `infra/caddy/Caddyfile` (commented reference), root `infra/railway.json` template. |
 | **Web** | `next.config.ts` sets `output: "standalone"` for Docker deploys. |
 | **Tests** | `tests/test_caddy_internal.py` (Postgres). |
-| **CI** | `.github/workflows/deploy-railway.yml` — **optional** Railway CLI deploy; requires secrets (`RAILWAY_TOKEN`, service IDs). Push-to-`main` targets **staging**; **production** is manual `workflow_dispatch` with GitHub Environment `production`. |
+| **CI** | `.github/workflows/deploy-staging.yml` / `deploy-production.yml` — **optional** Railway CLI deploy when secrets are set; GitHub-linked Railway builds remain primary. |
 | **Runbooks** | [ENVIRONMENTS.md](../runbooks/ENVIRONMENTS.md), [DEPLOYMENT.md](../runbooks/DEPLOYMENT.md), [ROLLBACK.md](../runbooks/ROLLBACK.md), [DATABASE.md](../runbooks/DATABASE.md), [MIGRATIONS.md](../runbooks/MIGRATIONS.md), [COST_MODEL.md](../runbooks/COST_MODEL.md), [LLM_OUTAGE.md](../runbooks/LLM_OUTAGE.md), [FIRST_PRODUCTION_BUG.md](../runbooks/FIRST_PRODUCTION_BUG.md), [ONCALL.md](../runbooks/ONCALL.md); extended [INCIDENT_RESPONSE.md](../runbooks/INCIDENT_RESPONSE.md). |
 
 ## What must be done in Railway / DNS (not verifiable from git)
