@@ -127,7 +127,7 @@ class Settings(BaseSettings):
 
     FORGE_OPERATOR_ORG_IDS: str = ""
     CADDY_INTERNAL_TOKEN: str = ""
-    # If set in production, ``GET /metrics`` requires header ``X-Metrics-Token`` (use for public API URLs).
+    # Required when ``ENVIRONMENT=production``: ``GET /metrics`` requires header ``X-Metrics-Token``.
     METRICS_TOKEN: str = ""
 
     model_config = SettingsConfigDict(

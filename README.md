@@ -37,6 +37,7 @@ Edit `.env` before starting anything that reads it:
 1. **Clerk** — `CLERK_JWKS_URL`, `CLERK_JWT_ISSUER`, `CLERK_AUDIENCE` (and webhook secret if you use webhooks). Required for browser sign-in and API JWT validation.
 2. **LLM** — At least `OPENAI_API_KEY` (or other provider keys) for live Studio generation and orchestration.
 3. **Secrets** — Set `SECRET_KEY` to a long random string (e.g. `openssl rand -hex 32`).
+4. **Production API** — With `ENVIRONMENT=production`, set `METRICS_TOKEN` (scrapers send `X-Metrics-Token` to `GET /metrics`), `CADDY_INTERNAL_TOKEN` if you expose `/internal/caddy/validate` for on-demand TLS, and `TRUST_PROXY_HEADERS=true` behind a trusted load balancer so rate limits use the real client IP.
 
 All variable names and categories match `apps/api/app/config.py`. **Never commit `.env`.** The canonical template is **`.env.example`**.
 
