@@ -84,6 +84,7 @@ class Settings(BaseSettings):
     LLM_MODEL_INTENT: str = "gpt-4o-mini"
     LLM_MODEL_COMPOSE: str = "gpt-4o"
     LLM_MODEL_SECTION_EDIT: str = "gpt-4o-mini"
+    LLM_MODEL_REVIEW: str = "gpt-4o"
     LLM_TIMEOUT_SECONDS: float = 120.0
     LLM_FALLBACK_MODELS: str = ""
     LLM_LOG_METRICS: bool = True

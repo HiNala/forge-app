@@ -19,7 +19,7 @@ from app.services.llm.pricing import estimate_cost_cents
 
 logger = logging.getLogger(__name__)
 
-TaskName = Literal["intent", "compose", "section_edit"]
+TaskName = Literal["intent", "compose", "section_edit", "review"]
 
 # Provider override (Studio body) → default LiteLLM model ids when env uses short names.
 _PROVIDER_DEFAULTS: dict[str, dict[str, str]] = {
@@ -27,16 +27,19 @@ _PROVIDER_DEFAULTS: dict[str, dict[str, str]] = {
         "intent": "gpt-4o-mini",
         "compose": "gpt-4o",
         "section_edit": "gpt-4o-mini",
+        "review": "gpt-4o",
     },
     "anthropic": {
         "intent": "anthropic/claude-3-5-haiku-20241022",
         "compose": "anthropic/claude-3-5-sonnet-20241022",
         "section_edit": "anthropic/claude-3-5-haiku-20241022",
+        "review": "anthropic/claude-3-5-sonnet-20241022",
     },
     "gemini": {
         "intent": "gemini/gemini-2.0-flash",
         "compose": "gemini/gemini-2.0-flash",
         "section_edit": "gemini/gemini-2.0-flash",
+        "review": "gemini/gemini-2.0-flash",
     },
 }
 
@@ -64,6 +67,7 @@ def _primary_model(task: TaskName, provider: str | None) -> str:
         "intent": settings.LLM_MODEL_INTENT,
         "compose": settings.LLM_MODEL_COMPOSE,
         "section_edit": settings.LLM_MODEL_SECTION_EDIT,
+        "review": settings.LLM_MODEL_REVIEW,
     }[task]
     if env_model.strip() and "/" in env_model:
         return env_model.strip()

@@ -7,14 +7,24 @@ import { adminOrchestrationQuality, type OrchestrationQualityOut } from "@/lib/a
 import { useForgeSession } from "@/providers/session-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+function parseOperatorOrgIds(): string[] {
+  const raw = process.env.NEXT_PUBLIC_FORGE_OPERATOR_ORG_IDS ?? "";
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export default function OrchestrationQualityPage() {
   const { getToken } = useAuth();
   const { activeOrganizationId } = useForgeSession();
+  const operatorIds = React.useMemo(() => parseOperatorOrgIds(), []);
+  const isOperator = !!activeOrganizationId && operatorIds.includes(activeOrganizationId);
   const [data, setData] = React.useState<OrchestrationQualityOut | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!activeOrganizationId) return;
+    if (!activeOrganizationId || !isOperator) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -27,7 +37,19 @@ export default function OrchestrationQualityPage() {
     return () => {
       cancelled = true;
     };
-  }, [getToken, activeOrganizationId]);
+  }, [getToken, activeOrganizationId, isOperator]);
+
+  if (!isOperator) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-12">
+        <h1 className="font-display text-2xl font-semibold text-text">Orchestration quality</h1>
+        <p className="mt-3 text-sm text-text-muted">
+          Forge operator workspace only — see{" "}
+          <code className="rounded bg-surface-muted px-1">NEXT_PUBLIC_FORGE_OPERATOR_ORG_IDS</code>.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">

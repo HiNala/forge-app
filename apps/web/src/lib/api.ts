@@ -1,14 +1,22 @@
 /**
  * Typed API client: Bearer Clerk JWT + Forge active-org header.
  * Backend tenant header: `x-forge-active-org-id` (see apps/api/app/deps/tenant.py).
+ *
+ * Do not import client-only UI (e.g. sonner) at module scope — this file is used from
+ * Server Components; dynamic import keeps marketing/static routes buildable.
  */
-import { toast } from "sonner";
+import { getApiUrl } from "./api-url";
 
 export const FORGE_ACTIVE_ORG_HEADER = "x-forge-active-org-id";
 
-export function getApiUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-  return raw.replace(/\/?$/, "") + "/api/v1";
+export { getApiUrl };
+
+function toastApiFeedback(kind: "error" | "warning", message: string): void {
+  if (typeof window === "undefined") return;
+  void import("sonner").then(({ toast }) => {
+    if (kind === "error") toast.error(message);
+    else toast.warning(message);
+  });
 }
 
 export type MembershipOut = {
@@ -86,17 +94,20 @@ export async function apiRequest<T>(
   }
 
   if (res.status === 402) {
-    toast.error("Plan limit reached. Raise limits under Settings → Billing.");
+    toastApiFeedback(
+      "error",
+      "Plan limit reached. Raise limits under Settings → Billing.",
+    );
     throw new ApiError("Payment required", 402, json);
   }
 
   if (res.status === 403) {
-    toast.error("You don’t have access to that.");
+    toastApiFeedback("error", "You don’t have access to that.");
     throw new ApiError("Forbidden", 403, json);
   }
 
   if (res.status === 429) {
-    toast.warning("Too many requests — try again in a moment.");
+    toastApiFeedback("warning", "Too many requests — try again in a moment.");
     throw new ApiError("Too many requests", 429, json);
   }
 
@@ -769,37 +780,11 @@ export async function postTemplateUse(
   });
 }
 
-export type PublicTemplateOut = {
-  id: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  category: string;
-  preview_image_url: string | null;
-  html: string;
-};
-
-export async function getPublicTemplateBySlug(slug: string): Promise<PublicTemplateOut> {
-  const res = await fetch(`${getApiUrl()}/public/templates/by-slug/${encodeURIComponent(slug)}`);
-  const json = res.headers.get("content-type")?.includes("application/json")
-    ? await res.json().catch(() => null)
-    : null;
-  if (!res.ok) {
-    throw new ApiError(res.statusText || "Request failed", res.status, json);
-  }
-  return json as PublicTemplateOut;
-}
-
-export async function listPublicTemplateSlugs(): Promise<string[]> {
-  const res = await fetch(`${getApiUrl()}/public/templates/slugs`);
-  const json = res.headers.get("content-type")?.includes("application/json")
-    ? await res.json().catch(() => null)
-    : null;
-  if (!res.ok) {
-    throw new ApiError(res.statusText || "Request failed", res.status, json);
-  }
-  return (json as { slugs: string[] }).slugs;
-}
+export {
+  getPublicTemplateBySlug,
+  listPublicTemplateSlugs,
+  type PublicTemplateOut,
+} from "./public-templates";
 
 export type AdminTemplateRow = {
   id: string;
