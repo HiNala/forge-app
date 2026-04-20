@@ -14,7 +14,7 @@ export function FaqAccordion({
   className?: string;
 }) {
   return (
-    <div className={cn("divide-y divide-border rounded-xl border border-border bg-surface", className)}>
+    <div className={cn("divide-y divide-border rounded-2xl border border-border bg-surface", className)}>
       {items.map((item) => (
         <details key={item.q} className="group p-0">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-left font-medium text-text font-body outline-none marker:content-none [-webkit-tap-highlight-color:transparent] [&::-webkit-details-marker]:hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">

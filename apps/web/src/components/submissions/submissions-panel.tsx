@@ -476,7 +476,7 @@ export function SubmissionsPanel() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
             transition={MOTION_TRANSITIONS.fadeUp}
-            className="fixed inset-x-4 bottom-4 z-40 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-lg md:left-auto md:right-8 md:max-w-2xl"
+            className="fixed inset-x-4 bottom-4 z-40 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-lg md:left-auto md:right-8 md:max-w-2xl"
             role="toolbar"
             aria-label="Bulk actions"
           >

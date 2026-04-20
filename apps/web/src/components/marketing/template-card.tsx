@@ -17,7 +17,7 @@ export function TemplateCard({ href, name, tag, description }: Props) {
     <Link
       href={href}
       className={cn(
-        "group block overflow-hidden rounded-xl border border-border bg-surface shadow-sm transition-[box-shadow,transform]",
+        "group block overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition-[box-shadow,transform]",
         "hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
       )}
     >

@@ -294,7 +294,7 @@ export function PricingPageClient() {
               Every feature, side by side.
             </h2>
           </div>
-          <div className="overflow-x-auto rounded-xl border border-border">
+          <div className="overflow-x-auto rounded-2xl border border-border">
             <table className="w-full min-w-[560px] border-collapse font-body text-sm">
               <thead>
                 <tr className="border-b border-border bg-bg-elevated">

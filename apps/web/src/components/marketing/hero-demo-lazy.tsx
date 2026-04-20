@@ -7,7 +7,7 @@ const HeroDemo = dynamic(
   {
     loading: () => (
       <div
-        className="mx-auto mt-10 min-h-[280px] max-w-2xl rounded-xl border border-dashed border-border bg-bg-elevated/40 lg:mt-12"
+        className="mx-auto mt-10 min-h-[280px] max-w-2xl rounded-2xl border border-dashed border-border bg-bg-elevated/40 lg:mt-12"
         aria-hidden
       />
     ),

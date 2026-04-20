@@ -49,7 +49,7 @@ export function StudioWorkflowCards({
               onPrime(prompt);
             }}
             className={cn(
-              "rounded-xl border px-4 py-3 text-left text-sm transition-colors font-body",
+              "rounded-2xl border px-4 py-3 text-left text-sm transition-colors font-body",
               "border-border bg-surface text-text shadow-sm hover:border-accent hover:text-accent",
               disabled && "pointer-events-none opacity-50",
               hi && "ring-2 ring-accent/40 ring-offset-2 ring-offset-bg",
@@ -65,7 +65,7 @@ export function StudioWorkflowCards({
         disabled={disabled}
         onClick={() => onPrime(resolveSurprisePrompt())}
         className={cn(
-          "rounded-xl border border-dashed px-4 py-3 text-left text-sm transition-colors font-body sm:col-span-2",
+          "rounded-2xl border border-dashed px-4 py-3 text-left text-sm transition-colors font-body sm:col-span-2",
           "border-border bg-bg-elevated/50 text-text-muted hover:border-accent hover:text-accent",
           disabled && "pointer-events-none opacity-50",
         )}

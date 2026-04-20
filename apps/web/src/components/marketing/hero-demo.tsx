@@ -248,12 +248,12 @@ export function HeroDemo() {
             {iframeDoc ? (
               <iframe
                 title="Page preview"
-                className="h-[min(440px,58vh)] w-full rounded-xl border border-border bg-white"
+                className="h-[min(440px,58vh)] w-full rounded-2xl border border-border bg-white"
                 srcDoc={iframeDoc}
                 sandbox="allow-same-origin"
               />
             ) : (
-              <div className="flex h-[min(440px,58vh)] w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-bg-elevated">
+              <div className="flex h-[min(440px,58vh)] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-bg-elevated">
                 {phase === "generating" ? (
                   <>
                     <div className="studio-dot-wave flex gap-1.5">

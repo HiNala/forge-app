@@ -34,7 +34,7 @@ export function DashboardTipBanner() {
 
   return (
     <div
-      className="mb-6 flex flex-col gap-3 rounded-xl border border-accent/25 bg-accent-light/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+      className="mb-6 flex flex-col gap-3 rounded-2xl border border-accent/25 bg-accent-light/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
       role="region"
       aria-label="Tip"
     >

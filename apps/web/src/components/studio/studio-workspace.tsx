@@ -1127,7 +1127,7 @@ export function StudioWorkspace() {
                     aria-modal="true"
                     aria-labelledby="section-edit-title"
                     tabIndex={-1}
-                    className="fixed z-50 w-[min(92vw,360px)] rounded-xl border border-border bg-surface p-3 shadow-lg outline-none"
+                    className="fixed z-50 w-[min(92vw,360px)] rounded-2xl border border-border bg-surface p-3 shadow-lg outline-none"
                     style={{
                       top: Math.min(editAnchor.top + 8, window.innerHeight - 280),
                       left: Math.min(editAnchor.left, window.innerWidth - 380),
