@@ -19,8 +19,8 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
-      - name: Lint web
-        run: pnpm --filter web lint
+      - name: Lint web (zero warnings)
+        run: pnpm --filter web lint:strict
       - name: Typecheck web
         run: pnpm --filter web typecheck
 
