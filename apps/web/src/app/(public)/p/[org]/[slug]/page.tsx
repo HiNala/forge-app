@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { PDraftPreview } from "@/components/public/p-draft-preview";
+import { injectDeckParentSearchParams } from "@/lib/deck-parent-query";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,13 @@ export default async function PublicPublishedPage({
   searchParams,
 }: {
   params: Promise<{ org: string; slug: string }>;
-  searchParams: Promise<{ preview?: string; token?: string }>;
+  searchParams: Promise<{
+    preview?: string;
+    token?: string;
+    mode?: string;
+    notes?: string;
+    presenter?: string;
+  }>;
 }) {
   const { org, slug } = await params;
   const sp = await searchParams;
@@ -48,12 +55,18 @@ export default async function PublicPublishedPage({
   const data = await fetchPublicPage(org, slug);
   if (!data) notFound();
 
+  const html = injectDeckParentSearchParams(data.html, {
+    mode: sp.mode,
+    notes: sp.notes,
+    presenter: sp.presenter,
+  });
+
   return (
     <iframe
       title={data.title}
       className="h-screen w-full border-0 bg-white"
-      srcDoc={data.html}
-      sandbox="allow-same-origin allow-forms allow-popups allow-modals"
+      srcDoc={html}
+      sandbox="allow-same-origin allow-forms allow-popups allow-modals allow-scripts"
     />
   );
 }

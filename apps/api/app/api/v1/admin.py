@@ -9,8 +9,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import AnalyticsEvent, Page, Template
+from app.db.models import AnalyticsEvent, Page, Template, User as UserModel
 from app.deps import get_db
+from app.deps.platform_admin import require_platform_admin
 from app.deps.forge_operator import require_forge_operator
 from app.deps.tenant import TenantContext
 from app.schemas.common import StubResponse
@@ -228,7 +229,7 @@ async def admin_template_stats(
     events = (
         await db.execute(
             select(AnalyticsEvent).where(
-                AnalyticsEvent.event_type == "template_used",
+                AnalyticsEvent.event_type == "template_use_click",
                 AnalyticsEvent.created_at >= since,
             )
         )
@@ -253,3 +254,11 @@ async def admin_template_stats(
             )
         )
     return TemplateStatsOut(top_templates=top)
+
+
+@router.get("/platform/health")
+async def platform_admin_health(
+    _u: UserModel = Depends(require_platform_admin),
+) -> dict[str, bool]:
+    """Confirms JWT belongs to a user with ``is_admin`` (Digital Studio Labs operators)."""
+    return {"ok": True}

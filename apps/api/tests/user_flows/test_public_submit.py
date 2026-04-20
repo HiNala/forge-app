@@ -89,7 +89,7 @@ async def test_submit_json_stores_submission_and_analytics_event() -> None:
                 .select_from(AnalyticsEvent)
                 .where(
                     AnalyticsEvent.page_id == page_id,
-                    AnalyticsEvent.event_type == "form_submit",
+                    AnalyticsEvent.event_type == "form_submit_success",
                 )
             )
         ).scalar_one()

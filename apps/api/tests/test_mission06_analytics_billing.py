@@ -168,7 +168,7 @@ async def test_funnel_submit_rate_handcrafted() -> None:
         s.add(
             AnalyticsEvent(
                 id=uuid.uuid4(),
-                event_type="form_submit",
+                event_type="form_submit_success",
                 visitor_id="x",
                 session_id=uuid.uuid4().hex,
                 **base,

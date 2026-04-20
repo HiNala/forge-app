@@ -4,7 +4,7 @@
 
 **Legend:** ✅ substantial · ⚠️ partial / stub · ❌ not started
 
-**Last audited:** 2026-04-18 — `apps/api` **106** pytest tests (`tests/README.md`); `ruff check .` + `mypy app` clean; `apps/web` `pnpm run typecheck` + `pnpm run lint` clean. Postgres-backed tests require a running DB (`uv run alembic upgrade head`). If `uv` cannot refresh `.venv` on Windows, use e.g. `UV_PROJECT_ENVIRONMENT=.venv-forge` before `uv sync`.
+**Last audited:** 2026-04-19 — `apps/api` **157** pytest tests (`uv run pytest tests/` with Postgres + `alembic upgrade head`); `apps/web` `pnpm run typecheck` + `pnpm run lint` + `pnpm run test` + `pnpm run build` clean. On Windows, if `uv` hits `.venv` lock errors, set `UV_PROJECT_ENVIRONMENT=.venv-forge` (see `tests/README.md`) before `uv sync` / `uv run`. Apply DB migrations before API tests: `cd apps/api && uv run alembic upgrade head`.
 
 ---
 
@@ -33,7 +33,8 @@
 | **Mission 07 — Polish** | ⚠️ 42% | Backend/API + repo sweep partial (see `10_MISSION_07_POLISH.md`); global WCAG/Lighthouse proof still open (complementary **FE-07** polish in `apps/web` tracked in `ui/FRONTEND_STATUS.md`) |
 | **Mission 08 — Railway deploy** | ⚠️ 20% | Docker/compose; Railway runbooks/CI breadth varies by branch |
 | **Mission 09 — Templates** | ⚠️ 15% | Templates route placeholder; marketplace out of 1.0 scope per PRD |
-| **W-03 — Pitch deck** | ⚠️ partial | Deck model + `render_deck_html`, frameworks, public inject (present/hash/Chart.js), `GET /pages/…/deck`, export queue stub; Studio UI + real PPTX/PDF + LLM composer still open |
+| **W-02 — Contractor proposal** | ⚠️ partial | `proposals` + questions + templates + numbering + deterministic render + public view/Q&A/accept/decline + change orders; emails, signed PDF worker fidelity, Studio line editor, org analytics dashboard, expiration job + E2E still open — see `MISSION_W02_REPORT.md` |
+| **W-03 — Pitch deck** | ⚠️ partial | Deck model + frameworks + builder + render + public runtime (present/keys/Chart.js) + iframe query forward + composer stub; full LLM Stage A/B, image gen, PPTX/PDF fidelity, Studio rail, E2E still open — see `MISSION-W03-REPORT.md` |
 
 **Overall vs. PRD 1.0:** roughly **55–63%** — publish + public HTML + tenant analytics/billing UI path is much further along; **automations reliability**, **custom domain**, and **production polish / a11y proof** remain the largest gaps.
 

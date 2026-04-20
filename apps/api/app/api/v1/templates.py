@@ -200,7 +200,7 @@ async def use_template(
     ev = AnalyticsEvent(
         organization_id=ctx.organization_id,
         page_id=page.id,
-        event_type="template_used",
+        event_type="template_use_click",
         visitor_id=f"user:{user.id}",
         session_id=uuid.uuid4().hex,
         metadata_={
@@ -216,7 +216,7 @@ async def use_template(
 
     await capture(
         str(user.id),
-        "template_used",
+        "template_use_click",
         {
             "template_id": str(t.id),
             "organization_id": str(ctx.organization_id),
