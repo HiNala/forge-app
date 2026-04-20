@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.context.models import ContextBundle
+from app.services.orchestration.composer.base import BaseComposer
 from app.services.orchestration.composer.composed_page import ComposedPage
 from app.services.orchestration.composer.contact import ContactFormComposer
 from app.services.orchestration.composer.generic import GenericComposer
@@ -16,7 +17,7 @@ from app.services.orchestration.composer.proposal_composer import ProposalCompos
 from app.services.orchestration.models import PageIntent
 from app.services.orchestration.planning_models import PagePlan
 
-_COMPOSERS: dict[str, object] = {
+_COMPOSERS: dict[str, BaseComposer] = {
     "contact_form": ContactFormComposer(),
     "landing": LandingComposer(),
     "promotion": PromotionComposer(),
@@ -46,14 +47,10 @@ def workflow_key_for_intent(intent: PageIntent) -> str:
         return "event_rsvp"
     if pt == "proposal":
         return "proposal"
-    if wf in ("contact_form", "landing", "menu", "event_rsvp", "gallery", "promotion", "proposal"):
-        return wf if wf != "gallery" else "gallery"
-    if wf == "gallery":
-        return "gallery"
-    if wf == "promotion":
-        return "promotion"
     if pt == "custom":
         return "generic"
+    if wf in ("contact_form", "landing", "menu", "event_rsvp", "proposal"):
+        return wf
     return "generic"
 
 
@@ -73,7 +70,7 @@ async def compose_with_best_agent(
     """Run the best-matching expert composer."""
     key = workflow_key_for_intent(intent)
     composer = _COMPOSERS.get(key, _COMPOSERS["generic"])
-    return await composer.compose(  # type: ignore[union-attr]
+    return await composer.compose(
         plan=plan,
         bundle=bundle,
         intent=intent,

@@ -31,9 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 async def _load_brand_kit(db: AsyncSession, org_id: UUID) -> dict[str, Any] | None:
-    row = (
-        await db.execute(select(BrandKit).where(BrandKit.organization_id == org_id))
-    ).scalar_one_or_none()
+    row = (await db.execute(select(BrandKit).where(BrandKit.organization_id == org_id))).scalar_one_or_none()
     if row is None:
         return None
     return {
@@ -49,22 +47,16 @@ async def _load_recent_pages(db: AsyncSession, org_id: UUID, limit: int = 5) -> 
     rows = (
         (
             await db.execute(
-                select(Page)
-                .where(Page.organization_id == org_id)
-                .order_by(Page.updated_at.desc())
-                .limit(limit)
+                select(Page).where(Page.organization_id == org_id).order_by(Page.updated_at.desc()).limit(limit)
             )
         )
         .scalars()
         .all()
     )
-    return [
-        PageSummary(id=str(p.id), title=p.title or "Untitled", page_type=p.page_type)
-        for p in rows
-    ]
+    return [PageSummary(id=str(p.id), title=p.title or "Untitled", page_type=p.page_type) for p in rows]
 
 
-async def _load_org_templates(_db: AsyncSession, _org_id: UUID) -> list:
+async def _load_org_templates(_db: AsyncSession, _org_id: UUID) -> list[Any]:
     return []
 
 
@@ -78,11 +70,7 @@ async def _load_user_voice(user: User) -> dict[str, Any] | None:
 
 async def _load_calendars_summary(db: AsyncSession, org_id: UUID) -> list[CalendarSummary]:
     rows = (
-        (
-            await db.execute(
-                select(CalendarConnection).where(CalendarConnection.organization_id == org_id).limit(10)
-            )
-        )
+        (await db.execute(select(CalendarConnection).where(CalendarConnection.organization_id == org_id).limit(10)))
         .scalars()
         .all()
     )
@@ -126,7 +114,10 @@ async def gather_context(
     incomplete: list[str] = []
 
     async def brand_task() -> dict[str, Any] | None:
-        return await with_timeout(_load_brand_kit(db, org.id), 1.5, "brand_kit")
+        r = await with_timeout(_load_brand_kit(db, org.id), 1.5, "brand_kit")
+        if r is None:
+            return None
+        return r if isinstance(r, dict) else None
 
     async def urls_task() -> list[str]:
         return await _resolve_urls(prompt, org, user)
@@ -134,11 +125,15 @@ async def gather_context(
     async def recent_task() -> list[PageSummary]:
         return await with_timeout(_load_recent_pages(db, org.id), 1.2, "recent_pages") or []
 
-    async def tpl_task() -> list:
-        return await with_timeout(_load_org_templates(db, org.id), 0.8, "org_templates") or []
+    async def tpl_task() -> list[Any]:
+        r = await with_timeout(_load_org_templates(db, org.id), 0.8, "org_templates")
+        return r if isinstance(r, list) else []
 
     async def voice_task() -> dict[str, Any] | None:
-        return await with_timeout(_load_user_voice(user), 0.5, "user_voice")
+        r = await with_timeout(_load_user_voice(user), 0.5, "user_voice")
+        if r is None:
+            return None
+        return r if isinstance(r, dict) else None
 
     async def cal_task() -> list[CalendarSummary]:
         return await with_timeout(_load_calendars_summary(db, org.id), 1.5, "calendars") or []

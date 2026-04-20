@@ -119,7 +119,7 @@ def _heuristic_intent(prompt: str) -> PageIntent:
             deck_kind=infer_deck_kind(prompt),
             deck_narrative_framework=infer_narrative_framework(prompt),
             alternatives=[
-                {"workflow": "landing", "confidence": 0.25},
+                AlternativeInterpretation(workflow="landing", confidence=0.25),
             ],
         )
     if _prompt_suggests_booking(prompt):

@@ -153,7 +153,7 @@ class LiteLLMUnifiedProvider:
             "stream": True,
         }
         stream = await acompletion(**kwargs)
-        async for chunk in stream:  # type: ignore[union-attr]
+        async for chunk in stream:
             try:
                 choice = chunk.choices[0]
                 delta = choice.delta

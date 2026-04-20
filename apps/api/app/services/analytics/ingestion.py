@@ -115,8 +115,7 @@ async def _consumer_loop() -> None:
 async def _flush_rows(db: AsyncSession, rows: list[dict[str, Any]]) -> None:
     if not rows:
         return
-    table = AnalyticsEvent.__table__
-    await db.execute(insert(table), rows)
+    await db.execute(insert(AnalyticsEvent), rows)
 
 
 def row_from_parts(
