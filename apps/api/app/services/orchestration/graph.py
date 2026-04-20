@@ -73,9 +73,9 @@ class Graph:
             state.node_timings_ms[node.name] = state.node_timings_ms.get(node.name, 0) + dt_ms
             outs = self._outgoing(current)
             nxt: str | None = None
-            for e in outs:
-                if e.condition is None or e.condition(state):
-                    nxt = e.to_node
+            for edge in outs:
+                if edge.condition is None or edge.condition(state):
+                    nxt = edge.to_node
                     break
             if nxt is None:
                 state.errors.append(f"graph: no edge from {current}")

@@ -2,19 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
-import { getPublicTemplateBySlug, listPublicTemplateSlugs } from "@/lib/api";
+import { getPublicTemplateBySlug } from "@/lib/public-templates";
 import { SITE_URL } from "@/lib/marketing-content";
 
-export const revalidate = 3600;
-
-export async function generateStaticParams(): Promise<{ slug: string }[]> {
-  try {
-    const slugs = await listPublicTemplateSlugs();
-    return slugs.map((slug) => ({ slug }));
-  } catch {
-    return [];
-  }
-}
+/** Avoid Next 16 prerender workStore invariant with remote template fetch + large HTML. */
+export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
 

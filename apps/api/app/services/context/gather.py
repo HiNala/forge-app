@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from sqlalchemy import select
@@ -64,7 +64,7 @@ async def _load_recent_pages(db: AsyncSession, org_id: UUID, limit: int = 5) -> 
     ]
 
 
-async def _load_org_templates(_db: AsyncSession, _org_id: UUID) -> list:
+async def _load_org_templates(_db: AsyncSession, _org_id: UUID) -> list[Any]:
     return []
 
 
@@ -126,7 +126,8 @@ async def gather_context(
     incomplete: list[str] = []
 
     async def brand_task() -> dict[str, Any] | None:
-        return await with_timeout(_load_brand_kit(db, org.id), 1.5, "brand_kit")
+        res = await with_timeout(_load_brand_kit(db, org.id), 1.5, "brand_kit")
+        return cast(dict[str, Any] | None, res)
 
     async def urls_task() -> list[str]:
         return await _resolve_urls(prompt, org, user)
@@ -134,11 +135,13 @@ async def gather_context(
     async def recent_task() -> list[PageSummary]:
         return await with_timeout(_load_recent_pages(db, org.id), 1.2, "recent_pages") or []
 
-    async def tpl_task() -> list:
-        return await with_timeout(_load_org_templates(db, org.id), 0.8, "org_templates") or []
+    async def tpl_task() -> list[Any]:
+        res = await with_timeout(_load_org_templates(db, org.id), 0.8, "org_templates") or []
+        return cast(list[Any], res)
 
     async def voice_task() -> dict[str, Any] | None:
-        return await with_timeout(_load_user_voice(user), 0.5, "user_voice")
+        res = await with_timeout(_load_user_voice(user), 0.5, "user_voice")
+        return cast(dict[str, Any] | None, res)
 
     async def cal_task() -> list[CalendarSummary]:
         return await with_timeout(_load_calendars_summary(db, org.id), 1.5, "calendars") or []

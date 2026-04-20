@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Protocol
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +17,25 @@ from app.services.orchestration.composer.proposal_composer import ProposalCompos
 from app.services.orchestration.models import PageIntent
 from app.services.orchestration.planning_models import PagePlan
 
-_COMPOSERS: dict[str, object] = {
+
+class _ExpertComposer(Protocol):
+    async def compose(
+        self,
+        *,
+        plan: PagePlan,
+        bundle: ContextBundle | None,
+        intent: PageIntent,
+        user_prompt: str,
+        provider: str | None,
+        db: AsyncSession | None,
+        organization_id: UUID | None,
+        form_action: str,
+        org_slug: str,
+        page_slug: str,
+    ) -> ComposedPage: ...
+
+
+_COMPOSERS: dict[str, _ExpertComposer] = {
     "contact_form": ContactFormComposer(),
     "landing": LandingComposer(),
     "promotion": PromotionComposer(),
@@ -46,12 +65,18 @@ def workflow_key_for_intent(intent: PageIntent) -> str:
         return "event_rsvp"
     if pt == "proposal":
         return "proposal"
-    if wf in ("contact_form", "landing", "menu", "event_rsvp", "gallery", "promotion", "proposal"):
-        return wf if wf != "gallery" else "gallery"
-    if wf == "gallery":
-        return "gallery"
-    if wf == "promotion":
-        return "promotion"
+    if wf == "contact_form":
+        return "contact_form"
+    if wf == "landing":
+        return "landing"
+    if wf == "menu":
+        return "menu"
+    if wf == "event_rsvp":
+        return "event_rsvp"
+    if wf == "proposal":
+        return "proposal"
+    if pt == "pitch_deck" or wf == "pitch_deck":
+        return "generic"
     if pt == "custom":
         return "generic"
     return "generic"
@@ -73,7 +98,7 @@ async def compose_with_best_agent(
     """Run the best-matching expert composer."""
     key = workflow_key_for_intent(intent)
     composer = _COMPOSERS.get(key, _COMPOSERS["generic"])
-    return await composer.compose(  # type: ignore[union-attr]
+    return await composer.compose(
         plan=plan,
         bundle=bundle,
         intent=intent,

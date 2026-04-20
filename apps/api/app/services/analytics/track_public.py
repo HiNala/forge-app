@@ -49,7 +49,7 @@ async def _custom_event_names(db: AsyncSession, organization_id: UUID) -> frozen
     return frozenset(str(r[0]) for r in rows)
 
 
-async def _dedupe_skip(redis: Redis | None, client_event_id: str | None) -> bool:
+async def _dedupe_skip(redis: Redis[Any] | None, client_event_id: str | None) -> bool:
     """Return True if duplicate (skip insert)."""
     if redis is None or not client_event_id:
         return False
@@ -70,7 +70,7 @@ async def handle_public_track_batch(
     org: Organization,
     page: Page,
     batch: TrackBatchIn,
-    redis: Redis | None,
+    redis: Redis[Any] | None,
 ) -> TrackBatchOut:
     if request.headers.get("dnt") == "1":
         return TrackBatchOut(ok=True, accepted=0)
@@ -143,7 +143,7 @@ async def handle_authenticated_track_batch(
     organization_id: UUID,
     user: User,
     batch: TrackBatchIn,
-    redis: Redis | None,
+    redis: Redis[Any] | None,
 ) -> TrackBatchOut:
     """In-app analytics: user_id and org from server; never trust client org."""
     custom_names = await _custom_event_names(db, organization_id)

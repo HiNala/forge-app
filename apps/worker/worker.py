@@ -308,6 +308,15 @@ async def proposal_pdf_render(ctx: object, page_id: str) -> str:
     return "ok"
 
 
+async def refresh_llm_cost_daily_mv(ctx: object) -> str:
+    """Refresh GL-02 materialized view for admin LLM cost rollups."""
+    del ctx
+    async with AsyncSessionLocal() as db:
+        await db.execute(text("REFRESH MATERIALIZED VIEW llm_cost_daily"))
+        await db.commit()
+    return "ok"
+
+
 async def expire_proposals(ctx: object) -> None:
     """Mark open proposals past expires_at as expired (W-02)."""
     del ctx
@@ -334,6 +343,7 @@ class WorkerSettings:
         generate_template_preview,
         proposal_pdf_render,
         deck_export,
+        refresh_llm_cost_daily_mv,
     ]
     cron_jobs = [
         cron(cleanup_old_revisions, hour=3, minute=0),
@@ -344,6 +354,7 @@ class WorkerSettings:
         cron(expire_pending_holds, minute=list(range(0, 60, 2))),
         cron(expire_proposals, hour=7, minute=30),
         cron(refresh_retention_views, hour=6, minute=30),
+        cron(refresh_llm_cost_daily_mv, minute=list(range(0, 60, 15))),
     ]
     redis_settings = RedisSettings.from_dsn(
         os.environ.get("REDIS_URL", "redis://localhost:6379/0")

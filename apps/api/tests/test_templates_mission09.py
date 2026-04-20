@@ -110,7 +110,7 @@ async def test_use_template_creates_page_and_revision() -> None:
 
 
 @pytest.mark.asyncio
-async def test_admin_templates_requires_operator_org() -> None:
+async def test_admin_templates_requires_platform_access() -> None:
     await require_postgres()
     from app.main import app
 
@@ -128,7 +128,19 @@ async def test_admin_templates_requires_operator_org() -> None:
     h = forge_test_headers(uid, oid)
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         r = await client.get("/api/v1/admin/templates", headers=h)
-    assert r.status_code == 503
+    assert r.status_code == 403
+
+    async with AsyncSessionLocal() as s2:
+        from app.db.models import User as U2
+
+        u = await s2.get(U2, uid)
+        assert u is not None
+        u.is_admin = True
+        await s2.commit()
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        r2 = await client.get("/api/v1/admin/templates", headers=h)
+    assert r2.status_code == 200
 
 
 @pytest.mark.asyncio

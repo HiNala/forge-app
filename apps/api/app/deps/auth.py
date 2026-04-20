@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import time
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -114,6 +115,10 @@ async def require_user(request: Request) -> User:
         payload = verify_clerk_jwt(token)
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token") from None
+
+    iat = payload.get("iat")
+    if isinstance(iat, (int, float)):
+        request.state.jwt_iat = float(iat)
 
     jti = payload.get("jti")
     if isinstance(jti, str) and jti.strip():

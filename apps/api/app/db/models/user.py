@@ -29,6 +29,8 @@ class User(Base, UUIDPrimaryKeyMixin):
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     pending_email: Mapped[str | None] = mapped_column(Text)
     is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    # GL-02 — last time user opened admin UI (pulse "since last visit")
+    platform_last_visit_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     user_preferences: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 

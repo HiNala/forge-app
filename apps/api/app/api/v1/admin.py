@@ -11,11 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import AnalyticsEvent, OrchestrationRun, Page, Template
 from app.db.models import User as UserModel
+from app.core.platform_auth import require_any_platform_access, require_platform_permission
 from app.deps import get_admin_db
 from app.deps.forge_operator import require_forge_operator
-from app.deps.platform_admin import require_platform_admin
 from app.deps.tenant import TenantContext
-from app.schemas.common import StubResponse
 from app.schemas.template import (
     AdminTemplateCreate,
     AdminTemplateOut,
@@ -38,29 +37,13 @@ def _normalize_slug(raw: str) -> str:
     return s[:120]
 
 
-@router.get("/organizations", response_model=StubResponse)
-async def admin_orgs(
-    db: AsyncSession = Depends(get_admin_db),
-    _ctx: TenantContext = Depends(require_forge_operator),
-) -> StubResponse:
-    return StubResponse()
-
-
-@router.get("/usage", response_model=StubResponse)
-async def admin_usage(
-    db: AsyncSession = Depends(get_admin_db),
-    _ctx: TenantContext = Depends(require_forge_operator),
-) -> StubResponse:
-    return StubResponse()
-
-
 @router.get("/orchestration-quality")
 async def admin_orchestration_quality(
     db: AsyncSession = Depends(get_admin_db),
-    _ctx: TenantContext = Depends(require_forge_operator),
+    _auth: UserModel = Depends(require_platform_permission("llm:read_run_traces")),
 ) -> dict[str, Any]:
     """Aggregate review scores from recent orchestration runs (O-04)."""
-    del _ctx
+    del _auth
     rows = (
         await db.execute(
             select(OrchestrationRun)
@@ -97,17 +80,17 @@ async def admin_orchestration_quality(
 @router.get("/llm-stats")
 async def admin_llm_stats(
     _db: AsyncSession = Depends(get_admin_db),
-    _ctx: TenantContext = Depends(require_forge_operator),
+    _u: UserModel = Depends(require_platform_permission("llm:read_usage")),
 ) -> dict[str, Any]:
     """In-memory LLM metrics (tokens/min, cache hits) — Mission 03."""
-    del _db, _ctx
+    del _db, _u
     return snapshot_last_minute()
 
 
 @router.get("/templates", response_model=list[AdminTemplateOut])
 async def admin_list_templates(
     db: AsyncSession = Depends(get_admin_db),
-    _ctx: TenantContext = Depends(require_forge_operator),
+    _u: UserModel = Depends(require_platform_permission("system:manage_templates")),
 ) -> list[Template]:
     rows = (
         await db.execute(select(Template).order_by(Template.sort_order.asc(), Template.name.asc()))
@@ -120,8 +103,9 @@ async def admin_create_template(
     request: Request,
     body: AdminTemplateCreate,
     db: AsyncSession = Depends(get_admin_db),
-    _ctx: TenantContext = Depends(require_forge_operator),
+    _perm: UserModel = Depends(require_platform_permission("system:manage_templates")),
 ) -> Template:
+    del _perm
     slug = _normalize_slug(body.slug)
     exists = (
         await db.execute(select(Template.id).where(Template.slug == slug))
@@ -194,8 +178,9 @@ async def admin_patch_template(
 async def admin_delete_template(
     template_id: UUID,
     db: AsyncSession = Depends(get_admin_db),
-    _ctx: TenantContext = Depends(require_forge_operator),
+    _perm: UserModel = Depends(require_platform_permission("system:manage_templates")),
 ) -> dict[str, str]:
+    del _perm
     row = await db.get(Template, template_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Not found")
@@ -252,8 +237,9 @@ async def admin_regenerate_template_preview(
     request: Request,
     template_id: UUID,
     db: AsyncSession = Depends(get_admin_db),
-    _ctx: TenantContext = Depends(require_forge_operator),
+    _perm: UserModel = Depends(require_platform_permission("system:manage_templates")),
 ) -> Template:
+    del _perm
     row = await db.get(Template, template_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Not found")
@@ -264,8 +250,9 @@ async def admin_regenerate_template_preview(
 @router.get("/templates/stats", response_model=TemplateStatsOut)
 async def admin_template_stats(
     db: AsyncSession = Depends(get_admin_db),
-    _ctx: TenantContext = Depends(require_forge_operator),
+    _perm: UserModel = Depends(require_platform_permission("analytics:read_platform_metrics")),
 ) -> TemplateStatsOut:
+    del _perm
     since = datetime.now(UTC) - timedelta(days=90)
     events = (
         await db.execute(
@@ -299,7 +286,8 @@ async def admin_template_stats(
 
 @router.get("/platform/health")
 async def platform_admin_health(
-    _u: UserModel = Depends(require_platform_admin),
+    _u: UserModel = Depends(require_any_platform_access),
 ) -> dict[str, bool]:
-    """Confirms JWT belongs to a user with ``is_admin`` (Digital Studio Labs operators)."""
+    """Confirms the caller has at least one platform permission (GL-02)."""
+    del _u
     return {"ok": True}

@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
+
 from fastapi import HTTPException, Request
 
 from app.deps.auth import require_user
 
 
-def require_api_scopes(*required: str):
+def require_api_scopes(*required: str) -> Callable[[Request], Awaitable[None]]:
     """Require each scope when ``auth_kind == api_token``.
 
     Always awaits :func:`require_user` so bearer resolution runs before we read
