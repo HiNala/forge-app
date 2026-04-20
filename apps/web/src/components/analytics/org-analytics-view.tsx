@@ -180,7 +180,7 @@ export function OrgAnalyticsView() {
           <p className="section-label">
             {orgMetaQ.data?.name ?? "Workspace"}
           </p>
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-text">Analytics</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-text">Analytics</h1>
           <p className="mt-1 text-sm text-text-muted font-body">
             Workspace-wide performance — every figure comes from stored events and submissions.
           </p>
@@ -223,7 +223,7 @@ export function OrgAnalyticsView() {
 
       {workflowMix.total > 0 ? (
         <div>
-          <h2 className="mb-2 font-display text-sm font-semibold text-text">Workflow mix</h2>
+          <h2 className="mb-2 font-display text-sm font-bold text-text">Workflow mix</h2>
           <div className="grid gap-3 sm:grid-cols-3">
             <Link
               href="/dashboard?workflow=contact"
@@ -232,7 +232,7 @@ export function OrgAnalyticsView() {
               <p className="section-label">
                 Contact &amp; booking
               </p>
-              <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-text">
+              <p className="mt-1 font-display text-2xl font-bold tabular-nums text-text">
                 {workflowMix.contact}
               </p>
               <p className="mt-1 text-xs text-text-muted font-body">pages · filtered dashboard →</p>
@@ -244,7 +244,7 @@ export function OrgAnalyticsView() {
               <p className="section-label">
                 Proposals
               </p>
-              <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-text">
+              <p className="mt-1 font-display text-2xl font-bold tabular-nums text-text">
                 {workflowMix.proposal}
               </p>
               <p className="mt-1 text-xs text-text-muted font-body">pages · pipeline in Page Detail →</p>
@@ -256,7 +256,7 @@ export function OrgAnalyticsView() {
               <p className="section-label">
                 Pitch decks
               </p>
-              <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-text">
+              <p className="mt-1 font-display text-2xl font-bold tabular-nums text-text">
                 {workflowMix.deck}
               </p>
               <p className="mt-1 text-xs text-text-muted font-body">pages · present &amp; export →</p>

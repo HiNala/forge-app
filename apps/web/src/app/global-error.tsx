@@ -21,7 +21,7 @@ export default function GlobalError({
   return (
     <html lang="en" data-theme="light-warm" className="theme-light-warm antialiased">
       <body className="flex min-h-screen flex-col items-center justify-center bg-bg px-4 py-12 font-body text-text">
-        <p className="font-display text-2xl font-semibold">We hit a wall</p>
+        <p className="font-display text-2xl font-bold">We hit a wall</p>
         <p className="mt-3 max-w-md text-center text-sm text-[var(--text-muted)]">
           Something went wrong while loading the app. Try reloading — if it keeps happening, contact support and share
           the error reference below (we use it the same way as a Sentry event ID).

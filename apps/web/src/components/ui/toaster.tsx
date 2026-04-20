@@ -17,7 +17,7 @@ export function AppToaster() {
       toastOptions={{
         classNames: {
           toast:
-            "rounded-[10px] border-[1.5px] border-border bg-surface text-text shadow-lg font-body animate-[toast-in_0.2s_var(--ease-out)_both]",
+            "rounded-2xl border-[1.5px] border-border bg-surface text-text shadow-lg font-body animate-[toast-in_0.2s_var(--ease-out)_both]",
           title: "font-medium text-text",
           description: "text-text-muted text-sm",
           success: "border-emerald-500/30",

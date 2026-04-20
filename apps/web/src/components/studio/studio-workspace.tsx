@@ -725,7 +725,7 @@ export function StudioWorkspace() {
                 layout
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mb-8 text-center font-display text-2xl font-semibold tracking-tight text-text"
+                className="mb-8 text-center font-display text-2xl font-bold tracking-tight text-text"
               >
                 {timeOfDayGreeting(firstName)}
               </motion.p>

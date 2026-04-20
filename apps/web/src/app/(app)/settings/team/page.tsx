@@ -247,7 +247,7 @@ export default function TeamSettingsPage() {
       {isOwner && pending.data && pending.data.length > 0 ? (
         <section>
           <h2 className="text-sm font-semibold text-text">Pending invitations</h2>
-          <ul className="mt-2 divide-y divide-border rounded-[10px] border border-border">
+          <ul className="mt-2 divide-y divide-border rounded-2xl border border-border">
             {pending.data.map((inv) => (
               <li key={inv.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
                 <div>
