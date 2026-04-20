@@ -217,7 +217,7 @@ export function DashboardPageCard({
             ) : null}
           </div>
           <div className="flex flex-col gap-1 px-3.5 py-3">
-            <p className="font-display text-[15px] font-semibold leading-tight tracking-tight text-text line-clamp-2">
+            <p className="font-display text-[15px] font-bold leading-tight tracking-tight text-text line-clamp-2">
               {page.title}
             </p>
             <div className="flex items-center gap-2 text-[11px] text-text-muted font-body">

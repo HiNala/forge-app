@@ -25,7 +25,7 @@ export function HowItWorksSection() {
   return (
     <section className="border-t border-border bg-bg-elevated py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <h2 className="font-display text-center text-3xl font-semibold text-text sm:text-4xl">
+        <h2 className="font-display text-center text-3xl font-bold text-text sm:text-4xl">
           How it works
         </h2>
         <ul className="mt-12 grid gap-10 sm:grid-cols-3">

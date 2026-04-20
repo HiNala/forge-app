@@ -45,11 +45,11 @@ export default function WorkflowContactFormPage() {
         <h2 className="font-display text-2xl font-bold text-text">Frequently asked</h2>
         <dl className="mt-6 divide-y divide-border">
           <div className="py-4">
-            <dt className="font-body text-sm font-semibold text-text">Do I need a separate booking tool?</dt>
+            <dt className="font-body text-sm font-bold text-text">Do I need a separate booking tool?</dt>
             <dd className="mt-1.5 font-body text-sm font-light text-text-muted">Forge focuses on the page and hand-off; calendar sync uses your connected provider.</dd>
           </div>
           <div className="py-4">
-            <dt className="font-body text-sm font-semibold text-text">Can I change the form later?</dt>
+            <dt className="font-body text-sm font-bold text-text">Can I change the form later?</dt>
             <dd className="mt-1.5 font-body text-sm font-light text-text-muted">Yes — open the page in Studio and refine with plain language.</dd>
           </div>
         </dl>

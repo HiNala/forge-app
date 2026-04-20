@@ -171,7 +171,7 @@ export function PageAnalyticsView() {
 
       {!isProposal(page.page_type) ? (
         <div>
-          <h3 className="mb-2 font-display text-sm font-semibold text-text">Views trend</h3>
+          <h3 className="mb-2 font-display text-sm font-bold text-text">Views trend</h3>
           {sparkData.length >= 2 ? (
             <>
               <TrendSparkline data={sparkData} />
@@ -191,7 +191,7 @@ export function PageAnalyticsView() {
 
       {!isProposal(page.page_type) && isGalleryLike(page.page_type) ? (
         <div>
-          <h3 className="mb-2 font-display text-sm font-semibold text-text">Top referrers</h3>
+          <h3 className="mb-2 font-display text-sm font-bold text-text">Top referrers</h3>
           {referrers.length === 0 ? (
             <ChartEmpty message={emptyMsg} />
           ) : (
@@ -237,7 +237,7 @@ export function PageAnalyticsView() {
       {!isProposal(page.page_type) && !isGalleryLike(page.page_type) ? (
         <div className="grid gap-8 lg:grid-cols-2">
           <div>
-            <h3 className="mb-2 font-display text-sm font-semibold text-text">Top referrers</h3>
+            <h3 className="mb-2 font-display text-sm font-bold text-text">Top referrers</h3>
             {referrers.length === 0 ? (
               <ChartEmpty message={emptyMsg} />
             ) : (
@@ -279,7 +279,7 @@ export function PageAnalyticsView() {
             )}
           </div>
           <div>
-            <h3 className="mb-2 font-display text-sm font-semibold text-text">Devices</h3>
+            <h3 className="mb-2 font-display text-sm font-bold text-text">Devices</h3>
             {devices.length === 0 ? (
               <ChartEmpty message={emptyMsg} />
             ) : (
@@ -358,7 +358,7 @@ function FormFunnelSection({ funnel, emptyMsg }: { funnel: Record<string, unknow
   if (starts === 0 && touch === 0 && submits === 0) {
     return (
       <div>
-        <h3 className="mb-2 font-display text-sm font-semibold text-text">Form funnel</h3>
+        <h3 className="mb-2 font-display text-sm font-bold text-text">Form funnel</h3>
         <ChartEmpty message={emptyMsg} />
       </div>
     );
@@ -367,7 +367,7 @@ function FormFunnelSection({ funnel, emptyMsg }: { funnel: Record<string, unknow
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="mb-2 font-display text-sm font-semibold text-text">Funnel</h3>
+        <h3 className="mb-2 font-display text-sm font-bold text-text">Funnel</h3>
         <p className="mb-2 text-xs text-text-muted font-body">
           Tracked as form start → sessions with any field interaction → submit (analytics events).
         </p>
@@ -409,7 +409,7 @@ function FormFunnelSection({ funnel, emptyMsg }: { funnel: Record<string, unknow
         </ChartTableToggle>
       </div>
       <div>
-        <h3 className="mb-2 font-display text-sm font-semibold text-text">Fields (by interaction share)</h3>
+        <h3 className="mb-2 font-display text-sm font-bold text-text">Fields (by interaction share)</h3>
         {sortedFields.length === 0 ? (
           <ChartEmpty message="No field touches recorded in this range." />
         ) : (
@@ -473,7 +473,7 @@ function ProposalSection({
         <KpiCard label="Unique visitors" value={uniq} />
       </div>
       <div>
-        <h3 className="mb-2 font-display text-sm font-semibold text-text">Scroll depth</h3>
+        <h3 className="mb-2 font-display text-sm font-bold text-text">Scroll depth</h3>
         {hist.length === 0 ? (
           <ChartEmpty message={emptyMsg} />
         ) : (
@@ -516,7 +516,7 @@ function ProposalSection({
         )}
       </div>
       <div>
-        <h3 className="mb-2 font-display text-sm font-semibold text-text">Section attention</h3>
+        <h3 className="mb-2 font-display text-sm font-bold text-text">Section attention</h3>
         <p className="mb-2 text-xs text-text-muted font-body">Total dwell time aggregated per section (from section timing events).</p>
         {dwell.length === 0 ? (
           <ChartEmpty message={emptyMsg} />

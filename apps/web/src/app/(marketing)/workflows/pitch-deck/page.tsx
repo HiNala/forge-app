@@ -48,11 +48,11 @@ export default function WorkflowPitchDeckPage() {
         <h2 className="font-display text-2xl font-bold text-text">Frequently asked</h2>
         <dl className="mt-6 divide-y divide-border">
           <div className="py-4">
-            <dt className="font-body text-sm font-semibold text-text">Is this PowerPoint?</dt>
+            <dt className="font-body text-sm font-bold text-text">Is this PowerPoint?</dt>
             <dd className="mt-1.5 font-body text-sm font-light text-text-muted">The canonical experience is web-native; exports are for offline sharing.</dd>
           </div>
           <div className="py-4">
-            <dt className="font-body text-sm font-semibold text-text">Can I present offline?</dt>
+            <dt className="font-body text-sm font-bold text-text">Can I present offline?</dt>
             <dd className="mt-1.5 font-body text-sm font-light text-text-muted">Use presenter mode in the browser when online; export PPTX for offline rooms.</dd>
           </div>
         </dl>

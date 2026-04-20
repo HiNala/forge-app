@@ -6,10 +6,8 @@ import { Button } from "@/components/ui/button";
 export default function NotFound() {
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center bg-bg px-4 py-16 text-center">
-      <p className="font-display text-sm font-semibold uppercase tracking-wide text-text-subtle">
-        404
-      </p>
-      <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-text sm:text-4xl">
+      <p className="section-label">404</p>
+      <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-text sm:text-4xl">
         This page isn&apos;t here
       </h1>
       <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-text-muted font-body">

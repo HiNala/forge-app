@@ -313,7 +313,7 @@ export function Sidebar({
                 <ForgeMark className="size-8 shrink-0" />
                 {!collapsed ? (
                   <>
-                    <span className="min-w-0 flex-1 truncate font-display text-base font-semibold tracking-tight text-text">
+                    <span className="min-w-0 flex-1 truncate font-display text-base font-bold tracking-tight text-text">
                       {activeOrg?.organization_name ?? "Workspace"}
                     </span>
                     <ChevronsUpDown className="size-4 shrink-0 text-text-subtle" aria-hidden />

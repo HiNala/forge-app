@@ -137,7 +137,7 @@ function PageCard({ page }: { page: PageOut }) {
           <PageThumbnail page={page} hovered={hovered} />
           <div className="flex items-center justify-between gap-2 px-3.5 py-3">
             <div className="min-w-0">
-              <p className="truncate font-display text-[13px] font-semibold tracking-tight text-text">
+              <p className="truncate font-display text-[13px] font-bold tracking-tight text-text">
                 {page.title}
               </p>
               <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-text-muted">

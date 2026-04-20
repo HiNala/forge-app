@@ -85,7 +85,7 @@ function GalleryCard({
 
         {/* Card body */}
         <div className="p-5">
-          <p className="font-display text-[17px] font-semibold leading-snug text-text">
+          <p className="font-display text-[17px] font-bold leading-snug text-text">
             {name}
           </p>
           <p className="mt-1.5 font-body text-sm font-light leading-[1.65] text-text-muted">

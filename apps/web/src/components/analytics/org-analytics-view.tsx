@@ -336,7 +336,7 @@ export function OrgAnalyticsView() {
       ) : null}
 
       <div>
-        <h2 className="mb-2 font-display text-sm font-semibold text-text">Views trend</h2>
+        <h2 className="mb-2 font-display text-sm font-bold text-text">Views trend</h2>
         {sparkData.length >= 2 ? (
           <TrendSparkline data={sparkData} />
         ) : (
@@ -351,7 +351,7 @@ export function OrgAnalyticsView() {
       </div>
 
       <div>
-        <h2 className="mb-2 font-display text-sm font-semibold text-text">Top pages by submissions</h2>
+        <h2 className="mb-2 font-display text-sm font-bold text-text">Top pages by submissions</h2>
         {topPages.length === 0 ? (
           <ChartEmpty message="No submissions in this range yet." />
         ) : (
@@ -389,7 +389,7 @@ export function OrgAnalyticsView() {
       </div>
 
       <div>
-        <h2 className="mb-2 font-display text-sm font-semibold text-text">Recent submissions</h2>
+        <h2 className="mb-2 font-display text-sm font-bold text-text">Recent submissions</h2>
         {recent.length === 0 ? (
           <ChartEmpty message="No submissions in this range." />
         ) : (
