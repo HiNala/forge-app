@@ -123,7 +123,7 @@ export default function TemplatesGalleryPage() {
           href="/templates?q=contact"
           className="rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:border-teal-500/40"
         >
-          <p className="font-display text-lg font-semibold text-text">Contact forms &amp; bookings</p>
+          <p className="font-display text-lg font-bold text-text">Contact forms &amp; bookings</p>
           <p className="mt-1 text-sm text-text-muted font-body">Lead capture and scheduling templates.</p>
           <span className="mt-3 inline-block text-sm font-medium text-accent font-body">Browse →</span>
         </Link>
@@ -131,7 +131,7 @@ export default function TemplatesGalleryPage() {
           href="/templates?q=proposal"
           className="rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:border-amber-500/40"
         >
-          <p className="font-display text-lg font-semibold text-text">Proposals &amp; quotes</p>
+          <p className="font-display text-lg font-bold text-text">Proposals &amp; quotes</p>
           <p className="mt-1 text-sm text-text-muted font-body">Client-ready bids and estimates.</p>
           <span className="mt-3 inline-block text-sm font-medium text-accent font-body">Browse →</span>
         </Link>
@@ -139,7 +139,7 @@ export default function TemplatesGalleryPage() {
           href="/templates?q=deck"
           className="rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:border-indigo-500/40"
         >
-          <p className="font-display text-lg font-semibold text-text">Pitch decks</p>
+          <p className="font-display text-lg font-bold text-text">Pitch decks</p>
           <p className="mt-1 text-sm text-text-muted font-body">Investor and launch narratives.</p>
           <span className="mt-3 inline-block text-sm font-medium text-accent font-body">Browse →</span>
         </Link>
@@ -232,7 +232,7 @@ export default function TemplatesGalleryPage() {
                   </span>
                 </button>
                 <div className="flex flex-1 flex-col gap-1 p-4">
-                  <h2 className="font-display text-lg font-semibold text-text">{t.name}</h2>
+                  <h2 className="font-display text-lg font-bold text-text">{t.name}</h2>
                   <div className="mt-auto flex flex-wrap gap-2 pt-2">
                     <Button size="sm" disabled={useBusy} onClick={() => void onUse(t)}>
                       Use template

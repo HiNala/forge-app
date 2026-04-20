@@ -39,8 +39,8 @@ export function TemplateCard({ href, name, tag, description }: Props) {
         />
       </div>
       <div className="p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">{tag}</p>
-        <p className="mt-1 font-display text-lg font-semibold text-text">{name}</p>
+        <p className="section-label mb-1">{tag}</p>
+        <p className="mt-1 font-display text-lg font-bold text-text">{name}</p>
         <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-text-muted">{description}</p>
       </div>
     </Link>

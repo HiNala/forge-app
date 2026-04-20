@@ -18,7 +18,7 @@ class AuditLog(Base):
     __tablename__ = "audit_log"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    organization_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    organization_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), nullable=True)
     actor_user_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), nullable=True)
     action: Mapped[str] = mapped_column(Text, nullable=False)
     resource_type: Mapped[str] = mapped_column(Text, nullable=False)
@@ -29,3 +29,5 @@ class AuditLog(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    # tenant | platform_admin — cross-tenant operator actions
+    action_context: Mapped[str] = mapped_column(Text, nullable=False, server_default="tenant")

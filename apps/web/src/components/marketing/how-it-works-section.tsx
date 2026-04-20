@@ -45,7 +45,7 @@ export function HowItWorksSection() {
               <span className="font-display text-sm font-semibold text-accent">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <h3 className="mt-2 font-display text-xl font-semibold text-text">{s.title}</h3>
+              <h3 className="mt-2 font-display text-xl font-bold text-text">{s.title}</h3>
               <p className="mt-2 max-w-sm text-pretty text-sm leading-relaxed text-text-muted">
                 {s.body}
               </p>
