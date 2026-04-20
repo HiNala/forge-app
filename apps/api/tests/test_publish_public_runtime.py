@@ -70,7 +70,9 @@ async def test_publish_then_public_get_returns_snapshot() -> None:
         assert data["slug"] == "contact"
         assert data["organization_slug"] == org_slug
         assert "Hello world this is long enough" in data["html"]
-        assert "<script>" in data["html"] and "page_view" in data["html"]
+        # GL-01: inline config + external forge-track.js (page_view fires in the loaded script)
+        assert "<script>" in data["html"]
+        assert "__FORGE_TRACK_CONFIG__" in data["html"] and "forge-track.js" in data["html"]
 
     async with AsyncSessionLocal() as s3:
         q = select(PageVersion).where(PageVersion.page_id == page_id)
