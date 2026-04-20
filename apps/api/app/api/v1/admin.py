@@ -38,14 +38,6 @@ def _normalize_slug(raw: str) -> str:
     return s[:120]
 
 
-@router.get("/organizations", response_model=StubResponse)
-async def admin_orgs(
-    db: AsyncSession = Depends(get_admin_db),
-    _ctx: TenantContext = Depends(require_forge_operator),
-) -> StubResponse:
-    return StubResponse()
-
-
 @router.get("/usage", response_model=StubResponse)
 async def admin_usage(
     db: AsyncSession = Depends(get_admin_db),

@@ -10,6 +10,12 @@ The mission brief asks for a multi-day, human-driven walkthrough (signup → all
 
 ## Fixes shipped on this branch (categorized)
 
+### API — GL-02 platform admin (follow-up)
+
+- **`app.api.v1.admin_platform`** is now **mounted** on the API router (`include_router(admin_platform.router)` before `admin.router`).
+- **Removed** the obsolete **`GET /admin/organizations` stub** from `admin.py` so the real platform RBAC handler in `admin_platform.py` serves org listing.
+- **`tests/test_gl02_platform_rbac.py`** covers session + org list permissions (support vs analyst vs legacy `is_admin`).
+
 ### Documentation & onboarding
 
 - **`README.md`**: Documented Docker **web port 3001** (not 3000), MinIO ports, seed command matching `scripts/seed_dev.py`, test commands for api/web in Compose, clarified that Caddy is not in root `docker-compose.yml`, added Option B for local dev, smoke-check table, prerequisite that `.env` must exist for Compose.
