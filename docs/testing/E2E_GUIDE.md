@@ -28,7 +28,7 @@ pnpm exec playwright test
 
 ## Seeding
 
-`POST /api/v1/__e2e__/seed-org` with header `X-Forge-E2e-Token` creates a fresh user + workspace when `FORGE_E2E_TOKEN` is set on the API. Never set this in production.
+`POST /api/v1/__e2e__/seed-org` with header `X-Forge-E2e-Token` creates a fresh user + workspace when `FORGE_E2E_TOKEN` is set on the API. The API compares tokens in constant time (see `app.core.secret_compare`). Never set `FORGE_E2E_TOKEN` in production.
 
 ## Debugging failures
 

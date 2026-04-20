@@ -13,6 +13,7 @@
 
 2. **E2E seed API**
    - `POST /api/v1/__e2e__/seed-org` gated by `FORGE_E2E_TOKEN` (404 when unset or wrong token).
+   - `app.core.secret_compare.constant_time_str_equal` for header comparison (SHA-256 + `hmac.compare_digest`).
    - `docker-compose.ci.yml` sets `AUTH_TEST_BYPASS`, `ENVIRONMENT=test`, and `FORGE_E2E_TOKEN` for CI.
 
 3. **CI**
