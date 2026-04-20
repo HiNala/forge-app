@@ -35,6 +35,45 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
 
 FRESH_AUTH_MAX_AGE_SECONDS = 15 * 60
 
+# Legacy ``users.is_admin`` unioned with DB rows (partial seed safe).
+_FULL_LEGACY_PLATFORM_PERMISSIONS: frozenset[str] = frozenset(
+    {
+        "orgs:read_list",
+        "orgs:read_detail",
+        "orgs:edit_plan",
+        "orgs:suspend",
+        "orgs:unsuspend",
+        "orgs:delete",
+        "orgs:restore",
+        "users:read_list",
+        "users:read_detail",
+        "users:edit_platform_roles",
+        "users:reset_email",
+        "users:force_mfa",
+        "users:terminate",
+        "billing:read_mrr",
+        "billing:read_invoices",
+        "billing:issue_refund",
+        "billing:apply_credit",
+        "billing:edit_plan_terms",
+        "analytics:read_org_metrics",
+        "analytics:read_platform_metrics",
+        "analytics:export",
+        "llm:read_usage",
+        "llm:read_cost_attribution",
+        "llm:read_run_traces",
+        "llm:edit_routing",
+        "system:read_health",
+        "system:read_logs",
+        "system:toggle_feature_flags",
+        "system:manage_templates",
+        "system:manage_permissions",
+        "impersonate:start",
+        "impersonate:any_org",
+        "audit:read_all",
+    }
+)
+
 _CACHE_TTL = 60
 _CACHE_PREFIX = "platform_perms:"
 
@@ -47,7 +86,7 @@ async def _perms_from_db(user_id: UUID) -> tuple[set[str], list[str]]:
             return set(), []
         if bool(user.is_admin):
             rows = (await session.execute(select(PlatformPermission.key))).scalars().all()
-            return set(rows), ["legacy_is_admin"]
+            return set(rows) | _FULL_LEGACY_PLATFORM_PERMISSIONS, ["legacy_is_admin"]
 
         rkeys = (
             await session.execute(

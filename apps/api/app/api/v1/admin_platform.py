@@ -1,4 +1,4 @@
-"""GL-02 — platform admin session, overview metrics, org listing, LLM rollups."""
+"""GL-02: platform admin session, overview metrics, org listing, LLM rollups."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from app.deps import get_admin_db
 router = APIRouter(prefix="/admin", tags=["admin-platform"])
 
 
-@router.get("/platform/session")
+@router.get("/platform/session", operation_id="gl02_admin_platform_session_get")
 async def platform_session(
     request: Request,
     user: User = Depends(require_any_platform_access),
@@ -44,12 +44,11 @@ async def platform_session(
     }
 
 
-@router.post("/platform/visit")
+@router.post("/platform/visit", operation_id="gl02_admin_platform_visit_post")
 async def platform_record_visit(
     user: User = Depends(require_any_platform_access),
     db: AsyncSession = Depends(get_admin_db),
 ) -> dict[str, str]:
-    """Update last admin visit for Pulse \"since you last visited\"."""
     row = await db.get(User, user.id)
     if row:
         row.platform_last_visit_at = datetime.now(UTC)
@@ -57,7 +56,7 @@ async def platform_record_visit(
     return {"status": "ok"}
 
 
-@router.get("/overview/summary")
+@router.get("/overview/summary", operation_id="gl02_admin_overview_summary_get")
 async def admin_overview_summary(
     request: Request,
     _u: User = Depends(require_platform_permission("analytics:read_platform_metrics")),
@@ -99,7 +98,7 @@ async def admin_overview_summary(
     }
 
 
-@router.get("/organizations")
+@router.get("/organizations", operation_id="gl02_admin_organizations_list_get")
 async def admin_list_organizations(
     request: Request,
     q: str | None = Query(None, description="Search name, slug, stripe id"),
@@ -125,7 +124,7 @@ async def admin_list_organizations(
             )
         )
     rows = (await db.execute(stmt)).scalars().all()
-    out = []
+    out: list[dict[str, Any]] = []
     for org in rows:
         mc = (
             await db.execute(
@@ -147,16 +146,16 @@ async def admin_list_organizations(
     return {"items": out, "next_cursor": None}
 
 
-@router.get("/organizations/{org_id}")
+@router.get("/organizations/{org_id}", operation_id="gl02_admin_organization_detail_get")
 async def admin_get_organization(
     org_id: UUID,
     _u: User = Depends(require_platform_permission("orgs:read_detail")),
     db: AsyncSession = Depends(get_admin_db),
 ) -> dict[str, Any]:
+    from app.core.errors import NotFound
+
     org = await db.get(Organization, org_id)
     if org is None or org.deleted_at is not None:
-        from app.core.errors import NotFound
-
         raise NotFound("Organization not found")
     mc = (
         await db.execute(select(func.count(Membership.id)).where(Membership.organization_id == org.id))
@@ -175,7 +174,7 @@ async def admin_get_organization(
     }
 
 
-@router.get("/llm/summary")
+@router.get("/llm/summary", operation_id="gl02_admin_llm_summary_get")
 async def admin_llm_summary(
     request: Request,
     days: int = Query(30, ge=1, le=365),
@@ -211,16 +210,16 @@ async def admin_llm_summary(
     }
 
 
-@router.get("/orchestration-runs/{run_id}")
+@router.get("/orchestration-runs/{run_id}", operation_id="gl02_admin_orchestration_run_get")
 async def admin_orchestration_run_detail(
     run_id: UUID,
     _u: User = Depends(require_platform_permission("llm:read_run_traces")),
     db: AsyncSession = Depends(get_admin_db),
 ) -> dict[str, Any]:
+    from app.core.errors import NotFound
+
     row = await db.get(OrchestrationRun, run_id)
     if row is None:
-        from app.core.errors import NotFound
-
         raise NotFound("Run not found")
     return {
         "id": str(row.id),
