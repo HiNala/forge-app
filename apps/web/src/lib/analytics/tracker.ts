@@ -53,7 +53,7 @@ export function useAnalytics(apiBase: string) {
   );
 
   useEffect(() => {
-    // `page_view` requires `page_id` in metadata. Shell navigation uses `dashboard_view`.
+    // `page_view` requires `page_id` (public pages). Shell navigation uses `dashboard_view`.
     track("dashboard_view", { route: pathname, surface: "web_app" });
   }, [pathname, track]);
 

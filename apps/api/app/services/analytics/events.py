@@ -174,7 +174,7 @@ def _rows() -> list[tuple[str, str, Scope, list[str], list[str], str]]:
             "authenticated",
             [],
             studio_opt + ["route"],
-            "App shell route viewed (SPA navigation); optional `route` string.",
+            "App shell / dashboard route viewed (SPA navigation; optional route string).",
         ),
         ("dashboard_filter_change", "studio", "authenticated", [], studio_opt + ["filter"], "Dashboard filter."),
         ("dashboard_search", "studio", "authenticated", [], studio_opt + ["query"], "Dashboard search."),

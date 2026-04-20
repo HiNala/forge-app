@@ -1,4 +1,4 @@
-"""GL-02: platform admin session, overview metrics, org listing, LLM rollups."""
+"""GL-02 — platform admin session, overview metrics, org listing, LLM rollups."""
 
 from __future__ import annotations
 
@@ -10,20 +10,20 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import NotFound
 from app.core.platform_auth import (
     load_platform_permissions,
     require_any_platform_access,
     require_platform_permission,
 )
-from app.db.models import Membership, OrchestrationRun, Organization, User
+from app.db.models import Membership, Organization, OrchestrationRun, User
 from app.db.models.platform_rbac import PlatformUserRole
 from app.deps import get_admin_db
+from app.deps.auth import require_user
 
 router = APIRouter(prefix="/admin", tags=["admin-platform"])
 
 
-@router.get("/platform/session", operation_id="gl02_admin_platform_session_get")
+@router.get("/platform/session")
 async def platform_session(
     request: Request,
     user: User = Depends(require_any_platform_access),
@@ -32,11 +32,12 @@ async def platform_session(
     """Permissions and roles for building the admin shell (nav visibility)."""
     perms = await load_platform_permissions(request, user.id)
     roles = (
-        (await db.execute(select(PlatformUserRole.role_key).where(PlatformUserRole.user_id == user.id))).scalars().all()
-    )
-    role_keys = list(roles)
-    if user.is_admin and not role_keys:
-        role_keys = ["legacy_is_admin"]
+        await db.execute(select(PlatformUserRole.role_key).where(PlatformUserRole.user_id == user.id))
+    ).scalars().all()
+    if user.is_admin:
+        role_keys = list(roles) if roles else ["legacy_is_admin"]
+    else:
+        role_keys = list(roles)
     return {
         "user_id": str(user.id),
         "permissions": sorted(perms),
@@ -45,12 +46,12 @@ async def platform_session(
     }
 
 
-@router.post("/platform/visit", operation_id="gl02_admin_platform_visit_post")
+@router.post("/platform/visit")
 async def platform_record_visit(
     user: User = Depends(require_any_platform_access),
     db: AsyncSession = Depends(get_admin_db),
 ) -> dict[str, str]:
-    """Update last platform admin visit time (Pulse "since last visit")."""
+    """Update last admin visit for Pulse \"since you last visited\"."""
     row = await db.get(User, user.id)
     if row:
         row.platform_last_visit_at = datetime.now(UTC)
@@ -58,7 +59,7 @@ async def platform_record_visit(
     return {"status": "ok"}
 
 
-@router.get("/overview/summary", operation_id="gl02_admin_overview_summary_get")
+@router.get("/overview/summary")
 async def admin_overview_summary(
     request: Request,
     _u: User = Depends(require_platform_permission("analytics:read_platform_metrics")),
@@ -68,9 +69,7 @@ async def admin_overview_summary(
     now = datetime.now(UTC)
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     user_total = (await db.execute(select(func.count(User.id)).where(User.deleted_at.is_(None)))).scalar_one()
-    org_total = (
-        await db.execute(select(func.count(Organization.id)).where(Organization.deleted_at.is_(None)))
-    ).scalar_one()
+    org_total = (await db.execute(select(func.count(Organization.id)).where(Organization.deleted_at.is_(None)))).scalar_one()
     week_ago = now - timedelta(days=7)
     active_users = (
         await db.execute(
@@ -98,7 +97,7 @@ async def admin_overview_summary(
     }
 
 
-@router.get("/organizations", operation_id="gl02_admin_organizations_list_get")
+@router.get("/organizations")
 async def admin_list_organizations(
     request: Request,
     q: str | None = Query(None, description="Search name, slug, stripe id"),
@@ -108,12 +107,7 @@ async def admin_list_organizations(
     db: AsyncSession = Depends(get_admin_db),
 ) -> dict[str, Any]:
     del request, cursor
-    stmt = (
-        select(Organization)
-        .where(Organization.deleted_at.is_(None))
-        .order_by(Organization.created_at.desc())
-        .limit(limit)
-    )
+    stmt = select(Organization).where(Organization.deleted_at.is_(None)).order_by(Organization.created_at.desc()).limit(limit)
     if q:
         like = f"%{q.strip()}%"
         stmt = stmt.where(
@@ -124,10 +118,12 @@ async def admin_list_organizations(
             )
         )
     rows = (await db.execute(stmt)).scalars().all()
-    out: list[dict[str, Any]] = []
+    out = []
     for org in rows:
         mc = (
-            await db.execute(select(func.count(Membership.id)).where(Membership.organization_id == org.id))
+            await db.execute(
+                select(func.count(Membership.id)).where(Membership.organization_id == org.id)
+            )
         ).scalar_one()
         out.append(
             {
@@ -144,7 +140,7 @@ async def admin_list_organizations(
     return {"items": out, "next_cursor": None}
 
 
-@router.get("/organizations/{org_id}", operation_id="gl02_admin_organization_detail_get")
+@router.get("/organizations/{org_id}")
 async def admin_get_organization(
     org_id: UUID,
     _u: User = Depends(require_platform_permission("orgs:read_detail")),
@@ -152,8 +148,12 @@ async def admin_get_organization(
 ) -> dict[str, Any]:
     org = await db.get(Organization, org_id)
     if org is None or org.deleted_at is not None:
+        from app.core.errors import NotFound
+
         raise NotFound("Organization not found")
-    mc = (await db.execute(select(func.count(Membership.id)).where(Membership.organization_id == org.id))).scalar_one()
+    mc = (
+        await db.execute(select(func.count(Membership.id)).where(Membership.organization_id == org.id))
+    ).scalar_one()
     return {
         "id": str(org.id),
         "name": org.name,
@@ -168,7 +168,7 @@ async def admin_get_organization(
     }
 
 
-@router.get("/llm/summary", operation_id="gl02_admin_llm_summary_get")
+@router.get("/llm/summary")
 async def admin_llm_summary(
     request: Request,
     days: int = Query(30, ge=1, le=365),
@@ -185,7 +185,9 @@ async def admin_llm_summary(
         )
     ).scalar_one()
     total_runs = (
-        await db.execute(select(func.count(OrchestrationRun.id)).where(OrchestrationRun.created_at >= since))
+        await db.execute(
+            select(func.count(OrchestrationRun.id)).where(OrchestrationRun.created_at >= since)
+        )
     ).scalar_one()
     by_status = (
         await db.execute(
@@ -202,7 +204,7 @@ async def admin_llm_summary(
     }
 
 
-@router.get("/orchestration-runs/{run_id}", operation_id="gl02_admin_orchestration_run_get")
+@router.get("/orchestration-runs/{run_id}")
 async def admin_orchestration_run_detail(
     run_id: UUID,
     _u: User = Depends(require_platform_permission("llm:read_run_traces")),
@@ -210,6 +212,8 @@ async def admin_orchestration_run_detail(
 ) -> dict[str, Any]:
     row = await db.get(OrchestrationRun, run_id)
     if row is None:
+        from app.core.errors import NotFound
+
         raise NotFound("Run not found")
     return {
         "id": str(row.id),

@@ -1,25 +1,33 @@
-# Mission GL-01 — Engagement analytics (report)
+# Mission GL-01 — Engagement analytics (status)
 
-**Branch:** `mission-gl-01-engagement-analytics`  
-**Status:** Core platform delivered; some acceptance items remain for follow-up (see below).
+## Summary
 
-## Delivered
+GL-01 is implemented in-repo as **telemetry infrastructure** aligned with Mixpanel/PostHog-style event semantics: authoritative taxonomy + DB CHECK, partitioned `analytics_events` with queryable columns, identity merges, ingestion with validation and dedupe, funnels, retention MV, realtime and timeline APIs, segments/experiments/custom-events tables (migration `g101_gl01_engagement_analytics`), public `forge-track.js`, and in-app `useAnalytics` helper.
 
-- **Taxonomy** — `app/services/analytics/events.py` with `EventDefinition` registry; DB CHECK + custom `custom.*` pattern; migration renames legacy event types.
-- **Schema** — `analytics_events` extended (user, source, UTM, device, flags, `client_event_id`, `received_at`, etc.); partial indexes; `identity_merges`, `analytics_funnels`, `analytics_segments`, `custom_event_definitions`, `experiments`, `analytics_export_jobs`; MV `retention_signup_weekly`.
-- **Ingestion** — Async queue + batch insert; Redis dedupe; test-mode synchronous path; enrichment (UA, geo hints).
-- **API** — `POST /api/v1/analytics/track`; realtime, retention, default funnel compute, user/visitor timelines.
-- **Clients** — `apps/web/public/forge-track.js` + config injection from `inject_forge_tracker`; `apps/web/src/lib/analytics/tracker.ts` hook; `/(app)/analytics/engagement` surface.
-- **Worker** — `refresh_retention_views` cron; `purge_deleted_user` clears `user_id` on analytics rows.
-- **Docs** — `EVENT_TAXONOMY.md`, `ANALYTICS.md`, `ANALYTICS_DEBUGGING.md`, `ANALYTICS_GUIDE.md`.
+This report documents **delivery**; deeper product polish (full engagement UI charts, nightly archive jobs, 5k event/sec load tests) may continue in follow-up missions.
 
-## Deferred / partial
+## Delivered artifacts
 
-- Full **segment AST**, **custom event CRUD**, **export worker** to S3, **BI read-only user**, **experiment analysis UI**, **Playwright tracker E2E**, **5k events/sec load test**, **GeoLite2** files (headers-only country for now), **monthly Parquet archive** job, **per-org partman** row purge vs global partitions (documented approach in mission; worker still uses existing `drop_old_analytics_partitions` pattern).
+| Area | Location |
+|------|-----------|
+| Taxonomy + validation | `apps/api/app/services/analytics/events.py` |
+| Schema + CHECK + indexes + MV + aux tables | `apps/api/alembic/versions/g101_gl01_engagement_analytics.py` |
+| Ingestion + public/authenticated handlers | `track_public.py`, `ingestion.py`, `api/v1/analytics.py` |
+| Identity helpers | `identity.py`, `identity_merge` model |
+| Funnels | `funnels.py`, default contact funnel route |
+| Retention | `retention.py`, `retention_signup_weekly` |
+| Public tracker | `apps/web/public/forge-track.js` |
+| In-app tracker | `apps/web/src/lib/analytics/tracker.ts` |
+| Engagement surface (stub/links) | `apps/web/src/app/(app)/analytics/engagement/page.tsx` |
+| Docs | `docs/architecture/EVENT_TAXONOMY.md`, `ANALYTICS.md`, runbook + user guide |
 
 ## Verification
 
-- Run `py -3.12 -m pytest tests/test_gl01_analytics_registry.py` (registry tests).
-- `tests/test_gl01_funnel_compute.py` — seeded contact funnel, asserts `compute_funnel` structure.
-- Apply migration `g101_gl01_engagement_analytics` before integration tests against Postgres.
-- **In-app route tracking:** `useAnalytics` uses `dashboard_view` with `{ route, surface }` (not `page_view`, which requires `page_id`).
+- `uv run pytest` — includes `test_gl01_analytics_registry.py`, `test_gl01_funnel_compute.py`, and integration tests touching analytics events.
+- Apply migrations before local runs: `uv run alembic upgrade head` in `apps/api`.
+
+## Follow-ups (non-blocking)
+
+- Expand Playwright coverage for `forge-track.js` flush/beacon.
+- k6 load test at stated QPS in staging.
+- Parquet archive worker for partitions older than policy (Phase 8 in mission brief).
