@@ -5,18 +5,62 @@ Forge turns a plain-English prompt into a finished, hosted, single-purpose web p
 ## Quick Start
 
 ```bash
-# Clone and start all services
 git clone https://github.com/HiNala/forge-app.git
 cd forge-app
 cp .env.example .env
-# Add Clerk keys (see .env.example) for sign-in; optional: Resend + S3 for invites/logo.
+# Edit .env: Clerk keys are required for sign-in. Add OPENAI_API_KEY (or other LLM keys) for live generation.
+```
+
+### Option A — Docker Compose (full stack)
+
+```bash
 docker compose up --build -d
 ```
 
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:8000
-- **API Docs:** http://localhost:8000/docs
-- **Deep health (Postgres + Redis):** http://localhost:8000/health/deep
+| Service    | URL / port | Notes |
+|------------|------------|--------|
+| **Web**    | **http://localhost:3001** | Mapped to host **3001** so a local `pnpm dev` can keep using **3000**. |
+| **API**    | http://localhost:8000 | OpenAPI at `/docs`. |
+| **Deep health** | http://localhost:8000/health/deep | Postgres + Redis checks. |
+| **MinIO**  | http://localhost:9001 (console), API :9000 | Set `STORAGE_*` in `.env` to match. |
+| **Postgres** | localhost:5432 | User/password/db: `postgres` / `postgres` / `forge_dev`. |
+
+The `api` container runs **Alembic migrations** on startup (`alembic upgrade head`). **Create `.env` before `docker compose up`** — `web`, `api`, and `worker` use `env_file: .env` so Clerk, LLM keys, and storage settings reach the containers.
+
+**Seed demo data** (idempotent — safe to run twice):
+
+```bash
+docker compose exec api uv run python scripts/seed_dev.py
+```
+
+**Tests inside containers** (from repo root, stack running):
+
+```bash
+docker compose exec api uv run pytest
+docker compose exec web sh -c "corepack enable && corepack prepare pnpm@9 --activate && pnpm install && pnpm --filter web test"
+```
+
+### Option B — Local dev (no Docker for web)
+
+From repo root, with Postgres/Redis/MinIO running (e.g. only infra services from Compose):
+
+```bash
+pnpm install
+pnpm dev
+```
+
+- **Web:** http://localhost:3000  
+- Point `NEXT_PUBLIC_API_URL` at your API (e.g. http://localhost:8000/api/v1).
+
+Run API locally: see `apps/api/README.md` or `uv run uvicorn` from `apps/api`.
+
+### After boot — smoke checks
+
+1. **Marketing:** http://localhost:3001 (Docker) or http://localhost:3000 (local) — landing page loads.
+2. **App shell:** http://localhost:3001/dashboard — redirects to Clerk **sign-in** if unauthenticated (`/app` also redirects to `/dashboard`).
+3. **API:** `curl -s http://localhost:8000/health` → healthy JSON.
+
+> **Compose services:** `docker-compose.yml` includes **web, api, worker, postgres, redis, minio**. There is **no Caddy** in this file — TLS termination is for Railway/production (see `infra/` and deployment docs).
 
 ### Signup → onboarding → brand (Mission 02)
 

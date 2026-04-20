@@ -2,6 +2,8 @@ services:
   web:
     image: node:20-bookworm-slim
     working_dir: /srv
+    env_file:
+      - .env
     volumes:
       - .:/srv
       # Linux deps inside the container (avoid bind-mounting Windows node_modules)
@@ -23,6 +25,8 @@ services:
   api:
     build:
       context: ./apps/api
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     depends_on:
@@ -59,6 +63,8 @@ services:
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
+    env_file:
+      - .env
     depends_on:
       redis:
         condition: service_healthy
