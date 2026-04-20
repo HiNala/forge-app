@@ -23,6 +23,7 @@ The API validates each event’s `metadata` against `required_properties` for th
 
 ## Example payloads
 
+- **`dashboard_view`** (in-app) — `{ "route": "/dashboard", "surface": "web_app" }`. Emitted by `useAnalytics` on Next.js route changes (no `page_id` required).
 - **`page_view`** — `{ "page_id": "<uuid>" }` (server injects on public track if omitted).
 - **`form_submit_success`** — `{ "page_id": "<uuid>", "submission_id": "<uuid>" }` from server on successful submit.
 - **`identity_merge`** — `{ "visitor_id": "...", "user_id": "<uuid>", "reason": "signup" }` for stitching.

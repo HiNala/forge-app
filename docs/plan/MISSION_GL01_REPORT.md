@@ -20,4 +20,6 @@
 ## Verification
 
 - Run `py -3.12 -m pytest tests/test_gl01_analytics_registry.py` (registry tests).
+- `tests/test_gl01_funnel_compute.py` — seeded contact funnel, asserts `compute_funnel` structure.
 - Apply migration `g101_gl01_engagement_analytics` before integration tests against Postgres.
+- **In-app route tracking:** `useAnalytics` uses `dashboard_view` with `{ route, surface }` (not `page_view`, which requires `page_id`).
