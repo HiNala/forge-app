@@ -26,7 +26,7 @@ export function MarketingFooter() {
           <div className="max-w-[280px]">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 font-display text-xl font-semibold tracking-tight text-text no-underline"
+              className="inline-flex items-center gap-2 font-display text-xl font-bold tracking-tight text-text no-underline"
             >
               <ForgeLogo size="md" className="text-accent" />
               Forge

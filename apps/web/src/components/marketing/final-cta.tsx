@@ -43,7 +43,7 @@ export function FinalCta() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="rounded-2xl border border-accent-bold bg-accent-light px-6 py-5 font-display text-base font-semibold text-accent"
+                className="rounded-2xl border border-accent-bold bg-accent-light px-6 py-5 font-display text-base font-bold text-accent"
               >
                 ✓ You&apos;re in — check your inbox.
               </motion.div>

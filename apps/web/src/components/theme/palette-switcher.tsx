@@ -84,7 +84,7 @@ export function PaletteSwitcher() {
   return (
     <div
       className={cn(
-        "fixed bottom-4 right-4 z-[100] flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 shadow-lg",
+        "fixed bottom-4 right-4 z-[100] flex flex-col gap-2 rounded-2xl border border-border bg-surface p-3 shadow-lg",
         "text-xs font-medium text-text",
       )}
       role="region"

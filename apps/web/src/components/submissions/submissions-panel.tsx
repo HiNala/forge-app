@@ -523,7 +523,7 @@ export function SubmissionsPanel() {
             </div>
             {brandQ.data ? (
               <div
-                className="rounded-lg border border-border-subtle bg-bg-elevated p-3 text-xs font-body"
+                className="rounded-2xl border border-border bg-bg-elevated p-3 text-xs font-body"
                 style={{
                   borderLeftWidth: 4,
                   borderLeftColor: brandQ.data.primary_color ?? "#6366f1",

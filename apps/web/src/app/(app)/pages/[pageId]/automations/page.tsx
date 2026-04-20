@@ -363,7 +363,7 @@ function ConnectionPicker({
       <Label htmlFor="cal-conn">Calendar connection</Label>
       <select
         id="cal-conn"
-        className="flex h-10 w-full rounded-md border border-border-subtle bg-surface px-3 text-sm"
+        className="flex h-10 w-full rounded-md border border-border bg-surface px-3 text-sm"
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value ? e.target.value : null)}
       >

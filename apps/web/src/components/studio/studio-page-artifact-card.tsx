@@ -42,7 +42,7 @@ export function StudioPageArtifactCard({
         "transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md",
       )}
     >
-      <p className="font-display text-sm font-semibold text-white">{meta.title}</p>
+      <p className="font-display text-sm font-bold text-white">{meta.title}</p>
       <div className="mt-1 flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-white/10 px-2 py-0.5 font-body text-[10px] font-semibold capitalize text-white/60">
           {meta.pageType.replace(/-/g, " ")}

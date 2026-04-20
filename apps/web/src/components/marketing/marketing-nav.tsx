@@ -45,7 +45,7 @@ export function MarketingNav() {
         {/* Logo */}
         <Link
           href="/"
-          className="flex min-h-11 min-w-0 items-center gap-2 font-display text-xl font-semibold tracking-tight text-text no-underline"
+          className="flex min-h-11 min-w-0 items-center gap-2 font-display text-xl font-bold tracking-tight text-text no-underline"
         >
           <ForgeLogo size="md" className="text-accent" />
           <span>Forge</span>

@@ -65,7 +65,7 @@ export default function AdminTemplatesPage() {
   if (!isOperator) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-12">
-        <h1 className="font-display text-2xl font-semibold text-text">Templates admin</h1>
+        <h1 className="font-display text-2xl font-bold text-text">Templates admin</h1>
         <p className="mt-3 text-sm text-text-muted">
           This view is only available when your active workspace is listed in{" "}
           <code className="rounded bg-surface-muted px-1">NEXT_PUBLIC_FORGE_OPERATOR_ORG_IDS</code>{" "}
@@ -78,14 +78,14 @@ export default function AdminTemplatesPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="font-display text-2xl font-semibold text-text">Curate templates</h1>
+      <h1 className="font-display text-2xl font-bold text-text">Curate templates</h1>
       <p className="mt-2 text-sm text-text-muted">
         Create and edit rows via API or seed scripts; queue screenshot regeneration here.
       </p>
       {loading ? (
         <p className="mt-8 text-sm text-text-muted">Loading…</p>
       ) : (
-        <ul className="mt-8 divide-y divide-border rounded-lg border border-border">
+        <ul className="mt-8 divide-y divide-border rounded-2xl border border-border">
           {rows.map((r) => (
             <li
               key={r.id}
