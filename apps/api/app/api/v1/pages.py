@@ -387,3 +387,32 @@ async def export_submissions_csv(
             "Content-Disposition": f'attachment; filename="{filename}"',
         },
     )
+
+
+@router.get("/{page_id}/export/html")
+async def export_page_html(
+    page_id: UUID,
+    _: None = Depends(require_api_scopes("read:pages")),
+    db: AsyncSession = Depends(get_db),
+    ctx: TenantContext = Depends(require_tenant),
+) -> StreamingResponse:
+    """Download the page's current HTML as a self-contained file."""
+    p = await db.get(Page, page_id)
+    if p is None or p.organization_id != ctx.organization_id:
+        raise HTTPException(status_code=404, detail="Not found")
+    html = p.current_html or ""
+    if not html.strip():
+        raise HTTPException(status_code=404, detail="Page has no generated content yet")
+    safe_slug = "".join(c if c.isalnum() or c in "-_" else "-" for c in (p.slug or "page"))[:80]
+    filename = f"{safe_slug}.html"
+
+    async def _stream():
+        yield html.encode("utf-8")
+
+    return StreamingResponse(
+        _stream(),
+        media_type="text/html; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )

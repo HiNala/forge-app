@@ -1373,6 +1373,29 @@ export async function exportSubmissionsCsv(
   return { blob, filename: fname };
 }
 
+export async function exportPageHtml(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+): Promise<{ blob: Blob; filename: string }> {
+  const token = await getToken();
+  if (!token) throw new ApiError("Not authenticated", 401);
+  const h = new Headers();
+  h.set("Authorization", `Bearer ${token}`);
+  if (activeOrgId) h.set(FORGE_ACTIVE_ORG_HEADER, activeOrgId);
+  const res = await fetchWithTimeout(`${getApiUrl()}/pages/${pageId}/export/html`, {
+    method: "GET",
+    headers: h,
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    throw new ApiError(res.statusText, res.status, json);
+  }
+  const fname = parseContentDispositionFilename(res.headers.get("content-disposition")) ?? `page-${pageId}.html`;
+  const blob = await res.blob();
+  return { blob, filename: fname };
+}
+
 export async function deleteCalendarConnection(
   getToken: () => Promise<string | null>,
   activeOrgId: string | null,
