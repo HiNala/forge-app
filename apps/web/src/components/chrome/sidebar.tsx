@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   getBillingUsage,
+  listPages,
   patchUserPreferences,
   postAuthSignOut,
   postCreateWorkspace,
@@ -194,6 +195,49 @@ function NavItem({
       <TooltipTrigger asChild>{link}</TooltipTrigger>
       <TooltipContent side="right">{label}</TooltipContent>
     </Tooltip>
+  );
+}
+
+function RecentPagesList({
+  getToken,
+  activeOrganizationId,
+}: {
+  getToken: () => Promise<string | null>;
+  activeOrganizationId: string | null;
+}) {
+  const q = useQuery({
+    queryKey: ["pages", activeOrganizationId],
+    queryFn: () => listPages(getToken, activeOrganizationId),
+    enabled: !!activeOrganizationId,
+    staleTime: 60_000,
+  });
+  const pages = (q.data ?? []).slice(0, 4);
+  if (pages.length === 0) return null;
+
+  return (
+    <div className="mt-4">
+      <p
+        className="px-2.5 pb-1.5 font-body"
+        style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--text-subtle)" }}
+      >
+        Recent
+      </p>
+      {pages.map((p) => (
+        <Link
+          key={p.id}
+          href={`/pages/${p.id}`}
+          className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 font-body text-[12px] text-text-muted transition-colors hover:bg-bg-elevated/80 hover:text-text"
+        >
+          <span
+            className="size-1.5 shrink-0 rounded-full"
+            style={{
+              background: p.status === "live" ? "var(--color-success)" : "var(--color-warning)",
+            }}
+          />
+          <span className="truncate">{p.title}</span>
+        </Link>
+      ))}
+    </div>
   );
 }
 
@@ -373,6 +417,12 @@ export function Sidebar({
               collapsed={collapsed}
             />
           ))}
+          {!collapsed && (
+            <RecentPagesList
+              getToken={getToken}
+              activeOrganizationId={activeOrganizationId}
+            />
+          )}
         </nav>
 
         <div className="shrink-0 border-t border-border px-2 pt-2 pb-1">
