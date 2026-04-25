@@ -44,16 +44,18 @@ export default function PageExportTab() {
   }
 
   return (
-    <div className="max-w-lg space-y-4 rounded-2xl border border-border bg-surface p-6 shadow-sm">
-      <h2 className="font-display text-lg font-bold text-text">Export deck</h2>
-      <p className="text-sm text-text-muted font-body">
-        Generate a traditional file for email or offline presenting. Large exports run in the background.
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="primary" loading={busy === "pdf"} onClick={() => void run("pdf")}>
+    <div className="space-y-4 rounded-2xl border border-border bg-surface p-4">
+      <div>
+        <p className="section-label mb-1">Export deck</p>
+        <p className="font-body text-[12px] text-text-muted">
+          Generate a file for email or offline use. Large exports run in the background — you&apos;ll get a download link when ready.
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <Button type="button" variant="primary" size="sm" loading={busy === "pdf"} onClick={() => void run("pdf")}>
           PDF
         </Button>
-        <Button type="button" variant="secondary" loading={busy === "pptx"} onClick={() => void run("pptx")}>
+        <Button type="button" variant="secondary" size="sm" loading={busy === "pptx"} onClick={() => void run("pptx")}>
           PPTX
         </Button>
       </div>
