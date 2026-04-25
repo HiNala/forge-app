@@ -8,11 +8,15 @@ from app.services.orchestration.planning_models import PagePlan
 
 from .contact_form import plan_contact_form
 from .default import plan_default
+from .faq import plan_faq
 from .landing import plan_landing
+from .link_in_bio import plan_link_in_bio
 from .menu import plan_menu
 from .pitch_deck import plan_pitch_deck
+from .portfolio import plan_portfolio
 from .proposal import plan_proposal
 from .rsvp import plan_rsvp
+from .waitlist import plan_waitlist
 
 
 def plan_for_intent(intent: PageIntent, bundle: ContextBundle | None) -> PagePlan:
@@ -32,4 +36,12 @@ def plan_for_intent(intent: PageIntent, bundle: ContextBundle | None) -> PagePla
         return plan_menu(intent, bundle)
     if wf == "event_rsvp":
         return plan_rsvp(intent, bundle)
+    if wf == "portfolio":
+        return plan_portfolio(intent, bundle)
+    if wf == "link_in_bio":
+        return plan_link_in_bio(intent, bundle)
+    if wf == "waitlist":
+        return plan_waitlist(intent, bundle)
+    if wf == "faq":
+        return plan_faq(intent, bundle)
     return plan_default(intent, bundle)

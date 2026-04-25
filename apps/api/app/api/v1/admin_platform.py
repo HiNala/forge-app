@@ -15,7 +15,7 @@ from app.core.platform_auth import (
     require_any_platform_access,
     require_platform_permission,
 )
-from app.db.models import Membership, OrchestrationRun, Organization, User
+from app.db.models import AnalyticsEvent, Membership, OrchestrationRun, Organization, Page, Submission, User
 from app.db.models.platform_rbac import PlatformUserRole
 from app.deps import get_admin_db
 
@@ -94,6 +94,38 @@ async def admin_overview_summary(
             "llm_cost_cents_today": int(llm_today),
         },
         "generated_at": now.isoformat(),
+    }
+
+
+@router.get("/users")
+async def admin_list_users(
+    q: str | None = Query(None, description="Search by email or display_name"),
+    limit: int = Query(50, ge=1, le=100),
+    _u: User = Depends(require_platform_permission("orgs:read_list")),
+    db: AsyncSession = Depends(get_admin_db),
+) -> dict[str, Any]:
+    stmt = select(User).where(User.deleted_at.is_(None)).order_by(User.created_at.desc()).limit(limit)
+    if q:
+        like = f"%{q.strip()}%"
+        stmt = stmt.where(
+            or_(
+                User.email.ilike(like),
+                User.display_name.ilike(like),
+            )
+        )
+    rows = (await db.execute(stmt)).scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(u.id),
+                "email": str(u.email),
+                "display_name": u.display_name,
+                "is_admin": bool(u.is_admin),
+                "created_at": u.created_at.isoformat() if u.created_at else None,
+            }
+            for u in rows
+        ],
+        "next_cursor": None,
     }
 
 
@@ -238,4 +270,78 @@ async def admin_orchestration_run_detail(
         "error_message": row.error_message,
         "prompt": row.prompt,
         "created_at": row.created_at.isoformat() if row.created_at else None,
+    }
+
+
+@router.get("/analytics/platform")
+async def admin_platform_analytics(
+    days: int = Query(30, ge=1, le=365),
+    _u: User = Depends(require_platform_permission("analytics:read_platform_metrics")),
+    db: AsyncSession = Depends(get_admin_db),
+) -> dict[str, Any]:
+    """Platform-wide analytics rollup for admin dashboard."""
+    since = datetime.now(UTC) - timedelta(days=days)
+
+    total_users = (
+        await db.execute(select(func.count(User.id)).where(User.deleted_at.is_(None)))
+    ).scalar_one()
+    new_users = (
+        await db.execute(select(func.count(User.id)).where(User.created_at >= since, User.deleted_at.is_(None)))
+    ).scalar_one()
+    total_orgs = (
+        await db.execute(select(func.count(Organization.id)).where(Organization.deleted_at.is_(None)))
+    ).scalar_one()
+    total_pages = (
+        await db.execute(select(func.count(Page.id)))
+    ).scalar_one()
+    live_pages = (
+        await db.execute(select(func.count(Page.id)).where(Page.status == "live"))
+    ).scalar_one()
+    total_submissions = (
+        await db.execute(select(func.count(Submission.id)).where(Submission.created_at >= since))
+    ).scalar_one()
+    total_page_views = (
+        await db.execute(
+            select(func.count(AnalyticsEvent.id)).where(
+                AnalyticsEvent.event_type == "page_view",
+                AnalyticsEvent.created_at >= since,
+            )
+        )
+    ).scalar_one()
+    total_llm_cost = (
+        await db.execute(
+            select(func.coalesce(func.sum(OrchestrationRun.total_cost_cents), 0)).where(
+                OrchestrationRun.created_at >= since
+            )
+        )
+    ).scalar_one()
+    total_llm_runs = (
+        await db.execute(
+            select(func.count(OrchestrationRun.id)).where(OrchestrationRun.created_at >= since)
+        )
+    ).scalar_one()
+
+    plans = (
+        await db.execute(
+            select(Organization.plan, func.count(Organization.id))
+            .where(Organization.deleted_at.is_(None))
+            .group_by(Organization.plan)
+        )
+    ).all()
+
+    return {
+        "window_days": days,
+        "users": {"total": int(total_users), "new_in_window": int(new_users)},
+        "organizations": {
+            "total": int(total_orgs),
+            "by_plan": {plan: int(cnt) for plan, cnt in plans},
+        },
+        "pages": {"total": int(total_pages), "live": int(live_pages)},
+        "submissions_in_window": int(total_submissions),
+        "page_views_in_window": int(total_page_views),
+        "llm": {
+            "cost_cents_in_window": int(total_llm_cost),
+            "runs_in_window": int(total_llm_runs),
+        },
+        "generated_at": datetime.now(UTC).isoformat(),
     }

@@ -1,0 +1,52 @@
+{# link_button_list — stacked full-width link buttons for link-in-bio pages #}
+{%- set links = props.links | default([]) %}
+{%- set name = props.name | default('') %}
+{%- set bio = props.bio | default('') %}
+{%- set avatar_url = props.avatar_url | default('') %}
+{%- set socials = props.socials | default([]) %}
+<section class="forge-sec-tight forge-bg-surface">
+  <div class="forge-bio-wrap">
+    {# Profile header #}
+    <div class="forge-bio-header">
+      <div class="forge-bio-avatar" aria-hidden="true">
+        {%- if avatar_url %}
+        <img src="{{ avatar_url }}" alt="{{ name }}" class="forge-bio-avatar-img" />
+        {%- else %}
+        <span class="forge-bio-avatar-placeholder">{{ name[0] | upper if name else '?' }}</span>
+        {%- endif %}
+      </div>
+      {%- if name %}
+      <h1 class="forge-h3 forge-mt-2">{{ name }}</h1>
+      {%- endif %}
+      {%- if bio %}
+      <p class="forge-bio-desc">{{ bio }}</p>
+      {%- endif %}
+      {%- if socials %}
+      <div class="forge-bio-socials">
+        {%- for s in socials %}
+        <span class="forge-bio-social-chip">{{ s }}</span>
+        {%- endfor %}
+      </div>
+      {%- endif %}
+    </div>
+
+    {# Link buttons #}
+    <div class="forge-bio-links">
+      {%- for link in links %}
+      {%- set label = link.label if link is mapping else link %}
+      {%- set url = link.url if link is mapping else '#' %}
+      {%- set emoji = link.emoji | default('') if link is mapping else '' %}
+      <a
+        href="{{ url }}"
+        class="forge-bio-btn"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {%- if emoji %}<span class="forge-bio-btn-emoji" aria-hidden="true">{{ emoji }}</span>{%- endif %}
+        <span>{{ label }}</span>
+      </a>
+      {%- endfor %}
+    </div>
+    {{ children_html | default('') }}
+  </div>
+</section>

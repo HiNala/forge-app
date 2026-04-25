@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   PlusCircle,
   Settings,
+  Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ForgeMark } from "@/components/chrome/forge-logo";
@@ -417,6 +418,14 @@ export function Sidebar({
               collapsed={collapsed}
             />
           ))}
+          {user?.is_platform_admin ? (
+            <NavItem
+              href="/admin/overview"
+              label="Admin"
+              Icon={Shield}
+              collapsed={collapsed}
+            />
+          ) : null}
           {!collapsed && (
             <RecentPagesList
               getToken={getToken}
@@ -470,9 +479,19 @@ export function Sidebar({
               <DropdownMenuItem asChild>
                 <Link href="/settings/billing">Billing</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem disabled className="text-text-subtle">
-                Theme (soon)
+              <DropdownMenuItem asChild>
+                <Link href="/settings/usage">Usage</Link>
               </DropdownMenuItem>
+              {user?.is_platform_admin ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/overview" className="text-danger">
+                      Admin panel
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              ) : null}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-danger focus:text-danger font-body"

@@ -26,6 +26,7 @@ class UserOut(BaseModel):
     email: str
     display_name: str | None
     avatar_url: str | None
+    is_platform_admin: bool = False
 
 
 class UserMePatch(BaseModel):

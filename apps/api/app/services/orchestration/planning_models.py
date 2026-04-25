@@ -51,6 +51,10 @@ WorkflowPlanType = Literal[
     "event_rsvp",
     "gallery",
     "promotion",
+    "portfolio",
+    "link_in_bio",
+    "waitlist",
+    "faq",
     "other",
 ]
 

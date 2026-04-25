@@ -3,7 +3,7 @@
  */
 
 import type { LucideIcon } from "lucide-react";
-import { FileText, LayoutGrid, Mail, Presentation } from "lucide-react";
+import { FileText, Globe, LayoutGrid, Link2, Mail, Presentation, Rocket } from "lucide-react";
 
 export type DashboardWorkflowFilter = "all" | "contact" | "proposal" | "deck" | "other";
 
@@ -76,6 +76,36 @@ export function getWorkflowSurfaceConfig(pageType: string): WorkflowSurfaceConfi
       middleTab: { id: "automations", label: "Automations", hrefSuffix: "/automations" },
       submissionsTabLabel: "Viewers & decisions",
       headerActions: "proposal",
+    };
+  }
+  if (pageType === "portfolio") {
+    return {
+      chipIcon: Globe,
+      chipLabel: "Portfolio",
+      chipClassName: "bg-emerald-500/10 text-emerald-800",
+      middleTab: { id: "automations", label: "Automations", hrefSuffix: "/automations" },
+      submissionsTabLabel: "Inquiries",
+      headerActions: "default",
+    };
+  }
+  if (pageType === "link_in_bio") {
+    return {
+      chipIcon: Link2,
+      chipLabel: "Link in bio",
+      chipClassName: "bg-pink-500/10 text-pink-800",
+      middleTab: { id: "automations", label: "Automations", hrefSuffix: "/automations" },
+      submissionsTabLabel: "Clicks",
+      headerActions: "default",
+    };
+  }
+  if (pageType === "waitlist") {
+    return {
+      chipIcon: Rocket,
+      chipLabel: "Waitlist",
+      chipClassName: "bg-orange-500/10 text-orange-800",
+      middleTab: { id: "automations", label: "Automations", hrefSuffix: "/automations" },
+      submissionsTabLabel: "Sign-ups",
+      headerActions: "default",
     };
   }
   if (isContactPageType(pageType)) {

@@ -1,0 +1,50 @@
+{# tabs_section — CSS-only radio-button tabs, no JS #}
+{%- set eyebrow = props.eyebrow | default('') %}
+{%- set headline = props.headline | default('') %}
+{%- set tabs = props.tabs | default([]) %}
+{%- set section_id = section_id | default('tabs-' + loop.index | string) %}
+<section class="forge-sec forge-bg-surface">
+  <div class="forge-container">
+    {%- if eyebrow %}
+    <p class="forge-eyebrow forge-mb-1">{{ eyebrow }}</p>
+    {%- endif %}
+    {%- if headline %}
+    <h2 class="forge-h2 forge-mb-4">{{ headline }}</h2>
+    {%- endif %}
+    <div class="forge-tabs" role="tablist">
+      {%- for tab in tabs %}
+      {%- set tid = section_id + '-tab-' + loop.index | string %}
+      <input
+        class="forge-tab-radio"
+        type="radio"
+        name="{{ section_id }}"
+        id="{{ tid }}"
+        {% if loop.first %}checked{% endif %}
+        hidden
+      />
+      <label class="forge-tab-label" for="{{ tid }}" role="tab">{{ tab.label | default('Tab ' + loop.index | string) }}</label>
+      {%- endfor %}
+      <div class="forge-tabs-panels">
+        {%- for tab in tabs %}
+        {%- set tid = section_id + '-tab-' + loop.index | string %}
+        <div class="forge-tab-panel" data-for="{{ tid }}">
+          {%- if tab.headline %}
+          <h3 class="forge-h3 forge-mb-2">{{ tab.headline }}</h3>
+          {%- endif %}
+          {%- if tab.body %}
+          <p class="forge-body-text">{{ tab.body }}</p>
+          {%- endif %}
+          {%- if tab.items %}
+          <ul class="forge-tab-list">
+            {%- for it in tab.items %}
+            <li>{{ it }}</li>
+            {%- endfor %}
+          </ul>
+          {%- endif %}
+        </div>
+        {%- endfor %}
+      </div>
+    </div>
+    {{ children_html | default('') }}
+  </div>
+</section>

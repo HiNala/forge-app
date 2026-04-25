@@ -726,6 +726,146 @@
     .forge-slot-btn { padding: .4rem .85rem; border: 1.5px solid var(--border-2); border-radius: var(--radius-sm); font-size: .875rem; font-weight: 500; cursor: pointer; background: var(--surface); transition: all .12s; }
     .forge-slot-btn:hover, .forge-slot-btn[aria-selected="true"] { background: var(--p); color: var(--p-fg); border-color: var(--p); }
     .forge-slot-times { display: flex; flex-wrap: wrap; gap: .4rem; }
+
+    /* ── Accordion FAQ ── */
+    .forge-faq-list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .forge-faq-item { border-bottom: 1px solid var(--border); }
+    .forge-faq-item:last-child { border-bottom: none; }
+    .forge-faq-q {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.125rem 1.375rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+      transition: background .12s;
+    }
+    .forge-faq-q::-webkit-details-marker { display: none; }
+    .forge-faq-q:hover { background: var(--surface-2); }
+    .forge-faq-item[open] > .forge-faq-q { background: var(--surface-2); color: var(--p); }
+    .forge-faq-icon { flex-shrink: 0; color: var(--text-3); transition: transform .2s ease; }
+    .forge-faq-item[open] .forge-faq-icon { transform: rotate(180deg); color: var(--p); }
+    .forge-faq-a { padding: .25rem 1.375rem 1.25rem; }
+    .forge-faq-a .forge-body-text { color: var(--text-2); line-height: 1.7; }
+
+    /* ── Tabs (CSS-only) ── */
+    .forge-tabs { position: relative; }
+    .forge-tab-radio { position: absolute; opacity: 0; pointer-events: none; }
+    .forge-tab-label {
+      display: inline-flex;
+      align-items: center;
+      padding: .65rem 1.25rem;
+      font-size: .9375rem;
+      font-weight: 600;
+      color: var(--text-3);
+      cursor: pointer;
+      border-bottom: 2.5px solid transparent;
+      margin-bottom: -1px;
+      transition: color .12s, border-color .12s;
+    }
+    .forge-tab-label:hover { color: var(--text); }
+    .forge-tabs-panels {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      margin-top: .5rem;
+    }
+    .forge-tab-panel { display: none; }
+    .forge-tab-list { list-style: disc; padding-left: 1.25rem; margin-top: .75rem; display: flex; flex-direction: column; gap: .35rem; color: var(--text-2); font-size: .9375rem; }
+    /* Show correct panel for each radio state */
+    #forge-tabs-panel-1:checked ~ .forge-tabs-panels [data-for="forge-tabs-panel-1"],
+    #forge-tabs-panel-2:checked ~ .forge-tabs-panels [data-for="forge-tabs-panel-2"],
+    #forge-tabs-panel-3:checked ~ .forge-tabs-panels [data-for="forge-tabs-panel-3"],
+    #forge-tabs-panel-4:checked ~ .forge-tabs-panels [data-for="forge-tabs-panel-4"],
+    #forge-tabs-panel-5:checked ~ .forge-tabs-panels [data-for="forge-tabs-panel-5"] { display: block; }
+    /* Active tab label highlight */
+    .forge-tab-radio:checked + .forge-tab-label { color: var(--p); border-bottom-color: var(--p); }
+    /* Border below tabs */
+    .forge-tabs::before { content: ''; display: block; border-bottom: 1px solid var(--border); margin-bottom: 0; }
+
+    /* ── Link-in-bio ── */
+    .forge-bio-wrap { max-width: 480px; margin: 0 auto; }
+    .forge-bio-header { text-align: center; padding-bottom: 1.5rem; }
+    .forge-bio-avatar {
+      width: 6rem;
+      height: 6rem;
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+      overflow: hidden;
+      background: var(--p-15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .forge-bio-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .forge-bio-avatar-placeholder {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--p);
+    }
+    .forge-bio-desc { font-size: .9375rem; color: var(--text-3); margin-top: .5rem; line-height: 1.6; max-width: 36ch; margin-left: auto; margin-right: auto; }
+    .forge-bio-socials { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; margin-top: .75rem; }
+    .forge-bio-social-chip { font-size: .8125rem; color: var(--text-3); background: var(--surface-2); border: 1px solid var(--border); border-radius: 99px; padding: .25rem .75rem; }
+    .forge-bio-links { display: flex; flex-direction: column; gap: .75rem; }
+    .forge-bio-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .6rem;
+      width: 100%;
+      padding: 1rem 1.5rem;
+      background: var(--surface);
+      border: 1.5px solid var(--border-2);
+      border-radius: var(--radius-lg);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      transition: all .15s;
+      box-shadow: var(--shadow-sm);
+    }
+    .forge-bio-btn:hover { border-color: var(--p); color: var(--p); background: var(--p-05); text-decoration: none; transform: translateY(-1px); box-shadow: var(--shadow); }
+    .forge-bio-btn-emoji { font-size: 1.125rem; line-height: 1; }
+
+    /* ── Case study cards ── */
+    .forge-case-header { margin-bottom: 2rem; }
+    .forge-case-grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+    .forge-case-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .2s, transform .2s;
+    }
+    .forge-case-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+    .forge-case-img-wrap { aspect-ratio: 16/9; overflow: hidden; background: var(--bg); }
+    .forge-case-img { width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
+    .forge-case-card:hover .forge-case-img { transform: scale(1.04); }
+    .forge-case-img-placeholder { background: linear-gradient(135deg, var(--p-10), var(--p-05)); }
+    .forge-case-body { padding: 1.25rem 1.5rem 1.5rem; }
+    .forge-case-tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .forge-case-tag {
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      background: var(--p-10);
+      color: var(--p);
+      border-radius: 99px;
+      padding: .2rem .65rem;
+    }
+    .forge-case-client { font-size: .875rem; color: var(--text-3); margin-top: .25rem; }
+    .forge-case-outcome { font-size: .9375rem; color: var(--text-2); margin-top: .5rem; line-height: 1.5; }
   </style>
 </head>
 <body>

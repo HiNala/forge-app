@@ -11,6 +11,7 @@ const TABS = [
   { href: "/settings/brand", label: "Brand" },
   { href: "/settings/team", label: "Team" },
   { href: "/settings/billing", label: "Billing" },
+  { href: "/settings/usage", label: "Usage" },
   { href: "/settings/integrations", label: "Integrations" },
   { href: "/settings/calendars", label: "Calendars" },
   { href: "/settings/notifications", label: "Notifications" },

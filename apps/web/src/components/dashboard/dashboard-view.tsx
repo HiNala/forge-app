@@ -20,6 +20,7 @@ import { getPageUnreadCounts, listPages } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
 import { DashboardPageCard } from "./dashboard-page-card";
+import { UsageQuotaBar } from "./usage-quota-bar";
 
 type Filter = "all" | "live" | "draft" | "archived";
 
@@ -197,6 +198,7 @@ export function DashboardView() {
 
   return (
     <div className="space-y-8">
+      <UsageQuotaBar />
       <DashboardTipBanner />
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <div>

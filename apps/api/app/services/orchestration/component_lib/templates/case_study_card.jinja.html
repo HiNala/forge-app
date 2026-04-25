@@ -1,0 +1,51 @@
+{# case_study_card — portfolio project grid with category tags and results #}
+{%- set eyebrow = props.eyebrow | default('Selected Work') %}
+{%- set headline = props.headline | default('') %}
+{%- set projects = props.projects | default(props.items | default([])) %}
+<section class="forge-sec forge-bg-surface">
+  <div class="forge-container-wide">
+    <div class="forge-case-header">
+      {%- if eyebrow %}
+      <p class="forge-eyebrow forge-mb-1">{{ eyebrow }}</p>
+      {%- endif %}
+      {%- if headline %}
+      <h2 class="forge-h2">{{ headline }}</h2>
+      {%- endif %}
+    </div>
+    <div class="forge-case-grid">
+      {%- for project in projects %}
+      {%- set title = project.title | default(project.name | default('Project')) %}
+      {%- set client = project.client | default(project.industry | default('')) %}
+      {%- set outcome = project.outcome | default(project.result | default(project.description | default(''))) %}
+      {%- set tags = project.tags | default(project.categories | default([])) %}
+      {%- set image = project.image | default(project.image_url | default('')) %}
+      <article class="forge-case-card">
+        {%- if image %}
+        <div class="forge-case-img-wrap">
+          <img src="{{ image }}" alt="{{ title }}" class="forge-case-img" loading="lazy" />
+        </div>
+        {%- else %}
+        <div class="forge-case-img-wrap forge-case-img-placeholder" aria-hidden="true"></div>
+        {%- endif %}
+        <div class="forge-case-body">
+          {%- if tags %}
+          <div class="forge-case-tags">
+            {%- for tag in tags[:3] %}
+            <span class="forge-case-tag">{{ tag }}</span>
+            {%- endfor %}
+          </div>
+          {%- endif %}
+          <h3 class="forge-h3 forge-mt-1">{{ title }}</h3>
+          {%- if client %}
+          <p class="forge-case-client">{{ client }}</p>
+          {%- endif %}
+          {%- if outcome %}
+          <p class="forge-case-outcome">{{ outcome }}</p>
+          {%- endif %}
+        </div>
+      </article>
+      {%- endfor %}
+    </div>
+    {{ children_html | default('') }}
+  </div>
+</section>

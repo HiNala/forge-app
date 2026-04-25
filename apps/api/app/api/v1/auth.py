@@ -47,6 +47,7 @@ def _user_out(u: User) -> UserOut:
         email=str(u.email),
         display_name=u.display_name,
         avatar_url=u.avatar_url,
+        is_platform_admin=bool(getattr(u, "is_admin", False)),
     )
 
 

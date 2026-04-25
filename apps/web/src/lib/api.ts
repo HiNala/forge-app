@@ -28,6 +28,7 @@ export type UserOut = {
   email: string;
   display_name: string | null;
   avatar_url: string | null;
+  is_platform_admin?: boolean;
 };
 
 export type MeResponse = {
@@ -921,6 +922,26 @@ export type AdminOrganizationListItem = {
   member_count: number;
   created_at: string | null;
 };
+
+export type AdminUserListItem = {
+  id: string;
+  email: string;
+  display_name: string | null;
+  is_admin: boolean;
+  created_at: string | null;
+};
+
+export async function listAdminUsers(
+  getToken: () => Promise<string | null>,
+  q?: string,
+): Promise<{ items: AdminUserListItem[]; next_cursor: string | null }> {
+  const qs = q ? `?limit=50&q=${encodeURIComponent(q)}` : "?limit=50";
+  return apiRequest(`/admin/users${qs}`, {
+    method: "GET",
+    getToken,
+    activeOrgId: null,
+  });
+}
 
 export async function listAdminOrganizations(
   getToken: () => Promise<string | null>,

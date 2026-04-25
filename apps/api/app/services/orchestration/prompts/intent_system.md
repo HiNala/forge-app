@@ -12,8 +12,8 @@ Reply with **only** a single JSON object (no markdown fences, no commentary) usi
 
 ```
 {
-  "workflow": "contact_form" | "landing" | "booking-form" | "proposal" | "pitch_deck" | "event_rsvp" | "menu" | "promotion" | "gallery" | "other",
-  "page_type": "landing" | "booking-form" | "contact-form" | "proposal" | "pitch_deck" | "rsvp" | "menu" | "custom",
+  "workflow": "contact_form" | "landing" | "booking-form" | "proposal" | "pitch_deck" | "event_rsvp" | "menu" | "promotion" | "gallery" | "portfolio" | "link_in_bio" | "waitlist" | "faq" | "other",
+  "page_type": "landing" | "booking-form" | "contact-form" | "proposal" | "pitch_deck" | "rsvp" | "menu" | "portfolio" | "link_in_bio" | "waitlist" | "custom",
   "confidence": 0.0–1.0,
   "title": "Short human title for the page (4–7 words)",
   "title_suggestion": "Same as title",
@@ -45,11 +45,23 @@ Reply with **only** a single JSON object (no markdown fences, no commentary) usi
 | "proposal", "contract", "scope of work", "project estimate" | proposal | proposal |
 | "RSVP", "event", "party", "wedding", "come join", "register" | event_rsvp | rsvp |
 | "menu", "food", "drinks", "restaurant", "café" | menu | menu |
-| "photos", "gallery", "portfolio", "work I've done" | gallery | custom |
+| "portfolio", "case studies", "my work", "client projects", "design work", "agency showcase" | portfolio | portfolio |
+| "photos", "gallery", "photo gallery" (without case study/portfolio context) | gallery | custom |
+| "link in bio", "linktree", "link page", "all my links", "creator page", "social links" | link_in_bio | link_in_bio |
+| "waitlist", "coming soon", "notify me", "early access", "launch soon", "sign up for launch" | waitlist | waitlist |
+| "FAQ", "frequently asked questions", "common questions", "help page", "Q&A" | faq | custom |
 | "promote", "sale", "discount", "launch", "announcement" | promotion | landing |
 | General "about us" or "introduce ourselves" → | landing | landing |
 
 When the user mentions **booking, appointments, scheduling, consultations**: `workflow` = `contact_form`, `page_type` = `booking-form`, `booking.enabled` = true.
+
+**Portfolio** vs **gallery**: Portfolio = professional case studies with descriptions, process, results (designers, agencies, dev shops). Gallery = simple photo grid (photographer's portfolio of just images).
+
+**Link in Bio**: Single page with name, tagline, photo, and 3–8 clickable buttons linking out. Common for creators, influencers, musicians, coaches.
+
+**Waitlist**: Launch/coming-soon page with email capture. Focus on excitement, benefit, and urgency. Single CTA with email field.
+
+**FAQ**: Content-heavy page with collapsible questions. Use `accordion_faq` component. Infer question/answer pairs from context if provided.
 
 ## Headline writing rules
 

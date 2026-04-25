@@ -1,0 +1,34 @@
+{# accordion_faq — details/summary collapsible FAQ, no JS required #}
+{%- set eyebrow = props.eyebrow | default('') %}
+{%- set headline = props.headline | default('Frequently Asked Questions') %}
+{%- set subtext = props.subtext | default('') %}
+{%- set items = props.items | default([]) %}
+<section class="forge-sec forge-bg-surface">
+  <div class="forge-container">
+    {%- if eyebrow %}
+    <p class="forge-eyebrow forge-mb-1">{{ eyebrow }}</p>
+    {%- endif %}
+    <h2 class="forge-h2 forge-mb-2">{{ headline }}</h2>
+    {%- if subtext %}
+    <p class="forge-lead forge-mb-4">{{ subtext }}</p>
+    {%- endif %}
+    <div class="forge-faq-list">
+      {%- for item in items %}
+      {%- set q = item.question if item is mapping else item %}
+      {%- set a = item.answer if item is mapping else '' %}
+      <details class="forge-faq-item" {% if loop.first %}open{% endif %}>
+        <summary class="forge-faq-q">
+          <span>{{ q }}</span>
+          <svg class="forge-faq-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        {%- if a %}
+        <div class="forge-faq-a">
+          <p class="forge-body-text">{{ a }}</p>
+        </div>
+        {%- endif %}
+      </details>
+      {%- endfor %}
+    </div>
+    {{ children_html | default('') }}
+  </div>
+</section>

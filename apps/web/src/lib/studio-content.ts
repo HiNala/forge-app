@@ -48,6 +48,22 @@ const SURPRISE_POOL: Omit<StudioStarterChip, "id">[] = [
     label: "Proposal",
     prompt: "A one-page sales proposal with pricing options and a clear CTA.",
   },
+  {
+    label: "Portfolio",
+    prompt: "A creative portfolio page showcasing my best client work with case studies and outcomes.",
+  },
+  {
+    label: "Waitlist",
+    prompt: "A pre-launch waitlist page for my new SaaS product with email capture and key benefits.",
+  },
+  {
+    label: "Link in bio",
+    prompt: "A link-in-bio page for a fitness coach with name, bio, and links to course, newsletter, and booking.",
+  },
+  {
+    label: "FAQ page",
+    prompt: "A FAQ page for a home renovation contractor answering common questions about pricing, timeline, and process.",
+  },
 ];
 
 /** Six suggestion chips — "Surprise me" picks a random category. */
@@ -97,7 +113,10 @@ export const STUDIO_SECONDARY_CHIPS: { id: string; label: string; prompt: string
   { id: "menu2", label: "Menu", prompt: "A daily specials menu for our restaurant with sections and prices." },
   { id: "landing2", label: "Landing", prompt: "A one-page landing for my product with hero, features, and CTA." },
   { id: "promo2", label: "Promotion", prompt: "A short promotion page for a limited-time sale with urgency and CTA." },
-  { id: "gallery2", label: "Gallery", prompt: "A simple image gallery page with captions for my portfolio." },
+  { id: "portfolio2", label: "Portfolio", prompt: "A portfolio page showcasing my design work with case studies and client results." },
+  { id: "waitlist2", label: "Waitlist", prompt: "A coming-soon waitlist page for my new product with email capture and benefits." },
+  { id: "linkinbio2", label: "Link in bio", prompt: "A link-in-bio page for my social media profile with my name, bio, and key links." },
+  { id: "faq2", label: "FAQ page", prompt: "A frequently asked questions page for my business with common customer questions and clear answers." },
   { id: "surprise2", label: "Surprise me", prompt: "" },
 ];
 

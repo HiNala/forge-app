@@ -161,31 +161,36 @@ export default function BillingSettingsPage() {
         <div className="h-32 animate-pulse rounded-2xl bg-bg-elevated" />
       ) : usage ? (
         <section className="space-y-5 rounded-2xl border border-border bg-surface p-6">
-          <div>
-            <h2 className="font-display text-base font-bold text-text">Usage this period</h2>
-            <p className="mt-0.5 font-body text-xs text-text-subtle">
-              {format(new Date(usage.period_start), "MMM d")} – {format(new Date(usage.period_end), "MMM d, yyyy")}
-            </p>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-base font-bold text-text">Usage this period</h2>
+              <p className="mt-0.5 font-body text-xs text-text-subtle">
+                {format(new Date(usage.period_start), "MMM d")} – {format(new Date(usage.period_end), "MMM d, yyyy")}
+              </p>
+            </div>
+            <a href="/settings/usage" className="font-body text-xs text-accent hover:underline shrink-0">
+              View details →
+            </a>
           </div>
           <UsageBar
             label="Pages generated"
+            sublabel={`Resets ${format(new Date(usage.period_end), "MMM d")}`}
             used={usage.pages_generated}
             cap={usage.pages_quota}
             tone={barTone}
           />
           <UsageBar
             label="Submissions received"
+            sublabel={`Resets ${format(new Date(usage.period_end), "MMM d")}`}
             used={usage.submissions_received}
             cap={usage.submissions_quota}
             tone={barTone}
           />
-          <div>
-            <div className="flex justify-between font-body text-xs font-medium text-text-muted">
-              <span>AI tokens (prompt + completion)</span>
-              <span className="font-mono tabular-nums">
-                {(usage.tokens_prompt + usage.tokens_completion).toLocaleString()}
-              </span>
-            </div>
+          <div className="flex items-center justify-between border-t border-border pt-3">
+            <span className="font-body text-xs text-text-muted">AI tokens this period</span>
+            <span className="font-body text-xs tabular-nums text-text-muted">
+              {(usage.tokens_prompt + usage.tokens_completion).toLocaleString()}
+            </span>
           </div>
         </section>
       ) : null}
@@ -272,28 +277,45 @@ export default function BillingSettingsPage() {
 
 function UsageBar({
   label,
+  sublabel,
   used,
   cap,
   tone,
 }: {
   label: string;
+  sublabel?: string;
   used: number;
   cap: number;
   tone: (pct: number) => string;
 }) {
-  const pct = cap > 0 ? Math.min(100, Math.round((used / cap) * 100)) : 0;
+  const pct = cap > 0 ? Math.min(100, (used / cap) * 100) : 0;
+  const pctRound = Math.round(pct);
   return (
     <div>
-      <div className="flex justify-between font-body text-xs font-medium text-text-muted">
-        <span>{label}</span>
-        <span className="tabular-nums">
-          {used.toLocaleString()} / {cap.toLocaleString()}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-body text-sm font-semibold text-text">{label}</p>
+          {sublabel ? (
+            <p className="mt-0.5 font-body text-xs text-text-muted">{sublabel}</p>
+          ) : null}
+        </div>
+        <span className="shrink-0 font-body text-sm font-medium tabular-nums text-text-muted">
+          {pctRound}% used
         </span>
       </div>
-      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-bg-elevated">
-        <div className={cn("h-full rounded-full transition-all duration-500", tone(pct))} style={{ width: `${pct}%` }} />
+      <div className="relative mt-2.5 h-2.5 overflow-hidden rounded-full bg-bg-elevated">
+        {pct > 0 ? (
+          <div
+            className={cn("h-full rounded-full transition-all duration-700", tone(pctRound))}
+            style={{ width: `${pct}%` }}
+          />
+        ) : (
+          <div className="absolute left-0 top-0 h-full w-0.5 rounded-full bg-accent opacity-60" />
+        )}
       </div>
-      <p className="mt-0.5 font-body text-[11px] text-text-subtle">{pct}% used</p>
+      <p className="mt-1.5 font-body text-[11px] tabular-nums text-text-subtle">
+        {used.toLocaleString()} / {cap.toLocaleString()}
+      </p>
     </div>
   );
 }
