@@ -1,0 +1,15 @@
+<div class="forge-field">
+  <fieldset style="border:none;padding:0;">
+    <legend class="forge-field-label">
+      {{ props.label | e }}{% if props.required %}<span class="forge-req" aria-hidden="true">*</span>{% endif %}
+    </legend>
+    <div class="forge-chips" style="margin-top:.35rem;">
+      {% for opt in (props.options or []) %}
+      <label>
+        <input type="radio" name="{{ props.name | e }}" value="{{ opt.value | default(opt) | e }}" class="forge-chip-input" {% if props.required %}required{% endif %} />
+        <span class="forge-chip-label">{{ opt.label | default(opt) | e }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+</div>

@@ -1,10 +1,57 @@
-<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-line-items">
-  <table style="width:100%;border-collapse:collapse;">
-    <thead><tr><th style="text-align:left;">Description</th><th>Qty</th><th>Rate</th><th>Total</th></tr></thead>
-    <tbody>
-    {% for row in props.rows %}
-      <tr><td>{{ row.description | e }}</td><td>{{ row.qty | e }}</td><td>{{ row.rate | e }}</td><td>{{ row.total | e }}</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
+<section data-forge-section="{{ section_id | e }}" class="forge-sec">
+  <div class="forge-container">
+    {% if props.title or props.headline %}
+    <h2 class="forge-h3" style="margin-bottom:1rem;">{{ (props.title or props.headline) | e }}</h2>
+    {% endif %}
+    <div style="overflow-x:auto;">
+      <table class="forge-table">
+        <thead>
+          <tr>
+            <th style="text-align:left;">{{ props.col_description | default('Description') | e }}</th>
+            <th>{{ props.col_qty | default('Qty') | e }}</th>
+            <th>{{ props.col_rate | default('Rate') | e }}</th>
+            <th>{{ props.col_total | default('Total') | e }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in (props.rows or []) %}
+          <tr>
+            <td>
+              <span class="forge-label-text" style="font-weight:500;">{{ row.description | e }}</span>
+              {% if row.note %}<br><span style="font-size:.82rem;opacity:.65;">{{ row.note | e }}</span>{% endif %}
+            </td>
+            <td style="text-align:center;">{{ row.qty | default('1') | e }}</td>
+            <td style="text-align:right;">{{ row.rate | e }}</td>
+            <td style="text-align:right;font-weight:600;">{{ row.total | e }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% if props.subtotal or props.tax or props.total %}
+        <tfoot>
+          {% if props.subtotal %}
+          <tr class="forge-table-summary">
+            <td colspan="3" style="text-align:right;">Subtotal</td>
+            <td style="text-align:right;">{{ props.subtotal | e }}</td>
+          </tr>
+          {% endif %}
+          {% if props.tax %}
+          <tr class="forge-table-summary">
+            <td colspan="3" style="text-align:right;">Tax ({{ props.tax_rate | default('') | e }})</td>
+            <td style="text-align:right;">{{ props.tax | e }}</td>
+          </tr>
+          {% endif %}
+          {% if props.total %}
+          <tr class="forge-table-summary forge-table-total">
+            <td colspan="3" style="text-align:right;font-weight:700;">Total</td>
+            <td style="text-align:right;font-weight:700;">{{ props.total | e }}</td>
+          </tr>
+          {% endif %}
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+    {% if props.notes %}
+    <p class="forge-body-text" style="margin-top:1.25rem;font-size:.85rem;opacity:.65;">{{ props.notes | e }}</p>
+    {% endif %}
+  </div>
 </section>

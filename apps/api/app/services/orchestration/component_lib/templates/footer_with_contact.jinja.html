@@ -1,0 +1,46 @@
+<footer data-forge-section="{{ section_id | e }}" class="forge-sec forge-footer">
+  <div class="forge-container">
+    <div class="forge-footer-grid">
+      <div class="forge-footer-brand">
+        {% if props.logo_text or props.brand %}
+        <p class="forge-label-text" style="margin:0 0 .5rem;font-size:1.05rem;">{{ (props.logo_text or props.brand) | e }}</p>
+        {% endif %}
+        {% if props.tagline %}
+        <p class="forge-body-text" style="margin:0;opacity:.65;font-size:.85rem;">{{ props.tagline | e }}</p>
+        {% endif %}
+      </div>
+      <div class="forge-footer-contact">
+        {% if props.email %}
+        <a href="mailto:{{ props.email | e }}" class="forge-footer-link">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+          </svg>
+          {{ props.email | e }}
+        </a>
+        {% endif %}
+        {% if props.phone %}
+        <a href="tel:{{ props.phone | e }}" class="forge-footer-link">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.69h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.3a16 16 0 0 0 6 6l.9-.9a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.4 18a2 2 0 0 1-.48 1.28z"/>
+          </svg>
+          {{ props.phone | e }}
+        </a>
+        {% endif %}
+        {% if props.address %}
+        <p class="forge-footer-link" style="cursor:default;">{{ props.address | e }}</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="forge-footer-bottom">
+      <p>{{ (props.copyright or props.footer_text or '&copy; ' ~ (props.brand or 'Forge')) | safe }}</p>
+      {% if props.links %}
+      <nav class="forge-footer-links">
+        {% for link in props.links %}
+        <a href="{{ link.href | default('#') | e }}" class="forge-footer-link">{{ link.label | e }}</a>
+        {% endfor %}
+      </nav>
+      {% endif %}
+    </div>
+  </div>
+</footer>

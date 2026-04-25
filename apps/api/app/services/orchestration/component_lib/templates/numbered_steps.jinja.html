@@ -1,0 +1,26 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec">
+  <div class="forge-container">
+    {% if props.eyebrow %}<p class="forge-eyebrow">{{ props.eyebrow | e }}</p>{% endif %}
+    {% if props.headline or props.title %}
+    <h2 class="forge-h2" style="margin-bottom:1rem;">{{ (props.headline or props.title) | e }}</h2>
+    {% endif %}
+    {% if props.subtitle %}
+    <p class="forge-lead" style="margin-bottom:2.5rem;">{{ props.subtitle | e }}</p>
+    {% endif %}
+    <ol class="forge-steps">
+      {% for step in (props.steps or props.items or []) %}
+      <li class="forge-step">
+        <span class="forge-step-num">{{ loop.index }}</span>
+        <div class="forge-step-body">
+          {% if step.title or step.label %}
+          <h3 class="forge-h3" style="margin:0 0 .25rem;">{{ (step.title or step.label) | e }}</h3>
+          {% endif %}
+          {% if step.body or step.description %}
+          <p class="forge-body-text" style="margin:0;opacity:.8;">{{ (step.body or step.description) | e }}</p>
+          {% elif step is string %}<p class="forge-body-text" style="margin:0;">{{ step | e }}</p>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>

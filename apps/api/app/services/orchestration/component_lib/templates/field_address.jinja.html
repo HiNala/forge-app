@@ -1,0 +1,37 @@
+<div class="forge-field">
+  <span class="forge-field-label">
+    {{ props.label | default('Address') | e }}{% if props.required %}<span class="forge-req" aria-hidden="true">*</span>{% endif %}
+  </span>
+  <div class="forge-address-grid">
+    <div class="forge-field" style="grid-column:1/-1;">
+      <label class="forge-field-label forge-field-label--sub" for="{{ props.name | e }}-street-{{ section_id | e }}">Street address</label>
+      <input type="text" id="{{ props.name | e }}-street-{{ section_id | e }}" name="{{ props.name | e }}_street"
+        class="forge-input" autocomplete="street-address" placeholder="123 Main St"
+        {% if props.required %}required aria-required="true"{% endif %} />
+    </div>
+    <div class="forge-field" style="grid-column:1/-1;">
+      <label class="forge-field-label forge-field-label--sub" for="{{ props.name | e }}-street2-{{ section_id | e }}">Apt, suite, etc. (optional)</label>
+      <input type="text" id="{{ props.name | e }}-street2-{{ section_id | e }}" name="{{ props.name | e }}_street2"
+        class="forge-input" autocomplete="address-line2" placeholder="Apt 4B" />
+    </div>
+    <div class="forge-field">
+      <label class="forge-field-label forge-field-label--sub" for="{{ props.name | e }}-city-{{ section_id | e }}">City</label>
+      <input type="text" id="{{ props.name | e }}-city-{{ section_id | e }}" name="{{ props.name | e }}_city"
+        class="forge-input" autocomplete="address-level2"
+        {% if props.required %}required{% endif %} />
+    </div>
+    <div class="forge-field">
+      <label class="forge-field-label forge-field-label--sub" for="{{ props.name | e }}-state-{{ section_id | e }}">State</label>
+      <input type="text" id="{{ props.name | e }}-state-{{ section_id | e }}" name="{{ props.name | e }}_state"
+        class="forge-input" autocomplete="address-level1" placeholder="CA"
+        {% if props.required %}required{% endif %} />
+    </div>
+    <div class="forge-field">
+      <label class="forge-field-label forge-field-label--sub" for="{{ props.name | e }}-zip-{{ section_id | e }}">ZIP code</label>
+      <input type="text" id="{{ props.name | e }}-zip-{{ section_id | e }}" name="{{ props.name | e }}_zip"
+        class="forge-input" autocomplete="postal-code" placeholder="90210"
+        {% if props.required %}required{% endif %} />
+    </div>
+  </div>
+  {% if props.hint %}<p class="forge-input-hint">{{ props.hint | e }}</p>{% endif %}
+</div>

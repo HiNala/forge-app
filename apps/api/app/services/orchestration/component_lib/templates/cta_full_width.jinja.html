@@ -1,0 +1,26 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-cta-strip" style="background:var(--p);border-radius:var(--radius-xl);">
+  <div class="forge-container forge-center">
+    {% if props.eyebrow %}<p class="forge-eyebrow forge-eyebrow--light">{{ props.eyebrow | e }}</p>{% endif %}
+    {% if props.headline or props.title %}
+    <h2 class="forge-h2" style="color:#fff;margin-bottom:.5rem;">{{ (props.headline or props.title) | e }}</h2>
+    {% endif %}
+    {% if props.subtitle or props.body %}
+    <p class="forge-lead" style="color:rgba(255,255,255,.8);margin-bottom:2rem;">{{ (props.subtitle or props.body) | e }}</p>
+    {% endif %}
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
+      <a href="{{ (props.href or props.cta_href or '#') | e }}"
+         class="forge-btn forge-btn-lg"
+         style="background:#fff;color:var(--p);font-weight:700;text-decoration:none;">
+        {{ (props.text or props.cta_text or 'Get started') | e }}
+      </a>
+      {% if props.secondary_href or props.secondary_text %}
+      <a href="{{ (props.secondary_href or '#') | e }}"
+         class="forge-btn forge-btn-ghost forge-btn-lg"
+         style="color:#fff;border-color:rgba(255,255,255,.5);text-decoration:none;">
+        {{ (props.secondary_text or 'Learn more') | e }}
+      </a>
+      {% endif %}
+    </div>
+    {% if props.subtext %}<p style="margin-top:1rem;font-size:.85rem;color:rgba(255,255,255,.6);">{{ props.subtext | e }}</p>{% endif %}
+  </div>
+</section>

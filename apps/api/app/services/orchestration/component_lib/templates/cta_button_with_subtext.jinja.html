@@ -4,13 +4,13 @@
     {% if props.headline or props.title %}
     <h2 class="forge-h2" style="margin-bottom:.5rem;">{{ (props.headline or props.title) | e }}</h2>
     {% endif %}
-    {% if props.subtitle or props.body %}
-    <p class="forge-lead" style="margin-bottom:1.75rem;">{{ (props.subtitle or props.body) | e }}</p>
+    {% if props.body or props.subtitle %}
+    <p class="forge-lead" style="margin-bottom:1.75rem;">{{ (props.body or props.subtitle) | e }}</p>
     {% endif %}
-    <a href="{{ (props.href or '#') | e }}"
+    <a href="{{ (props.href or props.cta_href or '#') | e }}"
        class="forge-btn forge-btn-primary forge-btn-lg"
-       style="text-decoration:none;display:inline-block;">
-      {{ (props.text or 'Get started') | e }}
+       style="text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;">
+      {{ (props.text or props.cta_text or 'Get started') | e }}
     </a>
     {% if props.subtext %}
     <p style="margin-top:.85rem;font-size:.82rem;opacity:.55;letter-spacing:.01em;">{{ props.subtext | e }}</p>

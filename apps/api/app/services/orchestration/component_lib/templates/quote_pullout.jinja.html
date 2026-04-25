@@ -1,0 +1,13 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec">
+  <div class="forge-container forge-center">
+    <blockquote class="forge-pullquote">
+      <p class="forge-pullquote-text">&ldquo;{{ props.quote | e }}&rdquo;</p>
+      {% if props.attribution or props.name %}
+      <footer class="forge-pullquote-footer">
+        &mdash; {{ (props.attribution or props.name) | e }}
+        {% if props.title or props.role %}<span class="forge-pullquote-role">, {{ (props.title or props.role) | e }}</span>{% endif %}
+      </footer>
+      {% endif %}
+    </blockquote>
+  </div>
+</section>

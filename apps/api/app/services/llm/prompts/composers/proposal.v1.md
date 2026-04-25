@@ -55,9 +55,39 @@ Also populate `components` with proposal sections using catalog names: `proposal
     {"description": "Labor — demolition & install", "qty": 24, "rate_cents": 6500, "category": "Labor"}
   ],
   "components": [
-    {"name": "proposal_cover", "props": {"title": "Proposal", "client_name": "Jamie Chen", "date": "2026-04-19"}, "data-forge-section": "cover"},
-    {"name": "paragraph_block", "props": {"title": "Executive summary", "body": "We will repair..."}, "data-forge-section": "exec"},
-    {"name": "line_items_table", "props": {"rows": []}, "data-forge-section": "pricing"}
+    {
+      "name": "proposal_cover",
+      "props": {
+        "title": "Deck Repair Proposal",
+        "proposal_number": "2026-042",
+        "client_name": "Jamie Chen",
+        "date": "2026-04-19",
+        "expiration": "2026-05-01",
+        "sender_name": "Maple Contracting",
+        "total": "$4,020"
+      },
+      "data-forge-section": "cover"
+    },
+    {
+      "name": "paragraph_block",
+      "props": {"headline": "Project summary", "body": "We will remove the existing deck surface, replace damaged joists, install new cedar decking, and finish with a weatherproof stain."},
+      "data-forge-section": "summary"
+    },
+    {
+      "name": "line_items_table",
+      "props": {
+        "rows": [
+          {"description": "Cedar decking materials", "qty": "1", "rate": "$2,400", "total": "$2,400"},
+          {"description": "Labor — demolition & install", "qty": "24 hrs", "rate": "$65", "total": "$1,560"}
+        ],
+        "subtotal": "$3,960",
+        "tax": "$60",
+        "total": "$4,020"
+      },
+      "data-forge-section": "pricing"
+    },
+    {"name": "paragraph_block", "props": {"headline": "Exclusions", "body": "Permits, structural engineering, haul-away of demolition material, and any work below grade."}, "data-forge-section": "exclusions"},
+    {"name": "footer_minimal", "props": {"footer_text": "Maple Contracting — Licensed & insured"}, "data-forge-section": "footer"}
   ]
 }
 ```

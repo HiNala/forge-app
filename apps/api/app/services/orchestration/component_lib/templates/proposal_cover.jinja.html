@@ -1,7 +1,44 @@
-<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-proposal-cover" style="padding:2rem 0;">
-  <h1 style="margin:0 0 0.5rem;">{{ props.title | e }}</h1>
-  {% if props.proposal_number %}<p style="margin:0.25rem 0;"><strong>Proposal #</strong> {{ props.proposal_number | e }}</p>{% endif %}
-  {% if props.client_name %}<p style="margin:0.25rem 0;"><strong>Prepared for</strong> {{ props.client_name | e }}</p>{% endif %}
-  {% if props.date %}<p style="margin:0.25rem 0;"><strong>Date</strong> {{ props.date | e }}</p>{% endif %}
-  {% if props.expiration %}<p style="margin:0.25rem 0;"><strong>Valid through</strong> {{ props.expiration | e }}</p>{% endif %}
+<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-bg-elevated">
+  <div class="forge-container">
+    <div class="forge-card" style="padding:2.5rem;max-width:640px;">
+      {% if props.eyebrow or props.sender_name %}
+      <p class="forge-eyebrow" style="margin-bottom:1.25rem;">
+        {{ (props.eyebrow or ('From: ' ~ props.sender_name)) | e }}
+      </p>
+      {% endif %}
+      <h1 class="forge-h1" style="margin-bottom:1rem;">{{ (props.title or 'Proposal') | e }}</h1>
+      <div class="forge-proposal-meta">
+        {% if props.proposal_number %}
+        <div class="forge-proposal-row">
+          <span class="forge-label-text">Proposal</span>
+          <span class="forge-body-text">#{{ props.proposal_number | e }}</span>
+        </div>
+        {% endif %}
+        {% if props.client_name %}
+        <div class="forge-proposal-row">
+          <span class="forge-label-text">Prepared for</span>
+          <span class="forge-body-text">{{ props.client_name | e }}</span>
+        </div>
+        {% endif %}
+        {% if props.date %}
+        <div class="forge-proposal-row">
+          <span class="forge-label-text">Date</span>
+          <span class="forge-body-text">{{ props.date | e }}</span>
+        </div>
+        {% endif %}
+        {% if props.expiration %}
+        <div class="forge-proposal-row">
+          <span class="forge-label-text">Valid through</span>
+          <span class="forge-body-text">{{ props.expiration | e }}</span>
+        </div>
+        {% endif %}
+        {% if props.total %}
+        <div class="forge-proposal-row" style="border-top:1px solid var(--border);margin-top:.75rem;padding-top:.75rem;">
+          <span class="forge-label-text">Total</span>
+          <span class="forge-h3" style="margin:0;">{{ props.total | e }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </section>

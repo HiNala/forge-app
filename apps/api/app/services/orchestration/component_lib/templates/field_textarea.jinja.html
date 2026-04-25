@@ -1,1 +1,14 @@
-<label style="display:block;margin-bottom:1rem;">{{ props.label | e }}<textarea name="{{ props.name | e }}" rows="4" {% if props.required %}required{% endif %} style="width:100%;box-sizing:border-box;padding:0.5rem;margin-top:0.25rem;"></textarea></label>
+<div class="forge-field">
+  <label class="forge-field-label" for="{{ props.name | e }}-{{ section_id | e }}">
+    {{ props.label | e }}{% if props.required %}<span class="forge-req" aria-hidden="true">*</span>{% endif %}
+  </label>
+  <textarea
+    id="{{ props.name | e }}-{{ section_id | e }}"
+    name="{{ props.name | e }}"
+    class="forge-input forge-textarea"
+    rows="{{ props.rows | default(4) }}"
+    placeholder="{{ props.placeholder | default('') | e }}"
+    {% if props.required %}required aria-required="true"{% endif %}
+  ></textarea>
+  {% if props.hint %}<p class="forge-input-hint">{{ props.hint | e }}</p>{% endif %}
+</div>

@@ -1,1 +1,15 @@
-<label style="display:block;margin-bottom:1rem;">{{ props.label | e }}<input type="tel" name="{{ props.name | e }}" {% if props.required %}required{% endif %} autocomplete="tel" style="width:100%;box-sizing:border-box;padding:0.5rem;margin-top:0.25rem;" /></label>
+<div class="forge-field">
+  <label class="forge-field-label" for="{{ props.name | e }}-{{ section_id | e }}">
+    {{ props.label | e }}{% if props.required %}<span class="forge-req" aria-hidden="true">*</span>{% endif %}
+  </label>
+  <input
+    type="tel"
+    id="{{ props.name | e }}-{{ section_id | e }}"
+    name="{{ props.name | e }}"
+    class="forge-input"
+    placeholder="{{ props.placeholder | default('(555) 000-0000') | e }}"
+    autocomplete="tel"
+    {% if props.required %}required aria-required="true"{% endif %}
+  />
+  {% if props.hint %}<p class="forge-input-hint">{{ props.hint | e }}</p>{% endif %}
+</div>

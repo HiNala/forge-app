@@ -1,11 +1,12 @@
-<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-bg-brand">
+<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-bg-brand forge-center">
   <div class="forge-container">
     {% if props.eyebrow %}<p class="forge-label-text forge-mb-2">{{ props.eyebrow | e }}</p>{% endif %}
     <h1 class="forge-h1">{{ (props.headline or props.title or 'Welcome') | e }}</h1>
     {% if props.subtitle or props.subhead %}<p class="forge-lead forge-mt-2">{{ (props.subtitle or props.subhead) | e }}</p>{% endif %}
     {% if props.cta %}
-    <div class="forge-mt-4">
+    <div class="forge-mt-4" style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
       <a href="{{ props.cta.anchor | default('#') | e }}" class="forge-btn forge-btn-primary forge-btn-lg">{{ props.cta.text | e }}</a>
+      {% if props.cta.secondary_text %}<a href="{{ props.cta.secondary_href | default('#') | e }}" class="forge-btn forge-btn-secondary forge-btn-lg">{{ props.cta.secondary_text | e }}</a>{% endif %}
     </div>
     {% elif props.cta_text %}
     <div class="forge-mt-4">

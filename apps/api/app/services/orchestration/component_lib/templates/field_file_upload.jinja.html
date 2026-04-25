@@ -1,0 +1,24 @@
+<div class="forge-field">
+  <label class="forge-field-label" for="{{ props.name | e }}-{{ section_id | e }}">
+    {{ props.label | e }}{% if props.required %}<span class="forge-req" aria-hidden="true">*</span>{% endif %}
+  </label>
+  <label class="forge-file-zone" for="{{ props.name | e }}-{{ section_id | e }}">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    <span class="forge-file-label">{{ props.placeholder | default('Click to upload or drag and drop') | e }}</span>
+    {% if props.accept_hint %}<span class="forge-file-hint">{{ props.accept_hint | e }}</span>{% endif %}
+    <input
+      type="file"
+      id="{{ props.name | e }}-{{ section_id | e }}"
+      name="{{ props.name | e }}"
+      class="forge-file-input"
+      {% if props.accept %}accept="{{ props.accept | e }}"{% endif %}
+      {% if props.multiple %}multiple{% endif %}
+      {% if props.required %}required aria-required="true"{% endif %}
+    />
+  </label>
+  {% if props.hint %}<p class="forge-input-hint">{{ props.hint | e }}</p>{% endif %}
+</div>

@@ -1,0 +1,18 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec" style="padding:2rem 0;">
+  <div class="forge-container">
+    {% if props.headline or props.label %}
+    <p class="forge-eyebrow" style="text-align:center;margin-bottom:1.5rem;">{{ (props.headline or props.label) | e }}</p>
+    {% endif %}
+    <div class="forge-logo-wall">
+      {% for logo in (props.logos or []) %}
+      <div class="forge-logo-item">
+        {% if logo.image_url or logo.src %}
+        <img src="{{ (logo.image_url or logo.src) | e }}" alt="{{ logo.name | default('') | e }}" loading="lazy" />
+        {% else %}
+        <span class="forge-logo-text">{{ (logo.name or logo) | e }}</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>

@@ -1,3 +1,12 @@
-<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-footer">
-  <p>{{ (props.footer_text or 'Built with Forge') | e }}</p>
-</section>
+<footer data-forge-section="{{ section_id | e }}" class="forge-sec forge-footer">
+  <div class="forge-container forge-footer-bottom">
+    <p>{{ (props.footer_text or props.copyright or 'Built with Forge') | e }}</p>
+    {% if props.links %}
+    <nav class="forge-footer-links">
+      {% for link in props.links %}
+      <a href="{{ link.href | default('#') | e }}" class="forge-footer-link">{{ link.label | e }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+  </div>
+</footer>

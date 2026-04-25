@@ -1,10 +1,24 @@
-<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-hero forge-hero-split" style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:center;padding:3rem 1.5rem;">
-  <div>
-    <h1 class="forge-h1" style="font-size:2rem;margin:0 0 0.5rem;">{{ (props.title or props.headline or 'Hello') | e }}</h1>
-    {% if props.subtitle %}<p class="forge-sub" style="opacity:0.9;margin:0;">{{ props.subtitle | e }}</p>{% endif %}
-    {% if props.cta and props.cta.text %}
-    <p style="margin-top:1rem;"><a href="{{ props.cta.anchor | default('#') | e }}" class="forge-cta-link">{{ props.cta.text | e }}</a></p>
-    {% endif %}
+<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-bg-brand">
+  <div class="forge-container-wide">
+    <div class="forge-hero-split-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;">
+      <div>
+        {% if props.eyebrow %}<p class="forge-label-text forge-mb-2">{{ props.eyebrow | e }}</p>{% endif %}
+        <h1 class="forge-h1">{{ (props.headline or props.title or 'Hello') | e }}</h1>
+        {% if props.subtitle or props.subhead %}<p class="forge-lead forge-mt-2">{{ (props.subtitle or props.subhead) | e }}</p>{% endif %}
+        {% if props.cta %}
+        <div class="forge-mt-4">
+          <a href="{{ props.cta.anchor | default('#') | e }}" class="forge-btn forge-btn-primary forge-btn-lg">{{ props.cta.text | e }}</a>
+          {% if props.cta.secondary_text %}<a href="{{ props.cta.secondary_href | default('#') | e }}" class="forge-btn forge-btn-secondary forge-btn-lg" style="margin-left:.75rem;">{{ props.cta.secondary_text | e }}</a>{% endif %}
+        </div>
+        {% elif props.cta_text %}
+        <div class="forge-mt-4">
+          <a href="{{ props.cta_href | default('#') | e }}" class="forge-btn forge-btn-primary forge-btn-lg">{{ props.cta_text | e }}</a>
+        </div>
+        {% endif %}
+      </div>
+      <div aria-hidden="true" style="min-height:320px;background:linear-gradient(135deg,var(--p-20),var(--p-05));border-radius:var(--radius-xl);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        {% if props.image_url %}<img src="{{ props.image_url | e }}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-xl);">{% endif %}
+      </div>
+    </div>
   </div>
-  <div class="forge-hero-media" aria-hidden="true" style="min-height:8rem;background:linear-gradient(135deg, var(--brand-primary)22, transparent);border-radius:8px;"></div>
 </section>

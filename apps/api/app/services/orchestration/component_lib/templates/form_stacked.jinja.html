@@ -1,6 +1,15 @@
-<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-form">
-  <form method="post" action="{{ form_action | e }}" class="forge-form-inner">
-    {{ children_html | safe }}
-    <button type="submit" class="forge-submit">{{ (props.submit_label or 'Submit') | e }}</button>
-  </form>
+<section data-forge-section="{{ section_id | e }}" class="forge-sec forge-bg-elevated">
+  <div class="forge-container">
+    {% if props.title or props.heading %}<h2 class="forge-h2 forge-mb-2">{{ (props.title or props.heading) | e }}</h2>{% endif %}
+    {% if props.description %}<p class="forge-lead forge-mb-3">{{ props.description | e }}</p>{% endif %}
+    <div class="forge-card" style="margin-top:1.5rem;">
+      <form method="post" action="{{ form_action | e }}" class="forge-form-inner">
+        {{ children_html | safe }}
+        <button type="submit" class="forge-submit" data-label="{{ (props.submit_label or 'Submit') | e }}">
+          {{ (props.submit_label or 'Submit') | e }}
+        </button>
+        {% if props.privacy_note %}<p style="font-size:.8125rem;color:var(--text-4);text-align:center;margin-top:.75rem;">{{ props.privacy_note | e }}</p>{% endif %}
+      </form>
+    </div>
+  </div>
 </section>

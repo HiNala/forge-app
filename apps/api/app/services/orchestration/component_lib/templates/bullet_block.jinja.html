@@ -1,0 +1,27 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec">
+  <div class="forge-container">
+    {% if props.eyebrow %}<p class="forge-eyebrow">{{ props.eyebrow | e }}</p>{% endif %}
+    {% if props.headline or props.title %}
+    <h2 class="forge-h2" style="margin-bottom:1.5rem;">{{ (props.headline or props.title) | e }}</h2>
+    {% endif %}
+    {% if props.subtitle %}
+    <p class="forge-lead" style="margin-bottom:2rem;">{{ props.subtitle | e }}</p>
+    {% endif %}
+    <ul class="forge-bullets">
+      {% for item in (props.items or props.bullets or []) %}
+      <li class="forge-bullet-item">
+        <span class="forge-bullet-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </span>
+        <span>
+          {% if item.label or item.title %}<strong>{{ (item.label or item.title) | e }}</strong>{% if item.body %} — {{ item.body | e }}{% endif %}
+          {% elif item.text %}<strong>{{ item.text | e }}</strong>{% if item.subtext %} — {{ item.subtext | e }}{% endif %}
+          {% else %}{{ item | e }}{% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>

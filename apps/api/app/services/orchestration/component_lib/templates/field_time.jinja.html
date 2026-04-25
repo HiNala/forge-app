@@ -3,12 +3,12 @@
     {{ props.label | e }}{% if props.required %}<span class="forge-req" aria-hidden="true">*</span>{% endif %}
   </label>
   <input
-    type="email"
+    type="time"
     id="{{ props.name | e }}-{{ section_id | e }}"
     name="{{ props.name | e }}"
-    class="forge-input"
-    placeholder="{{ props.placeholder | default('you@example.com') | e }}"
-    autocomplete="email"
+    class="forge-input forge-input--time"
+    {% if props.min %}min="{{ props.min | e }}"{% endif %}
+    {% if props.max %}max="{{ props.max | e }}"{% endif %}
     {% if props.required %}required aria-required="true"{% endif %}
   />
   {% if props.hint %}<p class="forge-input-hint">{{ props.hint | e }}</p>{% endif %}

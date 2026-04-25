@@ -1,0 +1,16 @@
+<div class="forge-field">
+  <fieldset style="border:none;padding:0;">
+    <legend class="forge-field-label">
+      {{ props.label | e }}{% if props.required %}<span class="forge-req" aria-hidden="true">*</span>{% endif %}
+    </legend>
+    <div class="forge-checkbox-grid">
+      {% for opt in (props.options or []) %}
+      <label class="forge-checkbox-item">
+        <input type="checkbox" name="{{ props.name | e }}" value="{{ opt.value | default(opt) | e }}" class="forge-checkbox-input" />
+        <span class="forge-checkbox-label">{{ opt.label | default(opt) | e }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  {% if props.hint %}<p class="forge-input-hint">{{ props.hint | e }}</p>{% endif %}
+</div>

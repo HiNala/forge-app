@@ -1,0 +1,44 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec">
+  <div class="forge-container">
+    {% if props.eyebrow %}<p class="forge-eyebrow">{{ props.eyebrow | e }}</p>{% endif %}
+    {% if props.headline or props.title %}
+    <h2 class="forge-h2" style="margin-bottom:.5rem;">{{ (props.headline or props.title) | e }}</h2>
+    {% endif %}
+    {% if props.subtitle %}
+    <p class="forge-lead" style="margin-bottom:2.5rem;">{{ props.subtitle | e }}</p>
+    {% endif %}
+    {% set tiers = props.tiers or props.plans or ([props] if props.price else []) %}
+    <div class="forge-card-grid">
+      {% for tier in tiers %}
+      <div class="forge-card forge-price-card{% if tier.featured or tier.highlighted %} forge-price-card--featured{% endif %}">
+        {% if tier.badge %}<span class="forge-price-badge">{{ tier.badge | e }}</span>{% endif %}
+        <h3 class="forge-h3" style="margin:0 0 .25rem;">{{ (tier.name or tier.title) | e }}</h3>
+        {% if tier.description %}<p class="forge-body-text" style="margin:0 0 1.25rem;opacity:.7;font-size:.9rem;">{{ tier.description | e }}</p>{% endif %}
+        <p class="forge-price-amount">
+          <span class="forge-price-value">{{ tier.price | e }}</span>
+          {% if tier.period %}<span class="forge-price-period">{{ tier.period | e }}</span>{% endif %}
+        </p>
+        {% if tier.features %}
+        <ul class="forge-price-features">
+          {% for f in tier.features %}
+          <li>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            {{ f | e }}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if tier.cta_text or tier.cta %}
+        <a href="{{ (tier.cta_href or tier.href or '#') | e }}"
+           class="forge-btn {% if tier.featured or tier.highlighted %}forge-btn-primary{% else %}forge-btn-secondary{% endif %} forge-btn-lg"
+           style="display:block;text-align:center;text-decoration:none;margin-top:auto;">
+          {{ (tier.cta_text or tier.cta) | e }}
+        </a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>

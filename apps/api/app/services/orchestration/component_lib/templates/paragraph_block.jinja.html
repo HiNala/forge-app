@@ -1,18 +1,16 @@
-<section data-forge-section="{{ section_id | e }}" class="forge-sec" data-component="{{ name | e }}">
+<section data-forge-section="{{ section_id | e }}" class="forge-sec">
   <div class="forge-container">
     {% if props.eyebrow %}<p class="forge-eyebrow">{{ props.eyebrow | e }}</p>{% endif %}
     {% if props.headline or props.title %}
     <h2 class="forge-h2">{{ (props.headline or props.title) | e }}</h2>
     {% endif %}
-    {% if props.subtitle %}
-    <p class="forge-lead">{{ props.subtitle | e }}</p>
-    {% endif %}
     {% if props.body %}
-    <div class="forge-body-text">{{ props.body | e | replace('\n', '<br>') | safe }}</div>
+    <div class="forge-body-text" style="max-width:68ch;">
+      {{ props.body | e | replace('\n', '<br>') | safe }}
+    </div>
     {% endif %}
     {% if props.html %}
     <div class="forge-body-text">{{ props.html | safe }}</div>
     {% endif %}
-    {{ children_html | safe }}
   </div>
 </section>

@@ -1,0 +1,40 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec">
+  <div class="forge-container">
+    {% if props.eyebrow %}<p class="forge-eyebrow">{{ props.eyebrow | e }}</p>{% endif %}
+    {% if props.headline or props.title %}
+    <h2 class="forge-h2" style="margin-bottom:2rem;">{{ (props.headline or props.title) | e }}</h2>
+    {% endif %}
+    {% set items = props.testimonials or props.items or ([props] if props.quote else []) %}
+    <div class="forge-card-grid">
+      {% for t in items %}
+      <article class="forge-card forge-testimonial">
+        {% if t.rating %}
+        <div class="forge-stars" aria-label="{{ t.rating }} out of 5 stars">
+          {% for i in range(t.rating | int) %}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--p)" stroke="none" aria-hidden="true">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <blockquote class="forge-testimonial-quote">
+          &ldquo;{{ (t.quote or t.body or t.text) | e }}&rdquo;
+        </blockquote>
+        <footer class="forge-testimonial-footer">
+          {% if t.avatar_url %}
+          <img src="{{ t.avatar_url | e }}" alt="{{ t.name | default('') | e }}" class="forge-avatar" loading="lazy" />
+          {% endif %}
+          <div>
+            {% if t.name %}<p class="forge-label-text" style="margin:0;">{{ t.name | e }}</p>{% endif %}
+            {% if t.title or t.role or t.company %}
+            <p class="forge-body-text" style="margin:0;font-size:.8rem;opacity:.65;">
+              {{ (t.title or t.role) | default('') | e }}{% if (t.title or t.role) and t.company %}, {% endif %}{{ t.company | default('') | e }}
+            </p>
+            {% endif %}
+          </div>
+        </footer>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
