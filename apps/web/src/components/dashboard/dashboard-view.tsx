@@ -197,11 +197,16 @@ export function DashboardView() {
   return (
     <div className="space-y-8">
       <DashboardTipBanner />
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-text">Pages</h1>
-          <p className="mt-1.5 font-body text-sm text-text-muted">
-            Every live page collects submissions and runs automations from one place.
+          <h1
+            className="font-display font-bold text-text"
+            style={{ fontSize: "clamp(24px, 3.5vw, 30px)", letterSpacing: "-0.01em", lineHeight: 1 }}
+          >
+            My Pages
+          </h1>
+          <p className="mt-1.5 font-body text-[13px] font-light text-text-muted">
+            Every generated page with its own URL, submissions, and settings.
           </p>
         </div>
         <Button
@@ -269,21 +274,24 @@ export function DashboardView() {
         </div>
       ) : (
         <>
-          {/* Greeting + search bar */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          {/* Greeting + search */}
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-text">
-                {firstName}&apos;s workspace
+              <h1
+                className="font-display font-bold text-text"
+                style={{ fontSize: "clamp(24px, 3.5vw, 30px)", letterSpacing: "-0.01em", lineHeight: 1 }}
+              >
+                Good morning, {firstName}.
               </h1>
-              <p className="mt-1 font-body text-sm text-text-muted">
+              <p className="mt-1.5 font-body text-[13px] font-light text-text-muted">
                 {(pagesQ.data ?? []).filter((p) => p.status === "live").length} live
                 {" · "}
                 {(pagesQ.data ?? []).filter((p) => p.status === "draft").length} drafts
               </p>
             </div>
-            <div className="flex w-full max-w-xs flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5">
               <Input
-                className="w-full"
+                className="w-[220px]"
                 placeholder="Search pages…"
                 value={qInput}
                 onChange={(e) => setQInput(e.target.value)}
@@ -310,25 +318,26 @@ export function DashboardView() {
             </div>
           </div>
 
-          {/* Unified filter strip */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-border pb-4">
-            <div className="flex flex-wrap gap-1.5">
+          {/* Status filter tabs (underline style) + workflow pills */}
+          <div className="space-y-2.5">
+            <div className="flex gap-0 border-b border-border">
               {chips.map((c) => (
                 <button
                   key={c.id}
                   type="button"
                   onClick={() => setFilter(c.id)}
                   className={cn(
-                    "rounded-full border px-3 py-1 font-body text-xs font-semibold transition-colors",
+                    "mb-[-1px] px-4 py-2 font-body text-[13px] transition-colors border-b-2",
                     filter === c.id
-                      ? "border-accent bg-accent-light text-accent"
-                      : "border-border bg-surface text-text-muted hover:border-accent/40 hover:text-text",
+                      ? "font-semibold text-text border-text"
+                      : "font-medium text-text-muted border-transparent hover:text-text hover:border-border-strong",
                   )}
                 >
                   {c.label}
                 </button>
               ))}
             </div>
+            {/* Type filter pills — secondary row */}
             <div className="flex flex-wrap gap-1.5">
               {wfChips.map((c) => (
                 <button
@@ -336,7 +345,7 @@ export function DashboardView() {
                   type="button"
                   onClick={() => setWorkflowFilter(c.id)}
                   className={cn(
-                    "rounded-full border px-3 py-1 font-body text-xs font-semibold transition-colors",
+                    "rounded-full border px-3 py-1 font-body text-[11px] font-semibold transition-colors",
                     workflowFilter === c.id
                       ? "border-text/20 bg-text text-bg"
                       : "border-border bg-surface text-text-muted hover:border-border-strong hover:text-text",
