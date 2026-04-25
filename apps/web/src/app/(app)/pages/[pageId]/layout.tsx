@@ -9,6 +9,7 @@ import { LayoutGroup, motion } from "framer-motion";
 import {
   ArrowLeft,
   ExternalLink,
+  Globe,
   MoreHorizontal,
   Pencil,
   Presentation,
@@ -27,6 +28,7 @@ import {
   getPage,
   listPageSubmissions,
   patchPage,
+  publishPage,
 } from "@/lib/api";
 import { getWorkflowSurfaceConfig } from "@/lib/workflow-config";
 import { ensureBridgeInFullDocument } from "@/lib/studio-preview-html";
@@ -151,10 +153,26 @@ export default function PageDetailLayout({
     enabled: !!activeOrganizationId && !!pageId,
   });
 
+  const [publishing, setPublishing] = React.useState(false);
+
   const refetch = React.useCallback(async () => {
     await qc.invalidateQueries({ queryKey: ["page", activeOrganizationId, pageId] });
     return q.refetch();
   }, [qc, activeOrganizationId, pageId, q]);
+
+  async function handlePublish() {
+    if (!activeOrganizationId) return;
+    setPublishing(true);
+    try {
+      await publishPage(getToken, activeOrganizationId, pageId);
+      toast.success("Page is live", { description: "Your page is now publicly accessible." });
+      void refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not publish page.");
+    } finally {
+      setPublishing(false);
+    }
+  }
 
   if (!activeOrganizationId) {
     return (
@@ -403,15 +421,28 @@ export default function PageDetailLayout({
 
           {/* Panel footer — action buttons */}
           <div className="shrink-0 border-t border-border px-[18px] py-3 flex items-center gap-2">
+            {p.status !== "live" && p.status !== "archived" ? (
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                className="flex-1 gap-1.5"
+                loading={publishing}
+                onClick={() => void handlePublish()}
+              >
+                <Globe className="size-3" />
+                Go Live
+              </Button>
+            ) : null}
             <Button
               type="button"
-              variant="primary"
+              variant={p.status !== "live" ? "secondary" : "primary"}
               size="sm"
-              className="flex-1 gap-1.5"
+              className={cn("gap-1.5", p.status === "live" && "flex-1")}
               onClick={() => router.push(`/studio?pageId=${pageId}`)}
             >
               <Pencil className="size-3" />
-              Edit in Studio
+              Edit
             </Button>
             {wf.headerActions === "deck" && (
               <Button

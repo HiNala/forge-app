@@ -99,7 +99,14 @@ export default function PageShareTab() {
 
       {/* Page link */}
       <div>
-        <p className="section-label mb-2">Page link</p>
+        <div className="mb-2 flex items-center gap-2">
+          <p className="section-label">Page link</p>
+          {page.status !== "live" ? (
+            <span className="font-body text-[10px] font-semibold uppercase tracking-wide text-warning">
+              Draft
+            </span>
+          ) : null}
+        </div>
         <div className="flex gap-1.5">
           <div
             className="flex-1 min-w-0 truncate rounded-lg border border-border bg-bg px-3 py-2 font-body text-[12px] text-text-muted"
