@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { STUDIO_STARTER_CHIPS, resolveSurprisePrompt } from "@/lib/studio-content";
+import { timeOfDayGreeting } from "@/lib/studio-greeting";
 import {
   type DashboardWorkflowFilter,
   pageMatchesWorkflowFilter,
@@ -281,7 +282,7 @@ export function DashboardView() {
                 className="font-display font-bold text-text"
                 style={{ fontSize: "clamp(24px, 3.5vw, 30px)", letterSpacing: "-0.01em", lineHeight: 1 }}
               >
-                Good morning, {firstName}.
+                {timeOfDayGreeting(firstName)}.
               </h1>
               <p className="mt-1.5 font-body text-[13px] font-light text-text-muted">
                 {(pagesQ.data ?? []).filter((p) => p.status === "live").length} live
