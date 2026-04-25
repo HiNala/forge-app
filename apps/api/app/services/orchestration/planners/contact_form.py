@@ -38,50 +38,54 @@ def plan_contact_form(intent: PageIntent, bundle: ContextBundle | None) -> PageP
         calendar_note = " ".join(
             f"{c.label}: {c.detail or 'connected'}" for c in bundle.calendars[:3]
         )
+    biz = intent.business_type or intent.title or "this business"
+    action = intent.primary_action or "get in touch"
+    diffs = intent.key_differentiators
+    diff_str = (" Highlight: " + "; ".join(diffs[:3]) + ".") if diffs else ""
+    hero_brief = (intent.headline or intent.title or biz).strip()
+    if intent.subheadline:
+        hero_brief += f" — {intent.subheadline}"
+
     sections: list[SectionSpec] = [
         SectionSpec(
             id="hero",
             role="hero",
             priority=0,
             layout_family="full_bleed_hero",
-            content_brief=((intent.headline or intent.title) + " — " + (intent.subheadline or "")).strip(),
-        ),
-        SectionSpec(
-            id="intro",
-            role="intro",
-            priority=1,
-            layout_family="single_column",
-            content_brief="Brief intro inviting the visitor to reach out; keep it short.",
+            content_brief=f"Hero for {biz}. Headline: '{hero_brief}'.{diff_str}",
         ),
         SectionSpec(
             id="form",
             role="form",
-            priority=2,
+            priority=1,
             layout_family="single_column",
-            content_brief="Lead capture form with the fields requested in the intent.",
+            content_brief=f"Form for visitors to {action}. Use form_stacked with provided fields.",
             required_data=["form_fields"] + (["calendar_slots"] if calendar_note else []),
         ),
         SectionSpec(
             id="trust_signals",
             role="trust",
-            priority=3,
+            priority=2,
             layout_family="card_grid",
-            content_brief="Trust line or testimonial placeholder if no proof in context.",
+            content_brief=(
+                f"Trust signal for {biz}.{diff_str} "
+                "Use rating_line or a brief testimonial_card only if the brief provides real proof. "
+                "Skip if no proof exists."
+            ),
         ),
         SectionSpec(
             id="footer",
             role="footer",
-            priority=4,
+            priority=3,
             layout_family="footer_strip",
-            content_brief="Minimal footer with org name.",
+            content_brief=f"Minimal footer for {biz}.",
         ),
     ]
     hints = {
-        "hero": "hero-centered",
-        "intro": "hero-centered",
-        "form": "form-vertical",
-        "trust_signals": "cta-bar",
-        "footer": "footer-minimal",
+        "hero": "hero_split",
+        "form": "form_stacked",
+        "trust_signals": "rating_line",
+        "footer": "footer_minimal",
     }
     data: dict[str, Any] = {"form_fields": fl}
     if calendar_note:

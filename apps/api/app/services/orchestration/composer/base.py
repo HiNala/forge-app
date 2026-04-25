@@ -78,17 +78,54 @@ class BaseComposer:
         *,
         user_prompt: str,
     ) -> str:
-        payload = {
-            "user_prompt": user_prompt,
-            "intent": intent.model_dump(mode="json"),
-            "page_plan": {
-                "workflow": plan.workflow,
-                "sections": [s.model_dump() for s in plan.sections],
-                "data_hints": plan.data_hints,
-                "component_hints": plan.component_hints,
-            },
-        }
-        return json.dumps(payload, indent=2)
+        lines: list[str] = ["## Creative brief\n"]
+
+        # Business identity
+        biz = intent.business_type or intent.title or "this business"
+        lines.append(f"**Business**: {biz}")
+        if intent.target_customer:
+            lines.append(f"**Customer**: {intent.target_customer}")
+        if intent.primary_action:
+            lines.append(f"**Goal**: {intent.primary_action}")
+        lines.append(f"**Workflow**: {plan.workflow}")
+        lines.append(f"**Tone**: {intent.tone} · **Visual direction**: {intent.visual_direction}")
+        if intent.headline:
+            lines.append(f"**Hero headline**: {intent.headline}")
+        if intent.subheadline:
+            lines.append(f"**Hero subline**: {intent.subheadline}")
+        if intent.key_differentiators:
+            lines.append("**Differentiators**: " + " · ".join(intent.key_differentiators))
+
+        # Section breakdown
+        lines.append("\n## Page sections (render in this order)\n")
+        ordered = sorted(plan.sections, key=lambda s: s.priority)
+        for i, sec in enumerate(ordered, 1):
+            hint = plan.component_hints.get(sec.id, "")
+            lines.append(f"{i}. **{sec.id.upper()}** [{hint}]")
+            if sec.content_brief:
+                lines.append(f"   Brief: {sec.content_brief}")
+            if sec.required_data:
+                lines.append(f"   Required: {', '.join(sec.required_data)}")
+
+        # Form fields
+        if plan.data_hints.get("form_fields"):
+            lines.append("\n## Form fields\n")
+            for f in plan.data_hints["form_fields"]:
+                req = "required" if f.get("required") else "optional"
+                lines.append(f"- {f.get('label', f.get('name', 'field'))} ({f.get('type', 'text')}, {req})")
+
+        # Calendar hint
+        if plan.data_hints.get("calendar_summary"):
+            lines.append(f"\n**Calendar**: {plan.data_hints['calendar_summary']}")
+
+        # User's original words — most important signal for copy
+        lines.append("\n## User's original request\n")
+        lines.append(f'"{user_prompt}"')
+
+        # Brand
+        lines.append(f"\n**Brand primary**: {plan.brand_tokens.primary}")
+
+        return "\n".join(lines)
 
     async def compose(
         self,
@@ -138,6 +175,7 @@ class BaseComposer:
             tree,
             plan.brand_tokens,
             form_action=form_action,
+            visual_dir=intent.visual_direction,
         )
         fs = extract_form_schema_hints(tree)
         if fs:

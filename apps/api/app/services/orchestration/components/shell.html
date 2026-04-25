@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-visual-dir="$visual_dir">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>$title</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  $fonts_link
   <style>
     :root {
       --p: $primary;
@@ -507,6 +507,34 @@
       transition: all .12s;
     }
     .forge-success-close:hover { border-color: var(--p); color: var(--p); }
+
+    /* ── Visual direction overrides ── */
+    /* minimal: tighter, more white space, hairline borders */
+    [data-visual-dir="minimal"] body { background: #fff; }
+    [data-visual-dir="minimal"] .forge-sec { --py: clamp(3rem, 8vw, 5.5rem); }
+    [data-visual-dir="minimal"] .forge-card { border: 1px solid var(--border); box-shadow: none; }
+    [data-visual-dir="minimal"] .forge-btn-primary { border-radius: var(--radius-sm); }
+    [data-visual-dir="minimal"] .forge-h1 { letter-spacing: -.035em; }
+
+    /* bold: punchy, higher contrast, larger type */
+    [data-visual-dir="bold"] .forge-h1 { font-size: clamp(2.5rem, 5vw + .5rem, 4.5rem); letter-spacing: -.04em; }
+    [data-visual-dir="bold"] .forge-bg-brand { background: var(--p); }
+    [data-visual-dir="bold"] .forge-bg-brand .forge-h1,
+    [data-visual-dir="bold"] .forge-bg-brand .forge-lead { color: #fff; }
+    [data-visual-dir="bold"] .forge-btn-primary { border-radius: var(--radius-xs); font-size: 1.0625rem; }
+    [data-visual-dir="bold"] .forge-card { box-shadow: var(--shadow-lg); }
+
+    /* playful: softer radius, warmer surface, friendlier */
+    [data-visual-dir="playful"] { --radius: 14px; --radius-lg: 22px; --radius-xl: 30px; }
+    [data-visual-dir="playful"] body { background: var(--p-05); }
+    [data-visual-dir="playful"] .forge-card { border-radius: var(--radius-xl); }
+
+    /* formal: sharper edges, cooler palette */
+    [data-visual-dir="formal"] { --radius: 4px; --radius-lg: 6px; --radius-xl: 8px; }
+    [data-visual-dir="formal"] .forge-h1 { letter-spacing: -.01em; }
+    [data-visual-dir="formal"] .forge-field-label { text-transform: uppercase; letter-spacing: .1em; font-size: .75rem; }
+
+    /* warm: default — no overrides needed */
 
     /* ── Eyebrow ── */
     .forge-eyebrow {

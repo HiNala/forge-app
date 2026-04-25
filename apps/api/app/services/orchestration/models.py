@@ -158,6 +158,24 @@ class PageIntent(BaseModel):
         description="Information density on the page",
     )
 
+    # Business context — extracted by intent parser, used by composers
+    business_type: str | None = Field(
+        default=None,
+        description="Short descriptor e.g. 'roofing contractor', 'yoga studio', 'SaaS startup'",
+    )
+    primary_action: str | None = Field(
+        default=None,
+        description="What the page drives toward: 'book appointment', 'get a quote', etc.",
+    )
+    key_differentiators: list[str] = Field(
+        default_factory=list,
+        description="Specific signals extracted from user text that signal trust or differentiation",
+    )
+    target_customer: str | None = Field(
+        default=None,
+        description="Who visits this page and what do they need?",
+    )
+
     deck_kind: str | None = Field(default=None, description="Pitch deck kind key (W-03)")
     deck_narrative_framework: str | None = Field(
         default=None,
