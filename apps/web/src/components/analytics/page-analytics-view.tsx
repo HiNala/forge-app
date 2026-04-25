@@ -103,16 +103,16 @@ export function PageAnalyticsView() {
   const emptyMsg = `No events in the selected range. Share your page to start seeing data.`;
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-text-muted font-body">
-          Real metrics for <span className="font-medium text-text">{page.title}</span> — no sample data.
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-body text-[12px] text-text-muted">
+          Real metrics — no sample data.
         </p>
         <AnalyticsRangeSelector />
       </div>
 
       {!isProposal(page.page_type) && !isGalleryLike(page.page_type) ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2">
           <KpiCard
             label="Views"
             value={views}
@@ -153,7 +153,7 @@ export function PageAnalyticsView() {
       ) : null}
 
       {isGalleryLike(page.page_type) ? (
-        <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-3">
+        <div className="grid grid-cols-2 gap-2">
           <KpiCard
             label="Views"
             value={views}

@@ -334,15 +334,34 @@ export function SubmissionsPanel() {
   const someSelected = rows.some((r) => selected.has(r.id));
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-3">
+      {/* Top row: count + export */}
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-body text-[13px] font-semibold text-text">
+          {listQ.isLoading ? "…" : rows.length}{" "}
+          <span className="font-normal text-text-muted">response{rows.length === 1 ? "" : "s"}</span>
+        </p>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          disabled={exporting}
+          onClick={() => void onExport()}
+          className="gap-1.5 shrink-0"
+        >
+          {exporting ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+          Export
+        </Button>
+      </div>
+      {/* Filter pills */}
+      <div className="flex flex-wrap gap-1.5">
         {FILTERS.map((f) => (
           <button
             key={f.id || "all"}
             type="button"
             onClick={() => setFilter(f.id)}
             className={cn(
-              "rounded-full border px-3 py-1.5 text-xs font-medium font-body transition-colors",
+              "rounded-full border px-2.5 py-1 text-[11px] font-medium font-body transition-colors",
               filter === f.id
                 ? "border-accent bg-accent-light text-accent"
                 : "border-border bg-surface text-text-muted hover:border-accent/40",
@@ -351,25 +370,14 @@ export function SubmissionsPanel() {
             {f.label}
           </button>
         ))}
-        <Input
-          className="ml-auto max-w-xs"
-          placeholder="Search payload…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          aria-label="Search submissions"
-        />
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          disabled={exporting}
-          onClick={() => void onExport()}
-          className="gap-1.5"
-        >
-          {exporting ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
-          Export CSV
-        </Button>
       </div>
+      {/* Search */}
+      <Input
+        placeholder="Search submissions…"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        aria-label="Search submissions"
+      />
 
       {listQ.isLoading ? (
         <div className="space-y-2">

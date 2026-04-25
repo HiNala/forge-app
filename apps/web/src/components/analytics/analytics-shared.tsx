@@ -79,22 +79,22 @@ export function KpiCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border bg-surface p-5 shadow-sm transition-shadow hover:shadow-md",
+        "relative overflow-hidden rounded-xl border bg-surface p-3 transition-shadow hover:shadow-sm",
         accent ? "border-accent/30" : "border-border",
       )}
     >
       {accent && (
         <span
-          className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl"
+          className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl"
           style={{ background: "var(--accent)" }}
           aria-hidden
         />
       )}
-      <p className="section-label mb-3">{label}</p>
-      <p className={cn(
-        "font-display font-bold leading-none tracking-tight text-text",
-        "text-[clamp(28px,4vw,40px)]",
-      )}>
+      <p className="section-label mb-2" style={{ fontSize: "10px" }}>{label}</p>
+      <p
+        className="font-display font-bold leading-none tracking-tight text-text"
+        style={{ fontSize: "clamp(18px, 2.5vw, 24px)", letterSpacing: "-0.01em" }}
+      >
         {value}
       </p>
       {hint ? <p className="mt-2 font-body text-xs text-text-subtle">{hint}</p> : null}

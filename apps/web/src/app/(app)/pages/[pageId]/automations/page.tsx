@@ -188,18 +188,18 @@ function AutomationsEditor({
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-10">
+    <div className="space-y-5">
       {connected ? (
         <p className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-text">
           Google Calendar connected. Pick this calendar below if you want events on submissions.
         </p>
       ) : null}
 
-      <section className="space-y-4 rounded-2xl border border-border bg-surface p-6">
+      <section className="space-y-3 rounded-2xl border border-border bg-surface p-4">
         <div>
-          <h2 className="font-display text-lg font-bold text-text">Notify on submission</h2>
-          <p className="mt-1 font-body text-sm text-text-muted">
-            One email per line — we&apos;ll email owners when a form is submitted.
+          <p className="section-label mb-0.5">Notify on submission</p>
+          <p className="font-body text-[12px] text-text-muted">
+            One email per line — we&apos;ll notify owners on each submission.
           </p>
         </div>
         <Textarea
@@ -208,17 +208,17 @@ function AutomationsEditor({
             setNotifyText(e.target.value);
             markDirty();
           }}
-          rows={4}
+          rows={3}
           className="font-mono text-sm"
           placeholder={"you@studio.com\ncoach@studio.com"}
         />
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-border bg-surface p-6">
-        <div className="flex items-center justify-between gap-4">
+      <section className="space-y-3 rounded-2xl border border-border bg-surface p-4">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="font-display text-lg font-bold text-text">Confirmation email</h2>
-            <p className="mt-1 font-body text-sm text-text-muted">Send a branded thank-you to the submitter.</p>
+            <p className="section-label mb-0.5">Confirmation email</p>
+            <p className="font-body text-[12px] text-text-muted">Send a branded thank-you to the submitter.</p>
           </div>
           <Switch
             checked={draft.confirm_submitter}
@@ -257,12 +257,12 @@ function AutomationsEditor({
         ) : null}
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-border bg-surface p-6">
-        <div className="flex items-center justify-between gap-4">
+      <section className="space-y-3 rounded-2xl border border-border bg-surface p-4">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="font-display text-lg font-bold text-text">Google Calendar</h2>
-            <p className="mt-1 font-body text-sm text-text-muted">
-              Create a hold when a submission arrives (optional).
+            <p className="section-label mb-0.5">Google Calendar</p>
+            <p className="font-body text-[12px] text-text-muted">
+              Create a hold when a submission arrives.
             </p>
           </div>
           <Switch
@@ -291,7 +291,7 @@ function AutomationsEditor({
                 markDirty();
               }}
             />
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3">
               <div className="space-y-1">
                 <Label>Event duration (minutes)</Label>
                 <Input
@@ -325,8 +325,8 @@ function AutomationsEditor({
         ) : null}
       </section>
 
-      <section className="space-y-3 rounded-2xl border border-border bg-surface p-6">
-        <h2 className="font-display text-lg font-bold text-text">Recent runs</h2>
+      <section className="space-y-3 rounded-2xl border border-border bg-surface p-4">
+        <p className="section-label">Recent runs</p>
         <RunsList
           runs={qRuns.data ?? []}
           loading={qRuns.isLoading}
