@@ -105,10 +105,13 @@ export function PageAnalyticsView() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-body text-[12px] text-text-muted">
-          Real metrics — no sample data.
-        </p>
         <AnalyticsRangeSelector />
+        <a
+          href={`/analytics?page=${page.id}`}
+          className="font-body text-[11px] font-medium text-accent underline-offset-4 hover:underline"
+        >
+          Full analytics →
+        </a>
       </div>
 
       {!isProposal(page.page_type) && !isGalleryLike(page.page_type) ? (

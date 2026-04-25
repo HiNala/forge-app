@@ -291,7 +291,7 @@ export function DashboardView() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Input
-                className="w-[220px]"
+                className="w-[200px]"
                 placeholder="Search pages…"
                 value={qInput}
                 onChange={(e) => setQInput(e.target.value)}
@@ -367,6 +367,23 @@ export function DashboardView() {
                 className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
                 aria-label="Workspace pages"
               >
+                {/* New page dashed card — always first */}
+                {filter === "all" && !qUrl.trim() && workflowFilter === "all" ? (
+                  <li className="list-none">
+                    <button
+                      type="button"
+                      onClick={() => router.push("/studio")}
+                      className="group flex h-full min-h-[210px] w-full flex-col items-center justify-center gap-2.5 rounded-2xl border border-dashed border-border bg-transparent font-body transition-all hover:border-accent hover:bg-accent-light/30"
+                    >
+                      <div className="flex size-8 items-center justify-center rounded-[9px] bg-bg-elevated text-text-muted transition-colors group-hover:bg-accent-light group-hover:text-accent">
+                        <Sparkles className="size-4" aria-hidden />
+                      </div>
+                      <span className="text-[13px] font-medium text-text-muted transition-colors group-hover:text-accent">
+                        New page
+                      </span>
+                    </button>
+                  </li>
+                ) : null}
                 {slice.map((p, idx) => (
                   <DashboardPageCard
                     key={p.id}

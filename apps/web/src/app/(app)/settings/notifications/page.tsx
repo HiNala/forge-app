@@ -68,6 +68,8 @@ export default function NotificationsSettingsPage() {
   });
 
   const prefs = (me.data?.preferences ?? {}) as Record<string, unknown>;
+  const formSubmitted = readBool(prefs, "notification_form_submitted", true);
+  const proposalViewed = readBool(prefs, "notification_proposal_viewed", true);
   const digest = readBool(prefs, "notification_daily_automation_digest", true);
   const weekly = readBool(prefs, "notification_weekly_submissions", false);
   const product = readBool(prefs, "notification_product_updates", true);
@@ -84,11 +86,11 @@ export default function NotificationsSettingsPage() {
   });
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight text-text">Notifications</h1>
         <p className="mt-1.5 font-body text-sm text-text-muted">
-          Email preferences — applied to your Forge account across all workspaces.
+          Email preferences applied to your account across all workspaces.
         </p>
       </div>
 
@@ -99,36 +101,67 @@ export default function NotificationsSettingsPage() {
           ))}
         </div>
       ) : (
-        <section className="divide-y divide-border rounded-2xl border border-border bg-surface px-6">
-          <NotificationRow
-            id="d1"
-            label="Daily automation digest"
-            hint="Summary of failed automations — sent each morning when there are failures."
-            checked={digest}
-            onChange={(v) => mut.mutate({ notification_daily_automation_digest: v })}
-          />
-          <NotificationRow
-            id="d2"
-            label="Weekly submissions summary"
-            hint="A weekly recap of form submissions and page views across your workspace."
-            checked={weekly}
-            onChange={(v) => mut.mutate({ notification_weekly_submissions: v })}
-          />
-          <NotificationRow
-            id="d3"
-            label="Product updates"
-            hint="Occasional roadmap notes, new features, and quality-of-life improvements."
-            checked={product}
-            onChange={(v) => mut.mutate({ notification_product_updates: v })}
-          />
-          <NotificationRow
-            id="d4"
-            label="Billing alerts"
-            hint="Payment failures, quota warnings, and renewal reminders — required, cannot be disabled."
-            checked
-            locked
-          />
-        </section>
+        <>
+          <section className="space-y-1">
+            <p className="section-label mb-3">Activity</p>
+            <div className="divide-y divide-border rounded-2xl border border-border bg-surface px-6">
+              <NotificationRow
+                id="d0"
+                label="Form submitted"
+                hint="Email when someone fills out a form on any of your pages."
+                checked={formSubmitted}
+                onChange={(v) => mut.mutate({ notification_form_submitted: v })}
+              />
+              <NotificationRow
+                id="d01"
+                label="Proposal viewed"
+                hint="Notify when a contact or proposal page is opened — link tracking."
+                checked={proposalViewed}
+                onChange={(v) => mut.mutate({ notification_proposal_viewed: v })}
+              />
+            </div>
+          </section>
+
+          <section className="space-y-1">
+            <p className="section-label mb-3">Digests</p>
+            <div className="divide-y divide-border rounded-2xl border border-border bg-surface px-6">
+              <NotificationRow
+                id="d1"
+                label="Daily automation digest"
+                hint="Summary of failed automations — sent each morning when there are failures."
+                checked={digest}
+                onChange={(v) => mut.mutate({ notification_daily_automation_digest: v })}
+              />
+              <NotificationRow
+                id="d2"
+                label="Weekly submissions summary"
+                hint="A weekly recap of form submissions and page views across your workspace."
+                checked={weekly}
+                onChange={(v) => mut.mutate({ notification_weekly_submissions: v })}
+              />
+            </div>
+          </section>
+
+          <section className="space-y-1">
+            <p className="section-label mb-3">System</p>
+            <div className="divide-y divide-border rounded-2xl border border-border bg-surface px-6">
+              <NotificationRow
+                id="d3"
+                label="Product updates"
+                hint="Occasional roadmap notes, new features, and quality-of-life improvements."
+                checked={product}
+                onChange={(v) => mut.mutate({ notification_product_updates: v })}
+              />
+              <NotificationRow
+                id="d4"
+                label="Billing alerts"
+                hint="Payment failures, quota warnings, and renewal reminders — required, cannot be disabled."
+                checked
+                locked
+              />
+            </div>
+          </section>
+        </>
       )}
 
       <p className="font-body text-xs text-text-subtle" aria-live="polite">

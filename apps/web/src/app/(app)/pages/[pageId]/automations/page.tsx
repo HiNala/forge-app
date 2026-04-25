@@ -291,26 +291,41 @@ function AutomationsEditor({
                 markDirty();
               }}
             />
-            <div className="grid gap-3">
-              <div className="space-y-1">
-                <Label>Event duration (minutes)</Label>
-                <Input
-                  type="number"
-                  min={15}
-                  max={1440}
-                  value={draft.calendar_event_duration_min}
-                  onChange={(e) => {
-                    const n = Number(e.target.value);
-                    setDraft((d) => ({
-                      ...d,
-                      calendar_event_duration_min: Number.isFinite(n) ? n : d.calendar_event_duration_min,
-                    }));
-                    markDirty();
-                  }}
-                />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="font-body text-[11px] font-semibold text-text">Default event duration</p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {[
+                    { label: "30m", value: 30 },
+                    { label: "1h", value: 60 },
+                    { label: "1.5h", value: 90 },
+                    { label: "2h", value: 120 },
+                    { label: "3h", value: 180 },
+                  ].map(({ label, value }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => {
+                        setDraft((d) => ({ ...d, calendar_event_duration_min: value }));
+                        markDirty();
+                      }}
+                      className="rounded-lg border px-3 py-1.5 font-body text-[12px] font-semibold transition-colors"
+                      style={{
+                        borderColor: draft.calendar_event_duration_min === value ? "var(--color-accent)" : "var(--color-border-strong)",
+                        background: draft.calendar_event_duration_min === value ? "var(--color-accent-light)" : "transparent",
+                        color: draft.calendar_event_duration_min === value ? "var(--color-accent)" : "var(--color-text-muted)",
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center justify-between gap-2 pt-6">
-                <Label htmlFor="inv">Invite submitter</Label>
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="font-body text-[13px] font-medium text-text">Send calendar invite to client</p>
+                  <p className="font-body text-[11px] text-text-muted">Client receives an email invite</p>
+                </div>
                 <Switch
                   id="inv"
                   checked={draft.calendar_send_invite}

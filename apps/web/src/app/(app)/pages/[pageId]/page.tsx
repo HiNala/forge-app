@@ -1,20 +1,28 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { Check, Copy, ExternalLink, Mail, Link as LinkIcon } from "lucide-react";
+import { Check, Copy, ExternalLink, Mail, Link as LinkIcon, Bell } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { listPageSubmissions } from "@/lib/api";
+import { listPageSubmissions, getPageAutomations } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 import { usePageDetail } from "@/providers/page-detail-provider";
+
+const FORM_TYPES = new Set(["booking-form", "contact-form", "rsvp", "booking", "contact"]);
+
+function isFormPage(pageType: string) {
+  return FORM_TYPES.has(pageType) || pageType.includes("form") || pageType.includes("booking") || pageType.includes("contact");
+}
 
 export default function PageShareTab() {
   const { page } = usePageDetail();
   const { getToken } = useAuth();
   const { activeOrganizationId, activeOrg } = useForgeSession();
+  const router = useRouter();
   const [copied, setCopied] = React.useState(false);
   const [embedCopied, setEmbedCopied] = React.useState(false);
 
@@ -36,6 +44,19 @@ export default function PageShareTab() {
   });
   const recentItems = qRecent.data?.items ?? [];
 
+  const qAutoRules = useQuery({
+    queryKey: ["automations", activeOrganizationId, page.id],
+    queryFn: () => getPageAutomations(getToken, activeOrganizationId, page.id),
+    enabled: !!activeOrganizationId && isFormPage(page.page_type),
+    staleTime: 60_000,
+  });
+
+  const notifyEmpty =
+    isFormPage(page.page_type) &&
+    qAutoRules.data &&
+    (qAutoRules.data.notify_emails ?? []).length === 0 &&
+    !qAutoRules.data.confirm_submitter;
+
   function copyLink() {
     if (!publicUrl) return;
     void navigator.clipboard.writeText(publicUrl).then(() => {
@@ -56,6 +77,26 @@ export default function PageShareTab() {
 
   return (
     <div className="space-y-5">
+      {/* Notification nudge for form pages with no email setup */}
+      {notifyEmpty ? (
+        <button
+          type="button"
+          onClick={() => router.push(`/pages/${page.id}/automations`)}
+          className="w-full flex items-center gap-3 rounded-xl border border-accent/30 bg-accent-light/40 px-3.5 py-3 text-left transition-colors hover:bg-accent-light/70"
+        >
+          <Bell className="size-4 shrink-0 text-accent" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <p className="font-body text-[12px] font-semibold text-accent">
+              Set up email notifications
+            </p>
+            <p className="font-body text-[11px] text-accent/70">
+              Get notified when someone fills out this form
+            </p>
+          </div>
+          <span className="font-body text-[11px] text-accent/70 shrink-0">→</span>
+        </button>
+      ) : null}
+
       {/* Page link */}
       <div>
         <p className="section-label mb-2">Page link</p>
