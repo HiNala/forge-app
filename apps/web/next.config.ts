@@ -14,6 +14,35 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [{ source: "/app", destination: "/dashboard", permanent: false }];
   },
+  /** Security headers - applied to all routes */
+  async headers() {
+    const csp =
+      "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://clerk.forge.app; " +
+      "style-src 'self' 'unsafe-inline'; " +
+      "img-src 'self' blob: data: https:; " +
+      "font-src 'self'; " +
+      "connect-src 'self' https://api.stripe.com https://clerk.forge.app; " +
+      "frame-src https://js.stripe.com; " +
+      "frame-ancestors 'none';";
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-DNS-Prefetch-Control", value: "on" },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          // CSP in report-only for now; tighten after testing
+          { key: "Content-Security-Policy-Report-Only", value: csp },
+        ],
+      },
+    ];
+  },
 };
 
 export default withBundleAnalyzer(nextConfig);

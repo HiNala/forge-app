@@ -30,6 +30,17 @@ _ALLOWED_CT = frozenset(
 )
 
 
+def _is_svg_safe(raw: bytes) -> bool:
+    """Basic XSS check: reject SVGs containing <script> or event handlers."""
+    if not raw.startswith(b"<?xml") and not raw.startswith(b"<svg"):
+        # Not an SVG starting with expected tag
+        pass
+    content = raw.lower()
+    # Reject script tags and common event handlers
+    dangerous = [b"<script", b"javascript:", b"onerror=", b"onload=", b"onclick=", b"onmouseover="]
+    return not any(d in content for d in dangerous)
+
+
 @router.post("/workspaces", response_model=OrganizationOut)
 async def create_workspace(
     body: CreateWorkspaceBody,
@@ -152,6 +163,8 @@ async def post_brand_logo(
     raw = await file.read()
     if len(raw) > 2 * 1024 * 1024:
         raise HTTPException(status_code=422, detail="File too large (max 2MB)")
+    if ct == "image/svg+xml" and not _is_svg_safe(raw):
+        raise HTTPException(status_code=422, detail="SVG contains potentially unsafe content")
     ext = guess_ext(file.filename or "logo", ct)
     if ext == "bin":
         raise HTTPException(status_code=422, detail="Could not determine file extension")

@@ -45,17 +45,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/p", tags=["public"])
 
-def _trim_metadata(md: dict[str, Any] | None) -> dict[str, Any] | None:
-    if md is None:
-        return None
-    try:
-        raw = json.dumps(md)
-    except (TypeError, ValueError):
-        return None
-    if len(raw) > 16000:
-        return {"_truncated": True}
-    return md
-
 
 async def _parse_submit_body(request: Request) -> dict[str, Any]:
     ct = (request.headers.get("content-type") or "").lower()
@@ -580,32 +569,11 @@ async def public_track(
     if p is None:
         raise HTTPException(status_code=404, detail="Not found")
 
-    ip_raw = get_client_ip(request)
-    ip_anon = anonymize_ipv4_to_slash24(ip_raw)
-    ua = request.headers.get("user-agent")
-    ref = request.headers.get("referer") or request.headers.get("referrer")
-    now = datetime.now(UTC)
-    rows: list[AnalyticsEvent] = []
-    for ev in batch.events:
-        if ev.event_type not in _ALLOWED_TRACK_EVENTS:
-            raise HTTPException(status_code=400, detail=f"Unsupported event_type: {ev.event_type}")
-        rows.append(
-            AnalyticsEvent(
-                id=uuid.uuid4(),
-                organization_id=org.id,
-                page_id=p.id,
-                event_type=ev.event_type,
-                visitor_id=ev.visitor_id[:200],
-                session_id=ev.session_id[:200],
-                metadata_=_trim_metadata(ev.metadata),
-                source_ip=ip_anon,
-                user_agent=(ua[:4000] if ua else None),
-                referrer=(ref[:2000] if ref else None),
-                created_at=now,
-            )
-        )
-    for row in rows:
-        db.add(row)
+    # Event validation, enrichment, dedupe, and ingestion all happen in
+    # ``handle_public_track_batch`` (uses the authoritative EVENTS registry in
+    # ``services/analytics/events.py``). A prior hand-rolled allowlist check lived
+    # here but referenced a non-existent ``_ALLOWED_TRACK_EVENTS`` symbol and is
+    # redundant with the handler's ``validate_event_payload`` call.
     try:
         return await handle_public_track_batch(
             db=db,

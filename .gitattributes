@@ -1,0 +1,55 @@
+# Normalize line endings across OSes. Source files store LF in Git, which matches
+# what Linux Docker containers (api, worker, web) and CI expect. Windows contributors
+# can keep CRLF in their working tree; Git will convert on checkin/checkout transparently.
+#
+# Without this file, Windows `core.autocrlf=true` produces huge phantom diffs every
+# time someone touches a file (see README / launch readiness fix, 2026-04-21).
+
+* text=auto eol=lf
+
+# Explicitly text (LF):
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.mjs       text eol=lf
+*.cjs       text eol=lf
+*.json      text eol=lf
+*.jsonc     text eol=lf
+*.py        text eol=lf
+*.toml      text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
+*.md        text eol=lf
+*.html      text eol=lf
+*.css       text eol=lf
+*.scss      text eol=lf
+*.sql       text eol=lf
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+*.env       text eol=lf
+
+# Windows scripts keep CRLF so PowerShell is happy.
+*.ps1       text eol=crlf
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# Binary — never munge:
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.webp      binary
+*.pdf       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.otf       binary
+*.eot       binary
+*.zip       binary
+*.gz        binary
+*.tar       binary
+
+# Lockfiles: keep diff-friendly but treat as generated for PR reviews.
+pnpm-lock.yaml  -diff linguist-generated=true
+uv.lock         -diff linguist-generated=true

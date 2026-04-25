@@ -1,4 +1,7 @@
-from pydantic import field_validator
+import json
+from typing import Any, Self
+
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -6,8 +9,12 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Forge API"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
-    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001"]
-    # Comma-separated extra origins (staging/prod frontends). Merged with BACKEND_CORS_ORIGINS (BI-02).
+    # Env: comma-separated, JSON array, or list — normalized to string in ``_normalize_backend_cors_origins``.
+    backend_cors_origins_raw: str = Field(
+        default="http://localhost:3000,http://localhost:3001",
+        validation_alias=AliasChoices("BACKEND_CORS_ORIGINS", "CORS_ORIGINS"),
+    )
+    # Comma-separated extra origins (staging/prod frontends). Merged with backend defaults (BI-02).
     CORS_ORIGINS_EXTRA: str = ""
     # Comma-separated hosts for TrustedHostMiddleware; "*" allows any (development only).
     TRUSTED_HOSTS: str = "*"
@@ -103,6 +110,10 @@ class Settings(BaseSettings):
     # Caddy on-demand TLS `ask` — optional shared secret (set in prod if endpoint is exposed)
     CADDY_INTERNAL_TOKEN: str = ""
 
+    # Prometheus `/metrics` endpoint — optional bearer token (set in prod when the endpoint is publicly
+    # routable). Leave empty in dev. Compared with ``hmac.compare_digest`` in app.main to avoid timing leaks.
+    METRICS_TOKEN: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,
@@ -154,31 +165,27 @@ class Settings(BaseSettings):
                 if o and o not in seen:
                     seen.add(o)
                     merged.append(o)
-        return merged
+        return merged if merged else ["http://localhost:3000", "http://localhost:3001"]
 
-    def effective_cors_origins(self) -> list[str]:
-        """Origins for CORSMiddleware: dev defaults plus optional ``CORS_ORIGINS_EXTRA`` (comma-separated)."""
-        merged: list[str] = []
-        seen: set[str] = set()
-        for raw in self.BACKEND_CORS_ORIGINS:
-            o = str(raw).strip().rstrip("/")
-            if o and o not in seen:
-                seen.add(o)
-                merged.append(o)
-        if self.CORS_ORIGINS_EXTRA.strip():
-            for part in self.CORS_ORIGINS_EXTRA.split(","):
-                o = part.strip().rstrip("/")
-                if o and o not in seen:
-                    seen.add(o)
-                    merged.append(o)
-        return merged
-
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
-    @classmethod
-    def _split_csv_cors(cls, v: object) -> object:
-        if isinstance(v, str) and "," in v:
-            return [p.strip() for p in v.split(",") if p.strip()]
-        return v
+    @model_validator(mode="after")
+    def _require_secret_in_production(self) -> Self:
+        if self.ENVIRONMENT == "production":
+            if not (self.SECRET_KEY or "").strip():
+                raise ValueError("SECRET_KEY must be set when ENVIRONMENT=production")
+            dev_placeholder = "change-me-in-production-use-openssl-rand-hex-32"
+            if self.SECRET_KEY.strip() == dev_placeholder:
+                raise ValueError("SECRET_KEY must not use the development default in production")
+            if self.AUTH_TEST_BYPASS:
+                raise ValueError("AUTH_TEST_BYPASS must be false when ENVIRONMENT=production")
+            if (self.TRUSTED_HOSTS or "").strip() == "*":
+                raise ValueError(
+                    "TRUSTED_HOSTS must list real hostnames in production, not '*' (see TrustedHostMiddleware)"
+                )
+            if not (self.CLERK_JWKS_URL or "").strip():
+                raise ValueError("CLERK_JWKS_URL must be set when ENVIRONMENT=production")
+            if (self.FORGE_E2E_TOKEN or "").strip():
+                raise ValueError("FORGE_E2E_TOKEN must be empty in production (disable __e2e__ bootstrap)")
+        return self
 
     def llm_fallback_model_list(self) -> list[str]:
         if not self.LLM_FALLBACK_MODELS.strip():

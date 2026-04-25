@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import logging
+import re
 from pathlib import Path
 from typing import Any, cast
 
@@ -15,6 +16,14 @@ from markupsafe import escape
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Basic email regex for validation (RFC 5322 simplified)
+_EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+
+
+def _validate_email(email: str) -> bool:
+    """Basic email format validation."""
+    return bool(_EMAIL_REGEX.match(email.strip()))
 
 _TEMPLATES = Path(__file__).resolve().parent / "templates"
 _env = Environment(
@@ -89,6 +98,9 @@ class EmailService:
         subject: str | None = None,
         attachments: list[tuple[str, bytes]] | None = None,
     ) -> str | None:
+        if not _validate_email(to_email):
+            logger.warning("Invalid email format: %s", to_email)
+            return None
         ctx = {
             "org_name": org_name,
             "page_title": page_title,
@@ -116,6 +128,9 @@ class EmailService:
         logo_url: str | None,
         attachments: list[tuple[str, bytes]] | None = None,
     ) -> str | None:
+        if not _validate_email(to_email):
+            logger.warning("Invalid email format: %s", to_email)
+            return None
         body_html = escape(body_plain).replace("\n", "<br />\n")
         ctx = {
             "subject_line": subject_line,
@@ -143,6 +158,9 @@ class EmailService:
         logo_url: str | None,
         in_reply_to: str | None = None,
     ) -> str | None:
+        if not _validate_email(to_email):
+            logger.warning("Invalid email format: %s", to_email)
+            return None
         ctx = {
             "subject_line": subject_line,
             "body_text": body_text,
@@ -171,6 +189,9 @@ class EmailService:
         primary_color: str | None,
         logo_url: str | None,
     ) -> str | None:
+        if not _validate_email(to_email):
+            logger.warning("Invalid email format: %s", to_email)
+            return None
         ctx = {
             "org_name": org_name,
             "cta_url": cta_url or "",
@@ -195,6 +216,9 @@ class EmailService:
         primary_color: str | None,
         logo_url: str | None,
     ) -> str | None:
+        if not _validate_email(to_email):
+            logger.warning("Invalid email format: %s", to_email)
+            return None
         ctx = {
             "org_name": org_name,
             "message": message,

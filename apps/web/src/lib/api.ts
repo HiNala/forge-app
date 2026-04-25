@@ -6,9 +6,14 @@ import { toast } from "sonner";
 
 export const FORGE_ACTIVE_ORG_HEADER = "x-forge-active-org-id";
 
+/** Base URL for JSON API calls (`/api/v1`). Accepts env with or without `/api/v1` suffix. */
 export function getApiUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-  return raw.replace(/\/?$/, "") + "/api/v1";
+  let base = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").trim();
+  base = base.replace(/\/+$/, "");
+  if (base.endsWith("/api/v1")) {
+    return base;
+  }
+  return `${base}/api/v1`;
 }
 
 export type MembershipOut = {
@@ -50,6 +55,19 @@ export class ApiError extends Error {
   }
 }
 
+/** Create a fetch with timeout using AbortController (default 30s). */
+function fetchWithTimeout(
+  url: string,
+  init: RequestInit & { timeoutMs?: number } = {},
+): Promise<Response> {
+  const { timeoutMs = 30000, ...rest } = init;
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...rest, signal: controller.signal }).finally(() =>
+    clearTimeout(id),
+  );
+}
+
 /** Low-level JSON request with auth + org headers. */
 export async function apiRequest<T>(
   path: string,
@@ -69,10 +87,13 @@ export async function apiRequest<T>(
     h.set(FORGE_ACTIVE_ORG_HEADER, activeOrgId);
   }
 
-  const res = await fetch(`${getApiUrl()}${path.startsWith("/") ? path : `/${path}`}`, {
-    ...init,
-    headers: h,
-  });
+  const res = await fetchWithTimeout(
+    `${getApiUrl()}${path.startsWith("/") ? path : `/${path}`}`,
+    {
+      ...init,
+      headers: h,
+    },
+  );
 
   const ct = res.headers.get("content-type") ?? "";
   const json = ct.includes("application/json") ? await res.json().catch(() => null) : null;
@@ -301,7 +322,7 @@ export async function previewAvailabilityIcs(
   if (activeOrgId) {
     h.set(FORGE_ACTIVE_ORG_HEADER, activeOrgId);
   }
-  const res = await fetch(`${getApiUrl()}/availability-calendars/preview-ics`, {
+  const res = await fetchWithTimeout(`${getApiUrl()}/availability-calendars/preview-ics`, {
     method: "POST",
     body: form,
     headers: h,
@@ -338,7 +359,7 @@ export async function uploadAvailabilityCalendarIcs(
   if (activeOrgId) {
     h.set(FORGE_ACTIVE_ORG_HEADER, activeOrgId);
   }
-  const res = await fetch(`${getApiUrl()}/availability-calendars/${calendarId}/upload-ics`, {
+  const res = await fetchWithTimeout(`${getApiUrl()}/availability-calendars/${calendarId}/upload-ics`, {
     method: "POST",
     body: form,
     headers: h,
@@ -414,7 +435,7 @@ export async function postBrandLogo(
   const h = new Headers();
   h.set("Authorization", `Bearer ${token}`);
   if (activeOrgId) h.set(FORGE_ACTIVE_ORG_HEADER, activeOrgId);
-  const res = await fetch(`${getApiUrl()}/org/brand/logo`, { method: "POST", headers: h, body: fd });
+  const res = await fetchWithTimeout(`${getApiUrl()}/org/brand/logo`, { method: "POST", headers: h, body: fd });
   const json = await res.json().catch(() => null);
   if (!res.ok) throw new ApiError(res.statusText, res.status, json);
   return json as { logo_url: string };
@@ -780,7 +801,7 @@ export type PublicTemplateOut = {
 };
 
 export async function getPublicTemplateBySlug(slug: string): Promise<PublicTemplateOut> {
-  const res = await fetch(`${getApiUrl()}/public/templates/by-slug/${encodeURIComponent(slug)}`);
+  const res = await fetchWithTimeout(`${getApiUrl()}/public/templates/by-slug/${encodeURIComponent(slug)}`);
   const json = res.headers.get("content-type")?.includes("application/json")
     ? await res.json().catch(() => null)
     : null;
@@ -791,7 +812,7 @@ export async function getPublicTemplateBySlug(slug: string): Promise<PublicTempl
 }
 
 export async function listPublicTemplateSlugs(): Promise<string[]> {
-  const res = await fetch(`${getApiUrl()}/public/templates/slugs`);
+  const res = await fetchWithTimeout(`${getApiUrl()}/public/templates/slugs`);
   const json = res.headers.get("content-type")?.includes("application/json")
     ? await res.json().catch(() => null)
     : null;
@@ -884,6 +905,29 @@ export async function getAdminOrganization(
   orgId: string,
 ): Promise<AdminOrganizationDetail> {
   return apiRequest<AdminOrganizationDetail>(`/admin/organizations/${encodeURIComponent(orgId)}`, {
+    method: "GET",
+    getToken,
+    activeOrgId: null,
+  });
+}
+
+export type AdminOrganizationListItem = {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  account_status: string;
+  stripe_customer_id: string | null;
+  member_count: number;
+  created_at: string | null;
+};
+
+export async function listAdminOrganizations(
+  getToken: () => Promise<string | null>,
+  q?: string,
+): Promise<{ items: AdminOrganizationListItem[]; next_cursor: string | null }> {
+  const qs = q ? `?limit=50&q=${encodeURIComponent(q)}` : "?limit=50";
+  return apiRequest(`/admin/organizations${qs}`, {
     method: "GET",
     getToken,
     activeOrgId: null,
@@ -1252,7 +1296,7 @@ export async function deleteSubmission(
   const h = new Headers();
   h.set("Authorization", `Bearer ${token}`);
   if (activeOrgId) h.set(FORGE_ACTIVE_ORG_HEADER, activeOrgId);
-  const res = await fetch(`${getApiUrl()}/submissions/${submissionId}`, {
+  const res = await fetchWithTimeout(`${getApiUrl()}/submissions/${submissionId}`, {
     method: "DELETE",
     headers: h,
   });
@@ -1316,7 +1360,7 @@ export async function exportSubmissionsCsv(
   if (opts?.status) p.set("status", opts.status);
   if (opts?.q) p.set("q", opts.q);
   const qs = p.toString();
-  const res = await fetch(`${getApiUrl()}/pages/${pageId}/submissions/export${qs ? `?${qs}` : ""}`, {
+  const res = await fetchWithTimeout(`${getApiUrl()}/pages/${pageId}/submissions/export${qs ? `?${qs}` : ""}`, {
     method: "GET",
     headers: h,
   });
@@ -1338,119 +1382,5 @@ export async function deleteCalendarConnection(
     method: "DELETE",
     getToken,
     activeOrgId,
-  });
-}
-
-/** GL-02 — platform admin (no active org header). */
-export type PlatformSession = {
-  user_id: string;
-  permissions: string[];
-  platform_roles: string[];
-  legacy_is_admin: boolean;
-};
-
-export async function getPlatformSession(
-  getToken: () => Promise<string | null>,
-): Promise<PlatformSession> {
-  return apiRequest<PlatformSession>("/admin/platform/session", {
-    method: "GET",
-    getToken,
-    activeOrgId: null,
-  });
-}
-
-export async function postPlatformVisit(
-  getToken: () => Promise<string | null>,
-): Promise<{ status: string }> {
-  return apiRequest<{ status: string }>("/admin/platform/visit", {
-    method: "POST",
-    getToken,
-    activeOrgId: null,
-    body: JSON.stringify({}),
-  });
-}
-
-export type AdminOverviewSummary = {
-  totals: {
-    users: number;
-    organizations: number;
-    active_users_7d: number;
-    llm_cost_cents_today: number;
-  };
-  generated_at: string;
-};
-
-export async function getAdminOverviewSummary(
-  getToken: () => Promise<string | null>,
-): Promise<AdminOverviewSummary> {
-  return apiRequest<AdminOverviewSummary>("/admin/overview/summary", {
-    method: "GET",
-    getToken,
-    activeOrgId: null,
-  });
-}
-
-export type AdminLlmSummary = {
-  window_days: number;
-  total_cost_cents: number;
-  run_count: number;
-  runs_by_status: Record<string, number>;
-};
-
-export async function getAdminLlmSummary(
-  getToken: () => Promise<string | null>,
-  days = 30,
-): Promise<AdminLlmSummary> {
-  return apiRequest<AdminLlmSummary>(`/admin/llm/summary?days=${days}`, {
-    method: "GET",
-    getToken,
-    activeOrgId: null,
-  });
-}
-
-export type AdminOrganizationListItem = {
-  id: string;
-  name: string;
-  slug: string;
-  plan: string;
-  account_status: string;
-  stripe_customer_id: string | null;
-  member_count: number;
-  created_at: string | null;
-};
-
-export async function listAdminOrganizations(
-  getToken: () => Promise<string | null>,
-  q?: string,
-): Promise<{ items: AdminOrganizationListItem[]; next_cursor: string | null }> {
-  const qs = q ? `?limit=50&q=${encodeURIComponent(q)}` : "?limit=50";
-  return apiRequest(`/admin/organizations${qs}`, {
-    method: "GET",
-    getToken,
-    activeOrgId: null,
-  });
-}
-
-export type AdminOrganizationDetail = {
-  id: string;
-  name: string;
-  slug: string;
-  plan: string;
-  account_status: string;
-  stripe_customer_id: string | null;
-  stripe_subscription_id?: string | null;
-  member_count: number;
-  created_at: string | null;
-  org_settings: Record<string, unknown>;
-};
-
-export async function getAdminOrganization(
-  getToken: () => Promise<string | null>,
-  orgId: string,
-): Promise<AdminOrganizationDetail> {
-  return apiRequest<AdminOrganizationDetail>(`/admin/organizations/${encodeURIComponent(orgId)}`, {
-    method: "GET",
-    getToken,
-    activeOrgId: null,
   });
 }

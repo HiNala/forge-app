@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import logging
 import mimetypes
 from typing import Any
 from uuid import UUID
 
 import boto3
 from botocore.config import Config
+from botocore.exceptions import ClientError
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 def _client() -> Any:
@@ -24,11 +28,23 @@ def _client() -> Any:
 
 
 def ensure_bucket() -> None:
+    """Create bucket if it doesn't exist. Idempotent; safe to call multiple times."""
     c = _client()
     try:
         c.head_bucket(Bucket=settings.S3_BUCKET)
-    except Exception:
-        c.create_bucket(Bucket=settings.S3_BUCKET)
+    except ClientError as e:
+        error_code = e.response.get("Error", {}).get("Code", "Unknown")
+        # 404 = bucket doesn't exist; 403 may mean no access to head but bucket exists
+        if error_code in ("404", "NoSuchBucket"):
+            try:
+                c.create_bucket(Bucket=settings.S3_BUCKET)
+            except ClientError as create_err:
+                logger.warning("ensure_bucket create failed: %s", create_err)
+        # 403 = bucket exists but we can't head it (different error, bucket likely exists)
+        elif error_code == "403":
+            logger.debug("ensure_bucket: head_bucket returned 403, assuming bucket exists")
+        else:
+            logger.warning("ensure_bucket head_bucket error: %s", e)
 
 
 def upload_brand_logo(

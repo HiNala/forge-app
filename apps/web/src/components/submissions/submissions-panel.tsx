@@ -391,8 +391,8 @@ export function SubmissionsPanel() {
           <p className="mt-1 font-body text-xs text-text-subtle">Share your live page to collect responses.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border">
-          <table className="w-full text-left text-sm font-body">
+        <div className="overflow-auto rounded-2xl border border-border">
+          <table className="min-w-[540px] w-full text-left text-sm font-body">
             <thead className="border-b border-border bg-bg-elevated text-xs uppercase tracking-wide text-text-muted">
               <tr>
                 <th className="w-10 p-3">

@@ -1,3 +1,4 @@
+import hmac
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -6,7 +7,7 @@ from typing import Any
 import redis.asyncio as redis
 from arq import create_pool
 from arq.connections import RedisSettings
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
@@ -157,7 +158,21 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 
 
 @app.get("/metrics")
-def metrics() -> Response:
+def metrics(request: Request) -> Response:
+    """Prometheus scrape endpoint. Open in dev; gated by ``METRICS_TOKEN`` when set.
+
+    Rationale: when the ``/metrics`` endpoint is publicly routable (production),
+    we require ``Authorization: Bearer <METRICS_TOKEN>``. Compared with
+    ``hmac.compare_digest`` to avoid timing leaks. In dev/CI, ``METRICS_TOKEN`` is
+    empty and the endpoint stays open so local Prometheus / scrape probes work
+    without extra config.
+    """
+    expected = (settings.METRICS_TOKEN or "").strip()
+    if expected:
+        auth = request.headers.get("authorization") or ""
+        scheme, _, token = auth.partition(" ")
+        if scheme.lower() != "bearer" or not hmac.compare_digest(token.strip(), expected):
+            raise HTTPException(status_code=401, detail="metrics token required")
     data = generate_latest()
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 

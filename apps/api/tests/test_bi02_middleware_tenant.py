@@ -31,6 +31,30 @@ async def test_metrics_not_rate_limited() -> None:
 
 
 @pytest.mark.asyncio
+async def test_metrics_gated_by_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    """When METRICS_TOKEN is set, /metrics must require `Authorization: Bearer <token>`."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "METRICS_TOKEN", "scrape-secret")
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # 1. no token → 401
+        r_missing = await client.get("/metrics")
+        # 2. wrong scheme → 401
+        r_basic = await client.get("/metrics", headers={"authorization": "Basic scrape-secret"})
+        # 3. wrong token → 401
+        r_bad = await client.get("/metrics", headers={"authorization": "Bearer wrong"})
+        # 4. correct token → 200
+        r_ok = await client.get("/metrics", headers={"authorization": "Bearer scrape-secret"})
+
+    assert r_missing.status_code == 401
+    assert r_basic.status_code == 401
+    assert r_bad.status_code == 401
+    assert r_ok.status_code == 200
+    assert "text/plain" in (r_ok.headers.get("content-type") or "")
+
+
+@pytest.mark.asyncio
 async def test_org_not_specified_when_two_memberships() -> None:
     ua = uuid.uuid4()
     org_a, org_b = uuid.uuid4(), uuid.uuid4()
