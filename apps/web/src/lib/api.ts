@@ -1358,8 +1358,22 @@ export async function duplicatePage(
   getToken: () => Promise<string | null>,
   activeOrgId: string | null,
   pageId: string,
-): Promise<{ ok: boolean; id?: string }> {
+): Promise<PageOut> {
   return apiRequest(`/pages/${pageId}/duplicate`, {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({}),
+  });
+}
+
+export async function revertPage(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  pageId: string,
+  versionId: string,
+): Promise<PageOut> {
+  return apiRequest(`/pages/${pageId}/revert/${versionId}`, {
     method: "POST",
     getToken,
     activeOrgId,

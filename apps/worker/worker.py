@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 async def run_automations(ctx: object, submission_id: str) -> str:
-    """Execute automation pipeline for a submission (notify, confirm, calendar)."""
+    """Execute automation pipeline for a submission (notify, confirm, calendar, webhooks)."""
     del ctx
     sid = UUID(submission_id)
     async with AsyncSessionLocal() as db:
@@ -47,33 +47,204 @@ async def run_automations(ctx: object, submission_id: str) -> str:
         )
         eng = AutomationEngine(db)
         await eng.run_for_submission(sid)
+
+        from app.db.models import Page
+        from app.services.webhook_dispatch import dispatch_webhook_event
+
+        page = await db.get(Page, sub.page_id)
+        try:
+            await dispatch_webhook_event(
+                db,
+                organization_id=sub.organization_id,
+                event_type="submission.created",
+                payload={
+                    "submission_id": str(sub.id),
+                    "page_id": str(sub.page_id),
+                    "page_slug": page.slug if page else None,
+                    "submitted_at": sub.created_at.isoformat() if sub.created_at else None,
+                    "payload": sub.payload,
+                },
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning("run_automations: webhook dispatch error %s", e)
     return "ok"
 
 
 async def email_notify(ctx: object, submission_id: str) -> str:
-    """Resend notify-owner (orchestration may call this directly)."""
-    del ctx, submission_id
-    return "stub"
+    """Send notify-owner email for a submission (direct call path)."""
+    del ctx
+    from app.db.models import BrandKit, Organization, Page
+    from app.services.email import email_service
+
+    sid = UUID(submission_id)
+    async with AsyncSessionLocal() as db:
+        sub = (await db.execute(select(Submission).where(Submission.id == sid))).scalar_one_or_none()
+        if sub is None:
+            return "missing"
+        await db.execute(text("SELECT set_config('app.current_tenant_id', :t, true)"), {"t": str(sub.organization_id)})
+        page = await db.get(Page, sub.page_id)
+        org = await db.get(Organization, sub.organization_id)
+        if page is None or org is None:
+            return "missing"
+        bk = (await db.execute(select(BrandKit).where(BrandKit.organization_id == org.id))).scalar_one_or_none()
+        from app.db.models import AutomationRule
+        rule = (await db.execute(select(AutomationRule).where(AutomationRule.page_id == page.id))).scalar_one_or_none()
+        notify_addrs = [e.strip() for e in (rule.notify_emails if rule else []) if e and e.strip()]
+        if not notify_addrs:
+            return "skipped"
+        summary = "\n".join(f"{k}: {v}" for k, v in sorted(sub.payload.items())) or "(empty)"
+        for addr in notify_addrs:
+            try:
+                await email_service.send_notification(
+                    to_email=addr,
+                    org_name=org.name,
+                    page_title=page.title,
+                    submission_summary=summary,
+                    primary_color=bk.primary_color if bk else None,
+                    logo_url=bk.logo_url if bk else None,
+                    voice_note=bk.voice_note if bk else None,
+                )
+            except Exception as e:  # noqa: BLE001
+                logger.warning("email_notify %s: %s", addr, e)
+    return "ok"
 
 
 async def email_confirm(ctx: object, submission_id: str) -> str:
-    del ctx, submission_id
-    return "stub"
+    """Send submitter confirmation email (direct call path)."""
+    del ctx
+    from app.db.models import AutomationRule, BrandKit, Organization, Page
+    from app.services.email import email_service
+
+    sid = UUID(submission_id)
+    async with AsyncSessionLocal() as db:
+        sub = (await db.execute(select(Submission).where(Submission.id == sid))).scalar_one_or_none()
+        if sub is None or not sub.submitter_email:
+            return "missing"
+        await db.execute(text("SELECT set_config('app.current_tenant_id', :t, true)"), {"t": str(sub.organization_id)})
+        page = await db.get(Page, sub.page_id)
+        org = await db.get(Organization, sub.organization_id)
+        if page is None or org is None:
+            return "missing"
+        bk = (await db.execute(select(BrandKit).where(BrandKit.organization_id == org.id))).scalar_one_or_none()
+        rule = (await db.execute(select(AutomationRule).where(AutomationRule.page_id == page.id))).scalar_one_or_none()
+        subj = (rule.confirm_template_subject if rule else None) or "Thanks for your message"
+        body = (rule.confirm_template_body if rule else None) or f"We received your submission for «{page.title}». We'll be in touch soon."
+        try:
+            await email_service.send_confirmation(
+                to_email=sub.submitter_email,
+                subject_line=subj,
+                body_plain=body,
+                primary_color=bk.primary_color if bk else None,
+                logo_url=bk.logo_url if bk else None,
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning("email_confirm %s: %s", sub.submitter_email, e)
+            return "error"
+    return "ok"
 
 
 async def email_reply(ctx: object, submission_id: str) -> str:
-    del ctx, submission_id
-    return "stub"
+    """Send owner reply to submitter — payload must be pre-staged on the submission row."""
+    del ctx
+    from app.db.models import BrandKit, Organization, Page
+    from app.services.email import email_service
+
+    sid = UUID(submission_id)
+    async with AsyncSessionLocal() as db:
+        sub = (await db.execute(select(Submission).where(Submission.id == sid))).scalar_one_or_none()
+        if sub is None or not sub.submitter_email:
+            return "missing"
+        reply_body = (sub.reply_text or "").strip() if hasattr(sub, "reply_text") else ""
+        if not reply_body:
+            return "skipped"
+        await db.execute(text("SELECT set_config('app.current_tenant_id', :t, true)"), {"t": str(sub.organization_id)})
+        page = await db.get(Page, sub.page_id)
+        org = await db.get(Organization, sub.organization_id)
+        if page is None or org is None:
+            return "missing"
+        bk = (await db.execute(select(BrandKit).where(BrandKit.organization_id == org.id))).scalar_one_or_none()
+        subj = f"Re: {page.title}"
+        try:
+            await email_service.send_reply(
+                to_email=sub.submitter_email,
+                subject_line=subj,
+                body_text=reply_body,
+                primary_color=bk.primary_color if bk else None,
+                logo_url=bk.logo_url if bk else None,
+                in_reply_to=sub.notification_message_id if hasattr(sub, "notification_message_id") else None,
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning("email_reply %s: %s", sub.submitter_email, e)
+            return "error"
+    return "ok"
 
 
 async def email_invitation(ctx: object, invitation_id: str) -> str:
-    del ctx, invitation_id
-    return "stub"
+    """Send team invitation email via worker (alternative to synchronous path in team.py)."""
+    del ctx
+    from app.config import settings
+    from app.db.models import Organization
+    from app.services.email import email_service
+
+    iid = UUID(invitation_id)
+    async with AsyncSessionLocal() as db:
+        inv = await db.get(Invitation, iid)
+        if inv is None or inv.accepted_at is not None:
+            return "skipped"
+        org = await db.get(Organization, inv.organization_id)
+        if org is None:
+            return "missing"
+        accept_url = f"{settings.APP_PUBLIC_URL.rstrip('/')}/invite/accept?token={inv.token}"
+        try:
+            await email_service.send_invitation(
+                to_email=str(inv.email),
+                org_name=org.name,
+                cta_url=accept_url,
+                primary_color=None,
+                logo_url=None,
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning("email_invitation %s: %s", inv.email, e)
+            return "error"
+    return "ok"
 
 
 async def email_billing_failed(ctx: object, organization_id: str) -> str:
-    del ctx, organization_id
-    return "stub"
+    """Notify org owner of a billing failure."""
+    del ctx
+    from app.config import settings
+    from app.db.models import Membership, Organization, User
+    from app.services.email import email_service
+
+    oid = UUID(organization_id)
+    async with AsyncSessionLocal() as db:
+        org = await db.get(Organization, oid)
+        if org is None:
+            return "missing"
+        owner_row = (
+            await db.execute(
+                select(User)
+                .join(Membership, Membership.user_id == User.id)
+                .where(Membership.organization_id == oid, Membership.role == "owner")
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+        if owner_row is None:
+            return "no_owner"
+        billing_url = f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings/billing"
+        try:
+            await email_service.send_billing_alert(
+                to_email=str(owner_row.email),
+                org_name=org.name,
+                message="Your recent payment could not be processed. Please update your payment method to keep your account active.",
+                billing_url=billing_url,
+                primary_color=None,
+                logo_url=None,
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning("email_billing_failed %s: %s", organization_id, e)
+            return "error"
+    return "ok"
 
 
 async def calendar_create_event(ctx: object, submission_id: str) -> str:

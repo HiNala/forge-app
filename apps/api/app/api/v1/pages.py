@@ -16,7 +16,6 @@ from app.deps import get_db, require_role, require_tenant
 from app.deps.api_scopes import require_api_scopes
 from app.deps.auth import require_user
 from app.deps.tenant import TenantContext
-from app.schemas.common import StubResponse
 from app.schemas.page import (
     PageCreate,
     PageDetailOut,
@@ -295,29 +294,72 @@ async def list_versions(
 
 @router.post(
     "/{page_id}/revert/{version_id}",
-    response_model=StubResponse,
+    response_model=PageOut,
 )
 async def revert_page(
     page_id: UUID,
     version_id: UUID,
     _: None = Depends(require_api_scopes("write:pages")),
     db: AsyncSession = Depends(get_db),
-    _ctx: TenantContext = Depends(require_tenant),
-) -> StubResponse:
-    return StubResponse()
+    ctx: TenantContext = Depends(require_role("owner", "editor")),
+) -> Page:
+    p = await db.get(Page, page_id)
+    if p is None or p.organization_id != ctx.organization_id:
+        raise HTTPException(status_code=404, detail="Not found")
+    ver = await db.get(PageVersion, version_id)
+    if ver is None or ver.page_id != page_id:
+        raise HTTPException(status_code=404, detail="Version not found")
+    p.current_html = ver.html
+    if ver.form_schema is not None:
+        p.form_schema = ver.form_schema
+    await db.commit()
+    await db.refresh(p)
+    return p
 
 
 @router.post(
     "/{page_id}/duplicate",
-    response_model=StubResponse,
+    response_model=PageOut,
 )
 async def duplicate_page(
     page_id: UUID,
     _: None = Depends(require_api_scopes("write:pages")),
     db: AsyncSession = Depends(get_db),
-    _ctx: TenantContext = Depends(require_tenant),
-) -> StubResponse:
-    return StubResponse()
+    ctx: TenantContext = Depends(require_role("owner", "editor")),
+) -> Page:
+    p = await db.get(Page, page_id)
+    if p is None or p.organization_id != ctx.organization_id:
+        raise HTTPException(status_code=404, detail="Not found")
+    base_slug = f"{p.slug}-copy"
+    candidate = base_slug
+    counter = 1
+    while True:
+        existing = (
+            await db.execute(
+                select(Page).where(
+                    Page.organization_id == ctx.organization_id,
+                    Page.slug == candidate,
+                )
+            )
+        ).scalar_one_or_none()
+        if existing is None:
+            break
+        counter += 1
+        candidate = f"{base_slug}-{counter}"
+    new_page = Page(
+        organization_id=ctx.organization_id,
+        slug=candidate,
+        page_type=p.page_type,
+        title=f"{p.title} (Copy)",
+        current_html=p.current_html or "",
+        form_schema=p.form_schema,
+        brand_kit_snapshot=p.brand_kit_snapshot,
+        intent_json=p.intent_json,
+    )
+    db.add(new_page)
+    await db.commit()
+    await db.refresh(new_page)
+    return new_page
 
 
 @router.get(
