@@ -870,6 +870,28 @@ export async function getAdminOverviewSummary(
   });
 }
 
+export type AdminPlatformAnalytics = {
+  window_days: number;
+  users: { total: number; new_in_window: number };
+  organizations: { total: number; by_plan: Record<string, number> };
+  pages: { total: number; live: number };
+  submissions_in_window: number;
+  page_views_in_window: number;
+  llm: { cost_cents_in_window: number; runs_in_window: number };
+  generated_at: string;
+};
+
+export async function getAdminPlatformAnalytics(
+  getToken: () => Promise<string | null>,
+  days = 30,
+): Promise<AdminPlatformAnalytics> {
+  return apiRequest<AdminPlatformAnalytics>(`/admin/analytics/platform?days=${days}`, {
+    method: "GET",
+    getToken,
+    activeOrgId: null,
+  });
+}
+
 export type AdminLlmSummary = {
   window_days: number;
   total_cost_cents: number;
