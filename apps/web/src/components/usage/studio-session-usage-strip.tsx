@@ -2,18 +2,19 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import { getBillingUsage } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 import { formatSessionResetsIn } from "@/lib/usage-credits";
 import { cn } from "@/lib/utils";
+import { getBillingUsage } from "@/lib/api";
+import { UsageBar } from "@/components/usage/UsageBar";
+import Link from "next/link";
 
 type Props = {
   className?: string;
   active?: boolean;
 };
 
-/** Slim footer strip for Studio chat — session Forge Credits, always visible in active mode. */
+/** Studio footer: session credits — compact row; click “Details” for the same bar pattern as Settings. */
 export function StudioSessionUsageStrip({ className, active: studioActive = true }: Props) {
   const { getToken } = useAuth();
   const { activeOrganizationId } = useForgeSession();
@@ -26,40 +27,27 @@ export function StudioSessionUsageStrip({ className, active: studioActive = true
   const u = q.data;
   if (!u || (u.credits_session_cap ?? 0) <= 0) return null;
   const pct = Math.min(100, u.credits_session_percent);
-  const band = pct >= 100 ? "limit" : pct >= 90 ? "90" : pct >= 70 ? "70" : "ok";
+  const reset = formatSessionResetsIn(u.credits_session_resets_at) ?? "Resets on the next 5 h window";
 
   return (
-    <div
-      className={cn("border-t border-white/10 px-3 py-2", className)}
-      role="status"
-    >
-      <div className="mb-1 flex items-center justify-between gap-2">
-        <p className="text-[10px] font-medium uppercase tracking-wide text-white/45 font-body">
-          Session usage
-        </p>
+    <div className={cn("border-t border-white/10 px-3 py-2.5", className)} role="status">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <p className="text-[10px] font-medium uppercase tracking-wide text-white/50 font-body">Session</p>
         <Link
           href="/settings/usage"
-          className="text-[10px] text-accent/90 underline-offset-2 hover:underline font-body"
+          className="text-[11px] font-medium text-white/60 underline-offset-2 hover:text-white/90 hover:underline font-body"
         >
-          Details
+          View usage
         </Link>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-        <div
-          className={cn(
-            "h-full rounded-full",
-            band === "limit" && "bg-red-500/80",
-            band === "90" && "bg-orange-400",
-            band === "70" && "bg-amber-400",
-            band === "ok" && "bg-accent",
-          )}
-          style={{ width: `${Math.min(100, pct)}%` }}
-        />
-      </div>
-      <p className="mt-1 text-[10px] text-white/50 font-body">
-        {u.credits_session_used.toLocaleString()} / {u.credits_session_cap.toLocaleString()} ·{" "}
-        {formatSessionResetsIn(u.credits_session_resets_at) ?? "5 h window"}
-      </p>
+      <UsageBar
+        variant="inverse"
+        label="Forge Credits"
+        percentUsed={pct}
+        used={u.credits_session_used}
+        cap={u.credits_session_cap}
+        resetText={reset}
+      />
     </div>
   );
 }

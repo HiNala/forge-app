@@ -62,8 +62,8 @@ export default function UsageSettingsPage() {
     <div className="mx-auto max-w-2xl space-y-0">
       <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-text">Usage</h1>
-          <p className="mt-1 font-body text-sm text-text-muted">
+          <h1 className="type-display text-text">Usage</h1>
+          <p className="mt-1 type-body text-text-muted">
             Forge Credits, session and weekly windows, and plan entitlements.
           </p>
         </div>
@@ -81,7 +81,7 @@ export default function UsageSettingsPage() {
 
       {/* Plan usage — session */}
       <section>
-        <h2 className="mb-3 font-display text-base font-semibold text-text">Current session</h2>
+        <h2 className="type-heading mb-3 text-text">Current session</h2>
         <div className="rounded-2xl border border-border bg-surface p-5">
           {usageQ.isLoading ? (
             <div className="space-y-2">
@@ -105,7 +105,7 @@ export default function UsageSettingsPage() {
 
       {/* Weekly */}
       <section className="pt-8">
-        <h2 className="mb-3 font-display text-base font-semibold text-text">Weekly limit — all workflows</h2>
+        <h2 className="type-heading mb-3 text-text">Weekly limit — all workflows</h2>
         <div className="rounded-2xl border border-border bg-surface p-5">
           {usageQ.isLoading || !usage ? null : usage.credits_week_cap > 0 ? (
             <UsageBar
@@ -133,7 +133,7 @@ export default function UsageSettingsPage() {
 
       {/* Entitlements (non-credit) */}
       <section className="pt-8">
-        <h2 className="mb-3 font-display text-base font-semibold text-text">Plan resources</h2>
+        <h2 className="type-heading mb-3 text-text">Plan resources</h2>
         <div className="space-y-0 divide-y divide-border rounded-2xl border border-border bg-surface overflow-hidden">
           {usageQ.isLoading ? (
             <div className="p-5">
@@ -162,9 +162,9 @@ export default function UsageSettingsPage() {
       {/* Extra usage */}
       {usage && (plan?.plan && plan.plan !== "free" && plan.plan !== "starter" && plan.plan !== "trial") ? (
         <section className="pt-8">
-          <h2 className="mb-3 font-display text-base font-semibold text-text">Extra usage</h2>
+          <h2 className="type-heading mb-3 text-text">Extra usage</h2>
           <div className="rounded-2xl border border-border bg-surface p-5">
-            <p className="font-body text-sm text-text-muted">
+            <p className="type-body text-text-muted">
               When session and weekly credits are used up, you can allow metered overage (paid plans) with a
               monthly cap.{" "}
               <Link href="/settings/billing" className="text-accent hover:underline">
@@ -173,20 +173,18 @@ export default function UsageSettingsPage() {
               .
             </p>
             {usage.extra_usage_enabled && capCents > 0 ? (
-              <div className="mt-4">
-                <p className="mb-1 font-body text-xs font-medium text-text-subtle">Spent this period (overage)</p>
-                <div className="h-2.5 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
-                  <div
-                    className="h-full rounded-full bg-accent"
-                    style={{ width: `${Math.min(100, extraPct)}%` }}
-                  />
-                </div>
-                <p className="mt-1 font-body text-xs tabular-nums text-text-muted">
-                  ${(spentCents / 100).toFixed(2)} / ${(capCents / 100).toFixed(2)}
-                </p>
+              <div className="mt-5">
+                <UsageBar
+                  label="Overage this period (metered)"
+                  description="Spending toward your monthly overage cap"
+                  percent={extraPct}
+                  used={spentCents}
+                  cap={capCents}
+                  valueDetail={`$${(spentCents / 100).toFixed(2)} / $${(capCents / 100).toFixed(2)} (USD)`}
+                />
               </div>
             ) : (
-              <p className="mt-3 font-body text-xs text-text-subtle">Extra usage is off for this workspace.</p>
+              <p className="mt-3 type-caption text-text-subtle">Extra usage is off for this workspace.</p>
             )}
           </div>
         </section>
@@ -194,7 +192,7 @@ export default function UsageSettingsPage() {
 
       {usage ? (
         <section className="pt-8">
-          <h2 className="mb-3 font-display text-base font-semibold text-text">AI token detail</h2>
+          <h2 className="type-heading mb-3 text-text">AI token detail</h2>
           <div className="rounded-2xl border border-border bg-surface overflow-hidden">
             <div className="divide-y divide-border">
               <TokenRow label="Prompt tokens" value={usage.tokens_prompt} />
@@ -210,7 +208,7 @@ export default function UsageSettingsPage() {
 
       {usage ? (
         <section className="pt-8">
-          <h2 className="mb-3 font-display text-base font-semibold text-text">Calendar month</h2>
+          <h2 className="type-heading mb-3 text-text">Calendar month</h2>
           <div className="rounded-2xl border border-border bg-surface px-5 py-4">
             <p className="font-body text-sm text-text">
               <span className="font-semibold">{format(new Date(usage.period_start), "MMMM d")}</span> —{" "}

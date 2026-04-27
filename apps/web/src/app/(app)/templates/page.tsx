@@ -4,6 +4,14 @@ import { useAuth } from "@clerk/nextjs";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+
+const COHORT_QUICK = [
+  { slug: "typeform", label: "Typeform" },
+  { slug: "carrd", label: "Carrd" },
+  { slug: "calendly", label: "Calendly" },
+  { slug: "linktree", label: "Linktree" },
+  { slug: "tally", label: "Tally" },
+] as const;
 import * as React from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -34,6 +42,7 @@ export default function TemplatesGalleryPage() {
   const [allItems, setAllItems] = React.useState<TemplateListItemOut[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [q, setQ] = React.useState(() => searchParams.get("q") ?? "");
+  const fromToolParam = searchParams.get("from_tool");
   const [category, setCategory] = React.useState<string | null>(null);
   const [workflowRow, setWorkflowRow] = React.useState<string | null>(null);
   const [detail, setDetail] = React.useState<TemplateListItemOut | null>(null);
@@ -46,6 +55,7 @@ export default function TemplatesGalleryPage() {
     try {
       const rows = await listTemplates(getToken, {
         q: q.trim() || undefined,
+        fromTool: fromToolParam || undefined,
       });
       setAllItems(rows);
     } catch {
@@ -53,7 +63,7 @@ export default function TemplatesGalleryPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, q]);
+  }, [getToken, q, fromToolParam]);
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- mount / q refresh
@@ -109,10 +119,8 @@ export default function TemplatesGalleryPage() {
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-text">
-            Template gallery
-          </h1>
-          <p className="mt-1.5 max-w-[60ch] font-body text-sm font-light text-text-muted">
+          <h1 className="type-display text-text">Template gallery</h1>
+          <p className="mt-1.5 max-w-prose type-body text-text-muted">
             Start from a polished page — brand kit applies automatically.
           </p>
         </div>
@@ -149,6 +157,48 @@ export default function TemplatesGalleryPage() {
           <p className="mt-1 text-sm text-text-muted font-body">Investor and launch narratives.</p>
           <span className="mt-3 inline-block text-sm font-medium text-accent font-body">Browse →</span>
         </Link>
+      </div>
+
+      <div className="mt-8 rounded-2xl border border-border bg-surface/60 p-5">
+        <p className="font-body text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+          Coming from another tool?
+        </p>
+        <p className="mt-1 max-w-prose text-sm text-text-muted font-body">
+          Jump to templates we tagged for people switching from common form and link-in-bio products — same job, open handoff.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              router.push("/templates");
+            }}
+            className={cn(
+              "rounded-full border px-3 py-1 text-xs font-medium transition",
+              !fromToolParam
+                ? "border-accent bg-accent/10 text-text"
+                : "border-border bg-surface text-text-muted hover:border-accent/40",
+            )}
+          >
+            All tools
+          </button>
+          {COHORT_QUICK.map((c) => (
+            <button
+              key={c.slug}
+              type="button"
+              onClick={() => {
+                router.push(`/templates?from_tool=${encodeURIComponent(c.slug)}`);
+              }}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-medium transition",
+                fromToolParam === c.slug
+                  ? "border-accent bg-accent/10 text-text"
+                  : "border-border bg-surface text-text-muted hover:border-accent/40",
+              )}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -241,14 +291,54 @@ export default function TemplatesGalleryPage() {
             <div key={i} className="h-56 animate-pulse rounded-2xl bg-bg-elevated" />
           ))}
         </div>
+      ) : items.length === 0 ? (
+        <div className="mt-16 flex flex-col items-center text-center">
+          <div
+            className="mb-6 text-text-muted"
+            aria-hidden
+          >
+            <svg
+              className="mx-auto h-28 w-40"
+              viewBox="0 0 160 100"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.25"
+            >
+              <rect x="20" y="20" width="120" height="64" rx="6" />
+              <path d="M40 50h32M40 58h24M100 50h24" />
+              <circle cx="52" cy="50" r="2" fill="currentColor" />
+            </svg>
+          </div>
+          <h2 className="type-heading text-text">No templates match</h2>
+          <p className="type-body mt-2 max-w-sm text-text-muted">
+            Try clearing search or a filter — or browse a workflow group above.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setQ("");
+                setCategory(null);
+                setWorkflowRow(null);
+                void load();
+              }}
+            >
+              Clear filters
+            </Button>
+            <Button type="button" asChild>
+              <Link href="/studio">Start from Studio</Link>
+            </Button>
+          </div>
+        </div>
       ) : (
         <ul className="mt-10 grid list-none gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((t) => (
             <li key={t.id}>
-              <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:border-accent/30 hover:shadow-md">
+              <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition-colors hover:border-border-strong">
                 <button
                   type="button"
-                  className="relative aspect-[16/10] w-full overflow-hidden bg-bg-muted text-left"
+                  className="relative aspect-[16/10] w-full overflow-hidden bg-bg-elevated text-left"
                   onClick={() => void openDetail(t)}
                 >
                   {t.preview_image_url ? (
@@ -256,7 +346,7 @@ export default function TemplatesGalleryPage() {
                     <img
                       src={t.preview_image_url}
                       alt=""
-                      className="absolute inset-0 size-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                      className="absolute inset-0 size-full object-cover"
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-xs text-text-muted">
@@ -265,11 +355,6 @@ export default function TemplatesGalleryPage() {
                   )}
                   <span className="absolute left-2 top-2 rounded-full bg-surface/90 px-2.5 py-0.5 font-body text-[10px] font-semibold capitalize text-text-muted">
                     {t.category}
-                  </span>
-                  <span className="absolute inset-x-0 bottom-0 flex translate-y-full items-center justify-center bg-gradient-to-t from-black/50 to-transparent p-3 transition group-hover:translate-y-0">
-                    <span className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-text shadow">
-                      Use template
-                    </span>
                   </span>
                 </button>
                 <div className="flex flex-1 flex-col gap-1 p-4">

@@ -60,8 +60,8 @@ import {
   useUIStore,
 } from "@/stores/ui";
 
-const SIDEBAR_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
-const SIDEBAR_MS = "240ms";
+const SIDEBAR_EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
+const SIDEBAR_MS = "200ms";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -94,7 +94,7 @@ function OrgQuotaBar({
   const sUsed = u.credits_session_used ?? 0;
   const sPct = sCap > 0 ? Math.min(100, (sUsed / sCap) * 100) : 0;
   const sBar =
-    sPct >= 100 ? "bg-red-500/80" : sPct >= 90 ? "bg-orange-500" : sPct >= 70 ? "bg-amber-500" : "bg-accent";
+    sPct >= 100 ? "bg-usage-fill-full" : sPct >= 95 ? "bg-usage-fill-approach" : "bg-usage-fill";
 
   const useSubs = u.submissions_quota > 0;
   const capM = useSubs ? u.submissions_quota : u.pages_quota;
@@ -192,11 +192,8 @@ function NavItem({
         primary &&
           "shadow-sm ring-1 ring-accent/20 bg-accent-light/40 font-semibold",
         active && !primary
-          ? "bg-accent-light text-accent"
+          ? "bg-accent-tint/80 text-text"
           : !active && "text-text-muted hover:bg-bg-elevated/80 hover:text-text",
-        active &&
-          !primary &&
-          "before:absolute before:top-1 before:bottom-1 before:left-0 before:w-0.5 before:rounded-full before:bg-accent",
         collapsed && "justify-center px-0",
       )}
     >

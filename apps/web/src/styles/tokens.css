@@ -1,39 +1,78 @@
 /**
- * Forge design tokens — single source of truth (Mission FE-01).
- * All colors use OKLCH. App components consume Tailwind-mapped utilities (bg-bg, text-text, …)
- * backed by these variables via `globals.css` @theme.
+ * Forge design tokens — single source of truth (FE-01, tightened V2 P-09).
+ * Principles: warm terracotta + cream, three background layers, four foreground steps,
+ * one accent, restrained radius and motion. Legacy aliases keep existing Tailwind
+ * `bg-bg`, `text-text`, etc. working.
  *
- * Upstream: reconcile variable names when `docs/design/raw/artifact` is available.
+ * P-09 reference: calm, generous whitespace, no decorative noise.
  */
 
 :root {
-  /* —— Color (semantic, OKLCH) —— */
-  --color-bg: oklch(97.2% 0.006 88);
-  --color-bg-elevated: oklch(94.2% 0.01 88);
-  --color-surface: oklch(100% 0 0);
-  --color-surface-dark: oklch(15.5% 0.012 75);
+  /* —— Core palette (OKLCH) ——
+   * Base: warm cream. Accent: terracotta (Claude-style warmth; single brand hue). */
+  --color-bg: oklch(97% 0.02 70);
+  --color-bg-raised: oklch(99.2% 0.008 75);
+  --color-bg-overlay: oklch(100% 0.005 80);
 
-  --color-text: oklch(22% 0.018 75);
-  --color-text-muted: oklch(42% 0.02 75);
-  --color-text-subtle: oklch(54% 0.022 72);
+  /* Cards / “elevated” surfaces (same family as raised; legacy: surface) */
+  --color-surface: oklch(99.2% 0.008 75);
+  --color-surface-dark: oklch(16% 0.012 72);
 
-  --color-border: oklch(90% 0.012 88);
-  --color-border-strong: oklch(82% 0.018 85);
+  /* Kept for older named “elevated” — maps to cream step between base and card */
+  --color-bg-elevated: oklch(95.5% 0.02 72);
 
-  --color-accent: oklch(50% 0.15 192);
-  --color-accent-hover: oklch(45% 0.15 192);
-  --color-accent-light: color-mix(in oklch, var(--color-accent) 10%, transparent);
-  --color-accent-mid: color-mix(in oklch, var(--color-accent) 20%, transparent);
-  --color-accent-bold: color-mix(in oklch, var(--color-accent) 32%, transparent);
+  /* Foreground (four stops; legacy --text* map here) */
+  --color-fg-strong: oklch(20% 0.02 70);
+  --color-fg-default: oklch(28% 0.02 70);
+  --color-fg-muted: oklch(45% 0.022 72);
+  --color-fg-faint: oklch(58% 0.02 72);
 
+  --color-text: var(--color-fg-default);
+  --color-text-muted: var(--color-fg-muted);
+  --color-text-subtle: var(--color-fg-faint);
+
+  /* Borders: two only */
+  --color-border: oklch(90% 0.012 80);
+  --color-border-strong: oklch(82% 0.016 78);
+
+  /* One accent + tint (focus/hover/selection) */
+  --color-accent: oklch(70% 0.14 45);
+  --color-accent-hover: oklch(64% 0.14 45);
+  --color-accent-tint: color-mix(in oklch, var(--color-accent) 10%, transparent);
+  --color-accent-light: var(--color-accent-tint);
+  --color-accent-mid: color-mix(in oklch, var(--color-accent) 22%, transparent);
+  --color-accent-bold: color-mix(in oklch, var(--color-accent) 34%, transparent);
+
+  /* Status (functional only) */
   --color-success: oklch(52% 0.12 155);
-  --color-warning: oklch(72% 0.14 85);
+  --color-warning: oklch(72% 0.12 80);
   --color-danger: oklch(52% 0.18 25);
+  --color-info: oklch(58% 0.08 230);
 
-  /* —— Typography scale (rem, ~1.25 modular) —— */
+  /* Usage meters (P-09): track + fills — warm amber at limit, not error-red */
+  --color-usage-track: color-mix(in oklch, var(--color-border) 70%, var(--color-bg) 30%);
+  --color-usage-fill: var(--color-accent);
+  --color-usage-fill-approach: oklch(70% 0.11 78);
+  --color-usage-fill-full: oklch(72% 0.1 75);
+
+  /* Charts (restrained warm set — use for Recharts / analytics) */
+  --chart-1: var(--color-accent);
+  --chart-2: oklch(72% 0.06 65);
+  --chart-3: oklch(58% 0.04 85);
+  --chart-4: oklch(62% 0.05 140);
+  --chart-5: oklch(55% 0.04 45);
+
+  /* —— Typography scale (P-09: 5 steps + code/chip) —— */
+  --text-display: 1.875rem;
+  --text-heading: 1.25rem;
+  --text-subhead: 1rem;
+  --text-body: 0.9375rem;
+  --text-caption: 0.8125rem;
+  --text-chip: 0.8125rem;
+
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
-  --text-base: 1rem;
+  --text-base: var(--text-body);
   --text-lg: 1.125rem;
   --text-xl: 1.25rem;
   --text-2xl: 1.5rem;
@@ -42,20 +81,22 @@
   --text-5xl: 3rem;
 
   --leading-tight: 1.2;
-  --leading-snug: 1.35;
-  --leading-normal: 1.5;
+  --leading-snug: 1.3;
+  --leading-subhead: 1.4;
+  --leading-normal: 1.55;
   --leading-relaxed: 1.65;
 
   --tracking-tight: -0.02em;
   --tracking-normal: 0;
   --tracking-wide: 0.02em;
+  --tracking-chip: 0.02em;
 
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
-  --font-weight-bold: 700;
+  --font-weight-bold: 600;
 
-  /* —— Spacing (4px baseline) —— */
+  /* Spacing: 4-pt scale — 4,8,12,16,20,24,32,40,56,72 */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -66,37 +107,43 @@
   --space-8: 2rem;
   --space-10: 2.5rem;
   --space-12: 3rem;
+  --space-14: 3.5rem;
   --space-16: 4rem;
+  --space-18: 4.5rem;
+  --space-20: 5rem;
 
-  /* —— Radius —— */
+  /* Radius: sm | md | lg | pill */
   --radius-sm: 0.375rem;
-  --radius-md: 0.5625rem;
+  --radius-md: 0.625rem;
   --radius-lg: 0.875rem;
-  --radius-xl: 1rem;
+  --radius-pill: 9999px;
+  /* legacy: map xl → lg to avoid a fifth radius */
+  --radius-xl: var(--radius-lg);
   --radius-full: 9999px;
 
-  /* —— Shadow (warm-neutral; slight chroma via oklch ink) —— */
+  /* Shadow: minimal; prefer borders */
   --shadow-sm: 0 1px 2px color-mix(in oklch, oklch(25% 0.02 80) 8%, transparent);
   --shadow-md: 0 4px 16px color-mix(in oklch, oklch(25% 0.02 80) 10%, transparent);
-  --shadow-lg: 0 12px 40px color-mix(in oklch, oklch(22% 0.02 80) 14%, transparent);
-  --shadow-xl: 0 20px 50px color-mix(in oklch, oklch(20% 0.02 80) 18%, transparent);
-  --shadow-2xl: 0 25px 60px color-mix(in oklch, oklch(18% 0.02 80) 22%, transparent);
+  --shadow-lg: 0 12px 40px color-mix(in oklch, oklch(22% 0.02 80) 12%, transparent);
+  --shadow-xl: 0 20px 50px color-mix(in oklch, oklch(20% 0.02 80) 16%, transparent);
+  --shadow-2xl: 0 25px 60px color-mix(in oklch, oklch(18% 0.02 80) 18%, transparent);
 
-  /* —— Motion —— */
+  /* Motion: standard ease + durations */
   --duration-instant: 100ms;
   --duration-fast: 180ms;
-  --duration-base: 240ms;
+  --duration-base: 220ms;
   --duration-slow: 400ms;
   --duration-slower: 600ms;
+  --duration-usage: 600ms;
 
   --ease-linear: linear;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  /* legacy alias used across app chrome */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  /* legacy (micro-celebrations only) */
   --ease-legacy-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
 
-  /* —— Z-index —— */
   --z-base: 0;
   --z-dropdown: 50;
   --z-sticky: 40;
@@ -105,15 +152,9 @@
   --z-toast: 110;
   --z-max: 9999;
 
-  /* —— Border width —— */
-  --border-width: 1.5px;
+  --border-width: 1px;
 
-  /*
-   * Breakpoints (Tailwind defaults; document only — media queries use px in CSS files):
-   * sm 640px | md 768px | lg 1024px | xl 1280px | 2xl 1536px
-   */
-
-  /* —— Legacy aliases (same tokens; existing components reference these names) —— */
+  /* Legacy aliases (components reference these) */
   --bg: var(--color-bg);
   --bg-elevated: var(--color-bg-elevated);
   --surface: var(--color-surface);
@@ -127,32 +168,43 @@
   --accent-light: var(--color-accent-light);
   --accent-mid: var(--color-accent-mid);
   --accent-bold: var(--color-accent-bold);
+  --accent-tint: var(--color-accent-tint);
   --success: var(--color-success);
   --warning: var(--color-warning);
   --danger: var(--color-danger);
 }
 
-/* Studio / split-panel dark scope — opt-in via `.dark` on subtree */
+/* Studio / app subtree dark — warm dark, not cold black */
 .dark {
-  --color-bg: oklch(15.5% 0.012 75);
-  --color-bg-elevated: oklch(19% 0.015 72);
-  --color-surface: oklch(19% 0.015 72);
-  --color-surface-dark: oklch(15.5% 0.012 75);
+  --color-bg: oklch(18% 0.012 72);
+  --color-bg-raised: oklch(22% 0.014 70);
+  --color-bg-overlay: oklch(24% 0.016 68);
+  --color-surface: oklch(22% 0.014 70);
+  --color-surface-dark: oklch(16% 0.012 72);
+  --color-bg-elevated: oklch(20% 0.013 71);
 
-  --color-text: oklch(96% 0.012 85);
-  --color-text-muted: oklch(78% 0.02 82);
-  --color-text-subtle: oklch(62% 0.02 78);
+  --color-fg-strong: oklch(98% 0.01 85);
+  --color-fg-default: oklch(95% 0.012 85);
+  --color-fg-muted: oklch(78% 0.02 82);
+  --color-fg-faint: oklch(62% 0.02 78);
 
-  --color-border: oklch(30% 0.02 72);
-  --color-border-strong: oklch(38% 0.022 70);
+  --color-text: var(--color-fg-default);
+  --color-text-muted: var(--color-fg-muted);
+  --color-text-subtle: var(--color-fg-faint);
 
-  --color-accent-light: color-mix(in oklch, var(--color-accent) 14%, transparent);
-  --color-accent-mid: color-mix(in oklch, var(--color-accent) 26%, transparent);
-  --color-accent-bold: color-mix(in oklch, var(--color-accent) 38%, transparent);
+  --color-border: oklch(32% 0.02 72);
+  --color-border-strong: oklch(40% 0.022 70);
+
+  --color-accent-tint: color-mix(in oklch, var(--color-accent) 14%, transparent);
+  --color-accent-light: var(--color-accent-tint);
+  --color-accent-mid: color-mix(in oklch, var(--color-accent) 28%, transparent);
+  --color-accent-bold: color-mix(in oklch, var(--color-accent) 40%, transparent);
+
+  --color-usage-track: oklch(32% 0.02 72);
 
   --shadow-sm: 0 1px 2px color-mix(in oklch, oklch(8% 0.02 80) 45%, transparent);
   --shadow-md: 0 4px 16px color-mix(in oklch, oklch(6% 0.02 80) 55%, transparent);
-  --shadow-lg: 0 12px 40px color-mix(in oklch, oklch(5% 0.02 80) 65%, transparent);
-  --shadow-xl: 0 20px 50px color-mix(in oklch, oklch(5% 0.02 80) 70%, transparent);
-  --shadow-2xl: 0 25px 60px color-mix(in oklch, oklch(4% 0.02 80) 75%, transparent);
+  --shadow-lg: 0 12px 40px color-mix(in oklch, oklch(5% 0.02 80) 60%, transparent);
+  --shadow-xl: 0 20px 50px color-mix(in oklch, oklch(5% 0.02 80) 65%, transparent);
+  --shadow-2xl: 0 25px 60px color-mix(in oklch, oklch(4% 0.02 80) 70%, transparent);
 }

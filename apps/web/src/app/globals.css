@@ -19,9 +19,20 @@
   --color-accent-light: var(--accent-light);
   --color-accent-mid: var(--accent-mid);
   --color-accent-bold: var(--accent-bold);
+  --color-accent-tint: var(--color-accent-tint);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
+  --color-info: var(--color-info);
+  --color-usage-track: var(--color-usage-track);
+  --color-usage-fill: var(--color-usage-fill);
+  --color-usage-fill-approach: var(--color-usage-fill-approach);
+  --color-usage-fill-full: var(--color-usage-fill-full);
+  --chart-1: var(--chart-1);
+  --chart-2: var(--chart-2);
+  --chart-3: var(--chart-3);
+  --chart-4: var(--chart-4);
+  --chart-5: var(--chart-5);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -37,6 +48,7 @@
   --ease-out: var(--ease-out);
   --ease-spring: var(--ease-spring);
   --ease-in-out: var(--ease-in-out);
+  --ease-standard: var(--ease-standard);
 
   --duration-instant: var(--duration-instant);
   --duration-fast: var(--duration-fast);
@@ -149,6 +161,38 @@
   :focus-visible {
     outline: 2px solid var(--accent-mid);
     outline-offset: 2px;
+  }
+
+  .type-display {
+    font-family: var(--font-display), "Cormorant Garamond", ui-serif, Georgia, serif;
+    font-size: var(--text-display);
+    font-weight: 600;
+    line-height: var(--leading-tight);
+  }
+  .type-heading {
+    font-family: var(--font-body);
+    font-size: var(--text-heading);
+    font-weight: 600;
+    line-height: var(--leading-snug);
+  }
+  .type-subhead {
+    font-family: var(--font-body);
+    font-size: var(--text-subhead);
+    font-weight: 600;
+    line-height: var(--leading-subhead);
+  }
+  .type-body {
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    font-weight: 400;
+    line-height: var(--leading-normal);
+  }
+  .type-caption {
+    font-family: var(--font-body);
+    font-size: var(--text-caption);
+    font-weight: 400;
+    line-height: var(--leading-subhead);
+    color: var(--text-muted);
   }
 }
 
@@ -342,6 +386,20 @@
   box-shadow: var(--shadow-lg);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .card-lift,
+  .card-lift:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+  }
+  .ticker-track {
+    animation: none;
+  }
+  .hero-orb {
+    animation: none;
+  }
+}
+
 /* ── Ticker (no-wrap infinite scroll) ────────────────────────────────── */
 .ticker-track {
   display: flex;
@@ -395,7 +453,7 @@
   display: block;
   font-family: var(--font-body);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-subtle);
