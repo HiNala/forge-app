@@ -21,16 +21,28 @@ class TemplateListItemOut(BaseModel):
         default=None,
         description="Hint from intent_json.page_type for workflow browsing (P-06).",
     )
+    migrate_from: list[str] = Field(
+        default_factory=list,
+        description="Competitor tools this template replaces (gallery cohort filter, P-08).",
+    )
 
     model_config = {"from_attributes": True}
 
     @classmethod
     def from_template_row(cls, row: object) -> TemplateListItemOut:
-        """Fill page_type from JSON intent when present."""
+        """Fill page_type and migrate_from from intent_json when present."""
         raw = TemplateListItemOut.model_validate(row)
         ij = getattr(row, "intent_json", None)
-        if isinstance(ij, dict) and ij.get("page_type"):
-            return raw.model_copy(update={"page_type": str(ij["page_type"])})
+        page_type: str | None = None
+        migrate_from: list[str] = []
+        if isinstance(ij, dict):
+            if ij.get("page_type"):
+                page_type = str(ij["page_type"])
+            mf = ij.get("migrate_from")
+            if isinstance(mf, list):
+                migrate_from = [str(x) for x in mf if x]
+        if page_type is not None or migrate_from:
+            return raw.model_copy(update={"page_type": page_type, "migrate_from": migrate_from})
         return raw
 
 

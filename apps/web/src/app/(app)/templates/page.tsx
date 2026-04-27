@@ -4,14 +4,6 @@ import { useAuth } from "@clerk/nextjs";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-
-const COHORT_QUICK = [
-  { slug: "typeform", label: "Typeform" },
-  { slug: "carrd", label: "Carrd" },
-  { slug: "calendly", label: "Calendly" },
-  { slug: "linktree", label: "Linktree" },
-  { slug: "tally", label: "Tally" },
-] as const;
 import * as React from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -33,6 +25,14 @@ import { STUDIO_WORKFLOW_GRID_ROWS } from "@/components/studio/studio-workflow-g
 import { templateMatchesStudioRow } from "@/lib/workflow-config";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
+
+const COHORT_QUICK = [
+  { slug: "typeform", label: "Typeform" },
+  { slug: "carrd", label: "Carrd" },
+  { slug: "calendly", label: "Calendly" },
+  { slug: "linktree", label: "Linktree" },
+  { slug: "tally", label: "Tally" },
+] as const;
 
 export default function TemplatesGalleryPage() {
   const router = useRouter();

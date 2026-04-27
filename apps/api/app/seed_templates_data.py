@@ -104,6 +104,20 @@ P08_TEMPLATE_SLUGS: frozenset[str] = frozenset(
     }
 )
 
+# P-08 — “Coming from {tool}?” gallery filter (honest migration hints).
+P08_MIGRATE_FROM: dict[str, list[str]] = {
+    "waitlist-beta-social-proof": ["carrd", "tally"],
+    "course-workshop-deposit": ["calendly", "typeform"],
+    "rsvp-plus-ones-extended": ["partiful", "paperless_post"],
+    "template-nps-csat": ["typeform", "surveymonkey"],
+    "job-application-solo": ["google_forms", "typeform"],
+    "coaching-discovery-call": ["calendly", "tally"],
+    "restaurant-menu-plated": ["squarespace", "instagram"],
+    "link-hub-creator": ["linktree", "beacons"],
+    "coming-soon-personal": ["carrd"],
+    "service-quote-request": ["wordpress", "tally"],
+}
+
 
 def _pack(title: str, inner_body: str) -> str:
     raw = _SHELL.format(body=inner_body)
@@ -208,7 +222,8 @@ def _proposal(headline: str, scope: str) -> str:
     return f"""
 <section class="forge-hero"><h1>{headline}</h1><p class="forge-sub">{scope}</p></section>
 <section class="forge-grid">
-  <div class="forge-card"><h2>Deliverables</h2><p class="forge-muted">Timeline, milestones, and revision rounds.</p></div>
+  <div class="forge-card"><h2>Deliverables</h2>
+    <p class="forge-muted">Timeline, milestones, and revision rounds.</p></div>
   <div class="forge-card"><h2>Investment</h2><p class="forge-muted">Detailed in your proposal PDF.</p></div>
 </section>
 <section class="forge-form">
@@ -310,7 +325,8 @@ def _p08_job_apply() -> str:
   <p class="forge-sub">We read every application — no automated gates.</p>
 </section>
 <section class="forge-form">
-  <form class="forge-form-inner" method="post" action="/p/__ORG_SLUG__/__PAGE_SLUG__/submit" enctype="multipart/form-data">
+  <form class="forge-form-inner" method="post"
+    action="/p/__ORG_SLUG__/__PAGE_SLUG__/submit" enctype="multipart/form-data">
     <label>Full name<input type="text" name="name" required /></label>
     <label>Email<input type="email" name="email" required /></label>
     <label>Phone<input type="tel" name="phone" /></label>
@@ -340,7 +356,8 @@ def _p08_link_hub() -> str:
 <section class="forge-grid" style="max-width:24rem;margin:0 auto">
   <div class="forge-card" style="text-align:center">📧 Newsletter — weeklyField notes</div>
   <p style="text-align:center"><a href="#" style="color:var(--brand-primary)">Read the latest issue →</a></p>
-  <form class="forge-form-inner" method="post" action="/p/__ORG_SLUG__/__PAGE_SLUG__/submit" style="padding:0 1rem 2rem">
+  <form class="forge-form-inner" method="post"
+    action="/p/__ORG_SLUG__/__PAGE_SLUG__/submit" style="padding:0 1rem 2rem">
     <label>Email for the list<input type="email" name="email" required /></label>
     <button class="forge-submit" type="submit" style="width:100%">Subscribe</button>
   </form>
@@ -1042,7 +1059,11 @@ _RAW: list[tuple[str, str, str, str, str, Any]] = [
         "Name, headline, three focus links, and email capture for a soft launch.",
         "coming-soon",
         "coming_soon",
-        _landing("Jamie K · building in public", "I’m shipping a calmer analytics layer for small teams — stay close.", "Notify me"),
+        _landing(
+            "Jamie K · building in public",
+            "I’m shipping a calmer analytics layer for small teams — stay close.",
+            "Notify me",
+        ),
     ),
     (
         "service-quote-request",
@@ -1061,6 +1082,14 @@ def curated_templates() -> list[dict[str, Any]]:
     for i, (slug, name, desc, cat, ptype, fragment) in enumerate(_RAW):
         html = _pack(name, fragment)
         source = "seed_p08" if slug in P08_TEMPLATE_SLUGS else "seed_mission09"
+        intent = {
+            "page_type": ptype,
+            "source": source,
+            "competitor_cohort": cat,
+        }
+        mf = P08_MIGRATE_FROM.get(slug)
+        if mf:
+            intent["migrate_from"] = mf
         out.append(
             {
                 "slug": slug,
@@ -1069,11 +1098,7 @@ def curated_templates() -> list[dict[str, Any]]:
                 "category": cat,
                 "html": html,
                 "form_schema": _form_schema_from_fragment(fragment),
-                "intent_json": {
-                    "page_type": ptype,
-                    "source": source,
-                    "competitor_cohort": cat,
-                },
+                "intent_json": intent,
                 "is_published": True,
                 "sort_order": i * 10,
             }

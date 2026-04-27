@@ -769,15 +769,18 @@ export type TemplateListItemOut = {
   sort_order: number;
   /** From template intent_json.page_type (P-06) */
   page_type: string | null;
+  /** intent_json.migrate_from — P-08 cohort tags */
+  migrate_from?: string[];
 };
 
 export async function listTemplates(
   getToken: () => Promise<string | null>,
-  options?: { q?: string; category?: string },
+  options?: { q?: string; category?: string; fromTool?: string },
 ): Promise<TemplateListItemOut[]> {
   const params = new URLSearchParams();
   if (options?.q) params.set("q", options.q);
   if (options?.category) params.set("category", options.category);
+  if (options?.fromTool) params.set("from_tool", options.fromTool);
   const qs = params.toString();
   return apiRequest<TemplateListItemOut[]>(`/templates${qs ? `?${qs}` : ""}`, {
     method: "GET",

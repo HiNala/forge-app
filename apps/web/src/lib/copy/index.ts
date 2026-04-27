@@ -10,6 +10,8 @@ export const brand = {
   tagline: "Mini-apps in minutes",
   homeHeroSubhead:
     "Forms, proposals, pitch decks, landing pages, mobile screens, websites. Describe what you want. Forge builds it, tracks it, and hands it back.",
+  homeHeroTrackingLine:
+    "Built-in tracking. Real submissions inbox. Never touch a database.",
   /** Studio — empty state under greeting */
   studioEmptyHint:
     "Describe a mini-app — a form, a landing page, a proposal, a pitch deck, a mobile screen, or a website. Forge builds it.",

@@ -6,6 +6,7 @@ import { GallerySection } from "@/components/marketing/gallery-section";
 import { HeroDemoLazy } from "@/components/marketing/hero-demo-lazy";
 import { HowItWorks } from "@/components/marketing/how-it-works";
 import { MarketingJsonLd } from "@/components/marketing/json-ld";
+import { DifferentiationSection } from "@/components/marketing/differentiation-section";
 import { WorkflowHeroPanel } from "@/components/marketing/workflow-hero-panel";
 import { StatsSection } from "@/components/marketing/stats-section";
 import { TestimonialsSection } from "@/components/marketing/testimonials-section";
@@ -68,6 +69,8 @@ export default function MarketingHomePage() {
           </div>
         </div>
       </section>
+
+      <DifferentiationSection />
 
       {/* TICKER */}
       <TickerSection />

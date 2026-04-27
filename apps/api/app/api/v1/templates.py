@@ -68,6 +68,10 @@ async def _unique_page_slug(db: AsyncSession, organization_id: UUID, base: str) 
 async def list_templates(
     category: str | None = None,
     q: str | None = Query(None, description="Search name/description"),
+    from_tool: str | None = Query(
+        None,
+        description="Only templates listing this slug in intent_json.migrate_from (P-08).",
+    ),
     db: AsyncSession = Depends(get_db_user_only),
     _user: User = Depends(require_user),
 ) -> list[TemplateListItemOut]:
@@ -81,6 +85,14 @@ async def list_templates(
         )
     stmt = stmt.order_by(Template.sort_order.asc(), Template.name.asc())
     rows = (await db.execute(stmt)).scalars().all()
+    if from_tool and from_tool.strip():
+        ft = from_tool.strip().lower()
+        rows = [
+            r
+            for r in rows
+            if isinstance(r.intent_json, dict)
+            and ft in [str(x).lower() for x in (r.intent_json.get("migrate_from") or []) if x]
+        ]
     return [TemplateListItemOut.from_template_row(r) for r in rows]
 
 

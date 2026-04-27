@@ -7,11 +7,11 @@ const CARDS: { kicker: string; body: string }[] = [
   },
   {
     kicker: "Take it with you",
-    body: "Hand off HTML, deck files, and design exports when you need to — the door stays open, so the buy feels safer.",
+    body: "Clean exports when you need them — HTML, decks, PDFs, design handoff. Want to switch later? You’re not locked in.",
   },
   {
-    kicker: "AI you can steer",
-    body: "Review what shipped, nudge the tone, keep brand in view — a pipeline, not a slot machine.",
+    kicker: "AI you actually want to use",
+    body: "Review panel, brand-aware composer, and a real pipeline — so you steer output instead of rolling the dice.",
   },
 ];
 

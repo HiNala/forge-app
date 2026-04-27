@@ -10,11 +10,12 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Page, User
+from app.db.models import Page, Template, User
 from app.deps import get_db, require_tenant
 from app.deps.api_scopes import require_api_scopes
 from app.deps.auth import require_user
 from app.deps.tenant import TenantContext
+from app.schemas.template import TemplateListItemOut
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,17 @@ _TOOL_MANIFEST: list[dict[str, Any]] = [
         "name": "forge.list_pages",
         "description": "List pages in the active organization.",
         "input_schema": {"type": "object", "properties": {"limit": {"type": "integer", "default": 20}}},
+    },
+    {
+        "name": "forge.list_templates",
+        "description": "List published gallery templates; optional from_tool filters migrate_from cohort.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "limit": {"type": "integer", "default": 30},
+                "from_tool": {"type": "string"},
+            },
+        },
     },
     {
         "name": "forge.get_analytics",
@@ -84,6 +96,32 @@ async def mcp_call(
                         "page_type": p.page_type,
                     }
                     for p in rows
+                ]
+            },
+        }
+    if t == "forge.list_templates":
+        limit = min(100, max(1, int(args.get("limit", 30))))
+        ft = str(args.get("from_tool") or "").strip().lower() or None
+        q = await db.execute(
+            select(Template)
+            .where(Template.is_published.is_(True))
+            .order_by(Template.sort_order.asc(), Template.name.asc())
+            .limit(limit)
+        )
+        trows = q.scalars().all()
+        if ft:
+            trows = [
+                x
+                for x in trows
+                if isinstance(x.intent_json, dict)
+                and ft in [str(y).lower() for y in (x.intent_json.get("migrate_from") or []) if y]
+            ]
+        return {
+            "ok": True,
+            "tool": t,
+            "result": {
+                "templates": [
+                    TemplateListItemOut.from_template_row(x).model_dump(mode="json") for x in trows
                 ]
             },
         }

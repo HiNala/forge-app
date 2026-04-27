@@ -61,6 +61,60 @@ async def test_unpublished_template_not_listed() -> None:
 
 
 @pytest.mark.asyncio
+async def test_list_templates_filters_by_from_tool() -> None:
+    await require_postgres()
+    from app.db.models import User
+    from app.main import app
+
+    t_match = uuid.uuid4()
+    t_other = uuid.uuid4()
+    uid = uuid.uuid4()
+    oid = uuid.uuid4()
+    async with AsyncSessionLocal() as s:
+        s.add(User(id=uid, email=f"{uid.hex}@cohort.example.com", auth_provider_id=f"c_{uid}"))
+        s.add(
+            Template(
+                id=t_match,
+                slug=f"mf-match-{t_match.hex[:6]}",
+                name="Typeform-shaped",
+                description=None,
+                category="surveys",
+                html=_minimal_template_html(),
+                form_schema=None,
+                intent_json={"page_type": "survey", "migrate_from": ["typeform", "tally"]},
+                is_published=True,
+                sort_order=0,
+            )
+        )
+        s.add(
+            Template(
+                id=t_other,
+                slug=f"mf-other-{t_other.hex[:6]}",
+                name="Carrd-shaped",
+                description=None,
+                category="landing",
+                html=_minimal_template_html(),
+                form_schema=None,
+                intent_json={"page_type": "coming_soon", "migrate_from": ["carrd"]},
+                is_published=True,
+                sort_order=0,
+            )
+        )
+        await s.commit()
+
+    h = forge_test_headers(uid, oid)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        r = await client.get("/api/v1/templates?from_tool=typeform", headers=h)
+    assert r.status_code == 200
+    ids = {x["id"] for x in r.json()}
+    assert str(t_match) in ids
+    assert str(t_other) not in ids
+    for row in r.json():
+        if row["id"] == str(t_match):
+            assert row.get("migrate_from") == ["typeform", "tally"]
+
+
+@pytest.mark.asyncio
 async def test_use_template_creates_page_and_revision() -> None:
     await require_postgres()
     from app.main import app
