@@ -21,6 +21,10 @@ Structured payloads for extended clarify types live in `clarify_payloads.py` (wo
 
 `plan_mode.PlanDraft` is the DTO for editable multi-step plans; execution is wired incrementally.
 
+## Streaming (credits ticker)
+
+After a successful Studio generate/refine persist, the pipeline emits SSE event **`credit.charged`** with `{ action, credits, usage, run_id }` where `usage` is the same Forge Credits snapshot shape as `/billing/usage` (session/week percent, reset times). The Studio client merges `usage` into the React Query `billing-usage` cache so the session strip and sidebar battery update without waiting for a refetch.
+
 ## Related
 
 - `docs/architecture/WEB_CANVAS.md`, mobile canvas docs

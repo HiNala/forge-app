@@ -1,12 +1,21 @@
 "use client";
 
 import {
+  CalendarHeart,
+  ClipboardList,
+  CircleHelp,
   FileSignature,
   FileText,
+  Globe,
+  Images,
   Layout,
+  Link2,
   MonitorSmartphone,
   PanelTop,
   Presentation,
+  Timer,
+  UserRound,
+  UtensilsCrossed,
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
@@ -16,9 +25,18 @@ import { cn } from "@/lib/utils";
 const ROTATE_MS = 7000;
 
 const ICONS: Record<WorkflowSlug, React.ReactNode> = {
+  "web-page": <Globe className="size-[50px] stroke-[1.35]" />,
   "mobile-app": <MonitorSmartphone className="size-[50px] stroke-[1.35]" />,
   website: <Layout className="size-[50px] stroke-[1.35]" />,
   "contact-form": <FileText className="size-[50px] stroke-[1.35]" />,
+  "event-rsvp": <CalendarHeart className="size-[50px] stroke-[1.35]" />,
+  menu: <UtensilsCrossed className="size-[50px] stroke-[1.35]" />,
+  survey: <ClipboardList className="size-[50px] stroke-[1.35]" />,
+  quiz: <CircleHelp className="size-[50px] stroke-[1.35]" />,
+  "coming-soon": <Timer className="size-[50px] stroke-[1.35]" />,
+  gallery: <Images className="size-[50px] stroke-[1.35]" />,
+  "link-in-bio": <Link2 className="size-[50px] stroke-[1.35]" />,
+  resume: <UserRound className="size-[50px] stroke-[1.35]" />,
   proposal: <FileSignature className="size-[50px] stroke-[1.35]" />,
   "pitch-deck": <Presentation className="size-[50px] stroke-[1.35]" />,
   "landing-page": <PanelTop className="size-[50px] stroke-[1.35]" />,

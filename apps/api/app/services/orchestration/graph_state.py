@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from app.services.context.models import ContextBundle
 from app.services.orchestration.models import PageIntent
+from app.services.orchestration.scope import ScopeLevel
 from app.services.orchestration.planning_models import PagePlan
 
 
@@ -43,6 +44,7 @@ class GraphState(BaseModel):
     provider: str | None = None
 
     context_bundle: ContextBundle | None = None
+    scope_level: ScopeLevel | None = None
     intent: PageIntent | None = None
     page_plan: PagePlan | None = None
     html: str = ""

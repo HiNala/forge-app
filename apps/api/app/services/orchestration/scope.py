@@ -7,6 +7,8 @@ from typing import Any, Protocol, TypedDict, runtime_checkable
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+
 class ScopeLevel(StrEnum):
     """Granularity of an orchestration / compose operation."""
 

@@ -20,6 +20,7 @@ import {
   getStudioConversation,
   getStudioUsage,
   publishPage,
+  type BillingUsageOut,
   type PageDetailOut,
   type StudioUsageOut,
 } from "@/lib/api";
@@ -34,11 +35,8 @@ import {
   STUDIO_SECONDARY_CHIPS,
   resolveSurprisePrompt,
 } from "@/lib/studio-content";
-import {
-  getTopUsedWorkflowId,
-  recordWorkflowPageCreated,
-} from "@/lib/studio-workflow-usage";
-import { StudioWorkflowCards } from "@/components/studio/studio-workflow-cards";
+import { recordWorkflowPageCreated } from "@/lib/studio-workflow-usage";
+import { StudioWorkflowGrid } from "@/components/studio/studio-workflow-grid";
 import { estimatedCreditsForAction } from "@/lib/usage-credits";
 import { timeOfDayGreeting } from "@/lib/studio-greeting";
 import {
@@ -126,6 +124,9 @@ export function StudioWorkspace() {
   const lastGeneratePromptRef = React.useRef<string>("");
   const lastUserPromptRef = React.useRef<string>("");
   const workflowHintRef = React.useRef<string | null>(null);
+  /** Next generate: API `forced_workflow` (kebab) from empty-state grid. */
+  const pendingForcedWorkflowRef = React.useRef<string | null>(null);
+  const urlWorkflowConsumedRef = React.useRef(false);
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
   const [refineChips, setRefineChips] = React.useState<string[]>([...DEFAULT_REFINE_CHIPS]);
@@ -205,13 +206,6 @@ export function StudioWorkspace() {
     const prime = map[workflowFromUrl];
     if (prime) setPromptEmpty((prev) => prev || prime);
   }, [workflowFromUrl, active]);
-
-  const [highlightWorkflow, setHighlightWorkflow] = React.useState<ReturnType<
-    typeof getTopUsedWorkflowId
-  > | null>(null);
-  React.useEffect(() => {
-    setHighlightWorkflow(getTopUsedWorkflowId());
-  }, []);
 
   React.useEffect(() => {
     if (emptyFocused) return;
@@ -423,8 +417,13 @@ export function StudioWorkspace() {
     if (kind === "generate") {
       const wh = workflowHintRef.current;
       if (wh) {
-        body = { ...body, workflow_hint: wh };
+        body = { ...body, forced_workflow: wh };
         workflowHintRef.current = null;
+      }
+      const forced = pendingForcedWorkflowRef.current;
+      if (forced) {
+        body = { ...body, forced_workflow: forced };
+        pendingForcedWorkflowRef.current = null;
       }
       lastGeneratePromptRef.current = userText;
     }
@@ -526,6 +525,16 @@ export function StudioWorkspace() {
                 kind: "review_summary",
                 text: rc.summary,
               });
+            }
+          }
+          if (event === "credit.charged" && data && typeof data === "object" && activeOrganizationId) {
+            const d = data as { usage?: Partial<BillingUsageOut> };
+            if (d.usage && typeof d.usage === "object") {
+              queryClient.setQueryData(
+                ["billing-usage", activeOrganizationId],
+                (prev: BillingUsageOut | undefined) =>
+                  prev ? { ...prev, ...d.usage } : ({ ...d.usage } as BillingUsageOut),
+              );
             }
           }
           if (event === "html.start") {
@@ -681,7 +690,13 @@ export function StudioWorkspace() {
       });
       return;
     }
-    void runGenerateOrRefine("generate", { prompt: text, page_id: null, provider: "openai" }, text);
+    const genBody: Record<string, unknown> = { prompt: text, page_id: null, provider: "openai" };
+    const wfUrl = searchParams.get("workflow");
+    if (wfUrl && !urlWorkflowConsumedRef.current && !pendingForcedWorkflowRef.current) {
+      pendingForcedWorkflowRef.current = wfUrl;
+      urlWorkflowConsumedRef.current = true;
+    }
+    void runGenerateOrRefine("generate", genBody, text);
     setPromptEmpty("");
   }
 
@@ -956,10 +971,12 @@ export function StudioWorkspace() {
                 </div>
               </form>
 
-              <StudioWorkflowCards
+              <StudioWorkflowGrid
                 disabled={busy}
-                highlightId={highlightWorkflow}
-                onPrime={(prime: string) => setPromptEmpty(prime)}
+                onPrimePrompt={(prime, workflowQuery) => {
+                  setPromptEmpty(prime);
+                  if (workflowQuery) pendingForcedWorkflowRef.current = workflowQuery;
+                }}
               />
 
               <motion.div layout transition={TRANSITION_PANEL} className="mt-6 flex flex-wrap justify-center gap-2">

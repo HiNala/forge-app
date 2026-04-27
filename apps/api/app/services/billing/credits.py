@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import CreditLedger, Organization
 from app.services.billing.credit_windows import SESSION, WEEK, apply_rolling_resets_in_memory
 from app.services.billing_plans import trial_is_active
+from app.services.orchestration.models import PageIntent
 
 # Action → base credits (see docs/billing/PRICING_MODEL.md)
 ACTION_CREDITS: dict[str, int] = {
@@ -59,6 +60,22 @@ def credit_tier_for_plan(plan: str | None, *, trial_ends_at: datetime | None) ->
     return "free"
 
 
+def studio_credit_charge_spec(
+    intent: PageIntent, *, refining_existing_page: bool
+) -> tuple[str, dict[str, Any] | None]:
+    """Map Studio pipeline intent to ledger action + optional compute_charge context."""
+    if refining_existing_page:
+        return "section_refine", None
+    if intent.page_type == "pitch_deck":
+        return "deck_10_slides", None
+    return "page_generate", None
+
+
+def compute_studio_pipeline_credits(intent: PageIntent, *, refining_existing_page: bool) -> int:
+    action, ctx = studio_credit_charge_spec(intent, refining_existing_page=refining_existing_page)
+    return compute_charge(action, ctx)
+
+
 def compute_charge(action: str, context: dict[str, Any] | None = None) -> int:
     """
     Return credits for an action. Context may scale counts, e.g.
@@ -89,6 +106,23 @@ class BalanceCheck:
     projected_overage_cents: int
 
 
+def forge_credits_402_payload(bc: BalanceCheck) -> dict[str, Any]:
+    """Structured body for HTTP 402 when Forge Credits block an action."""
+    return {
+        "code": "forge_credits_exhausted",
+        "message": (
+            "Session or weekly Forge Credits are used up. Upgrade, enable extra usage, "
+            "or wait for the next reset."
+        ),
+        "session_remaining": bc.session_remaining,
+        "week_remaining": bc.week_remaining,
+        "session_cap": bc.session_cap,
+        "week_cap": bc.week_cap,
+        "would_use_extra_usage": bc.would_use_extra_usage,
+        "projected_overage_cents": bc.projected_overage_cents,
+    }
+
+
 def _project_overage_cents(tier: str, credits: int) -> int:
     rate = OVERAGE_RATES_CENTS_PER_CREDIT.get(tier, 10)
     return max(0, credits * rate)
@@ -96,7 +130,6 @@ def _project_overage_cents(tier: str, credits: int) -> int:
 
 def _reset_timestamps(org: Organization) -> tuple[datetime | None, datetime | None]:
     """Next reset = window start + duration (for display)."""
-    now = datetime.now(UTC)
     session_at = org.session_window_start
     week_at = org.week_window_start
     session_reset = (session_at + SESSION) if session_at else None
@@ -133,8 +166,16 @@ async def check_balance(
         )
     if need <= s_rem and need <= w_rem:
         return BalanceCheck(True, s_rem, w_rem, s_cap, w_cap, tier, False, 0)
+    included = min(need, s_rem, w_rem)
+    overage_credits = need - included
+    if overage_credits <= 0:
+        return BalanceCheck(True, s_rem, w_rem, s_cap, w_cap, tier, False, 0)
     if org.extra_usage_enabled and tier in ("pro", "max_5x", "max_20x"):
-        short = max(0, need - min(s_rem, w_rem))
+        add_cents = _project_overage_cents(tier, overage_credits)
+        cap = org.extra_usage_monthly_cap_cents
+        spent = int(org.extra_usage_spent_period_cents or 0)
+        if cap is not None and spent + add_cents > cap:
+            return BalanceCheck(False, s_rem, w_rem, s_cap, w_cap, tier, False, 0)
         return BalanceCheck(
             True,
             s_rem,
@@ -143,7 +184,7 @@ async def check_balance(
             w_cap,
             tier,
             True,
-            _project_overage_cents(tier, short or need),
+            add_cents,
         )
     return BalanceCheck(False, s_rem, w_rem, s_cap, w_cap, tier, False, 0)
 
@@ -169,8 +210,21 @@ async def apply_charge(
     stmt = select(Organization).where(Organization.id == organization_id).with_for_update()
     org = (await db.execute(stmt)).scalar_one()
     apply_rolling_resets_in_memory(org)
-    org.credits_consumed_session = int(org.credits_consumed_session or 0) + credits
-    org.credits_consumed_week = int(org.credits_consumed_week or 0) + credits
+    tier = credit_tier_for_plan(org.plan, trial_ends_at=org.trial_ends_at)
+    s_cap, w_cap = TIER_BUDGETS.get(tier, TIER_BUDGETS["free"])
+    s_used = int(org.credits_consumed_session or 0)
+    w_used = int(org.credits_consumed_week or 0)
+    s_rem = max(0, s_cap - s_used)
+    w_rem = max(0, w_cap - w_used)
+    included = min(credits, s_rem, w_rem)
+    overage_credits = credits - included
+    org.credits_consumed_session = s_used + included
+    org.credits_consumed_week = w_used + included
+    if overage_credits > 0:
+        if not org.extra_usage_enabled:
+            raise RuntimeError("forge credits overage without extra_usage_enabled")
+        rate = OVERAGE_RATES_CENTS_PER_CREDIT.get(tier, 10)
+        org.extra_usage_spent_period_cents = int(org.extra_usage_spent_period_cents or 0) + overage_credits * rate
     db.add(
         CreditLedger(
             organization_id=organization_id,

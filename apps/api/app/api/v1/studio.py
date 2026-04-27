@@ -11,9 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import StreamingResponse
 
 from app.db.models import Conversation, Message, Organization, Page, PageRevision, User
+from app.db.models.studio_attachment import StudioAttachment
 from app.deps import get_db, require_role, require_tenant, require_user
 from app.deps.tenant import TenantContext
-from app.db.models.studio_attachment import StudioAttachment
 from app.schemas.studio import (
     StudioConversationResponse,
     StudioGenerateContinueRequest,
@@ -33,15 +33,25 @@ from app.services.ai.usage import (
     increment_section_edits,
     usage_snapshot,
 )
-from app.services.orchestration.pipeline import stream_page_generation
-from app.services.storage_s3 import presign_put_studio_attachment
-from app.services.vision.extract import stub_extract_from_kind
+from app.services.billing.credits import (
+    apply_charge,
+    check_balance,
+    compute_charge,
+    compute_studio_pipeline_credits,
+    forge_credits_402_payload,
+)
+from app.services.orchestration.pipeline import (
+    prepare_studio_page_generation,
+    stream_studio_page_generation_tail,
+)
 from app.services.orchestration.section_editor import (
     edit_section_html,
     extract_section_html,
     splice_section,
 )
 from app.services.rate_limit_studio import rate_limit_studio_generate
+from app.services.storage_s3 import presign_put_studio_attachment
+from app.services.vision.extract import stub_extract_from_kind
 
 router = APIRouter(prefix="/studio", tags=["studio"])
 
@@ -140,17 +150,31 @@ async def studio_generate(
     if body.page_id is None:
         await assert_page_generation_allowed(db, ctx.organization_id)
 
+    replay, prep_state = await prepare_studio_page_generation(
+        db=db,
+        ctx=ctx,
+        user=user,
+        prompt=body.prompt,
+        provider=body.provider,
+        existing_page_id=body.page_id,
+        forced_workflow=body.forced_workflow,
+        vision_attachment_ids=body.vision_attachment_ids or None,
+    )
+    if prep_state is None:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    refining = body.page_id is not None
+    charge = compute_studio_pipeline_credits(
+        prep_state.intent,
+        refining_existing_page=refining,
+    )
+    bc = await check_balance(db, ctx.organization_id, charge)
+    if not bc.can_proceed:
+        raise HTTPException(status_code=402, detail=forge_credits_402_payload(bc))
+
     async def gen() -> AsyncIterator[bytes]:
-        async for chunk in stream_page_generation(
-            db=db,
-            ctx=ctx,
-            user=user,
-            prompt=body.prompt,
-            provider=body.provider,
-            existing_page_id=body.page_id,
-            forced_workflow=body.forced_workflow,
-            vision_attachment_ids=body.vision_attachment_ids or None,
-        ):
+        for chunk in replay:
+            yield chunk
+        async for chunk in stream_studio_page_generation_tail(prep_state):
             yield chunk
 
     return StreamingResponse(
@@ -194,17 +218,30 @@ async def studio_refine(
         f"Prior intent summary: {json.dumps(hint)[:4000]}\n"
     )
 
+    replay, prep_state = await prepare_studio_page_generation(
+        db=db,
+        ctx=ctx,
+        user=user,
+        prompt=merged,
+        provider=body.provider,
+        existing_page_id=page.id,
+        forced_workflow=None,
+        vision_attachment_ids=body.vision_attachment_ids or None,
+    )
+    if prep_state is None:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    charge = compute_studio_pipeline_credits(
+        prep_state.intent,
+        refining_existing_page=True,
+    )
+    bc = await check_balance(db, ctx.organization_id, charge)
+    if not bc.can_proceed:
+        raise HTTPException(status_code=402, detail=forge_credits_402_payload(bc))
+
     async def gen_refine() -> AsyncIterator[bytes]:
-        async for chunk in stream_page_generation(
-            db=db,
-            ctx=ctx,
-            user=user,
-            prompt=merged,
-            provider=body.provider,
-            existing_page_id=page.id,
-            forced_workflow=None,
-            vision_attachment_ids=body.vision_attachment_ids or None,
-        ):
+        for chunk in replay:
+            yield chunk
+        async for chunk in stream_studio_page_generation_tail(prep_state):
             yield chunk
 
     return StreamingResponse(
@@ -224,6 +261,10 @@ async def studio_section_edit(
     page = await db.get(Page, body.page_id)
     if page is None or page.organization_id != tenant.organization_id:
         raise HTTPException(status_code=404, detail="Not found")
+    sec_charge = compute_charge("section_edit", None)
+    sec_bc = await check_balance(db, tenant.organization_id, sec_charge)
+    if not sec_bc.can_proceed:
+        raise HTTPException(status_code=402, detail=forge_credits_402_payload(sec_bc))
     full = page.current_html or ""
     sec_html = body.html
     if not sec_html:
@@ -255,6 +296,17 @@ async def studio_section_edit(
             llm_provider=None,
             llm_model=None,
         )
+    )
+    await apply_charge(
+        db,
+        tenant.organization_id,
+        action="section_edit",
+        credits=sec_charge,
+        user_id=_user.id,
+        page_id=page.id,
+        orchestration_run_id=None,
+        provider=body.provider,
+        model=None,
     )
     await db.commit()
     await db.refresh(page)

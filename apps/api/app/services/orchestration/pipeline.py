@@ -6,6 +6,7 @@ import json
 import logging
 import time
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
 from typing import Any, cast
 from uuid import UUID, uuid4
 
@@ -16,10 +17,19 @@ from app.config import settings
 from app.db.models import BrandKit, Organization, Page, PageRevision, User
 from app.deps.tenant import TenantContext
 from app.services.ai.usage import increment_pages_generated
+from app.services.billing.credit_windows import apply_rolling_resets_in_memory
+from app.services.billing.credits import (
+    apply_charge,
+    compute_studio_pipeline_credits,
+    credits_usage_dict,
+    studio_credit_charge_spec,
+)
 from app.services.context.gather import gather_context
+from app.services.context.models import ContextBundle
 from app.services.deck_service import finalize_deck_studio_html
 from app.services.orchestration.component_lib.render import render_top_level_component
 from app.services.orchestration.component_lib.schema import ProposalComponentTree
+from app.services.orchestration.forced_workflow import apply_forced_workflow
 from app.services.orchestration.html_validate import validate_compose_graph, validate_generated_html
 from app.services.orchestration.intent_parser import parse_intent
 from app.services.orchestration.models import PageIntent
@@ -55,6 +65,12 @@ def _refine_suggestions_for_page_type(page_type: str) -> list[str]:
         "rsvp": ("Add dietary restrictions", "Show event time prominently"),
         "menu": ("Highlight dietary info", "Add pricing"),
         "landing": ("Add social proof", "Tighter hero copy"),
+        "survey": ("Shorten the intro", "Add one NPS follow-up"),
+        "quiz": ("Sharpen a question", "Add a stronger outcome CTA"),
+        "coming_soon": ("Tighten the countdown copy", "Add 3 more teaser bullets"),
+        "resume": ("Quantify a bullet", "Tighten the summary"),
+        "gallery": ("Add a stronger gallery headline", "Tighten inquiry form"),
+        "link_in_bio": ("Add one more link", "Shorten the bio line"),
     }
     a, b = extras.get(page_type, ("Add pricing", "Add a phone number"))
     return [core[0], core[1], a, b, core[2], core[3]]
@@ -64,7 +80,28 @@ def _sse(event: str, payload: dict[str, Any]) -> bytes:
     return f"event: {event}\ndata: {json.dumps(payload, default=str)}\n\n".encode()
 
 
-async def stream_page_generation(
+@dataclass
+class StudioPipelineState:
+    db: AsyncSession
+    ctx: TenantContext
+    user: User
+    prompt: str
+    provider: str | None
+    existing_page_id: UUID | None
+    org_row: Organization
+    bundle: ContextBundle
+    intent: PageIntent
+    brand_snapshot: dict[str, Any] | None
+    brand_hint: dict[str, Any] | None
+    primary: str
+    secondary: str
+    run_id: UUID
+    pipeline_started: float
+    node_timings: dict[str, int]
+    composed: Any
+
+
+async def prepare_studio_page_generation(
     *,
     db: AsyncSession,
     ctx: TenantContext,
@@ -74,8 +111,9 @@ async def stream_page_generation(
     existing_page_id: UUID | None,
     forced_workflow: str | None = None,
     vision_attachment_ids: list[UUID] | None = None,
-) -> AsyncIterator[bytes]:
-    """Yield SSE chunks: intent → html.chunk (per section) → html.complete | error."""
+) -> tuple[list[bytes], StudioPipelineState | None]:
+    """Context gather + intent parse; SSE bytes for replay; None state if org missing."""
+    replay: list[bytes] = []
     brand_row = (
         await db.execute(select(BrandKit).where(BrandKit.organization_id == ctx.organization_id))
     ).scalar_one_or_none()
@@ -103,15 +141,15 @@ async def stream_page_generation(
 
     org_row = await db.get(Organization, ctx.organization_id)
     if org_row is None:
-        yield _sse("error", {"code": "not_found", "message": "Organization not found"})
-        return
+        replay.append(_sse("error", {"code": "not_found", "message": "Organization not found"}))
+        return replay, None
 
     run_id = uuid4()
     pipeline_started = time.perf_counter()
     node_timings: dict[str, int] = {}
     composed = None
 
-    yield _sse("context", {"phase": "started"})
+    replay.append(_sse("context", {"phase": "started"}))
     bundle = await gather_context(
         db=db,
         org=org_row,
@@ -120,31 +158,37 @@ async def stream_page_generation(
         time_budget_seconds=3.0,
         vision_attachment_ids=vision_attachment_ids,
     )
-    yield _sse(
-        "context.gathered",
-        {
-            "duration_ms": bundle.gather_duration_ms,
-            "incomplete": bundle.gather_incomplete,
-            "urls": bundle.prompt_urls,
-            "vision_attachments": len(bundle.vision_inputs),
-        },
-    )
-    if bundle.vision_inputs:
-        yield _sse(
-            "context.vision",
+    replay.append(
+        _sse(
+            "context.gathered",
             {
-                "count": len(bundle.vision_inputs),
-                "kinds": [v.kind for v in bundle.vision_inputs],
+                "duration_ms": bundle.gather_duration_ms,
+                "incomplete": bundle.gather_incomplete,
+                "urls": bundle.prompt_urls,
+                "vision_attachments": len(bundle.vision_inputs),
             },
         )
+    )
+    if bundle.vision_inputs:
+        replay.append(
+            _sse(
+                "context.vision",
+                {
+                    "count": len(bundle.vision_inputs),
+                    "kinds": [v.kind for v in bundle.vision_inputs],
+                },
+            )
+        )
     if bundle.site_brand:
-        yield _sse(
-            "context.brand.extracted",
-            {
-                "url": bundle.site_brand.url,
-                "business_name": bundle.site_brand.business_name,
-                "primary_color": bundle.site_brand.primary_color,
-            },
+        replay.append(
+            _sse(
+                "context.brand.extracted",
+                {
+                    "url": bundle.site_brand.url,
+                    "business_name": bundle.site_brand.business_name,
+                    "primary_color": bundle.site_brand.primary_color,
+                },
+            )
         )
         sb = bundle.site_brand
         if brand_hint is None:
@@ -163,9 +207,9 @@ async def stream_page_generation(
                 snap["body_font"] = snap.get("body_font") or sb.body_font
             brand_snapshot = snap or brand_snapshot
     if bundle.site_voice:
-        yield _sse("context.voice.inferred", {"summary": bundle.site_voice.persona_summary[:200]})
+        replay.append(_sse("context.voice.inferred", {"summary": bundle.site_voice.persona_summary[:200]}))
     if bundle.site_products:
-        yield _sse("context.products.found", {"count": len(bundle.site_products)})
+        replay.append(_sse("context.products.found", {"count": len(bundle.site_products)}))
 
     ctx_block = bundle.to_prompt_context().strip()
     t_intent0 = time.perf_counter()
@@ -181,16 +225,19 @@ async def stream_page_generation(
     except Exception as e:
         logger.exception("intent_fatal %s", e)
         intent = PageIntent(title_suggestion=prompt[:80] or "Page")
+    intent = apply_forced_workflow(intent, forced_workflow)
     node_timings["intent_parser"] = int((time.perf_counter() - t_intent0) * 1000)
 
-    yield _sse(
-        "intent",
-        {
-            "workflow": intent.workflow,
-            "confidence": intent.confidence,
-            "alternatives": [a.model_dump(mode="json") for a in intent.alternatives],
-            "intent": intent.model_dump(mode="json"),
-        },
+    replay.append(
+        _sse(
+            "intent",
+            {
+                "workflow": intent.workflow,
+                "confidence": intent.confidence,
+                "alternatives": [a.model_dump(mode="json") for a in intent.alternatives],
+                "intent": intent.model_dump(mode="json"),
+            },
+        )
     )
     if intent.confidence < 0.85:
         clarify_cands: list[dict[str, Any]] = [
@@ -198,9 +245,80 @@ async def stream_page_generation(
         ]
         for a in intent.alternatives[:2]:
             clarify_cands.append({"workflow": a.workflow, "confidence": a.confidence})
-        yield _sse("clarify", {"candidates": clarify_cands[:3]})
+        replay.append(_sse("clarify", {"candidates": clarify_cands[:3]}))
 
-    yield _sse("html.start", {"status": "composing"})
+    replay.append(_sse("html.start", {"status": "composing"}))
+
+    state = StudioPipelineState(
+        db=db,
+        ctx=ctx,
+        user=user,
+        prompt=prompt,
+        provider=provider,
+        existing_page_id=existing_page_id,
+        org_row=org_row,
+        bundle=bundle,
+        intent=intent,
+        brand_snapshot=brand_snapshot,
+        brand_hint=brand_hint,
+        primary=primary,
+        secondary=secondary,
+        run_id=run_id,
+        pipeline_started=pipeline_started,
+        node_timings=node_timings,
+        composed=composed,
+    )
+    return replay, state
+
+
+async def stream_page_generation(
+    *,
+    db: AsyncSession,
+    ctx: TenantContext,
+    user: User,
+    prompt: str,
+    provider: str | None,
+    existing_page_id: UUID | None,
+    forced_workflow: str | None = None,
+    vision_attachment_ids: list[UUID] | None = None,
+) -> AsyncIterator[bytes]:
+    """Yield SSE chunks: intent → html.chunk (per section) → html.complete | error."""
+    replay, state = await prepare_studio_page_generation(
+        db=db,
+        ctx=ctx,
+        user=user,
+        prompt=prompt,
+        provider=provider,
+        existing_page_id=existing_page_id,
+        forced_workflow=forced_workflow,
+        vision_attachment_ids=vision_attachment_ids,
+    )
+    for chunk in replay:
+        yield chunk
+    if state is None:
+        return
+    async for chunk in stream_studio_page_generation_tail(state):
+        yield chunk
+
+
+async def stream_studio_page_generation_tail(state: StudioPipelineState) -> AsyncIterator[bytes]:
+    db = state.db
+    ctx = state.ctx
+    user = state.user
+    prompt = state.prompt
+    provider = state.provider
+    existing_page_id = state.existing_page_id
+    org_row = state.org_row
+    bundle = state.bundle
+    intent = state.intent
+    brand_snapshot = state.brand_snapshot
+    primary = state.primary
+    secondary = state.secondary
+    run_id = state.run_id
+    pipeline_started = state.pipeline_started
+    node_timings = state.node_timings
+    composed = state.composed
+    forge_credit_applied: tuple[str, int] | None = None
 
     title = intent.title_suggestion or "Untitled"
     existing: Page | None = None
@@ -534,6 +652,20 @@ async def stream_page_generation(
             )
         except Exception:
             logger.exception("orchestration_run_record_failed")
+        spec_action, _ = studio_credit_charge_spec(intent, refining_existing_page=True)
+        charge_amt = compute_studio_pipeline_credits(intent, refining_existing_page=True)
+        forge_credit_applied = (spec_action, charge_amt)
+        await apply_charge(
+            db,
+            ctx.organization_id,
+            action=spec_action,
+            credits=charge_amt,
+            user_id=user.id,
+            page_id=page.id,
+            orchestration_run_id=run_id,
+            provider=provider,
+            model=None,
+        )
         await db.commit()
         await db.refresh(page)
         pid = page.id
@@ -622,9 +754,36 @@ async def stream_page_generation(
             )
         except Exception:
             logger.exception("orchestration_run_record_failed")
+        spec_action, _ = studio_credit_charge_spec(intent, refining_existing_page=False)
+        charge_amt = compute_studio_pipeline_credits(intent, refining_existing_page=False)
+        forge_credit_applied = (spec_action, charge_amt)
+        await apply_charge(
+            db,
+            ctx.organization_id,
+            action=spec_action,
+            credits=charge_amt,
+            user_id=user.id,
+            page_id=pid,
+            orchestration_run_id=run_id,
+            provider=provider,
+            model=None,
+        )
         await db.commit()
         await db.refresh(page)
         await increment_pages_generated(db, ctx.organization_id)
+
+    org_for_usage = await db.get(Organization, ctx.organization_id)
+    if org_for_usage is not None and forge_credit_applied is not None:
+        apply_rolling_resets_in_memory(org_for_usage)
+        yield _sse(
+            "credit.charged",
+            {
+                "action": forge_credit_applied[0],
+                "credits": forge_credit_applied[1],
+                "usage": credits_usage_dict(org_for_usage),
+                "run_id": str(run_id),
+            },
+        )
 
     yield _sse(
         "persist",
