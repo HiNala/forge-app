@@ -15,6 +15,7 @@ import {
   PlusCircle,
   Settings,
   Shield,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ForgeMark } from "@/components/chrome/forge-logo";
@@ -64,6 +65,7 @@ const SIDEBAR_MS = "240ms";
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/studio", label: "Studio", icon: PlusCircle, primary: true as const },
+  { href: "/studio/mobile", label: "Mobile design", icon: Smartphone },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/settings/profile", label: "Settings", icon: Settings },
 ] as const;
@@ -140,6 +142,10 @@ function OrgQuotaBar({
 function navLinkActive(pathname: string, href: string): boolean {
   if (href === "/settings/profile") return pathname.startsWith("/settings");
   if (href === "/dashboard") return pathname === "/dashboard";
+  if (href === "/studio") return pathname === "/studio";
+  if (href === "/studio/mobile") {
+    return pathname === "/studio/mobile" || pathname.startsWith("/studio/mobile/");
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
