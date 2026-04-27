@@ -45,6 +45,8 @@
 
 - `python -m pytest tests/test_p06_workflow_surface.py tests/test_p06_planner_evaluation.py tests/test_seed_templates_p06.py` — pass.
 - `pnpm exec tsc --noEmit` (apps/web) — pass.
+- `pnpm run lint:strict` + `pnpm run build` (apps/web) — pass (Next may print existing middleware/edge warnings).
+- Public tracker: `data-forge-analytics` values are allow-listed client-side to match the API event taxonomy (invalid values are ignored; no duplicate `outbound_link` for those taps).
 
 ## Commit guidance
 

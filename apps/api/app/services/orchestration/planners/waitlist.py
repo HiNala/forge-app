@@ -30,7 +30,7 @@ def plan_waitlist(intent: PageIntent, bundle: ContextBundle | None) -> PagePlan:
                 f"Launch hero for {product}. Headline: '{intent.headline or intent.title_suggestion}'. "
                 f"Subheadline: '{intent.subheadline or ''}'. "
                 f"Immediately below the headline: an inline email capture form (single email field + CTA button). "
-                f"Button label: 'Join the Waitlist' or similar. {diff_str}"
+                f"Button label: 'Join the Waitlist' or similar; CTA should match “{action}”. {diff_str}"
                 "Visual direction: bold. This should feel like an exciting launch, not a static page."
             ),
         ),
@@ -65,8 +65,8 @@ def plan_waitlist(intent: PageIntent, bundle: ContextBundle | None) -> PagePlan:
             priority=3,
             layout_family="single_column",
             content_brief=(
-                f"Bottom CTA repeating the email capture form. "
-                f"Headline: urgency-focused (e.g. 'Spots are limited — don't miss launch'). "
+                "Bottom CTA repeating the email capture form. "
+                "Headline: urgency-focused (e.g. 'Spots are limited — don't miss launch'). "
                 "Same email + button as hero, so it's easy to sign up after scrolling."
             ),
         ),

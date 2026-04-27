@@ -4,7 +4,7 @@ import pytest
 
 from app.services.orchestration.composer.registry import _COMPOSERS, workflow_key_for_intent
 from app.services.orchestration.forced_workflow import apply_forced_workflow
-from app.services.orchestration.models import PageIntent, WORKFLOW_TO_PAGE_TYPE
+from app.services.orchestration.models import WORKFLOW_TO_PAGE_TYPE, PageIntent
 from app.services.workflows.registry import WORKFLOW_REGISTRY
 
 

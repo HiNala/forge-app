@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
-from app.services.orchestration.models import PageIntent
+from app.services.orchestration.models import PageIntent, PageType, WorkflowType
 from app.services.orchestration.planners import plan_for_intent
 
 _TITLES = ("", "Launch feedback", "Unicode 测试 — café")
@@ -14,7 +16,13 @@ _CASES: list[tuple[str, str, str, int, frozenset[str]]] = [
     ("quiz", "quiz", "quiz", 4, frozenset({"intro", "questions", "result", "footer"})),
     ("coming_soon", "coming_soon", "coming_soon", 4, frozenset({"hero", "capture", "teaser", "footer"})),
     ("gallery", "gallery", "gallery", 5, frozenset({"hero", "grid", "about", "inquiry", "footer"})),
-    ("resume", "resume", "resume", 7, frozenset({"hero", "summary", "experience", "projects", "skills", "education", "footer"})),
+    (
+        "resume",
+        "resume",
+        "resume",
+        7,
+        frozenset({"hero", "summary", "experience", "projects", "skills", "education", "footer"}),
+    ),
     ("link_in_bio", "link_in_bio", "link_in_bio", 3, frozenset({"profile", "links", "footer"})),
     ("event_rsvp", "rsvp", "event_rsvp", 3, frozenset({"hero", "form", "footer"})),
     ("menu", "menu", "menu", 3, frozenset({"hero", "menu_body", "footer"})),
@@ -32,8 +40,8 @@ def test_p06_planner_sections_stable(
     ids: frozenset[str],
 ) -> None:
     intent = PageIntent(
-        workflow=workflow,  # type: ignore[assignment]
-        page_type=page_type,  # type: ignore[assignment]
+        workflow=cast(WorkflowType, workflow),
+        page_type=cast(PageType, page_type),
         title=title or "Untitled",
         headline="Headline",
         subheadline="Sub",

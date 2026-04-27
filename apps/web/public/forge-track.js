@@ -15,6 +15,14 @@
   var T = null;
   var FLUSH_MS = 2000;
   var MAX_BATCH = 10;
+  /** Only these may be sent via data-forge-analytics (must match API EVENTS taxonomy). */
+  var FORGE_DATA_ANALYTICS_EVENTS = {
+    link_click: true,
+    menu_item_view: true,
+    rsvp_submit: true,
+    survey_step_complete: true,
+    quiz_complete: true,
+  };
 
   function cid(k) {
     var m = document.cookie.match(new RegExp("(?:^|; )" + k + "=([^;]*)"));
@@ -158,12 +166,14 @@
       if (fa) {
         var evName = fa.getAttribute("data-forge-analytics");
         if (evName) {
-          var md = { page_id: C.pageId };
-          var lbl = fa.getAttribute("data-link-label");
-          if (lbl) md.link_label = lbl;
-          var href = fa.getAttribute("href");
-          if (href) md.url = href;
-          push(evName, md);
+          if (FORGE_DATA_ANALYTICS_EVENTS[evName]) {
+            var md = { page_id: C.pageId };
+            var lbl = fa.getAttribute("data-link-label");
+            if (lbl) md.link_label = lbl;
+            var href = fa.getAttribute("href");
+            if (href) md.url = href;
+            push(evName, md);
+          }
           return;
         }
       }
