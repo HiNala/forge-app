@@ -309,9 +309,9 @@ export default function TemplatesGalleryPage() {
               <circle cx="52" cy="50" r="2" fill="currentColor" />
             </svg>
           </div>
-          <h2 className="type-heading text-text">No templates match</h2>
-          <p className="type-body mt-2 max-w-sm text-text-muted">
-            Try clearing search or a filter — or browse a workflow group above.
+          <h2 className="type-heading text-text">No templates match your filters</h2>
+          <p className="type-body mt-2 max-w-prose text-text-muted">
+            Clear search, a category, or a workflow chip — or start from Studio with a blank page.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
             <Button

@@ -154,6 +154,15 @@
 
   --border-width: 1px;
 
+  /* Semantic aliases (P-09 docs / mission vocabulary — same values as --color-* ) */
+  --bg-base: var(--color-bg);
+  --bg-raised: var(--color-bg-raised);
+  --bg-overlay: var(--color-bg-overlay);
+  --fg-strong: var(--color-fg-strong);
+  --fg-default: var(--color-fg-default);
+  --fg-muted: var(--color-fg-muted);
+  --fg-faint: var(--color-fg-faint);
+
   /* Legacy aliases (components reference these) */
   --bg: var(--color-bg);
   --bg-elevated: var(--color-bg-elevated);
@@ -207,4 +216,12 @@
   --shadow-lg: 0 12px 40px color-mix(in oklch, oklch(5% 0.02 80) 60%, transparent);
   --shadow-xl: 0 20px 50px color-mix(in oklch, oklch(5% 0.02 80) 65%, transparent);
   --shadow-2xl: 0 25px 60px color-mix(in oklch, oklch(4% 0.02 80) 70%, transparent);
+
+  --bg-base: var(--color-bg);
+  --bg-raised: var(--color-bg-raised);
+  --bg-overlay: var(--color-bg-overlay);
+  --fg-strong: var(--color-fg-strong);
+  --fg-default: var(--color-fg-default);
+  --fg-muted: var(--color-fg-muted);
+  --fg-faint: var(--color-fg-faint);
 }

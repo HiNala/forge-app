@@ -33,6 +33,8 @@ type UsageBarProps = {
   variant?: "default" | "inverse";
   /** Replaces the default “used / cap credits” line (e.g. dollar amounts). */
   valueDetail?: string;
+  /** Alias of `valueDetail` (P-09 naming). */
+  valueText?: string;
 };
 
 function usePrefersReducedMotion(): boolean {
@@ -68,11 +70,40 @@ export function UsageBar({
   className,
   variant = "default",
   valueDetail,
+  valueText,
 }: UsageBarProps) {
   const description = descriptionOpt ?? sublabel;
+  const reduceMotion = usePrefersReducedMotion();
+  if (cap <= 0) {
+    const detail = valueText ?? valueDetail;
+    return (
+      <div className={cn("w-full space-y-1", className)}>
+        <p
+          className={cn(
+            "font-body text-[15px] font-semibold leading-snug",
+            variant === "inverse" ? "text-white/90" : "text-text",
+          )}
+        >
+          {label}
+        </p>
+        {description ? (
+          <p
+            className={cn(
+              "font-body text-[13px] leading-snug",
+              variant === "inverse" ? "text-white/60" : "text-text-muted",
+            )}
+          >
+            {description}
+          </p>
+        ) : null}
+        <p className={cn("font-body text-[12px]", variant === "inverse" ? "text-white/45" : "text-text-subtle")}>
+          {detail ?? "No limit to display yet."}
+        </p>
+      </div>
+    );
+  }
   const rawPct = percentUsed ?? percentProp ?? 0;
   const pct = Math.min(100, Math.max(0, rawPct));
-  const reduceMotion = usePrefersReducedMotion();
   const reset = resetText ?? resetPhrase;
 
   const derivedState: UsageBarState =
@@ -130,7 +161,11 @@ export function UsageBar({
             <span className={cn("font-body text-[11px] font-medium", tagClass)}>Approaching limit</span>
           ) : null}
           <span
-            className={cn("font-body text-[15px] font-medium tabular-nums", textMuted, derivedState === "exceeded" && "text-usage-fill-full")}
+            className={cn(
+              "font-body text-[15px] font-medium tabular-nums",
+              textMuted,
+              (derivedState === "exceeded" || pct >= 100) && "text-[color:var(--color-usage-fill-full)]",
+            )}
           >
             {Math.round(pct)}%
             {learnMoreHref ? (
@@ -181,7 +216,7 @@ export function UsageBar({
 
       {reset ? <p className={cn("mt-2 font-body text-[12px] leading-normal", textMuted)}>{reset}</p> : null}
       <p className={cn("mt-1 font-body text-[12px] tabular-nums", textSubtle, inv && "text-white/40")}>
-        {valueDetail ?? `${used.toLocaleString()} / ${cap.toLocaleString()} credits`}
+        {valueText ?? valueDetail ?? `${used.toLocaleString()} / ${cap.toLocaleString()} credits`}
       </p>
     </div>
   );

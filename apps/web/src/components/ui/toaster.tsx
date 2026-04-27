@@ -13,17 +13,17 @@ export function AppToaster() {
       position={desktop ? "bottom-right" : "bottom-center"}
       duration={4000}
       closeButton
-      gap={10}
+      gap={8}
       toastOptions={{
         classNames: {
           toast:
-            "rounded-2xl border-[1.5px] border-border bg-surface text-text shadow-lg font-body animate-[toast-in_0.2s_var(--ease-out)_both]",
+            "max-w-[min(420px,calc(100vw-2rem))] rounded-[var(--radius-lg)] border border-border bg-surface px-4 py-3 text-[15px] font-normal leading-snug text-text shadow-md font-body animate-toast-in",
           title: "font-medium text-text",
-          description: "text-text-muted text-sm",
-          success: "border-emerald-500/30",
-          error: "border-danger/40",
-          warning: "border-amber-500/35",
-          info: "border-sky-500/35",
+          description: "text-text-muted text-[13px] leading-normal",
+          success: "border-border",
+          error: "border-border",
+          warning: "border-border",
+          info: "border-border",
         },
       }}
     />

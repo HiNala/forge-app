@@ -59,30 +59,41 @@ export default function UsageSettingsPage() {
   const extraPct = capCents > 0 ? Math.min(100, (spentCents / capCents) * 100) : 0;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-0">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto max-w-2xl space-y-10">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="type-display text-text">Usage</h1>
-          <p className="mt-1 type-body text-text-muted">
+          <p className="mt-1 max-w-prose type-body text-text-muted">
             Forge Credits, session and weekly windows, and plan entitlements.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-border bg-bg-elevated px-3 py-1 font-body text-sm font-medium text-text">
-            {displayTier}
-          </span>
-          {usage?.extra_usage_enabled && capCents > 0 ? (
-            <Button asChild size="sm" variant="secondary">
-              <Link href="/settings/billing">Adjust limit</Link>
-            </Button>
-          ) : null}
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <span className="rounded-full border border-border bg-bg-elevated px-3 py-1 font-body text-sm font-medium text-text">
+              {displayTier}
+            </span>
+            {usage?.extra_usage_enabled && capCents > 0 ? (
+              <Button asChild size="sm" variant="secondary">
+                <Link href="/settings/billing">Adjust limit</Link>
+              </Button>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 font-body text-xs text-text-muted transition-colors hover:text-text disabled:opacity-50"
+          >
+            <RefreshCw className={cn("size-3.5 stroke-[1.5]", refreshing && "animate-spin")} aria-hidden />
+            Last updated {formatDistanceToNow(refreshedAt, { addSuffix: true })}
+          </button>
         </div>
-      </div>
+      </header>
 
       {/* Plan usage — session */}
       <section>
-        <h2 className="type-heading mb-3 text-text">Current session</h2>
-        <div className="rounded-2xl border border-border bg-surface p-5">
+        <h2 className="type-heading mb-4 text-text">Current session</h2>
+        <div className="rounded-lg border border-border bg-surface p-6">
           {usageQ.isLoading ? (
             <div className="space-y-2">
               <div className="h-3.5 w-40 animate-pulse rounded bg-bg-elevated" />
@@ -104,9 +115,9 @@ export default function UsageSettingsPage() {
       </section>
 
       {/* Weekly */}
-      <section className="pt-8">
-        <h2 className="type-heading mb-3 text-text">Weekly limit — all workflows</h2>
-        <div className="rounded-2xl border border-border bg-surface p-5">
+      <section>
+        <h2 className="type-heading mb-4 text-text">Weekly limit — all workflows</h2>
+        <div className="rounded-lg border border-border bg-surface p-6">
           {usageQ.isLoading || !usage ? null : usage.credits_week_cap > 0 ? (
             <UsageBar
               label="This week"
@@ -118,23 +129,12 @@ export default function UsageSettingsPage() {
             />
           ) : null}
         </div>
-        <div className="mt-3 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void refresh()}
-            disabled={refreshing}
-            className="inline-flex items-center gap-1.5 font-body text-xs text-text-muted transition-colors hover:text-text disabled:opacity-50"
-          >
-            <RefreshCw className={cn("size-3", refreshing && "animate-spin")} />
-            Last updated: {formatDistanceToNow(refreshedAt, { addSuffix: true })}
-          </button>
-        </div>
       </section>
 
       {/* Entitlements (non-credit) */}
-      <section className="pt-8">
-        <h2 className="type-heading mb-3 text-text">Plan resources</h2>
-        <div className="space-y-0 divide-y divide-border rounded-2xl border border-border bg-surface overflow-hidden">
+      <section>
+        <h2 className="type-heading mb-4 text-text">Plan resources</h2>
+        <div className="space-y-0 divide-y divide-border rounded-lg border border-border bg-surface overflow-hidden">
           {usageQ.isLoading ? (
             <div className="p-5">
               <div className="h-3.5 w-48 animate-pulse rounded bg-bg-elevated" />
@@ -161,9 +161,9 @@ export default function UsageSettingsPage() {
 
       {/* Extra usage */}
       {usage && (plan?.plan && plan.plan !== "free" && plan.plan !== "starter" && plan.plan !== "trial") ? (
-        <section className="pt-8">
-          <h2 className="type-heading mb-3 text-text">Extra usage</h2>
-          <div className="rounded-2xl border border-border bg-surface p-5">
+        <section>
+          <h2 className="type-heading mb-4 text-text">Extra usage</h2>
+          <div className="rounded-lg border border-border bg-surface p-6">
             <p className="type-body text-text-muted">
               When session and weekly credits are used up, you can allow metered overage (paid plans) with a
               monthly cap.{" "}
@@ -191,9 +191,9 @@ export default function UsageSettingsPage() {
       ) : null}
 
       {usage ? (
-        <section className="pt-8">
-          <h2 className="type-heading mb-3 text-text">AI token detail</h2>
-          <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+        <section>
+          <h2 className="type-heading mb-4 text-text">AI token detail</h2>
+          <div className="rounded-lg border border-border bg-surface overflow-hidden">
             <div className="divide-y divide-border">
               <TokenRow label="Prompt tokens" value={usage.tokens_prompt} />
               <TokenRow label="Completion tokens" value={usage.tokens_completion} />
@@ -207,9 +207,9 @@ export default function UsageSettingsPage() {
       ) : null}
 
       {usage ? (
-        <section className="pt-8">
-          <h2 className="type-heading mb-3 text-text">Calendar month</h2>
-          <div className="rounded-2xl border border-border bg-surface px-5 py-4">
+        <section>
+          <h2 className="type-heading mb-4 text-text">Calendar month</h2>
+          <div className="rounded-lg border border-border bg-surface px-6 py-5">
             <p className="font-body text-sm text-text">
               <span className="font-semibold">{format(new Date(usage.period_start), "MMMM d")}</span> —{" "}
               <span className="font-semibold">{format(new Date(usage.period_end), "MMMM d, yyyy")}</span>
@@ -231,11 +231,14 @@ function EntitlementRow({ label, used, cap }: { label: string; used: number; cap
   if (cap <= 0) return null;
   const pct = Math.min(100, (used / cap) * 100);
   return (
-    <div className="px-5 py-4">
-      <p className="font-body text-sm font-medium text-text">{label}</p>
-      <p className="mt-0.5 font-body text-xs tabular-nums text-text-muted">
-        {used.toLocaleString()} / {cap.toLocaleString()} ({Math.round(pct)}%)
-      </p>
+    <div className="px-6 py-5">
+      <UsageBar
+        label={label}
+        percentUsed={pct}
+        used={used}
+        cap={cap}
+        valueText={`${used.toLocaleString()} / ${cap.toLocaleString()} this period`}
+      />
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import * as React from "react";
 
 const SWATCHES = [
+  { name: "--bg-base", note: "Semantic alias → cream base (same as --color-bg)" },
+  { name: "--fg-strong", note: "Semantic alias → strongest text" },
   { name: "--color-bg", note: "Page background (cream)" },
   { name: "--color-bg-raised", note: "Cards / panels" },
   { name: "--color-bg-overlay", note: "Dialogs" },

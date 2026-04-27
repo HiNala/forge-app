@@ -49,11 +49,19 @@ This pass applies a **calm, warm, low-chrome** design language: terracotta accen
 
 - **Filtered empty state:** line-art SVG, headline, “Clear filters” + “Start from Studio”; removed **hover-reveal overlay** on cards.
 
+## Incremental polish (post–initial report)
+
+- **Tokens:** `--bg-base`, `--bg-raised`, `--bg-overlay`, `--fg-*` semantic aliases (same values as `--color-*`) for documentation and audits.
+- **Toasts:** `max-w` ~420px, `gap={8}`, neutral `border-border`, **240ms** `animate-toast-in` with **standard ease**; **reduced-motion** disables toast + skeleton pulse.
+- **useToast:** success **6s**, info **4s**, **warning 8s**, error until dismissed.
+- **Settings → Usage:** header **Last updated** + refresh; **consistent `space-y-10`** and **`radius-lg` / p-6** cards; **plan resources** rows use **`UsageBar`** (same pattern as session).
+- **Studio strip:** one-line **“Session: N% used · …”** above the bar.
+- **Templates:** calmer **filtered-empty** copy.
+
 ## Follow-up (not all TODO lines closed in one PR)
 
 - Full **hex grep** pass outside `tokens.css` to eliminate remaining hardcoded colors in marketing and components.
 - **Recharts** — wire `--chart-1` … `--chart-5` in every analytics chart.
-- **Toast/sonner** — width, stack gap, and duration alignment with mission §9.
 - **Form standardization** (required dot, 40px inputs) across **all** settings pages.
 - **Public OG image** — procedural Cormorant title card (item 43).
 - **Two-day walk** (items 57–60) and snapshot commits under `apps/web/design/regression/`.

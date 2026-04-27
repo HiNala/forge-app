@@ -40,6 +40,9 @@ export function StudioSessionUsageStrip({ className, active: studioActive = true
           View usage
         </Link>
       </div>
+      <p className="mb-2 font-body text-[12px] leading-snug text-white/70">
+        Session: {Math.round(pct)}% used · {reset}
+      </p>
       <UsageBar
         variant="inverse"
         label="Forge Credits"
