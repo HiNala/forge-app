@@ -1,8 +1,9 @@
 "use client";
 
 import { useReactFlow, useStore } from "@xyflow/react";
-import { Minus, Plus, Scan, LayoutGrid, Menu, Sun, SunMoon, Trash2 } from "lucide-react";
+import { Minus, Plus, Scan, LayoutGrid, Menu, Sun, SunMoon, Trash2, Download, GitBranch, LayoutTemplate, AlertTriangle } from "lucide-react";
 import * as React from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,8 +13,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { orphanPageIds } from "@/lib/web-canvas-nav-graph";
+import { buildSingleFileStaticSite } from "@/lib/web-canvas-static-export";
 import { useWebCanvasStore, type SiteNavLink } from "./web-canvas-store";
 import type { WebCanvasFocusBreakpoint } from "./types";
 import { cn } from "@/lib/utils";
@@ -37,6 +51,12 @@ function newNavId(): string {
  */
 export function WebCanvasToolbar() {
   const { zoomIn, zoomOut, fitView, setViewport, getViewport } = useReactFlow();
+  const pages = useWebCanvasStore((s) => s.pages);
+  const edges = useWebCanvasStore((s) => s.edges);
+  const homePageId = useWebCanvasStore((s) => s.homePageId);
+  const accentHue = useWebCanvasStore((s) => s.accentHue);
+  const arrangePagesInGrid = useWebCanvasStore((s) => s.arrangePagesInGrid);
+  const syncFlowEdgesFromNavLinks = useWebCanvasStore((s) => s.syncFlowEdgesFromNavLinks);
   const z = useStore((s) => s.transform[2]);
   const zoomPct = Math.round(z * 100);
   const setTheme = useWebCanvasStore((s) => s.setTheme);
@@ -72,6 +92,26 @@ export function WebCanvasToolbar() {
 
   function addNavRow() {
     setNavDraft((rows) => [...rows, { id: newNavId(), label: "New", href: "/new" }]);
+  }
+
+  const orphanIds =
+    pages.length > 1 ? orphanPageIds(pages.map((p) => p.id), homePageId, edges) : [];
+
+  function downloadStaticHtml() {
+    const accent = `hsl(${accentHue} 78% 48%)`;
+    const doc = buildSingleFileStaticSite(
+      pages.map((p) => ({ path: p.path, title: p.title, html: p.html })),
+      "Forge site preview",
+      { accent, bg: "#ffffff", fg: "#0f172a" },
+    );
+    const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "forge-site-preview.html";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Downloaded static preview");
   }
 
   return (
@@ -207,6 +247,69 @@ export function WebCanvasToolbar() {
           <Menu className="size-3.5" />
           Site nav
         </Button>
+
+        <div className="h-5 w-px bg-border" />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="secondary" size="sm" className="h-8 gap-1.5 font-body text-xs">
+              <Download className="size-3.5" />
+              Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="font-body">
+            <DropdownMenuItem className="cursor-pointer" onSelect={() => downloadStaticHtml()}>
+              Static site (single HTML file)
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled className="text-text-muted">
+              Next.js zip (API pipeline)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="h-8 gap-1.5 font-body text-xs"
+          title="Snap page nodes to a 3-column grid"
+          onClick={() => {
+            arrangePagesInGrid();
+            void fitView({ padding: 0.2, minZoom: 0.25, maxZoom: 4, duration: 200 });
+          }}
+        >
+          <LayoutTemplate className="size-3.5" />
+          Grid
+        </Button>
+
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="h-8 gap-1.5 font-body text-xs"
+          title="Create flow edges from internal links in page HTML"
+          onClick={() => {
+            syncFlowEdgesFromNavLinks();
+            toast.success("Flow synced from nav links");
+          }}
+        >
+          <GitBranch className="size-3.5" />
+          Sync links
+        </Button>
+
+        {orphanIds.length > 0 ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex items-center gap-1 rounded-md border border-warning/40 bg-warning/10 px-2 py-1 font-body text-[10px] font-medium text-warning">
+                <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
+                {orphanIds.length} orphan{orphanIds.length > 1 ? "s" : ""}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs font-body text-xs">
+              No incoming link from other pages (homepage excluded). Use Sync links or draw edges.
+            </TooltipContent>
+          </Tooltip>
+        ) : null}
       </div>
 
       <Dialog open={siteNavEditorOpen} onOpenChange={setSiteNavEditorOpen}>

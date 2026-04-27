@@ -2,31 +2,49 @@
 
 The web canvas reuses the same **xyflow** substrate as the mobile canvas (`translateExtent` ±50k, minimap, dot grid ≥50% zoom, marquee hotkey `M`).
 
+Spec alias: `components/canvas/WebCanvas.tsx` re-exports the implementation from `components/web-canvas`.
+
 ## Client components
 
 - `apps/web/src/components/web-canvas/web-canvas.tsx` — `ReactFlowProvider` + `browserFrame` node type.
-- `apps/web/src/components/web-canvas/browser-frame-node.tsx` — Three stacked preview rows (desktop 1440px, tablet 834px, mobile 390px content width) with macOS-style chrome. Content is **scaled** to `WEB_CANVAS_ROW_DISPLAY_WIDTH` (380px) so nodes stay a manageable size on the canvas; layout is still computed at the true breakpoint width inside the scaled layer.
+- `apps/web/src/components/web-canvas/browser-frame-node.tsx` — Three stacked preview rows (desktop 1440px, tablet 834px, mobile 390px) with macOS-style chrome. **Shared** header/footer use `forge-shared-region` + diagonal stripe on hover (“site shell”).
 - `apps/web/src/lib/web-canvas-viewports.ts` — Breakpoint sizes and `scaleForCanvasRow()`.
-- `apps/web/src/lib/web-marquee-hit.ts` — Collects `[data-forge-node-id]` / `[data-forge-region]` elements overlapping a viewport-space marquee; `marqueeCoverageRatio()` flags near–full-screen selections for screen-level refine.
+- `apps/web/src/lib/web-marquee-hit.ts` — Marquee hit-testing against `data-forge-node-id` / `data-forge-region`.
+- `apps/web/src/lib/web-canvas-nav-graph.ts` — `normalizeWebPath`, `collectInternalNavTargetsFromHtml`, `orphanPageIds` for flow UX.
+- `apps/web/src/lib/web-canvas-static-export.ts` — `buildSingleFileStaticSite()` MVP export (one HTML file with hash sections).
 
-## Marquee & region refine (client)
+## Canvas features (client, shipped)
 
-- **Modes:** toolbar **Marquee** toggle, **`M`** hotkey, or **⌘/Ctrl + drag** on any preview row (the overlay uses `nodrag` / `nopan` so the gesture does not pan the canvas or drag the node).
-- **Tagged HTML:** `buildPageHtml` in `web-canvas-store.ts` emits stable `data-forge-node-id` / `data-forge-region` attributes so overlap hit-testing has something to target.
-- **Refine panel:** After release, a floating panel captures a prompt and confirms scope (full-screen if coverage ≥ ~92%). Generation is still **orchestration/API work** (P-05); the UI records intent and surfaces a success toast.
+| Feature | Status |
+|--------|--------|
+| Breakpoint emphasis (All / Desktop / Tablet / Mobile) | Shipped |
+| Marquee + refine panel (orchestration wiring = P-05) | Client shipped |
+| Site nav modal → rebuild all pages via `buildPageHtml` | Shipped |
+| Homepage flag, change path, rename, duplicate, delete | Shipped |
+| Grid arrange + fit view | Shipped |
+| **Sync links** — edges from internal `<a href="/path">` (data `fromNav: true`; manual edges preserved) | Shipped |
+| Orphan page hint (no incoming edge, excluding homepage) | Shipped |
+| Static export — single downloadable `.html` preview | Shipped |
+| Multi-page orchestration (`SiteOutline`, `WebsiteComposer`, streaming) | **API / P-05** |
+| Next.js zip, Framer/Webflow JSON, Figma API, hosted multi-route site | **Pipeline** |
+| Responsive linter + auto-fix | **Not started** |
+| Page Detail tabs (Pages / Canvas / Flow / SEO / …) | **Partial / product** |
+| In-frame link click → pan to target node | **Not started** |
+| Per-page header override | **Not started** |
 
-## Site navigation
+## State (`useWebCanvasStore`)
 
-- **Site nav** dialog edits shared header links (`siteNavLinks` in `useWebCanvasStore`). **Apply** rebuilds every page’s HTML via `buildPageHtml` so previews stay consistent (demo/local state until multi-page sync ships).
-
-## State
-
-`useWebCanvasStore` holds `pages` (id, title, path, html), `siteNavLinks`, `nodes`/`edges`, `focusBreakpoint` (`all` | `desktop` | `tablet` | `mobile`), `fontPairId`, theme and brand sliders, `marqueeMode`, and `siteNavEditorOpen` for the **Site nav** dialog.
+- `pages`, `siteNavLinks`, `homePageId`, `nodes` / `edges`, `focusBreakpoint`, `fontPairId`, theme, brand sliders, `marqueeMode`, dialogs.
 
 ## Studio routes
 
-- `/studio/web` — this canvas. Single-page and legacy workflows remain on `/studio` without canvas.
+- `/studio/web` — web canvas. Single-page legacy workflows remain on `/studio`.
 
-## Not yet in this tree
+## Tests
 
-Multi-page orchestration (`SiteOutline`), `WebsiteComposer`, static/Next.js/Figma export, responsive linter, and shared-region server sync are **API and pipeline work** tracked under P-03 Phases 3+.
+- `web-canvas-nav-graph.test.ts`, `web-canvas-static-export.test.ts`, `web-marquee-hit.test.ts`, `web-canvas-viewports.test.ts`.
+
+## Related docs
+
+- `docs/user/WEB_DESIGN_GUIDE.md` — user-facing how-to.
+- `docs/missions/V2_P03_MISSION_REPORT.md` — mission status vs acceptance criteria.

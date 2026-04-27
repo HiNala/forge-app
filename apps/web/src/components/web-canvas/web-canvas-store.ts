@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { addEdge, type Connection, type Edge, type Node } from "@xyflow/react";
 import type { WebCanvasFontPairId } from "@/lib/web-canvas-fonts";
+import { collectInternalNavTargetsFromHtml, normalizeWebPath } from "@/lib/web-canvas-nav-graph";
 import { createWebPageNode, type WebBrowserNodeData, type WebCanvasFocusBreakpoint } from "./types";
 
 type ThemeMode = "light" | "dark";
@@ -25,6 +26,8 @@ const DEFAULT_SITE_NAV: SiteNavLink[] = [
   { id: "nav-pricing", label: "Pricing", href: "/pricing" },
 ];
 
+const INITIAL_HOME_ID = "wp-home";
+
 /** Shared header/footer + main body; nav drives the site-wide header. Exported for tests. */
 export function buildPageHtml(title: string, path: string, navLinks: SiteNavLink[]): string {
   const t = escapeHtmlText(title);
@@ -37,7 +40,7 @@ export function buildPageHtml(title: string, path: string, navLinks: SiteNavLink
     .join('<span style="opacity:.25">·</span>');
 
   return `
-<header data-forge-region="header" data-forge-shared="1" style="padding:12px 20px;border-bottom:1px solid rgba(0,0,0,.08);background:var(--fc-bg-elevated);">
+<header class="forge-shared-region" data-forge-region="header" data-forge-shared="1" style="padding:12px 20px;border-bottom:1px solid rgba(0,0,0,.08);background:var(--fc-bg-elevated);">
   <nav style="display:flex;gap:14px;align-items:center;justify-content:space-between;font:14px/1.2 var(--fc-font-body,system-ui,sans-serif);">
     <span data-forge-node-id="brand" style="font-weight:700;color:var(--fc-accent)">Acme</span>
     <span style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">${navItems}</span>
@@ -49,7 +52,7 @@ export function buildPageHtml(title: string, path: string, navLinks: SiteNavLink
   <p data-forge-node-id="p1" style="font-size:16px;line-height:1.5;opacity:.88;margin:0 0 20px;">F-pattern friendly intro copy. The same page renders at three widths on the canvas.</p>
   <a data-forge-node-id="a1" href="#" style="display:inline-block;padding:10px 18px;border-radius:8px;background:var(--fc-accent);color:#fff;font-weight:600;font-size:15px;text-decoration:none;">Call to action</a>
 </main>
-<footer data-forge-region="footer" data-forge-shared="1" style="padding:16px 20px;font-size:12px;opacity:.6;border-top:1px solid rgba(0,0,0,.08);font-family:var(--fc-font-body,system-ui,sans-serif);">© Forge preview — shared site footer</footer>
+<footer class="forge-shared-region" data-forge-region="footer" data-forge-shared="1" style="padding:16px 20px;font-size:12px;opacity:.6;border-top:1px solid rgba(0,0,0,.08);font-family:var(--fc-font-body,system-ui,sans-serif);">© Forge preview — shared site footer</footer>
 `;
 }
 
@@ -61,7 +64,7 @@ export type WebPageRecord = {
 };
 
 const INITIAL_PAGES: WebPageRecord[] = [
-  { id: "wp-home", title: "Home", path: "/", html: buildPageHtml("Welcome home", "/", DEFAULT_SITE_NAV) },
+  { id: INITIAL_HOME_ID, title: "Home", path: "/", html: buildPageHtml("Welcome home", "/", DEFAULT_SITE_NAV) },
 ];
 
 function positionsByPageId(nodes: Node<WebBrowserNodeData>[]): Map<string, { x: number; y: number }> {
@@ -80,6 +83,7 @@ function buildNodes(
   pages: WebPageRecord[],
   theme: ThemeMode,
   previous: Map<string, { x: number; y: number }>,
+  homePageId: string,
 ): Node<WebBrowserNodeData>[] {
   return pages.map((p, i) => {
     const n = createWebPageNode(p.id, p.title, p.path, p.html, defaultPositionForIndex(i).x, defaultPositionForIndex(i).y);
@@ -88,6 +92,7 @@ function buildNodes(
       theme,
       sharedHeader: true,
       sharedFooter: true,
+      isHome: p.id === homePageId,
     };
     const kept = previous.get(p.id);
     if (kept) n.position = kept;
@@ -103,6 +108,9 @@ type Store = {
   setSiteNavEditorOpen: (v: boolean) => void;
   siteNavLinks: SiteNavLink[];
   setSiteNavLinks: (links: SiteNavLink[]) => void;
+  /** Page id treated as site homepage for orphan / routing UX */
+  homePageId: string;
+  setHomePageId: (id: string) => void;
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
   marqueeMode: boolean;
@@ -128,6 +136,10 @@ type Store = {
   renamePage: (id: string, title: string) => void;
   duplicatePage: (id: string) => void;
   deletePage: (id: string) => void;
+  updatePagePath: (id: string, rawPath: string) => boolean;
+  arrangePagesInGrid: () => void;
+  /** Replace auto-generated edges (from &lt;a href&gt;) while keeping manual links */
+  syncFlowEdgesFromNavLinks: () => void;
 };
 
 export const useWebCanvasStore = create<Store>((set, get) => ({
@@ -137,7 +149,7 @@ export const useWebCanvasStore = create<Store>((set, get) => ({
   setSiteNavEditorOpen: (siteNavEditorOpen) => set({ siteNavEditorOpen }),
   siteNavLinks: DEFAULT_SITE_NAV,
   setSiteNavLinks: (siteNavLinks) => {
-    const { pages, theme, nodes } = get();
+    const { pages, theme, nodes, homePageId } = get();
     const nextPages = pages.map((p) => ({
       ...p,
       html: buildPageHtml(p.title, p.path, siteNavLinks),
@@ -145,13 +157,22 @@ export const useWebCanvasStore = create<Store>((set, get) => ({
     set({
       siteNavLinks,
       pages: nextPages,
-      nodes: buildNodes(nextPages, theme, positionsByPageId(nodes)),
+      nodes: buildNodes(nextPages, theme, positionsByPageId(nodes), homePageId),
+    });
+  },
+  homePageId: INITIAL_HOME_ID,
+  setHomePageId: (id) => {
+    const st = get();
+    if (!st.pages.some((p) => p.id === id)) return;
+    set({
+      homePageId: id,
+      nodes: buildNodes(st.pages, st.theme, positionsByPageId(st.nodes), id),
     });
   },
   theme: "light",
   setTheme: (theme) => {
-    const { pages, nodes } = get();
-    set({ theme, nodes: buildNodes(pages, theme, positionsByPageId(nodes)) });
+    const { pages, nodes, homePageId } = get();
+    set({ theme, nodes: buildNodes(pages, theme, positionsByPageId(nodes), homePageId) });
   },
   marqueeMode: false,
   setMarqueeMode: (marqueeMode) => set({ marqueeMode }),
@@ -161,8 +182,10 @@ export const useWebCanvasStore = create<Store>((set, get) => ({
   pages: INITIAL_PAGES,
   setPages: (u) => {
     const next = typeof u === "function" ? u(get().pages) : u;
-    const { theme, nodes } = get();
-    set({ pages: next, nodes: buildNodes(next, theme, positionsByPageId(nodes)) });
+    const { theme, nodes, homePageId } = get();
+    let home = homePageId;
+    if (!next.some((p) => p.id === home)) home = next[0]?.id ?? homePageId;
+    set({ pages: next, homePageId: home, nodes: buildNodes(next, theme, positionsByPageId(nodes), home) });
   },
   accentHue: 210,
   setAccentHue: (accentHue) => set({ accentHue }),
@@ -170,38 +193,42 @@ export const useWebCanvasStore = create<Store>((set, get) => ({
   setCornerRadius: (cornerRadius) => set({ cornerRadius }),
   applyTweaksToAll: true,
   setApplyTweaksToAll: (applyTweaksToAll) => set({ applyTweaksToAll }),
-  nodes: buildNodes(INITIAL_PAGES, "light", new Map()),
+  nodes: buildNodes(INITIAL_PAGES, "light", new Map(), INITIAL_HOME_ID),
   edges: [] as Edge[],
   setNodes: (u) => set({ nodes: typeof u === "function" ? u(get().nodes) : u }),
   setEdges: (u) => set({ edges: typeof u === "function" ? u(get().edges) : u }),
   onConnect: (c) => {
-    set((st) => ({ edges: addEdge({ ...c, type: "smoothstep" }, st.edges) }));
+    set((st) => ({
+      edges: addEdge({ ...c, type: "smoothstep", data: { fromNav: false } }, st.edges),
+    }));
   },
   resyncNodes: () => {
-    const { pages, theme, nodes } = get();
-    set({ nodes: buildNodes(pages, theme, positionsByPageId(nodes)) });
+    const { pages, theme, nodes, homePageId } = get();
+    set({ nodes: buildNodes(pages, theme, positionsByPageId(nodes), homePageId) });
   },
   addPage: () => {
     const n = get().pages.length + 1;
-    const { siteNavLinks } = get();
+    const { siteNavLinks, theme, nodes, homePageId } = get();
     const pg: WebPageRecord = {
       id: `wp-${Date.now()}`,
       title: `Page ${n}`,
       path: `/page-${n}`,
       html: buildPageHtml(`New page ${n}`, `/page-${n}`, siteNavLinks),
     };
-    get().setPages((prev) => [...prev, pg]);
+    const next = [...get().pages, pg];
+    set({ pages: next, nodes: buildNodes(next, theme, positionsByPageId(nodes), homePageId) });
   },
   renamePage: (id, title) => {
     const trimmed = title.trim();
     if (!trimmed) return;
-    const { siteNavLinks } = get();
-    get().setPages((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, title: trimmed, html: buildPageHtml(trimmed, p.path, siteNavLinks) } : p)),
+    const { siteNavLinks, theme, nodes, homePageId } = get();
+    const next = get().pages.map((p) =>
+      p.id === id ? { ...p, title: trimmed, html: buildPageHtml(trimmed, p.path, siteNavLinks) } : p,
     );
+    set({ pages: next, nodes: buildNodes(next, theme, positionsByPageId(nodes), homePageId) });
   },
   duplicatePage: (id) => {
-    const { pages, siteNavLinks } = get();
+    const { pages, siteNavLinks, theme, nodes, homePageId } = get();
     const p = pages.find((x) => x.id === id);
     if (!p) return;
     const idx = pages.length + 1;
@@ -212,10 +239,68 @@ export const useWebCanvasStore = create<Store>((set, get) => ({
       path: `/page-${idx}-${nid.slice(-4)}`,
       html: buildPageHtml(`${p.title} copy`, `/page-${idx}-${nid.slice(-4)}`, siteNavLinks),
     };
-    get().setPages((prev) => [...prev, pg]);
+    const next = [...pages, pg];
+    set({ pages: next, nodes: buildNodes(next, theme, positionsByPageId(nodes), homePageId) });
   },
   deletePage: (id) => {
-    if (get().pages.length <= 1) return;
-    get().setPages((prev) => prev.filter((p) => p.id !== id));
+    const st = get();
+    if (st.pages.length <= 1) return;
+    const nextPages = st.pages.filter((p) => p.id !== id);
+    const home = st.homePageId === id ? nextPages[0]!.id : st.homePageId;
+    const nextEdges = st.edges.filter((e) => e.source !== id && e.target !== id);
+    set({
+      pages: nextPages,
+      homePageId: home,
+      edges: nextEdges,
+      nodes: buildNodes(nextPages, st.theme, positionsByPageId(st.nodes), home),
+    });
+  },
+  updatePagePath: (id, rawPath) => {
+    const path = normalizeWebPath(rawPath);
+    const { pages, siteNavLinks, theme, nodes, homePageId } = get();
+    if (pages.some((p) => p.id !== id && normalizeWebPath(p.path) === path)) {
+      return false;
+    }
+    const next = pages.map((p) =>
+      p.id === id ? { ...p, path, html: buildPageHtml(p.title, path, siteNavLinks) } : p,
+    );
+    set({ pages: next, nodes: buildNodes(next, theme, positionsByPageId(nodes), homePageId) });
+    return true;
+  },
+  arrangePagesInGrid: () => {
+    const { pages, theme, homePageId } = get();
+    const pos = new Map<string, { x: number; y: number }>();
+    pages.forEach((p, i) => {
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      pos.set(p.id, { x: 80 + col * 520, y: 40 + row * 680 });
+    });
+    set({ nodes: buildNodes(pages, theme, pos, homePageId) });
+  },
+  syncFlowEdgesFromNavLinks: () => {
+    const st = get();
+    const kept = st.edges.filter((e) => !(e.data as { fromNav?: boolean } | undefined)?.fromNav);
+    const pathMap = new Map(st.pages.map((p) => [normalizeWebPath(p.path), p.id]));
+    const newEdges: Edge[] = [];
+    let seq = 0;
+    const seen = new Set<string>();
+    for (const p of st.pages) {
+      for (const { path: href, label } of collectInternalNavTargetsFromHtml(p.html)) {
+        const tid = pathMap.get(href);
+        if (!tid || tid === p.id) continue;
+        const key = `${p.id}->${tid}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        newEdges.push({
+          id: `forge-nav-${p.id}-${tid}-${seq++}`,
+          source: p.id,
+          target: tid,
+          type: "smoothstep",
+          label: label || undefined,
+          data: { fromNav: true },
+        });
+      }
+    }
+    set({ edges: [...kept, ...newEdges] });
   },
 }));

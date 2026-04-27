@@ -16,6 +16,8 @@ export type WebBrowserNodeData = {
   /** Shared header/footer from site shell (hover affordance in P-03 Phase 6) */
   sharedHeader: boolean;
   sharedFooter: boolean;
+  /** True when this page is the site homepage (routing / preview). */
+  isHome?: boolean;
 };
 
 export function createWebPageNode(

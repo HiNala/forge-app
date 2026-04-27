@@ -183,6 +183,13 @@ Commit on milestones: workflow pickers, Studio empty-state redesign, templates g
 
 ---
 
+## Addendum — V2 canvas workflows (Studio)
+
+- **Mobile design** (`/studio/mobile`) and **Web & website** (`/studio/web`) add an **xyflow** visual canvas (multi-screen / multi-page). They do **not** replace the chat-first Studio at `/studio` for single-page flagship workflows (contact form, proposal, deck, landing) from W-04.
+- Users who want a **simple single page** keep using `/studio` and existing Page Detail. Users who want **responsive, multi-page website previews** use `/studio/web`. Onboarding and marketing may surface additional workflow tiles; routing should send “full site / visual canvas” intent to the web canvas without breaking W-04 flows.
+
+---
+
 ## Acceptance Criteria
 
 - Studio empty state cleanly surfaces all three workflows without overwhelming.

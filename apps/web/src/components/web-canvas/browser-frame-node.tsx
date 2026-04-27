@@ -1,7 +1,7 @@
 "use client";
 
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
-import { MoreHorizontal, Pencil, Copy, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Copy, Trash2, Home, Link2 } from "lucide-react";
 import * as React from "react";
 import { createPortal } from "react-dom";
 import {
@@ -332,6 +332,8 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
   const renamePage = useWebCanvasStore((s) => s.renamePage);
   const duplicatePage = useWebCanvasStore((s) => s.duplicatePage);
   const deletePage = useWebCanvasStore((s) => s.deletePage);
+  const setHomePageId = useWebCanvasStore((s) => s.setHomePageId);
+  const updatePagePath = useWebCanvasStore((s) => s.updatePagePath);
   const pages = useWebCanvasStore((s) => s.pages);
   const theme = data.theme;
   const bg = theme === "dark" ? "#0f1419" : "#ffffff";
@@ -344,6 +346,8 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
   const [refinePrompt, setRefinePrompt] = React.useState("");
   const [renameOpen, setRenameOpen] = React.useState(false);
   const [renameDraft, setRenameDraft] = React.useState(data.title);
+  const [pathOpen, setPathOpen] = React.useState(false);
+  const [pathDraft, setPathDraft] = React.useState(data.path);
 
   const handleRefineOpen = React.useCallback((s: RefineState | null) => {
     setRefinePrompt("");
@@ -393,10 +397,19 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
           <p className="font-mono text-[10px] text-text-muted">{data.path}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          {data.isHome ? (
+            <span
+              className="inline-flex items-center gap-0.5 rounded border border-border bg-bg-elevated px-1.5 py-0.5 font-body text-[9px] font-medium text-text-muted"
+              title="Homepage for routing and orphan checks"
+            >
+              <Home className="size-3" aria-hidden />
+              Home
+            </span>
+          ) : null}
           {data.sharedHeader ? (
             <span
               className="rounded border border-dashed border-accent/50 bg-accent/5 px-1.5 py-0.5 font-body text-[9px] font-medium text-accent"
-              title="Header is site-wide; edits propagate to all pages"
+              title="Header/footer are site-wide; edit links in Site nav"
             >
               Shared
             </span>
@@ -425,6 +438,27 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
               <DropdownMenuItem className="gap-2" onSelect={() => duplicatePage(data.pageId)}>
                 <Copy className="size-3.5" />
                 Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2"
+                onSelect={() => {
+                  setPathDraft(data.path);
+                  setPathOpen(true);
+                }}
+              >
+                <Link2 className="size-3.5" />
+                Change path…
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2"
+                disabled={!!data.isHome}
+                onSelect={() => {
+                  setHomePageId(data.pageId);
+                  toast.success("Homepage updated");
+                }}
+              >
+                <Home className="size-3.5" />
+                Set as homepage
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -465,6 +499,24 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
           .forge-web-html h1, .forge-web-html h2, .forge-web-html h3 {
             font-family: var(--fc-font-heading, inherit);
           }
+          .forge-web-html .forge-shared-region { position: relative; }
+          .forge-web-html .forge-shared-region::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            background: repeating-linear-gradient(
+              -45deg,
+              transparent,
+              transparent 6px,
+              rgba(14, 165, 233, 0.07) 6px,
+              rgba(14, 165, 233, 0.07) 12px
+            );
+          }
+          .forge-web-html:hover .forge-shared-region::after { opacity: 1; }
         `}</style>
         {WEB_BREAKPOINTS.map((bp) => {
           const displayUrl = `https://preview.local${data.path || "/"}`;
@@ -527,6 +579,57 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
             document.body,
           )
         : null}
+
+      <Dialog
+        open={pathOpen}
+        onOpenChange={(o) => {
+          setPathOpen(o);
+          if (o) setPathDraft(data.path);
+        }}
+      >
+        <DialogContent className="font-body sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Page path</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-1">
+            <Label htmlFor="page-path">URL path</Label>
+            <Input
+              id="page-path"
+              value={pathDraft}
+              onChange={(e) => setPathDraft(e.target.value)}
+              placeholder="/about"
+              className="font-mono text-sm"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const ok = updatePagePath(data.pageId, pathDraft);
+                  if (ok) {
+                    setPathOpen(false);
+                    toast.success("Path updated");
+                  } else toast.error("Path must be unique");
+                }
+              }}
+            />
+            <p className="text-[11px] text-text-muted">Leading slash added if omitted. Must not match another page.</p>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setPathOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                const ok = updatePagePath(data.pageId, pathDraft);
+                if (ok) {
+                  setPathOpen(false);
+                  toast.success("Path updated");
+                } else toast.error("Path must be unique");
+              }}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
         <DialogContent className="font-body sm:max-w-sm">
