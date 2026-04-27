@@ -2,23 +2,15 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { useUIStore } from "@/stores/ui";
 
-export const SHORTCUTS_HELP = [
-  { keys: "⌘ K / Ctrl+K", action: "Command palette (search pages, people, settings)" },
-  { keys: "⌘⇧C / Ctrl+Shift+C", action: "New contact form (Studio)" },
-  { keys: "⌘⇧P / Ctrl+Shift+P", action: "New proposal (Studio)" },
-  { keys: "⌘⇧D / Ctrl+Shift+D", action: "New pitch deck (Studio)" },
-  { keys: "G then D", action: "Go to Dashboard" },
-  { keys: "G then S", action: "Go to Studio" },
-  { keys: "G then A", action: "Go to Analytics" },
-  { keys: "↑ / ↓", action: "Dashboard — move focus between page cards; Submissions — move between rows" },
-  { keys: "Enter", action: "Dashboard — open focused page; Submissions — expand or collapse row" },
-  { keys: "E", action: "Dashboard — open focused page in Studio" },
-  { keys: "Escape", action: "Submissions — collapse expanded row" },
-  { keys: "R", action: "Submissions — open reply (when a row is expanded)" },
-  { keys: "A", action: "Submissions — archive submission (when expanded)" },
-  { keys: "?", action: "Open this shortcuts list" },
-] as const;
+export { SHORTCUTS_HELP } from "@/lib/shortcuts-help";
+
+function isTypingTarget(el: HTMLElement | null) {
+  return el?.closest(
+    "input:not([readonly]), textarea, select, [contenteditable=true], [role=combobox]",
+  );
+}
 
 /**
  * Gmail-style chord navigation + `?` help. Cmd+K is handled in `CommandPaletteProvider`.
@@ -36,63 +28,43 @@ export function useAppShortcuts(
     };
 
     const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+
+      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+        if (isTypingTarget(target)) return;
+        e.preventDefault();
+        useUIStore.getState().toggleSidebar();
+        return;
+      }
+
       if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
         const k = e.key.toLowerCase();
         if (k === "c" || k === "p" || k === "d") {
+          if (isTypingTarget(target)) return;
           const map = {
             c: "/studio?workflow=contact_form",
             p: "/studio?workflow=proposal",
             d: "/studio?workflow=pitch_deck",
           } as const;
           const href = map[k as keyof typeof map];
-          if (href) {
-            e.preventDefault();
-            router.push(href);
-          }
+          e.preventDefault();
+          router.push(href);
           return;
         }
       }
+
       if (e.key === "?" && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        const el = e.target as HTMLElement | null;
-        if (
-          el?.closest(
-            "input:not([readonly]), textarea, select, [contenteditable=true], [role=combobox]",
-          )
-        ) {
-          return;
-        }
+        if (isTypingTarget(target)) return;
         e.preventDefault();
         setHelpOpen(true);
         return;
       }
 
       if (e.metaKey || e.ctrlKey) {
-        if (e.shiftKey) {
-          const k = e.key.toLowerCase();
-          if (k === "c" || k === "p" || k === "d") {
-            const el = e.target as HTMLElement | null;
-            if (
-              el?.closest(
-                "input:not([readonly]), textarea, select, [contenteditable=true], [role=combobox]",
-              )
-            ) {
-              return;
-            }
-            e.preventDefault();
-            const wf =
-              k === "c" ? "contact-form" : k === "p" ? "proposal" : "pitch-deck";
-            router.push(`/studio?workflow=${wf}`);
-          }
-        }
         return;
       }
       if (e.altKey) return;
-      const el = e.target as HTMLElement | null;
-      if (
-        el?.closest(
-          "input:not([readonly]), textarea, select, [contenteditable=true], [role=combobox]",
-        )
-      ) {
+      if (isTypingTarget(target)) {
         return;
       }
 
@@ -109,6 +81,8 @@ export function useAppShortcuts(
         d: "/dashboard",
         s: "/studio",
         a: "/analytics",
+        t: "/templates",
+        p: "/settings/profile",
       };
       const href = map[e.key.toLowerCase()];
       if (href) {

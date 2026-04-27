@@ -84,20 +84,40 @@ export default function TemplatesGalleryPage() {
     return rows;
   }, [allItems, category, workflowRow]);
 
-  async function openDetail(t: TemplateListItemOut) {
-    setDetail(t);
-    setDetailHtml(null);
-    setDetailLoading(true);
-    try {
-      const d = await getTemplateDetail(getToken, t.id);
-      setDetailHtml(d.html);
-    } catch {
-      toast.error("Could not load template.");
-      setDetail(null);
-    } finally {
-      setDetailLoading(false);
-    }
-  }
+  const openDetail = React.useCallback(
+    async (t: TemplateListItemOut) => {
+      setDetail(t);
+      setDetailHtml(null);
+      setDetailLoading(true);
+      try {
+        const d = await getTemplateDetail(getToken, t.id);
+        setDetailHtml(d.html);
+      } catch {
+        toast.error("Could not load template.");
+        setDetail(null);
+      } finally {
+        setDetailLoading(false);
+      }
+    },
+    [getToken],
+  );
+
+  const openTemplateId = searchParams.get("open");
+  const deepLinkHandledRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    deepLinkHandledRef.current = null;
+  }, [openTemplateId]);
+
+  React.useEffect(() => {
+    if (!openTemplateId || loading) return;
+    if (deepLinkHandledRef.current === openTemplateId) return;
+    const t = allItems.find((i) => i.id === openTemplateId);
+    if (!t) return;
+    deepLinkHandledRef.current = openTemplateId;
+    queueMicrotask(() => {
+      void openDetail(t);
+    });
+  }, [openTemplateId, loading, allItems, openDetail]);
 
   async function onUse(t: TemplateListItemOut) {
     if (!activeOrganizationId) {

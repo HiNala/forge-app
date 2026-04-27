@@ -203,7 +203,8 @@ export function StudioWorkspace() {
       website: "A simple website for ",
       landing_page: "A one-page landing for ",
     };
-    const prime = map[workflowFromUrl];
+    const wfKey = workflowFromUrl.replace(/-/g, "_");
+    const prime = map[wfKey];
     if (prime) setPromptEmpty((prev) => prev || prime);
   }, [workflowFromUrl, active]);
 

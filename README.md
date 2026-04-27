@@ -151,7 +151,7 @@ Run the API on the host from `apps/api` (see `apps/api/pyproject.toml`): typical
 
 ### Going live on the internet
 
-Set `ENVIRONMENT=production` only on real deploys: the API **refuses to boot** with weak `SECRET_KEY`, wildcard `TRUSTED_HOSTS`, missing Clerk config, non-HTTPS public URLs/CORS, or `AUTH_TEST_BYPASS` / `FORGE_E2E_TOKEN` enabled. Use **`METRICS_TOKEN`** for Prometheus, **`TRUST_PROXY_HEADERS=true`** behind your load balancer, and rotate secrets per environment. Full checklist: **`docs/runbooks/PRODUCTION_LAUNCH.md`**.
+Set `ENVIRONMENT=production` only on real deploys: the API **refuses to boot** with weak `SECRET_KEY`, wildcard `TRUSTED_HOSTS`, missing Clerk config, non-HTTPS public URLs/CORS, or `AUTH_TEST_BYPASS` / `FORGE_E2E_TOKEN` enabled. Use **`METRICS_TOKEN`** for Prometheus, **`TRUST_PROXY_HEADERS=true`** behind your load balancer, and rotate secrets per environment. Full checklist: **`docs/runbooks/GO_LIVE_PLAYBOOK.md`** and **`docs/runbooks/LAUNCH_READINESS.md`**.
 
 ---
 
