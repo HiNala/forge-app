@@ -29,7 +29,7 @@ Spec alias: `components/canvas/WebCanvas.tsx` re-exports the implementation from
 | Next.js zip, Framer/Webflow JSON, Figma API, hosted multi-route site | **Pipeline** |
 | Responsive linter + auto-fix | **Not started** |
 | Page Detail tabs (Pages / Canvas / Flow / SEO / …) | **Partial / product** |
-| In-frame link click → pan to target node | **Not started** |
+| In-frame link click → focus / fit target page node | **Shipped** (`requestFocusPageByPath`, `WebCanvasPendingFocus`) |
 | Per-page header override | **Not started** |
 
 ## State (`useWebCanvasStore`)
@@ -47,4 +47,5 @@ Spec alias: `components/canvas/WebCanvas.tsx` re-exports the implementation from
 ## Related docs
 
 - `docs/user/WEB_DESIGN_GUIDE.md` — user-facing how-to.
+- `docs/architecture/MOBILE_CANVAS.md` — sibling surface for `/studio/mobile`.
 - `docs/missions/V2_P03_MISSION_REPORT.md` — mission status vs acceptance criteria.
