@@ -59,6 +59,14 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         </ul>
       </nav>
 
+      <p className="mb-8 text-xs text-text-muted">
+        Press <kbd className="rounded border border-border px-1 font-mono">?</kbd> for the shortcut list, or{" "}
+        <Link href="/help/shortcuts" className="font-medium text-accent hover:underline">
+          open the full cheatsheet
+        </Link>
+        .
+      </p>
+
       {/* Page content with fade transition */}
       <motion.div
         key={pathname}
