@@ -7,6 +7,25 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
+class VisionInput(BaseModel):
+    """Reference image / PDF page / sketch for multi-modal Studio (V2 P-05)."""
+
+    kind: Literal[
+        "screenshot",
+        "brand_board",
+        "sketch",
+        "reference_design",
+        "pdf_page",
+        "photo",
+    ] = "screenshot"
+    storage_key: str
+    mime_type: str
+    width: int = 0
+    height: int = 0
+    description: str | None = None
+    extracted_features: dict[str, Any] | None = None
+
+
 class SiteBrand(BaseModel):
     url: str
     primary_color: str | None = None
@@ -69,8 +88,33 @@ class ContextBundle(BaseModel):
     recent_pages: list[PageSummary] = Field(default_factory=list)
     org_templates: list[TemplateSummary] = Field(default_factory=list)
     calendars: list[CalendarSummary] = Field(default_factory=list)
+    vision_inputs: list[VisionInput] = Field(default_factory=list)
     gather_duration_ms: int = 0
     gather_incomplete: list[str] = Field(default_factory=list)
+
+    def vision_text_block(self) -> str:
+        if not self.vision_inputs:
+            return ""
+        lines: list[str] = ["## Reference attachments (vision)"]
+        for i, v in enumerate(self.vision_inputs, 1):
+            lines.append(
+                f"{i}. kind={v.kind} key={v.storage_key} mime={v.mime_type} size={v.width}x{v.height}",
+            )
+            if v.description:
+                lines.append(f"   User note: {v.description}")
+            feat = v.extracted_features or {}
+            if feat.get("dominant_colors"):
+                lines.append(f"   Colors: {feat.get('dominant_colors')}")
+            if feat.get("style_guess"):
+                lines.append(f"   Style guess: {feat.get('style_guess')}")
+            if feat.get("ocr_text"):
+                t = str(feat["ocr_text"])[:1200]
+                lines.append(f"   Text in image (OCR): {t}")
+        lines.append(
+            "If a reference is attached, mirror visual style (density, mood, palette) — "
+            "adapt to brand tokens; do not copy proprietary assets verbatim.",
+        )
+        return "\n".join(lines) + "\n"
 
     def to_prompt_context(self) -> str:
         lines: list[str] = ["## Business context"]
@@ -103,4 +147,7 @@ class ContextBundle(BaseModel):
             )
         if self.gather_incomplete:
             lines.append(f"(Partial gather; timed out: {', '.join(self.gather_incomplete)})")
+        vz = self.vision_text_block().strip()
+        if vz:
+            lines.append("\n" + vz)
         return "\n".join(lines) + "\n"

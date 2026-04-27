@@ -632,6 +632,19 @@ export type BillingUsageOut = {
   tokens_completion: number;
   period_start: string;
   period_end: string;
+  /** Forge Credits — rolling session (5 h) and week (7 d); see PRICING_MODEL */
+  credits_tier: string;
+  credits_session_used: number;
+  credits_session_cap: number;
+  credits_session_percent: number;
+  credits_week_used: number;
+  credits_week_cap: number;
+  credits_week_percent: number;
+  credits_session_resets_at: string | null;
+  credits_week_resets_at: string | null;
+  extra_usage_enabled: boolean;
+  extra_usage_monthly_cap_cents: number | null;
+  extra_usage_spent_period_cents: number;
 };
 
 export async function getBillingPlan(

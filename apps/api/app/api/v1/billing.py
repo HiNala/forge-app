@@ -255,6 +255,18 @@ async def billing_usage(
         tokens_completion=int(snap["tokens_completion"]),
         period_start=str(snap["period_start"]),
         period_end=str(snap["period_end"]),
+        credits_tier=str(snap.get("credits_tier", "free")),
+        credits_session_used=int(snap.get("credits_session_used", 0)),
+        credits_session_cap=int(snap.get("credits_session_cap", 0)),
+        credits_session_percent=float(snap.get("credits_session_percent", 0.0)),
+        credits_week_used=int(snap.get("credits_week_used", 0)),
+        credits_week_cap=int(snap.get("credits_week_cap", 0)),
+        credits_week_percent=float(snap.get("credits_week_percent", 0.0)),
+        credits_session_resets_at=snap.get("credits_session_resets_at"),
+        credits_week_resets_at=snap.get("credits_week_resets_at"),
+        extra_usage_enabled=bool(snap.get("extra_usage_enabled", False)),
+        extra_usage_monthly_cap_cents=snap.get("extra_usage_monthly_cap_cents"),
+        extra_usage_spent_period_cents=int(snap.get("extra_usage_spent_period_cents", 0)),
         raw=snap,
     )
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth, useUser } from "@clerk/nextjs";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { Monitor, PanelsTopLeft, Send } from "lucide-react";
 import Link from "next/link";
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   apiRequest,
+  getBillingUsage,
   getPage,
   getStudioConversation,
   getStudioUsage,
@@ -37,6 +39,7 @@ import {
   recordWorkflowPageCreated,
 } from "@/lib/studio-workflow-usage";
 import { StudioWorkflowCards } from "@/components/studio/studio-workflow-cards";
+import { estimatedCreditsForAction } from "@/lib/usage-credits";
 import { timeOfDayGreeting } from "@/lib/studio-greeting";
 import {
   ensureBridgeInFullDocument,
@@ -54,6 +57,7 @@ import { cn } from "@/lib/utils";
 import { ForgeLogo } from "@/components/icons/logo";
 import { StudioPageArtifactCard } from "@/components/studio/studio-page-artifact-card";
 import { StudioPublishDialog } from "@/components/studio/studio-publish-dialog";
+import { StudioSessionUsageStrip } from "@/components/usage/studio-session-usage-strip";
 
 const TRANSITION_PANEL = { ...SPRINGS.soft };
 
@@ -86,7 +90,14 @@ export function StudioWorkspace() {
   const workflowFromUrl = searchParams.get("workflow");
   const { getToken } = useAuth();
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const { activeOrganizationId, activeOrg } = useForgeSession();
+  const creditsUsageQ = useQuery({
+    queryKey: ["billing-usage", activeOrganizationId],
+    queryFn: () => getBillingUsage(getToken, activeOrganizationId),
+    enabled: !!activeOrganizationId,
+    staleTime: 15_000,
+  });
   const setSidebarCollapsed = useUIStore((s) => s.setSidebarCollapsed);
 
   const firstName = user?.firstName || user?.emailAddresses?.[0]?.emailAddress?.split("@")[0] || "there";
@@ -598,7 +609,20 @@ export function StudioWorkspace() {
               setPageId(p.id);
             }
             setStreamPhase("idle");
-            if (activeOrganizationId) void getStudioUsage(getToken, activeOrganizationId).then(setUsage).catch(() => {});
+            if (activeOrganizationId) {
+              void getStudioUsage(getToken, activeOrganizationId).then(setUsage).catch(() => {});
+              void queryClient.invalidateQueries({ queryKey: ["billing-usage", activeOrganizationId] });
+              void (async () => {
+                const u = await getBillingUsage(getToken, activeOrganizationId);
+                const wasGen = lastStreamRef.current?.kind === "generate";
+                const est = estimatedCreditsForAction(wasGen ? "generate" : "refine");
+                const remPct = Math.max(0, 100 - u.credits_session_percent);
+                toast.message(wasGen ? "Build complete" : "Changes applied", {
+                  description: `~${est} credits · ~${Math.round(remPct)}% of session headroom left`,
+                  duration: 3000,
+                });
+              })().catch(() => {});
+            }
           }
           if (event === "error" && data && typeof data === "object") {
             const msg = (data as { message?: string }).message ?? "Generation failed";
@@ -624,10 +648,39 @@ export function StudioWorkspace() {
     }
   }
 
+  function cannotUseForgeCredits(): boolean {
+    const bu = creditsUsageQ.data;
+    if (!bu) return false;
+    if (bu.extra_usage_enabled) return false;
+    if ((bu.credits_session_cap ?? 0) > 0 && (bu.credits_session_percent ?? 0) >= 100) {
+      return true;
+    }
+    if ((bu.credits_week_cap ?? 0) > 0 && (bu.credits_week_percent ?? 0) >= 100) {
+      return true;
+    }
+    return false;
+  }
+
+  function heavySessionWarning(kind: "generate" | "refine"): string | null {
+    const bu = creditsUsageQ.data;
+    if (!bu || (bu.credits_session_cap ?? 0) <= 0) return null;
+    const rem = bu.credits_session_cap - bu.credits_session_used;
+    const est = estimatedCreditsForAction(kind);
+    if (rem <= 0) return null;
+    if (est / rem <= 0.5) return null;
+    return `This will use a large share of your remaining session credits (about ${est} of ${rem} left).`;
+  }
+
   function onSubmitEmpty(e?: React.FormEvent) {
     e?.preventDefault();
     const text = promptEmpty.trim();
     if (!text || busy) return;
+    if (cannotUseForgeCredits()) {
+      toast.error("Credit limit reached for this window.", {
+        description: "Upgrade, enable extra usage in Billing, or wait for the next reset.",
+      });
+      return;
+    }
     void runGenerateOrRefine("generate", { prompt: text, page_id: null, provider: "openai" }, text);
     setPromptEmpty("");
   }
@@ -649,6 +702,12 @@ export function StudioWorkspace() {
     if (!pageId) return;
     const text = chatInput.trim();
     if (!text || busy) return;
+    if (cannotUseForgeCredits()) {
+      toast.error("Credit limit reached for this window.", {
+        description: "Upgrade, enable extra usage in Billing, or wait for the next reset.",
+      });
+      return;
+    }
     debouncedPersistDraft(pageId, "");
     setChatInput("");
     void runGenerateOrRefine(
@@ -811,6 +870,40 @@ export function StudioWorkspace() {
                 </p>
               ) : null}
 
+              {cannotUseForgeCredits() ? (
+                <div className="mb-4 w-full rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-left">
+                  <p className="text-sm font-medium text-text font-body">Session and weekly credits are at the limit</p>
+                  <p className="mt-1 text-xs text-text-muted font-body">
+                    You can wait for the next window, add extra usage in Billing, or upgrade.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link
+                      href="/settings/usage"
+                      className="text-sm font-medium text-accent underline-offset-2 hover:underline font-body"
+                    >
+                      View usage
+                    </Link>
+                    <Link
+                      href="/settings/billing"
+                      className="text-sm font-medium text-accent underline-offset-2 hover:underline font-body"
+                    >
+                      Billing
+                    </Link>
+                    <Link
+                      href="/pricing"
+                      className="text-sm font-medium text-text-muted hover:text-text font-body"
+                    >
+                      Compare plans
+                    </Link>
+                  </div>
+                </div>
+              ) : null}
+              {heavySessionWarning("generate") && !cannotUseForgeCredits() ? (
+                <p className="mb-2 text-center text-xs text-amber-700 dark:text-amber-300/90 font-body">
+                  {heavySessionWarning("generate")}
+                </p>
+              ) : null}
+
               <form
                 className="relative w-full"
                 onSubmit={(e) => {
@@ -831,7 +924,7 @@ export function StudioWorkspace() {
                   onBlur={() => setEmptyFocused(false)}
                   minRows={2}
                   maxRows={6}
-                  disabled={busy}
+                  disabled={busy || cannotUseForgeCredits()}
                   placeholder={emptyFocused ? "" : STUDIO_PLACEHOLDERS[placeholderIdx]}
                   className={cn(
                     "w-full resize-none rounded-2xl border border-border bg-surface px-4 py-4 pr-14",
@@ -850,10 +943,10 @@ export function StudioWorkspace() {
                   ) : (
                     <button
                       type="submit"
-                      disabled={!promptEmpty.trim()}
+                      disabled={!promptEmpty.trim() || cannotUseForgeCredits()}
                       className={cn(
                         "pointer-events-auto flex size-9 items-center justify-center rounded-lg border border-border bg-bg-elevated text-accent transition-opacity",
-                        !promptEmpty.trim() && "opacity-40",
+                        (!promptEmpty.trim() || cannotUseForgeCredits()) && "opacity-40",
                       )}
                       aria-label="Send prompt"
                     >
@@ -977,6 +1070,31 @@ export function StudioWorkspace() {
                 ) : null}
               </div>
 
+              {cannotUseForgeCredits() ? (
+                <div className="border-t border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-amber-100 font-body">
+                  <p className="font-medium">Forge Credits limit reached for this window.</p>
+                  <p className="mt-0.5 text-white/60">
+                    <Link href="/settings/usage" className="text-accent hover:underline">
+                      Usage
+                    </Link>{" "}
+                    ·{" "}
+                    <Link href="/settings/billing" className="text-accent hover:underline">
+                      Extra usage
+                    </Link>{" "}
+                    ·{" "}
+                    <Link href="/pricing" className="text-white/50 hover:text-white/80">
+                      Plans
+                    </Link>
+                  </p>
+                </div>
+              ) : null}
+              {heavySessionWarning("refine") && !cannotUseForgeCredits() ? (
+                <div className="border-t border-amber-500/20 bg-amber-500/5 px-3 py-1.5 text-[11px] text-amber-100/90 font-body">
+                  {heavySessionWarning("refine")}
+                </div>
+              ) : null}
+              <StudioSessionUsageStrip active={active} />
+
               <footer className="border-t border-white/10 p-3">
                 <form
                   onSubmit={(e) => {
@@ -1001,7 +1119,7 @@ export function StudioWorkspace() {
                       }}
                       minRows={1}
                       maxRows={4}
-                      disabled={busy || !pageId}
+                      disabled={busy || !pageId || cannotUseForgeCredits()}
                       placeholder="Refine this page…"
                       className="min-h-0 flex-1 resize-none rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 font-body focus-visible:border-accent focus-visible:outline-none"
                     />
@@ -1009,7 +1127,7 @@ export function StudioWorkspace() {
                       type="submit"
                       size="sm"
                       variant="primary"
-                      disabled={!chatInput.trim() || !pageId || busy}
+                      disabled={!chatInput.trim() || !pageId || busy || cannotUseForgeCredits()}
                       className="shrink-0"
                     >
                       <Send className="size-4" />

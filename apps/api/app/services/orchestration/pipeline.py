@@ -73,6 +73,7 @@ async def stream_page_generation(
     provider: str | None,
     existing_page_id: UUID | None,
     forced_workflow: str | None = None,
+    vision_attachment_ids: list[UUID] | None = None,
 ) -> AsyncIterator[bytes]:
     """Yield SSE chunks: intent → html.chunk (per section) → html.complete | error."""
     brand_row = (
@@ -111,15 +112,31 @@ async def stream_page_generation(
     composed = None
 
     yield _sse("context", {"phase": "started"})
-    bundle = await gather_context(db=db, org=org_row, user=user, prompt=prompt, time_budget_seconds=3.0)
+    bundle = await gather_context(
+        db=db,
+        org=org_row,
+        user=user,
+        prompt=prompt,
+        time_budget_seconds=3.0,
+        vision_attachment_ids=vision_attachment_ids,
+    )
     yield _sse(
         "context.gathered",
         {
             "duration_ms": bundle.gather_duration_ms,
             "incomplete": bundle.gather_incomplete,
             "urls": bundle.prompt_urls,
+            "vision_attachments": len(bundle.vision_inputs),
         },
     )
+    if bundle.vision_inputs:
+        yield _sse(
+            "context.vision",
+            {
+                "count": len(bundle.vision_inputs),
+                "kinds": [v.kind for v in bundle.vision_inputs],
+            },
+        )
     if bundle.site_brand:
         yield _sse(
             "context.brand.extracted",

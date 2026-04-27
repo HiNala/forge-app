@@ -17,6 +17,14 @@ class StudioGenerateRequest(BaseModel):
         default=None,
         description="Optional — user disambiguation overrides auto intent for this generation.",
     )
+    session_id: str = Field(
+        default="default",
+        description="Client-side Studio session key for grouped attachments (P-05).",
+    )
+    vision_attachment_ids: list[UUID] = Field(
+        default_factory=list,
+        description="Registered studio_attachments to include as vision context (max 5).",
+    )
 
 
 class StudioGenerateContinueRequest(BaseModel):
@@ -33,6 +41,35 @@ class StudioRefineRequest(BaseModel):
     message: str = Field(examples=["Make the hero more minimal"])
     page_id: UUID = Field(examples=["00000000-0000-4000-8000-000000000002"])
     provider: Literal["openai", "anthropic", "gemini"] | None = Field(default=None)
+    session_id: str = "default"
+    vision_attachment_ids: list[UUID] = Field(default_factory=list)
+
+
+class StudioPresignRequest(BaseModel):
+    session_id: str = "default"
+    filename: str = "upload.png"
+    content_type: str = "image/png"
+
+
+class StudioPresignOut(BaseModel):
+    url: str
+    storage_key: str
+    max_size_bytes: int
+
+
+class StudioRegisterAttachmentIn(BaseModel):
+    session_id: str = "default"
+    storage_key: str
+    kind: str = "screenshot"
+    mime_type: str
+    width: int | None = None
+    height: int | None = None
+    description: str | None = None
+
+
+class StudioRegisterAttachmentOut(BaseModel):
+    id: UUID
+    storage_key: str
 
 
 class StudioSectionEditRequest(BaseModel):

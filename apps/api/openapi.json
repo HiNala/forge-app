@@ -6986,6 +6986,75 @@
             "type": "string",
             "title": "Period End"
           },
+          "credits_tier": {
+            "type": "string",
+            "title": "Credits Tier"
+          },
+          "credits_session_used": {
+            "type": "integer",
+            "title": "Credits Session Used"
+          },
+          "credits_session_cap": {
+            "type": "integer",
+            "title": "Credits Session Cap"
+          },
+          "credits_session_percent": {
+            "type": "number",
+            "title": "Credits Session Percent"
+          },
+          "credits_week_used": {
+            "type": "integer",
+            "title": "Credits Week Used"
+          },
+          "credits_week_cap": {
+            "type": "integer",
+            "title": "Credits Week Cap"
+          },
+          "credits_week_percent": {
+            "type": "number",
+            "title": "Credits Week Percent"
+          },
+          "credits_session_resets_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits Session Resets At"
+          },
+          "credits_week_resets_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits Week Resets At"
+          },
+          "extra_usage_enabled": {
+            "type": "boolean",
+            "title": "Extra Usage Enabled"
+          },
+          "extra_usage_monthly_cap_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Usage Monthly Cap Cents"
+          },
+          "extra_usage_spent_period_cents": {
+            "type": "integer",
+            "title": "Extra Usage Spent Period Cents"
+          },
           "raw": {
             "additionalProperties": true,
             "type": "object",
@@ -7001,7 +7070,19 @@
           "tokens_prompt",
           "tokens_completion",
           "period_start",
-          "period_end"
+          "period_end",
+          "credits_tier",
+          "credits_session_used",
+          "credits_session_cap",
+          "credits_session_percent",
+          "credits_week_used",
+          "credits_week_cap",
+          "credits_week_percent",
+          "credits_session_resets_at",
+          "credits_week_resets_at",
+          "extra_usage_enabled",
+          "extra_usage_monthly_cap_cents",
+          "extra_usage_spent_period_cents"
         ],
         "title": "BillingUsageOut"
       },

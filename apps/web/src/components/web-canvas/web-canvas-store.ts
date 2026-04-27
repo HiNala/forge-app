@@ -1,8 +1,11 @@
 import { create } from "zustand";
 import { addEdge, type Connection, type Edge, type Node } from "@xyflow/react";
+import type { WebCanvasFontPairId } from "@/lib/web-canvas-fonts";
 import { createWebPageNode, type WebBrowserNodeData, type WebCanvasFocusBreakpoint } from "./types";
 
 type ThemeMode = "light" | "dark";
+
+export type SiteNavLink = { id: string; label: string; href: string };
 
 function escapeHtmlText(raw: string): string {
   return raw
@@ -13,24 +16,42 @@ function escapeHtmlText(raw: string): string {
     .replace(/'/g, "&#39;");
 }
 
-const demoWebHtml = (title: string, path: string) => {
+function escapeHtmlAttr(raw: string): string {
+  return escapeHtmlText(raw).replace(/`/g, "&#96;");
+}
+
+const DEFAULT_SITE_NAV: SiteNavLink[] = [
+  { id: "nav-home", label: "Home", href: "/" },
+  { id: "nav-pricing", label: "Pricing", href: "/pricing" },
+];
+
+/** Shared header/footer + main body; nav drives the site-wide header. Exported for tests. */
+export function buildPageHtml(title: string, path: string, navLinks: SiteNavLink[]): string {
   const t = escapeHtmlText(title);
   const p = escapeHtmlText(path);
+  const navItems = navLinks
+    .map(
+      (l) =>
+        `<a data-forge-node-id="${escapeHtmlAttr(`link-${l.id}`)}" href="${escapeHtmlAttr(l.href)}" style="font-size:13px;color:var(--fc-fg);opacity:.85;text-decoration:none;font-weight:500;">${escapeHtmlText(l.label)}</a>`,
+    )
+    .join('<span style="opacity:.25">·</span>');
+
   return `
 <header data-forge-region="header" data-forge-shared="1" style="padding:12px 20px;border-bottom:1px solid rgba(0,0,0,.08);background:var(--fc-bg-elevated);">
-  <nav style="display:flex;gap:20px;align-items:center;justify-content:space-between;font:14px/1.2 system-ui,sans-serif;">
-    <span style="font-weight:700;color:var(--fc-accent)">Acme</span>
+  <nav style="display:flex;gap:14px;align-items:center;justify-content:space-between;font:14px/1.2 var(--fc-font-body,system-ui,sans-serif);">
+    <span data-forge-node-id="brand" style="font-weight:700;color:var(--fc-accent)">Acme</span>
+    <span style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">${navItems}</span>
     <span style="font-size:12px;opacity:.55">${p}</span>
   </nav>
 </header>
-<main style="padding:24px 20px;max-width:100%;">
-  <h1 data-forge-node-id="h1" style="font-size:clamp(1.5rem,4vw,2.25rem);font-weight:700;margin:0 0 12px;letter-spacing:-.02em;">${t}</h1>
+<main style="padding:24px 20px;max-width:100%;font-family:var(--fc-font-body,system-ui,sans-serif);">
+  <h1 data-forge-node-id="h1" style="font-size:clamp(1.5rem,4vw,2.25rem);font-weight:700;margin:0 0 12px;letter-spacing:-.02em;font-family:var(--fc-font-heading,inherit);">${t}</h1>
   <p data-forge-node-id="p1" style="font-size:16px;line-height:1.5;opacity:.88;margin:0 0 20px;">F-pattern friendly intro copy. The same page renders at three widths on the canvas.</p>
   <a data-forge-node-id="a1" href="#" style="display:inline-block;padding:10px 18px;border-radius:8px;background:var(--fc-accent);color:#fff;font-weight:600;font-size:15px;text-decoration:none;">Call to action</a>
 </main>
-<footer data-forge-region="footer" data-forge-shared="1" style="padding:16px 20px;font-size:12px;opacity:.6;border-top:1px solid rgba(0,0,0,.08);">© Forge preview — shared site footer</footer>
+<footer data-forge-region="footer" data-forge-shared="1" style="padding:16px 20px;font-size:12px;opacity:.6;border-top:1px solid rgba(0,0,0,.08);font-family:var(--fc-font-body,system-ui,sans-serif);">© Forge preview — shared site footer</footer>
 `;
-};
+}
 
 export type WebPageRecord = {
   id: string;
@@ -40,7 +61,7 @@ export type WebPageRecord = {
 };
 
 const INITIAL_PAGES: WebPageRecord[] = [
-  { id: "wp-home", title: "Home", path: "/", html: demoWebHtml("Welcome home", "/") },
+  { id: "wp-home", title: "Home", path: "/", html: buildPageHtml("Welcome home", "/", DEFAULT_SITE_NAV) },
 ];
 
 function positionsByPageId(nodes: Node<WebBrowserNodeData>[]): Map<string, { x: number; y: number }> {
@@ -80,11 +101,15 @@ type Store = {
   setFocusBreakpoint: (b: WebCanvasFocusBreakpoint) => void;
   siteNavEditorOpen: boolean;
   setSiteNavEditorOpen: (v: boolean) => void;
+  siteNavLinks: SiteNavLink[];
+  setSiteNavLinks: (links: SiteNavLink[]) => void;
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
   marqueeMode: boolean;
   setMarqueeMode: (v: boolean) => void;
   toggleMarqueeMode: () => void;
+  fontPairId: WebCanvasFontPairId;
+  setFontPairId: (id: WebCanvasFontPairId) => void;
   pages: WebPageRecord[];
   setPages: (p: WebPageRecord[] | ((prev: WebPageRecord[]) => WebPageRecord[])) => void;
   accentHue: number;
@@ -100,6 +125,9 @@ type Store = {
   onConnect: (c: Connection) => void;
   resyncNodes: () => void;
   addPage: () => void;
+  renamePage: (id: string, title: string) => void;
+  duplicatePage: (id: string) => void;
+  deletePage: (id: string) => void;
 };
 
 export const useWebCanvasStore = create<Store>((set, get) => ({
@@ -107,6 +135,19 @@ export const useWebCanvasStore = create<Store>((set, get) => ({
   setFocusBreakpoint: (focusBreakpoint) => set({ focusBreakpoint }),
   siteNavEditorOpen: false,
   setSiteNavEditorOpen: (siteNavEditorOpen) => set({ siteNavEditorOpen }),
+  siteNavLinks: DEFAULT_SITE_NAV,
+  setSiteNavLinks: (siteNavLinks) => {
+    const { pages, theme, nodes } = get();
+    const nextPages = pages.map((p) => ({
+      ...p,
+      html: buildPageHtml(p.title, p.path, siteNavLinks),
+    }));
+    set({
+      siteNavLinks,
+      pages: nextPages,
+      nodes: buildNodes(nextPages, theme, positionsByPageId(nodes)),
+    });
+  },
   theme: "light",
   setTheme: (theme) => {
     const { pages, nodes } = get();
@@ -115,6 +156,8 @@ export const useWebCanvasStore = create<Store>((set, get) => ({
   marqueeMode: false,
   setMarqueeMode: (marqueeMode) => set({ marqueeMode }),
   toggleMarqueeMode: () => set((s) => ({ marqueeMode: !s.marqueeMode })),
+  fontPairId: "system",
+  setFontPairId: (fontPairId) => set({ fontPairId }),
   pages: INITIAL_PAGES,
   setPages: (u) => {
     const next = typeof u === "function" ? u(get().pages) : u;
@@ -140,12 +183,39 @@ export const useWebCanvasStore = create<Store>((set, get) => ({
   },
   addPage: () => {
     const n = get().pages.length + 1;
+    const { siteNavLinks } = get();
     const pg: WebPageRecord = {
       id: `wp-${Date.now()}`,
       title: `Page ${n}`,
       path: `/page-${n}`,
-      html: demoWebHtml(`New page ${n}`, `/page-${n}`),
+      html: buildPageHtml(`New page ${n}`, `/page-${n}`, siteNavLinks),
     };
     get().setPages((prev) => [...prev, pg]);
+  },
+  renamePage: (id, title) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    const { siteNavLinks } = get();
+    get().setPages((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, title: trimmed, html: buildPageHtml(trimmed, p.path, siteNavLinks) } : p)),
+    );
+  },
+  duplicatePage: (id) => {
+    const { pages, siteNavLinks } = get();
+    const p = pages.find((x) => x.id === id);
+    if (!p) return;
+    const idx = pages.length + 1;
+    const nid = `wp-${Date.now()}`;
+    const pg: WebPageRecord = {
+      id: nid,
+      title: `${p.title} copy`,
+      path: `/page-${idx}-${nid.slice(-4)}`,
+      html: buildPageHtml(`${p.title} copy`, `/page-${idx}-${nid.slice(-4)}`, siteNavLinks),
+    };
+    get().setPages((prev) => [...prev, pg]);
+  },
+  deletePage: (id) => {
+    if (get().pages.length <= 1) return;
+    get().setPages((prev) => prev.filter((p) => p.id !== id));
   },
 }));

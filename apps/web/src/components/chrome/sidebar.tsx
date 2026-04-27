@@ -72,7 +72,7 @@ const NAV = [
   { href: "/settings/profile", label: "Settings", icon: Settings },
 ] as const;
 
-/** Plan usage: submissions quota when set, else pages generated (Mission 06). */
+/** Session Forge Credits (P-04) + monthly plan meter; links to usage settings. */
 function OrgQuotaBar({
   collapsed,
   getToken,
@@ -90,40 +90,51 @@ function OrgQuotaBar({
   });
   const u = q.data;
   if (!u) return null;
+  const sCap = u.credits_session_cap ?? 0;
+  const sUsed = u.credits_session_used ?? 0;
+  const sPct = sCap > 0 ? Math.min(100, (sUsed / sCap) * 100) : 0;
+  const sBar =
+    sPct >= 100 ? "bg-red-500/80" : sPct >= 90 ? "bg-orange-500" : sPct >= 70 ? "bg-amber-500" : "bg-accent";
+
   const useSubs = u.submissions_quota > 0;
-  const cap = useSubs ? u.submissions_quota : u.pages_quota;
-  const used = useSubs ? u.submissions_received : u.pages_generated;
-  if (cap <= 0) return null;
-  const ratio = Math.min(1, used / cap);
-  const pct = ratio * 100;
-  const barClass =
-    pct >= 100 ? "bg-danger" : pct >= 80 ? "bg-warning" : "bg-accent";
-  const label = useSubs
-    ? `${used}/${cap} submissions this month`
-    : `${used}/${cap} pages this month`;
+  const capM = useSubs ? u.submissions_quota : u.pages_quota;
+  const usedM = useSubs ? u.submissions_received : u.pages_generated;
+  const monthlyLine =
+    capM > 0
+      ? useSubs
+        ? `${usedM.toLocaleString()}/${capM.toLocaleString()} submissions (mo.)`
+        : `${usedM.toLocaleString()}/${capM.toLocaleString()} published (mo.)`
+      : null;
+
+  const label = sCap > 0 ? `Session: ${sUsed.toLocaleString()}/${sCap.toLocaleString()} credits` : monthlyLine ?? "Usage";
 
   const inner = (
     <Link
-      href="/settings/billing"
+      href="/settings/usage"
       className={cn(
         "block w-full rounded-md px-1 py-2 text-left transition-colors hover:bg-bg-elevated/60",
         collapsed && "px-0 py-1.5",
       )}
-      aria-label={label}
+      aria-label={`${label}. Open usage and limits.`}
     >
       {!collapsed ? (
         <p className="mb-1 text-[10px] font-medium tracking-wide text-text-subtle uppercase">
-          Plan usage
+          Session (Forge Credits)
         </p>
       ) : null}
-      <div className="h-1 w-full overflow-hidden rounded-full bg-border">
-        <div
-          className={cn("h-full rounded-full transition-all", barClass)}
-          style={{ width: `${Math.min(100, pct)}%` }}
-        />
-      </div>
+      {sCap > 0 ? (
+        <div className="h-1 w-full overflow-hidden rounded-full bg-border">
+          <div
+            className={cn("h-full rounded-full transition-all", sBar)}
+            style={{ width: `${Math.min(100, sPct)}%` }}
+          />
+        </div>
+      ) : null}
       {!collapsed ? (
         <p className="mt-1 truncate text-[11px] text-text-muted">{label}</p>
+      ) : null}
+      {!collapsed && monthlyLine ? (
+        <p className="mt-0.5 truncate text-[10px] text-text-subtle">{monthlyLine}</p>
       ) : null}
     </Link>
   );
@@ -133,7 +144,8 @@ function OrgQuotaBar({
       <Tooltip>
         <TooltipTrigger asChild>{inner}</TooltipTrigger>
         <TooltipContent side="right" className="max-w-[220px]">
-          {label} — Billing
+          {label}
+          {monthlyLine ? ` · ${monthlyLine}` : ""} — Usage
         </TooltipContent>
       </Tooltip>
     );

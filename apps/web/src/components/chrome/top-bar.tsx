@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useCommandPalette } from "@/contexts/command-palette-context";
 import { getNotificationUnreadCount } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
+import { SessionUsageBattery } from "@/components/usage/session-usage-battery";
 import { Sidebar } from "@/components/chrome/sidebar";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
@@ -126,6 +127,7 @@ export function TopBar({ className }: { className?: string }) {
       </div>
 
       <div className="flex shrink-0 items-center gap-2 md:gap-3">
+        <SessionUsageBattery />
         <Sheet open={notifOpen} onOpenChange={setNotifOpen}>
           <SheetTrigger asChild>
             <button

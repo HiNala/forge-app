@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, String, Text, func, text
+from sqlalchemy import BigInteger, Boolean, DateTime, Integer, String, Text, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -36,6 +36,20 @@ class Organization(Base, UUIDPrimaryKeyMixin):
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )
     account_status: Mapped[str] = mapped_column(Text, nullable=False, server_default="active")
+    # V2 P-04 — rolling Forge Credit windows (denormalized; ledger is source of truth)
+    credits_consumed_session: Mapped[int] = mapped_column(
+        BigInteger, nullable=False, server_default="0"
+    )
+    credits_consumed_week: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+    session_window_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    week_window_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    extra_usage_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false"
+    )
+    extra_usage_monthly_cap_cents: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    extra_usage_spent_period_cents: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
+    )
 
     memberships = relationship("Membership", back_populates="organization")
     brand_kit = relationship("BrandKit", back_populates="organization", uselist=False)

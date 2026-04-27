@@ -254,6 +254,13 @@ Worker-specific behavior: **`docs/runbooks/WORKER.md`**.
 | Database | `docs/runbooks/DATABASE.md` |
 | Go-live | `docs/runbooks/GO_LIVE_PLAYBOOK.md` |
 | Environments | `docs/runbooks/ENVIRONMENTS.md` |
+| **Pricing (V2 model)** | `docs/billing/PRICING_MODEL.md` — Free / Pro / Max 5x / Max 20x, Forge Credits, session + weekly windows |
+
+---
+
+## Pricing (summary)
+
+Self-serve tiers: **Free** ($0), **Pro** ($20/mo, $200/yr), **Max 5x** ($100/mo, $1,000/yr), **Max 20x** ($200/mo, $2,000/yr). Usage is metered in **Forge Credits** with a rolling **5-hour session** pool and a **7-day weekly** cap; see the marketing **Pricing** page and `docs/billing/PRICING_MODEL.md` for the full table (published mini-apps, submissions, seats, overage, etc.).
 
 ---
 

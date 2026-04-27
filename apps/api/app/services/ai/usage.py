@@ -13,6 +13,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Organization, SubscriptionUsage
+from app.services.billing.credit_windows import apply_rolling_resets_in_memory
+from app.services.billing.credits import credits_usage_dict
 from app.services.billing_gate import check_quota
 from app.services.billing_plans import monthly_page_generation_limit, monthly_submissions_limit
 
@@ -151,6 +153,9 @@ async def usage_snapshot(db: AsyncSession, organization_id: UUID) -> dict[str, A
     period = _month_start()
     row = await _get_usage_row(db, organization_id, period)
     org = await db.get(Organization, organization_id)
+    if org is not None:
+        apply_rolling_resets_in_memory(org)
+        await db.flush()
     plan = (org.plan if org else "trial").lower()
     trial_ends = org.trial_ends_at if org else None
     limit = monthly_quota_for_plan(plan, trial_ends_at=trial_ends)
@@ -159,7 +164,7 @@ async def usage_snapshot(db: AsyncSession, organization_id: UUID) -> dict[str, A
     subs_used = int(row.submissions_received or 0) if row else 0
     last_day = calendar.monthrange(period.year, period.month)[1]
     period_end = date(period.year, period.month, last_day)
-    return {
+    out: dict[str, Any] = {
         "plan": plan,
         "pages_generated": used,
         "pages_quota": limit,
@@ -171,3 +176,6 @@ async def usage_snapshot(db: AsyncSession, organization_id: UUID) -> dict[str, A
         "tokens_completion": int(row.tokens_completion or 0) if row else 0,
         "cost_cents": int(row.cost_cents or 0) if row else 0,
     }
+    if org is not None:
+        out.update(credits_usage_dict(org))
+    return out

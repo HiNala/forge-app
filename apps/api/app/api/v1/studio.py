@@ -13,13 +13,18 @@ from starlette.responses import StreamingResponse
 from app.db.models import Conversation, Message, Organization, Page, PageRevision, User
 from app.deps import get_db, require_role, require_tenant, require_user
 from app.deps.tenant import TenantContext
+from app.db.models.studio_attachment import StudioAttachment
 from app.schemas.studio import (
     StudioConversationResponse,
     StudioGenerateContinueRequest,
     StudioGenerateRequest,
     StudioMessageCreateRequest,
     StudioMessageOut,
+    StudioPresignOut,
+    StudioPresignRequest,
     StudioRefineRequest,
+    StudioRegisterAttachmentIn,
+    StudioRegisterAttachmentOut,
     StudioSectionEditRequest,
     StudioSectionEditResponse,
 )
@@ -29,6 +34,8 @@ from app.services.ai.usage import (
     usage_snapshot,
 )
 from app.services.orchestration.pipeline import stream_page_generation
+from app.services.storage_s3 import presign_put_studio_attachment
+from app.services.vision.extract import stub_extract_from_kind
 from app.services.orchestration.section_editor import (
     edit_section_html,
     extract_section_html,
@@ -46,6 +53,52 @@ async def studio_usage(
 ) -> dict[str, Any]:
     """Monthly quota + token usage for the active org (Studio UI)."""
     return await usage_snapshot(db, ctx.organization_id)
+
+
+@router.post("/attachments/presign", response_model=StudioPresignOut)
+async def studio_presign_attachment(
+    body: StudioPresignRequest,
+    ctx: TenantContext = Depends(require_tenant),
+) -> StudioPresignOut:
+    if not body.content_type.startswith(("image/", "application/pdf")):
+        raise HTTPException(status_code=400, detail="Only images and PDFs are allowed")
+    out = presign_put_studio_attachment(
+        organization_id=ctx.organization_id,
+        session_id=body.session_id or "default",
+        filename=body.filename,
+        content_type=body.content_type,
+    )
+    return StudioPresignOut(
+        url=out["url"],
+        storage_key=out["storage_key"],
+        max_size_bytes=int(out["max_size_bytes"]),
+    )
+
+
+@router.post("/attachments/register", response_model=StudioRegisterAttachmentOut)
+async def studio_register_attachment(
+    body: StudioRegisterAttachmentIn,
+    db: AsyncSession = Depends(get_db),
+    ctx: TenantContext = Depends(require_tenant),
+    user: User = Depends(require_user),
+) -> StudioRegisterAttachmentOut:
+    feats = stub_extract_from_kind(body.kind, body.mime_type)
+    row = StudioAttachment(
+        organization_id=ctx.organization_id,
+        user_id=user.id,
+        session_id=body.session_id or "default",
+        storage_key=body.storage_key,
+        kind=body.kind[:32],
+        mime_type=body.mime_type[:128],
+        width=body.width,
+        height=body.height,
+        description=body.description,
+        extracted_features=feats,
+    )
+    db.add(row)
+    await db.commit()
+    await db.refresh(row)
+    return StudioRegisterAttachmentOut(id=row.id, storage_key=row.storage_key)
 
 _SSE_HEADERS = {
     "Cache-Control": "no-cache",
@@ -96,6 +149,7 @@ async def studio_generate(
             provider=body.provider,
             existing_page_id=body.page_id,
             forced_workflow=body.forced_workflow,
+            vision_attachment_ids=body.vision_attachment_ids or None,
         ):
             yield chunk
 
@@ -149,6 +203,7 @@ async def studio_refine(
             provider=body.provider,
             existing_page_id=page.id,
             forced_workflow=None,
+            vision_attachment_ids=body.vision_attachment_ids or None,
         ):
             yield chunk
 

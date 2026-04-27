@@ -2492,6 +2492,30 @@ export interface components {
             period_start: string;
             /** Period End */
             period_end: string;
+            /** Credits Tier */
+            credits_tier: string;
+            /** Credits Session Used */
+            credits_session_used: number;
+            /** Credits Session Cap */
+            credits_session_cap: number;
+            /** Credits Session Percent */
+            credits_session_percent: number;
+            /** Credits Week Used */
+            credits_week_used: number;
+            /** Credits Week Cap */
+            credits_week_cap: number;
+            /** Credits Week Percent */
+            credits_week_percent: number;
+            /** Credits Session Resets At */
+            credits_session_resets_at: string | null;
+            /** Credits Week Resets At */
+            credits_week_resets_at: string | null;
+            /** Extra Usage Enabled */
+            extra_usage_enabled: boolean;
+            /** Extra Usage Monthly Cap Cents */
+            extra_usage_monthly_cap_cents: number | null;
+            /** Extra Usage Spent Period Cents */
+            extra_usage_spent_period_cents: number;
             /** Raw */
             raw?: {
                 [key: string]: unknown;

@@ -1,16 +1,9 @@
 "use client";
 
-import * as React from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { WEB_CANVAS_FONT_PAIRS, type WebCanvasFontPairId } from "@/lib/web-canvas-fonts";
 import { useWebCanvasStore } from "./web-canvas-store";
-
-const FONT_PAIRS = [
-  { id: "system", label: "System / Inter" },
-  { id: "inter", label: "Inter + Inter" },
-  { id: "display", label: "DM Sans + Inter" },
-  { id: "serif", label: "Fraunces + Source Sans" },
-];
 
 /**
  * Site-wide brand controls for the web canvas (P-03). Tokens apply to every page preview.
@@ -24,7 +17,8 @@ export function WebCanvasTweaks() {
   const setApplyTweaksToAll = useWebCanvasStore((s) => s.setApplyTweaksToAll);
   const theme = useWebCanvasStore((s) => s.theme);
   const setTheme = useWebCanvasStore((s) => s.setTheme);
-  const [fontPair, setFontPair] = React.useState("system");
+  const fontPairId = useWebCanvasStore((s) => s.fontPairId);
+  const setFontPairId = useWebCanvasStore((s) => s.setFontPairId);
 
   return (
     <div className="w-[220px] shrink-0 space-y-4 rounded-xl border border-border bg-surface/95 p-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-surface/80">
@@ -36,7 +30,8 @@ export function WebCanvasTweaks() {
           <Switch checked={applyTweaksToAll} onCheckedChange={setApplyTweaksToAll} />
         </div>
         <p className="text-[10px] leading-snug text-text-muted">
-          Brand colors and radius update every browser frame. Per-page override comes in Phase 6.
+          Brand colors, type, and radius update every browser frame. Per-page overrides ship with P-03
+          orchestration.
         </p>
       </div>
 
@@ -70,11 +65,11 @@ export function WebCanvasTweaks() {
       <div className="space-y-1.5">
         <Label className="text-[11px] text-text-muted">Font pair</Label>
         <select
-          value={fontPair}
-          onChange={(e) => setFontPair(e.target.value)}
+          value={fontPairId}
+          onChange={(e) => setFontPairId(e.target.value as WebCanvasFontPairId)}
           className="w-full rounded-md border border-border bg-surface py-1.5 pr-2 pl-2 font-body text-[11px]"
         >
-          {FONT_PAIRS.map((f) => (
+          {WEB_CANVAS_FONT_PAIRS.map((f) => (
             <option key={f.id} value={f.id}>
               {f.label}
             </option>

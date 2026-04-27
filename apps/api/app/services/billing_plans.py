@@ -7,10 +7,14 @@ from datetime import UTC, datetime
 from app.config import settings
 
 
-def _trial_active(*, trial_ends_at: datetime | None) -> bool:
+def trial_is_active(*, trial_ends_at: datetime | None) -> bool:
     if trial_ends_at is None:
         return False
     return trial_ends_at > datetime.now(UTC)
+
+
+def _trial_active(*, trial_ends_at: datetime | None) -> bool:
+    return trial_is_active(trial_ends_at=trial_ends_at)
 
 
 def effective_plan(plan: str | None, *, trial_ends_at: datetime | None) -> str:

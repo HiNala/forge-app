@@ -12,14 +12,17 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import BrandKit, CalendarConnection, Organization, Page, User
+from app.db.models.studio_attachment import StudioAttachment
 from app.services.context.budget import wait_with_budget, with_timeout
 from app.services.context.models import (
     CalendarSummary,
     ContextBundle,
     PageSummary,
     SiteBrand,
+    VisionInput,
     VoiceProfile,
 )
+from app.services.vision.extract import vision_input_from_row
 from app.services.context.site_extract import (
     extract_site_brand,
     extract_site_products_stub,
@@ -101,6 +104,43 @@ async def _resolve_urls(
     return []
 
 
+async def _load_vision_for_prompt(
+    db: AsyncSession,
+    org_id: UUID,
+    user_id: UUID,
+    attachment_ids: list[UUID],
+) -> list[VisionInput]:
+    if not attachment_ids:
+        return []
+    rows = (
+        (
+            await db.execute(
+                select(StudioAttachment).where(
+                    StudioAttachment.organization_id == org_id,
+                    StudioAttachment.user_id == user_id,
+                    StudioAttachment.id.in_(attachment_ids),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    out: list[VisionInput] = []
+    for r in rows:
+        out.append(
+            vision_input_from_row(
+                r.storage_key,
+                r.kind,
+                r.mime_type,
+                r.width,
+                r.height,
+                r.description,
+                r.extracted_features,
+            ),
+        )
+    return out
+
+
 async def gather_context(
     *,
     db: AsyncSession,
@@ -108,6 +148,7 @@ async def gather_context(
     user: User,
     prompt: str,
     time_budget_seconds: float = 3.0,
+    vision_attachment_ids: list[UUID] | None = None,
 ) -> ContextBundle:
     """Parallel gather with hard budget; secondary URL tasks get an additional slice."""
     t0 = time.perf_counter()
@@ -149,6 +190,9 @@ async def gather_context(
 
     primary = await wait_with_budget(tasks, budget_seconds=time_budget_seconds)
 
+    v_ids = list(vision_attachment_ids or [])[:5]
+    vision_list = await _load_vision_for_prompt(db, org.id, user.id, v_ids)
+
     bundle = ContextBundle(
         brand_kit=primary.get("brand_kit"),
         prompt_urls=list(primary.get("prompt_urls") or []),
@@ -156,6 +200,7 @@ async def gather_context(
         org_templates=list(primary.get("org_templates") or []),
         user_voice=None,
         calendars=list(primary.get("calendars") or []),
+        vision_inputs=vision_list,
     )
     uv = primary.get("user_voice")
     if isinstance(uv, dict):

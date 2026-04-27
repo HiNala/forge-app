@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import mimetypes
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import boto3
 from botocore.config import Config
@@ -80,6 +80,32 @@ def upload_template_preview_png(*, template_id: UUID, content: bytes) -> str:
     )
     base = settings.PUBLIC_ASSET_BASE_URL.rstrip("/")
     return f"{base}/{key}"
+
+
+def presign_put_studio_attachment(
+    *,
+    organization_id: UUID,
+    session_id: str,
+    filename: str,
+    content_type: str,
+    max_size_bytes: int = 10 * 1024 * 1024,
+) -> dict[str, str]:
+    """Return presigned PUT URL and storage key for Studio multi-modal uploads (P-05)."""
+    ensure_bucket()
+    ext = guess_ext(filename, content_type)
+    safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in filename[:80])
+    key = f"org/{organization_id}/studio/{session_id}/{uuid4().hex}-{safe}.{ext}"
+    c = _client()
+    url = c.generate_presigned_url(
+        "put_object",
+        Params={
+            "Bucket": settings.S3_BUCKET,
+            "Key": key,
+            "ContentType": content_type.split(";")[0].strip(),
+        },
+        ExpiresIn=3600,
+    )
+    return {"url": url, "storage_key": key, "max_size_bytes": str(max_size_bytes)}
 
 
 def guess_ext(filename: str, content_type: str) -> str:

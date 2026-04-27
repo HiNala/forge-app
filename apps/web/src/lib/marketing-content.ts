@@ -128,17 +128,23 @@ export const PRICING_FAQ: { q: string; a: string }[] = [
   },
 ];
 
-export const PRICING_COMPARISON: { feature: string; free: string; pro: string; max: string }[] = [
-  { feature: "Live mini-apps (pages)", free: "3", pro: "25", max: "100" },
-  { feature: "Form submissions / mo (guidance)", free: "200", pro: "5k", max: "25k" },
-  { feature: "Session usage & weekly cap", free: "Entry", pro: "Standard", max: "High" },
-  { feature: "Custom domain + TLS", free: "—", pro: "Yes", max: "Yes" },
-  { feature: "Team seats", free: "1", pro: "5", max: "15" },
-  { feature: "Automations", free: "—", pro: "Core", max: "Full" },
-  { feature: "Analytics retention", free: "14 days", pro: "12 months", max: "24 months" },
-  { feature: "Support", free: "Email", pro: "Priority", max: "Priority + same-day" },
-  { feature: "Exports (PDF, PPTX, HTML, …)", free: "Core", pro: "Full", max: "Full" },
-  { feature: "Calendar integrations", free: "—", pro: "Yes", max: "Yes" },
-  { feature: "API access", free: "—", pro: "Read", max: "Read/write" },
-  { feature: "SSO / SAML", free: "—", pro: "—", max: "Add-on" },
+export const PRICING_COMPARISON: {
+  feature: string;
+  free: string;
+  pro: string;
+  max5: string;
+  max20: string;
+}[] = [
+  { feature: "Published mini-apps", free: "1", pro: "25", max5: "100", max20: "500" },
+  { feature: "Form submissions / month", free: "50", pro: "5,000", max5: "50,000", max20: "250,000" },
+  { feature: "Forge Credits / session (5 h)", free: "50", pro: "500", max5: "2,500", max20: "10,000" },
+  { feature: "Weekly Forge Credits cap", free: "200", pro: "5,000", max5: "25,000", max20: "100,000" },
+  { feature: "Concurrent generations", free: "1", pro: "2", max5: "5", max20: "15" },
+  { feature: "Custom domains", free: "—", pro: "1", max5: "10", max20: "Unlimited" },
+  { feature: "Team seats (included)", free: "1", pro: "3", max5: "10", max20: "25" },
+  { feature: "Analytics", free: "Basic", pro: "Full", max5: "Full", max20: "Full" },
+  { feature: '"Made with Forge" badge', free: "On", pro: "Off", max5: "Off", max20: "Off" },
+  { feature: "Support", free: "Email (best effort)", pro: "Priority", max5: "Priority + fast lane", max20: "Priority + highest" },
+  { feature: "Exports (PDF, PPTX, …)", free: "Core", pro: "Full", max5: "Advanced", max20: "All" },
+  { feature: "AI provider (backend)", free: "Forge-managed", pro: "Forge-managed", max5: "Forge-managed", max20: "Optional org override" },
 ];

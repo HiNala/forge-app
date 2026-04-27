@@ -9,6 +9,7 @@ from app.db.models.availability_calendar import AvailabilityCalendar
 from app.db.models.brand_kit import BrandKit
 from app.db.models.calendar_busy_block import CalendarBusyBlock
 from app.db.models.calendar_connection import CalendarConnection
+from app.db.models.credit_ledger import CreditLedger
 from app.db.models.conversation import Conversation
 from app.db.models.custom_domain import CustomDomain
 from app.db.models.custom_event_definition import CustomEventDefinition
@@ -16,6 +17,7 @@ from app.db.models.deck import Deck
 from app.db.models.email_template_override import EmailTemplateOverride
 from app.db.models.identity_merge import IdentityMerge
 from app.db.models.invitation import Invitation
+from app.db.models.llm_routing_policy import LlmRoutingHistory, LlmRoutingPolicy
 from app.db.models.membership import Membership
 from app.db.models.message import Message
 from app.db.models.notification import Notification
@@ -42,6 +44,7 @@ from app.db.models.proposal import (
 from app.db.models.scheduled_plan_change import ScheduledPlanChange
 from app.db.models.slot_hold import SlotHold
 from app.db.models.stripe_event_processed import StripeEventProcessed
+from app.db.models.studio_attachment import StudioAttachment
 from app.db.models.submission import Submission
 from app.db.models.submission_file import SubmissionFile
 from app.db.models.submission_reply import SubmissionReply
@@ -62,10 +65,13 @@ __all__ = [
     "CustomDomain",
     "Deck",
     "EmailTemplateOverride",
+    "CreditLedger",
     "Conversation",
     "CustomEventDefinition",
     "IdentityMerge",
     "Invitation",
+    "LlmRoutingHistory",
+    "LlmRoutingPolicy",
     "Membership",
     "Message",
     "Notification",
@@ -87,6 +93,7 @@ __all__ = [
     "PageVersion",
     "ScheduledPlanChange",
     "SlotHold",
+    "StudioAttachment",
     "Submission",
     "SubmissionFile",
     "SubmissionReply",
