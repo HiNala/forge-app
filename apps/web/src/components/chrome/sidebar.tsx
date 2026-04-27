@@ -13,6 +13,7 @@ import {
   ChevronsUpDown,
   LayoutDashboard,
   PlusCircle,
+  Monitor,
   Settings,
   Shield,
   Smartphone,
@@ -66,6 +67,7 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/studio", label: "Studio", icon: PlusCircle, primary: true as const },
   { href: "/studio/mobile", label: "Mobile design", icon: Smartphone },
+  { href: "/studio/web", label: "Web & website", icon: Monitor },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/settings/profile", label: "Settings", icon: Settings },
 ] as const;
@@ -145,6 +147,9 @@ function navLinkActive(pathname: string, href: string): boolean {
   if (href === "/studio") return pathname === "/studio";
   if (href === "/studio/mobile") {
     return pathname === "/studio/mobile" || pathname.startsWith("/studio/mobile/");
+  }
+  if (href === "/studio/web") {
+    return pathname === "/studio/web" || pathname.startsWith("/studio/web/");
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
