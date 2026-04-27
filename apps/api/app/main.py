@@ -19,6 +19,7 @@ from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.caddy_internal import router as caddy_internal_router
+from app.api.mcp_v1 import router as mcp_v1_router
 from app.api.public_api import router as public_router
 from app.api.public_proposal import router as public_proposal_router
 from app.api.v1 import api_router
@@ -178,6 +179,7 @@ def metrics(request: Request) -> Response:
 
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(mcp_v1_router, prefix=settings.API_V1_STR)
 app.include_router(public_router)
 app.include_router(public_proposal_router)
 app.include_router(caddy_internal_router)

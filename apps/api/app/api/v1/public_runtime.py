@@ -18,6 +18,7 @@ from app.schemas.page import PublicPageOut
 from app.services.booking_slot_inject import inject_booking_slot_runtime
 from app.services.deck_public_inject import inject_deck_public_runtime
 from app.services.forge_tracker import inject_forge_tracker
+from app.services.form_public_inject import inject_all_public_form_styles
 from app.services.proposal_public_inject import inject_proposal_public_runtime
 from app.services.public_brand_badge import (
     forge_branding_visible_for_plan,
@@ -80,6 +81,15 @@ async def get_public_page(
                         page_id=str(data.get("page_id", "")),
                         forge_site_base=settings.APP_PUBLIC_URL,
                     )
+                raw_fs = data.get("form_schema")
+                raw_ij = data.get("intent_json")
+                data["html"] = inject_all_public_form_styles(
+                    data["html"],
+                    form_schema=raw_fs if isinstance(raw_fs, dict) else None,
+                    intent_json=raw_ij if isinstance(raw_ij, dict) else None,
+                    app_public_url=settings.APP_PUBLIC_URL,
+                    org_plan=plan_str,
+                )
                 return PublicPageOut(
                     html=data["html"],
                     title=data["title"],
@@ -154,6 +164,16 @@ async def get_public_page(
             page_id=str(p.id),
             forge_site_base=settings.APP_PUBLIC_URL,
         )
+    plan_str = str(org.plan) if org.plan is not None else None
+    raw_fs = p.form_schema
+    raw_ij = p.intent_json
+    html_out = inject_all_public_form_styles(
+        html_out,
+        form_schema=raw_fs if isinstance(raw_fs, dict) else None,
+        intent_json=raw_ij if isinstance(raw_ij, dict) else None,
+        app_public_url=settings.APP_PUBLIC_URL,
+        org_plan=plan_str,
+    )
     return PublicPageOut(
         html=html_out,
         title=p.title,

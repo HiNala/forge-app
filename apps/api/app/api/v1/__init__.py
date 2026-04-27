@@ -14,6 +14,7 @@ from app.api.v1 import (
     organization,
     orgs_current_alias,
     page_deck,
+    page_export,
     page_proposal,
     pages,
     proposal_templates,
@@ -40,6 +41,7 @@ api_router.include_router(settings_surfaces.router)
 api_router.include_router(notifications_center.router)
 api_router.include_router(team.router)
 api_router.include_router(pages.router)
+api_router.include_router(page_export.router)
 api_router.include_router(page_proposal.router, prefix="/pages")
 api_router.include_router(page_deck.router, prefix="/pages")
 api_router.include_router(proposal_templates.router)

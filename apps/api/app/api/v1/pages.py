@@ -221,6 +221,8 @@ async def publish_page(
     await db.commit()
     await db.refresh(p)
 
+    raw_fs = p.form_schema
+    raw_ij = p.intent_json
     payload = {
         "html": ver.html,
         "title": p.title,
@@ -229,6 +231,8 @@ async def publish_page(
         "page_id": str(p.id),
         "page_type": p.page_type,
         "org_plan": org.plan,
+        "form_schema": raw_fs if isinstance(raw_fs, dict) else None,
+        "intent_json": raw_ij if isinstance(raw_ij, dict) else None,
     }
     r = getattr(request.app.state, "redis", None)
     if r is not None:

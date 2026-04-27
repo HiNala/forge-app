@@ -33,10 +33,10 @@ from app.services.booking_calendar.cache import (
 )
 from app.services.booking_calendar.datetime_parse import parse_iso_datetime
 from app.services.booking_calendar.page_config import resolve_calendar_for_page
+from app.services.form_show_if import validate_payload_against_form_schema_and_show_if
 from app.services.public_submission import (
     anonymize_ipv4_to_slash24,
     normalize_submit_fields,
-    validate_payload_against_form_schema,
     visitor_fingerprint,
 )
 from app.services.queue import enqueue_run_automations
@@ -347,7 +347,7 @@ async def public_submit(
     await check_quota(db, org, "submissions")
 
     schema = p.form_schema if isinstance(p.form_schema, dict) else None
-    ok, reason = validate_payload_against_form_schema(schema, payload)
+    ok, reason = validate_payload_against_form_schema_and_show_if(schema, payload)
     if not ok:
         raise HTTPException(status_code=422, detail=reason)
 
