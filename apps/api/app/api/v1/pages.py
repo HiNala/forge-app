@@ -136,6 +136,14 @@ async def patch_page(
         p.slug = body.slug
     if body.status is not None:
         p.status = body.status
+    if body.form_schema is not None:
+        base = dict(p.form_schema) if isinstance(p.form_schema, dict) else {}
+        base.update(body.form_schema)
+        p.form_schema = base
+    if body.intent_json is not None:
+        base_i = dict(p.intent_json) if isinstance(p.intent_json, dict) else {}
+        base_i.update(body.intent_json)
+        p.intent_json = base_i
     await db.commit()
     await db.refresh(p)
     return p

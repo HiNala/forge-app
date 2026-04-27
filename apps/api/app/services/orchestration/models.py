@@ -19,6 +19,11 @@ PageType = Literal[
     "portfolio",
     "link_in_bio",
     "waitlist",
+    "gallery",
+    "survey",
+    "quiz",
+    "coming_soon",
+    "resume",
     "custom",
 ]
 
@@ -33,12 +38,16 @@ WORKFLOW_TO_PAGE_TYPE: dict[WorkflowType, PageType] = {
     "landing": "landing",
     "menu": "menu",
     "event_rsvp": "rsvp",
-    "gallery": "custom",
+    "gallery": "gallery",
     "promotion": "landing",
     "portfolio": "portfolio",
     "link_in_bio": "link_in_bio",
     "waitlist": "waitlist",
     "faq": "custom",
+    "survey": "survey",
+    "quiz": "quiz",
+    "coming_soon": "coming_soon",
+    "resume": "resume",
     "other": "custom",
 }
 
@@ -54,6 +63,11 @@ PAGE_TYPE_TO_WORKFLOW: dict[PageType, WorkflowType] = {
     "portfolio": "portfolio",
     "link_in_bio": "link_in_bio",
     "waitlist": "waitlist",
+    "gallery": "gallery",
+    "survey": "survey",
+    "quiz": "quiz",
+    "coming_soon": "coming_soon",
+    "resume": "resume",
     "custom": "other",
 }
 

@@ -6,6 +6,7 @@ Each HTML uses ``template_finalize`` placeholders: ``__ORG_SLUG__``, ``__PAGE_SL
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 _SHELL = """<!DOCTYPE html>
@@ -43,6 +44,65 @@ _SHELL = """<!DOCTYPE html>
 {body}
 </body>
 </html>"""
+
+
+def _form_schema_from_fragment(fragment: str) -> dict[str, Any]:
+    """Infer ``fields`` / ``required`` from the first form in a template fragment (P-08)."""
+    names: list[str] = []
+    for m in re.finditer(r'name="([^"]+)"', fragment):
+        n = m.group(1)
+        if n and n not in names and not n.startswith("_"):
+            names.append(n)
+    fields: list[dict[str, Any]] = []
+    for n in names:
+        typ: str
+        if n == "email":
+            typ = "email"
+        elif n == "phone":
+            typ = "tel"
+        elif n in {
+            "details",
+            "notes",
+            "message",
+            "diet",
+            "issue",
+            "services",
+            "schedule",
+            "scope",
+            "song",
+            "creative",
+        } or "description" in n:
+            typ = "textarea"
+        else:
+            typ = "text"
+        fields.append(
+            {
+                "name": n,
+                "label": n.replace("_", " ").title(),
+                "type": typ,
+                "required": n in ("email", "name"),
+            }
+        )
+    req = [n for n in names if n in ("email", "name")]
+    if not req and names:
+        req = [names[0]]
+    return {"fields": fields, "required": req}
+
+
+P08_TEMPLATE_SLUGS: frozenset[str] = frozenset(
+    {
+        "waitlist-beta-social-proof",
+        "course-workshop-deposit",
+        "rsvp-plus-ones-extended",
+        "template-nps-csat",
+        "job-application-solo",
+        "coaching-discovery-call",
+        "restaurant-menu-plated",
+        "link-hub-creator",
+        "coming-soon-personal",
+        "service-quote-request",
+    }
+)
 
 
 def _pack(title: str, inner_body: str) -> str:
@@ -178,6 +238,131 @@ def _booking(headline: str, sub: str) -> str:
             ("slot", "Preferred time window", "text"),
         ],
         "Book",
+    )
+
+
+def _p08_beta_waitlist() -> str:
+    return """
+<section class="forge-hero">
+  <h1>Join the beta</h1>
+  <p class="forge-sub">412 people already on the list — you’re in good company.</p>
+  <p class="forge-muted" style="font-size:0.95rem">Timeline: invite wave → private Slack → public launch.</p>
+</section>
+<section class="forge-form">
+  <form class="forge-form-inner" method="post" action="/p/__ORG_SLUG__/__PAGE_SLUG__/submit">
+    <label>Work email<input type="email" name="email" required /></label>
+    <label>Your name<input type="text" name="name" required /></label>
+    <label>What do you want this product to fix?<textarea name="expectation" rows="3"></textarea></label>
+    <button class="forge-submit" type="submit">Request access</button>
+  </form>
+</section>
+<section class="forge-footer">Built with Forge</section>
+""".strip()
+
+
+def _p08_course_workshop() -> str:
+    return _form_block(
+        "Save your seat",
+        "One-day workshop — materials included, deposit secures your spot.",
+        [
+            ("name", "Full name", "text"),
+            ("email", "Email", "email"),
+            ("session_date", "Preferred date", "date"),
+            ("attendees", "Number of seats", "text"),
+            ("dietary", "Dietary needs", "textarea"),
+        ],
+        "Pay deposit",
+    )
+
+
+def _p08_rsvp_plus() -> str:
+    return _form_block(
+        "You’re invited",
+        "Let us know if you can make it and who’s coming with you.",
+        [
+            ("attending", "Will you attend?", "text"),
+            ("guest_name", "Plus-one name (optional)", "text"),
+            ("email", "Your email", "email"),
+            ("diet", "Diet / allergies", "textarea"),
+            ("transport", "Transportation needs", "text"),
+        ],
+        "Send RSVP",
+    )
+
+
+def _p08_nps_open() -> str:
+    return _form_block(
+        "How are we doing?",
+        "0–10 score plus one line — that’s it.",
+        [
+            ("nps", "How likely are you to recommend us? (0–10)", "text"),
+            ("feedback", "What would make it a 10?", "textarea"),
+            ("email", "Email (optional, for a follow-up)", "email"),
+        ],
+        "Submit",
+    )
+
+
+def _p08_job_apply() -> str:
+    return """
+<section class="forge-hero">
+  <h1>Join the team</h1>
+  <p class="forge-sub">We read every application — no automated gates.</p>
+</section>
+<section class="forge-form">
+  <form class="forge-form-inner" method="post" action="/p/__ORG_SLUG__/__PAGE_SLUG__/submit" enctype="multipart/form-data">
+    <label>Full name<input type="text" name="name" required /></label>
+    <label>Email<input type="email" name="email" required /></label>
+    <label>Phone<input type="tel" name="phone" /></label>
+    <label>Role applying for
+      <select name="role" required>
+        <option>Engineering</option>
+        <option>Design</option>
+        <option>Go-to-market</option>
+      </select>
+    </label>
+    <label>Resume (PDF)<input type="file" name="resume" accept=".pdf" /></label>
+    <label>Portfolio or LinkedIn URL<input type="text" name="portfolio_url" /></label>
+    <label>Why us?<textarea name="why_us" rows="4" required></textarea></label>
+    <button class="forge-submit" type="submit">Apply</button>
+  </form>
+</section>
+<section class="forge-footer">Built with Forge</section>
+""".strip()
+
+
+def _p08_link_hub() -> str:
+    return """
+<section class="forge-hero" style="text-align:center">
+  <h1>Your Name</h1>
+  <p class="forge-sub">Builder · coffee · office hours on Fridays</p>
+</section>
+<section class="forge-grid" style="max-width:24rem;margin:0 auto">
+  <div class="forge-card" style="text-align:center">📧 Newsletter — weeklyField notes</div>
+  <p style="text-align:center"><a href="#" style="color:var(--brand-primary)">Read the latest issue →</a></p>
+  <form class="forge-form-inner" method="post" action="/p/__ORG_SLUG__/__PAGE_SLUG__/submit" style="padding:0 1rem 2rem">
+    <label>Email for the list<input type="email" name="email" required /></label>
+    <button class="forge-submit" type="submit" style="width:100%">Subscribe</button>
+  </form>
+  <p style="text-align:center;font-size:0.9rem;opacity:0.8">Twitter · GitHub · YouTube</p>
+</section>
+<section class="forge-footer">Built with Forge</section>
+""".strip()
+
+
+def _p08_quote_request() -> str:
+    return _form_block(
+        "Request a quote",
+        "Tell us the shape of the work — we reply within one business day.",
+        [
+            ("project_type", "What kind of project?", "text"),
+            ("scope", "Key deliverables (checkbox style in Studio)", "textarea"),
+            ("timeline", "When do you need it?", "text"),
+            ("budget", "Budget range", "text"),
+            ("email", "Work email", "email"),
+            ("phone", "Phone", "tel"),
+        ],
+        "Get pricing",
     )
 
 
@@ -609,13 +794,263 @@ _RAW: list[tuple[str, str, str, str, str, Any]] = [
     (
         "tour-booking",
         "Tour Booking",
-            "Facility tours for prospects and partners.",
+        "Facility tours for prospects and partners.",
         "booking",
         "booking-form",
         _booking(
             "Schedule a tour",
             "We host small groups weekdays at 10am and 2pm.",
         ),
+    ),
+    # --- P-06 workflow expansion (curated starting points) ---
+    (
+        "link-bio-creator",
+        "Creator link-in-bio",
+        "Name, short bio, shop, and newsletter for social profiles.",
+        "personal",
+        "link_in_bio",
+        _landing("Alex · creator", "Shop, office hours, and the weekly letter.", "Open links"),
+    ),
+    (
+        "link-bio-restaurant",
+        "Restaurant link hub",
+        "Reservations, menu PDF, and directions from one link.",
+        "personal",
+        "link_in_bio",
+        _landing("Northside Table", "Reservations, menu, and hours — one tap.", "View menu"),
+    ),
+    (
+        "rsvp-wedding",
+        "Wedding RSVP (template)",
+        "Meal and song with a clear deadline.",
+        "events",
+        "rsvp",
+        _form_block(
+            "Sam & Alex",
+            "We cannot wait to celebrate with you.",
+            [("name", "Name", "text"), ("email", "Email", "email")],
+            "RSVP",
+        ),
+    ),
+    (
+        "rsvp-conference",
+        "Conference RSVP",
+        "Workshop add-ons and t-shirt size.",
+        "events",
+        "rsvp",
+        _form_block(
+            "MapleCon 2026",
+            "One day, three tracks.",
+            [("name", "Name", "text"), ("email", "Email", "email")],
+            "Register",
+        ),
+    ),
+    (
+        "menu-fine-dining",
+        "Fine dining menu",
+        "Tasting notes and wine pairing callouts.",
+        "menus",
+        "menu",
+        _menu("Helio", ["Oysters", "Duck", "Desert wine flight"]),
+    ),
+    (
+        "menu-salon",
+        "Salon services menu",
+        "Cuts, color, and add-on services with timing.",
+        "menus",
+        "menu",
+        _menu("Mosaic Salon", ["Cut", "Color", "Treatment"]),
+    ),
+    (
+        "survey-nps",
+        "NPS pulse",
+        "One score + one follow-up for quarterly checks.",
+        "forms",
+        "survey",
+        _form_block(
+            "How are we doing?",
+            "Two minutes, huge help.",
+            [("name", "Name", "text"), ("email", "Work email", "email")],
+            "Next",
+        ),
+    ),
+    (
+        "survey-course",
+        "Course feedback",
+        "Module clarity and pace after cohort week 1.",
+        "forms",
+        "survey",
+        _form_block(
+            "Cohort feedback",
+            "Help us tune week two.",
+            [("name", "Name", "text"), ("email", "Email", "email")],
+            "Submit",
+        ),
+    ),
+    (
+        "quiz-product-fit",
+        "Product tier quiz",
+        "Recommend a plan from a few questions.",
+        "forms",
+        "quiz",
+        _form_block(
+            "Find your plan",
+            "Honest questions, a clear result.",
+            [("name", "Name", "text"), ("email", "Email", "email")],
+            "Start",
+        ),
+    ),
+    (
+        "quiz-style",
+        "Design style quiz",
+        "Fun outcome quiz for a studio launch.",
+        "forms",
+        "quiz",
+        _form_block(
+            "What is your design vibe?",
+            "Six quick questions.",
+            [("name", "Name", "text")],
+            "Begin",
+        ),
+    ),
+    (
+        "coming-saas",
+        "SaaS waitlist",
+        "Launch list with a crisp value promise.",
+        "landing",
+        "coming_soon",
+        _landing("Something better for small teams", "The boring parts automated.", "Join"),
+    ),
+    (
+        "coming-restaurant",
+        "Opening soon (restaurant)",
+        "Neighborhood spot with opening window.",
+        "landing",
+        "coming_soon",
+        _landing("Opening this spring on 4th", "Wine-forward, small plates, walk-ins welcome.", "Notify me"),
+    ),
+    (
+        "gallery-wedding",
+        "Wedding portfolio",
+        "Highlight reel and inquiry for couples.",
+        "galleries",
+        "gallery",
+        _gallery("Riverlight Photo", "Documentary wedding photography in the PNW."),
+    ),
+    (
+        "gallery-designer",
+        "Designer portfolio",
+        "Case-study first portfolio grid.",
+        "galleries",
+        "gallery",
+        _gallery("Studio Tangent", "Product UI for fintech and climate teams."),
+    ),
+    (
+        "resume-swe",
+        "Software engineer resume",
+        "Impact bullets and projects for hiring managers.",
+        "personal",
+        "resume",
+        _landing("Jordan Lee — software engineer", "Backend-heavy full-stack. Open to remote.", "Email Jordan"),
+    ),
+    (
+        "resume-freelance",
+        "Freelance consultant page",
+        "Offer + process + CTA in one scannable page.",
+        "personal",
+        "resume",
+        _landing("Avery Consulting", "Ops and systems for 10–200 person teams.", "Book a call"),
+    ),
+    # --- P-08 competitor parity (ten net-new use cases) ---
+    (
+        "waitlist-beta-social-proof",
+        "Beta waitlist (social proof)",
+        "Email capture, timeline, and a live counter callout for Carrd-style launches.",
+        "lead-capture",
+        "coming_soon",
+        _p08_beta_waitlist(),
+    ),
+    (
+        "course-workshop-deposit",
+        "Course / workshop sign-up",
+        "Date, headcount, dietary notes — Calendly + form combo in one page.",
+        "booking",
+        "booking-form",
+        _p08_course_workshop(),
+    ),
+    (
+        "rsvp-plus-ones-extended",
+        "Event RSVP with plus-ones",
+        "Attendance, guest names, diet, and transport in one form.",
+        "events",
+        "rsvp",
+        _p08_rsvp_plus(),
+    ),
+    (
+        "template-nps-csat",
+        "Customer feedback (NPS + open)",
+        "NPS score field plus follow-up and optional contact.",
+        "surveys",
+        "survey",
+        _p08_nps_open(),
+    ),
+    (
+        "job-application-solo",
+        "Job application (solo team)",
+        "Resume upload, role select, and a “why us” story.",
+        "sales",
+        "contact-form",
+        _p08_job_apply(),
+    ),
+    (
+        "coaching-discovery-call",
+        "Coaching discovery call",
+        "Booking-style intake for consulting / coaching: slot + context.",
+        "booking",
+        "booking-form",
+        _booking(
+            "Book a discovery call",
+            "Tell us what you are solving — 20 minutes, video or phone.",
+        ),
+    ),
+    (
+        "restaurant-menu-plated",
+        "Restaurant menu (full layout)",
+        "Sections, price callouts, and a reservation CTA for dine-in teams.",
+        "restaurants",
+        "menu",
+        _menu(
+            "Plated Bistro",
+            [
+                "Crudo — market fish, citrus, herbs — $16",
+                "Pappardelle — short rib ragu — $24",
+                "Chocolate pave — olive oil, sea salt — $11",
+            ],
+        ),
+    ),
+    (
+        "link-hub-creator",
+        "Link hub (Linktree-style)",
+        "Bio, link stack, mid-page newsletter, social row at bottom.",
+        "link-hub",
+        "link_in_bio",
+        _p08_link_hub(),
+    ),
+    (
+        "coming-soon-personal",
+        "Personal coming soon",
+        "Name, headline, three focus links, and email capture for a soft launch.",
+        "coming-soon",
+        "coming_soon",
+        _landing("Jamie K · building in public", "I’m shipping a calmer analytics layer for small teams — stay close.", "Notify me"),
+    ),
+    (
+        "service-quote-request",
+        "Quote request (service business)",
+        "Scope, timeline, and budget for trades and agencies.",
+        "service",
+        "contact-form",
+        _p08_quote_request(),
     ),
 ]
 
@@ -625,6 +1060,7 @@ def curated_templates() -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for i, (slug, name, desc, cat, ptype, fragment) in enumerate(_RAW):
         html = _pack(name, fragment)
+        source = "seed_p08" if slug in P08_TEMPLATE_SLUGS else "seed_mission09"
         out.append(
             {
                 "slug": slug,
@@ -632,12 +1068,12 @@ def curated_templates() -> list[dict[str, Any]]:
                 "description": desc,
                 "category": cat,
                 "html": html,
-                "form_schema": {
-                    "fields": [
-                        {"name": "email", "label": "Email", "type": "email", "required": True},
-                    ]
+                "form_schema": _form_schema_from_fragment(fragment),
+                "intent_json": {
+                    "page_type": ptype,
+                    "source": source,
+                    "competitor_cohort": cat,
                 },
-                "intent_json": {"page_type": ptype, "source": "seed_mission09"},
                 "is_published": True,
                 "sort_order": i * 10,
             }

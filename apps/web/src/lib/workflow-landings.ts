@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
 
 export const WORKFLOW_SLUGS = [
+  "web-page",
   "mobile-app",
   "website",
   "contact-form",
+  "event-rsvp",
+  "menu",
+  "survey",
+  "quiz",
+  "coming-soon",
+  "gallery",
+  "link-in-bio",
+  "resume",
   "proposal",
   "pitch-deck",
   "landing-page",
@@ -40,6 +49,62 @@ const commonExport =
   "Take it with you: export paths depend on the workflow (HTML, PDF, PPTX, or design handoff as we ship V2). Or keep it on Forge — hosted, tracked, updatable in one place.";
 
 export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
+  "web-page": {
+    slug: "web-page",
+    path: "/workflows/web-page",
+    meta: {
+      title: "AI single web page — fast, on-brand | Forge",
+      description:
+        "One focused public page: clear promise, social proof, and a next step. Built in Studio with the same analytics as the rest of Forge.",
+    },
+    label: "Web page",
+    tileLabel: "Web page",
+    heroHighlight: "One offer, one page, one next step — without fighting a full site builder.",
+    workflowQuery: "landing_page",
+    sectionLabel: "Web pages",
+    h1: "A web page that",
+    h1Accent: "gets to the point.",
+    intro:
+      "When you do not need a full site, you need a page that works: scannable, credible, and fast on phones. " + commonExport,
+    whatYouGet: [
+      { title: "A single, confident story", body: "Hero, proof, and CTA that agree with each other — not a kitchen sink." },
+      { title: "Brand kit applied", body: "Colors and tone from the workspace, not a random template pack." },
+      { title: "Same analytics as forms and decks", body: "See who arrived and who converted in one system." },
+    ],
+    howItWorks: {
+      title: "How it works",
+      steps: [
+        "Describe the audience, offer, and the one action you want.",
+        "Forge drafts the page; you refine language and details in Studio.",
+        "Publish a Forge link; connect DNS when the campaign is worth it.",
+      ],
+    },
+    builtFor: {
+      title: "Built for",
+      who: [
+        "A campaign or service line that needs its own home",
+        "Founders who want a real page this week, not a quarter-long CMS",
+        "Operators testing an offer before building a full site",
+      ],
+    },
+    exampleGallery: [
+      { caption: "Consulting offer — CTA to book", tag: "Services" },
+      { caption: "Workshop sign-up — date + time zone", tag: "Events" },
+    ],
+    faq: [
+      { q: "Is this a whole website builder?", a: "Forge is optimized for fast mini-apps and focused pages, not a WordPress-style CMS with unlimited templates." },
+      { q: "What about a multi-page site?", a: "Use the Website / web canvas flow for light IA; for a single CTA, start here first." },
+    ],
+    compare: {
+      vs: "Carrd for a one-off page",
+      honest: [
+        { forge: "One workflow with forms, decks, and more", other: "Great at a single static page" },
+        { forge: "Language-first iteration", other: "Visual-first" },
+        { forge: "Shared analytics in Forge", other: "Varies" },
+      ],
+    },
+    templatesQuery: "landing",
+  },
   "mobile-app": {
     slug: "mobile-app",
     path: "/workflows/mobile-app",
@@ -380,6 +445,441 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       ],
     },
     templatesQuery: "landing",
+  },
+  "link-in-bio": {
+    slug: "link-in-bio",
+    path: "/workflows/link-in-bio",
+    meta: {
+      title: "Link in bio — prettier than Linktree, tracked in Forge | Forge",
+      description:
+        "One mini-page of links, media, and email capture for your social profile. Branding, analytics, and a single hosted link.",
+    },
+    label: "Link in bio",
+    tileLabel: "Link in bio",
+    heroHighlight: "Your bio link, on-brand, with per-link click analytics when you need them.",
+    workflowQuery: "link_in_bio",
+    sectionLabel: "Link in bio",
+    h1: "Your bio link,",
+    h1Accent: "prettier than Linktree.",
+    intro:
+      "Stack every destination you need — shop, lead capture, YouTube, newsletter — in one place that still feels like you. " + commonExport,
+    whatYouGet: [
+      { title: "Mobile-first by default", body: "Big tap targets, clear labels, and no mystery taps." },
+      { title: "On-brand, not on-template", body: "Your colors and tone — not a stock gradient." },
+      { title: "Analytics that respect the format", body: "See which link earns clicks and where people bounce." },
+    ],
+    howItWorks: {
+      title: "How it works",
+      steps: [
+        "Describe you, your offer, and the links you want above the fold.",
+        "Review the first layout; add or reorder blocks in plain language.",
+        "Drop the one Forge link in your profile and iterate after real traffic.",
+      ],
+    },
+    builtFor: {
+      title: "Built for",
+      who: [
+        "Creators with more than one destination",
+        "Local businesses pointing Instagram traffic to book or order",
+        "Founders with a beta list plus a calendar link",
+      ],
+    },
+    exampleGallery: [
+      { caption: "Coach — book + newsletter", tag: "Services" },
+      { caption: "Musician — tour + store", tag: "Creative" },
+    ],
+    faq: [
+      { q: "Is this just Linktree?", a: "Same category, different trade-offs: deeper Forge stack (forms, decks) and a consistent analytics model." },
+      { q: "Can I use my own domain?", a: "Yes on plans that include custom DNS — the link still renders from your Forge org." },
+    ],
+    compare: {
+      vs: "Linktree, Beacons, Stan",
+      honest: [
+        { forge: "Tied to your whole Forge account", other: "Mature, link-first category tools" },
+        { forge: "You describe; Forge composes the page", other: "You drag, duplicate, and theme" },
+        { forge: "Deeper when you outgrow a single list", other: "Fastest to a plain list" },
+      ],
+    },
+    templatesQuery: "link",
+  },
+  "event-rsvp": {
+    slug: "event-rsvp",
+    path: "/workflows/event-rsvp",
+    meta: {
+      title: "Event RSVP page — no spreadsheets | Forge",
+      description: "A hosted invite with RSVP, guest questions, and responses in your Forge inbox. Compared to social-only invites and generic forms.",
+    },
+    label: "Event RSVP",
+    tileLabel: "Event RSVP",
+    heroHighlight: "Headcount, meals, and plus-ones in one place — with branding that looks intentional.",
+    workflowQuery: "event_rsvp",
+    sectionLabel: "Events",
+    h1: "Your event,",
+    h1Accent: "RSVP'd. No spreadsheet.",
+    intro:
+      "From weddings to all-hands, guests need clarity and you need a clean tally. " + commonExport,
+    whatYouGet: [
+      { title: "A real invite, not a bare form", body: "Date, time, and what to expect — before the questions." },
+      { title: "Field mix you control", body: "Dietary, plus-ones, and custom questions when you need them." },
+      { title: "Responses in one inbox", body: "Same notifications story as the rest of Forge." },
+    ],
+    howItWorks: {
+      title: "How it works",
+      steps: [
+        "Name the event, the vibe, and what you must know from guests.",
+        "Forge composes a hosted RSVP; you tune wording in Studio.",
+        "Share a link; track activity without chasing screenshots.",
+      ],
+    },
+    builtFor: {
+      title: "Built for",
+      who: [
+        "Couples and families tired of DMs and reply-all sprawl",
+        "Ops teams with real catering constraints",
+        "Community meetups with capacity limits",
+      ],
+    },
+    exampleGallery: [
+      { caption: "Wedding — meal + song", tag: "Social" },
+      { caption: "All-hands — lunch preference", tag: "Work" },
+    ],
+    faq: [
+      { q: "Partiful already exists", a: "If you need heavy social design, that can be right. Forge wins when you want one brand system and exports across forms, decks, and more." },
+      { q: "Eventbrite-style ticketing?", a: "Forge is not a full box office. For most private events, a focused RSVP is enough." },
+    ],
+    compare: {
+      vs: "Partiful, Paperless Post, Eventbrite",
+      honest: [
+        { forge: "Single Forge workspace for the rest of your pages", other: "Event-specific polish and features" },
+        { forge: "Faster to a branded hosted page from language", other: "More setup for a themed invite" },
+      ],
+    },
+    templatesQuery: "event",
+  },
+  menu: {
+    slug: "menu",
+    path: "/workflows/menu",
+    meta: {
+      title: "Online menu for restaurants and services | Forge",
+      description: "A phone-friendly food or service menu you can link from Instagram and QR. Compared to PDF menus and POS microsites you did not have time to learn.",
+    },
+    label: "Menu / services",
+    tileLabel: "Menu",
+    heroHighlight: "Sections, prices, and dietary clues — in a page guests can actually read in line.",
+    workflowQuery: "menu",
+    sectionLabel: "Menus",
+    h1: "Your menu,",
+    h1Accent: "online in minutes.",
+    intro:
+      "Whether you are plating dinner or bundling services, the job is the same: a scannable list that feels on-brand. " + commonExport,
+    whatYouGet: [
+      { title: "Readable on phones", body: "Short lines, big category headers, and space for the details that matter." },
+      { title: "Room for dietary and upsells", body: "Callouts for specials, pairings, or add-ons when you have them." },
+      { title: "Same org as the rest of Forge", body: "Your logo and colors, not a random PDF export." },
+    ],
+    howItWorks: {
+      title: "How it works",
+      steps: [
+        "Describe the kind of business and how many sections you need.",
+        "Forge produces a first menu layout; you refine items and copy.",
+        "Share a link or QR; update prices without a file chase.",
+      ],
+    },
+    builtFor: {
+      title: "Built for",
+      who: [
+        "Restaurants that change specials often",
+        "Salons and clinics with a services price list",
+        "Studios with packages, not a full commerce cart",
+      ],
+    },
+    exampleGallery: [
+      { caption: "Wine list — by the glass", tag: "Hospitality" },
+      { caption: "Salon — cut + color packages", tag: "Services" },
+    ],
+    faq: [
+      { q: "We already have Toast or Square", a: "Point-of-sale systems win at orders. Forge is for a fast, shareable, branded public menu page when you do not need a full ordering stack." },
+      { q: "Do you sync prices?", a: "In v1 you edit in Studio. Treat it as a fast front-of-house surface." },
+    ],
+    compare: {
+      vs: "Toast, Square, or Instagram-only menus",
+      honest: [
+        { forge: "Speed from a text brief", other: "Deeper when already on the stack" },
+        { forge: "Same handoff and analytics with other Forge pages", other: "Often separate tools" },
+      ],
+    },
+    templatesQuery: "menu",
+  },
+  survey: {
+    slug: "survey",
+    path: "/workflows/survey",
+    meta: {
+      title: "Surveys on a branded page — NPS, CSAT, research | Forge",
+      description: "A hosted survey you can link anywhere — with Forge analytics, not a separate login.",
+    },
+    label: "Survey",
+    tileLabel: "Survey",
+    heroHighlight: "Typeform-weight questions, Forge-weight iteration speed.",
+    workflowQuery: "survey",
+    sectionLabel: "Surveys",
+    h1: "Surveys that",
+    h1Accent: "people actually finish.",
+    intro:
+      "Long surveys fail on phones. Forge aims at tight question sets, clear steps, and copy that does not feel like HR homework. " + commonExport,
+    whatYouGet: [
+      { title: "A survey that is still a page", body: "Brand context matters — respondents see you, not a random URL." },
+      { title: "Field mix for real research", body: "Ratings, single choice, and one honest open end." },
+      { title: "You stay in one account", body: "No separate 'survey' login for a small org." },
+    ],
+    howItWorks: {
+      title: "How it works",
+      steps: [
+        "Name the study, audience, and what decision the answers will drive.",
+        "Forge composes a first pass; you sharpen wording in Studio.",
+        "Share a link; read responses in Forge and iterate the survey like any other page.",
+      ],
+    },
+    builtFor: {
+      title: "Built for",
+      who: [
+        "Bootstrapped teams without a research ops stack",
+        "CS leaders running lightweight NPS or CSAT",
+        "Event hosts with real feedback to collect",
+      ],
+    },
+    exampleGallery: [
+      { caption: "CSAT after onboarding", tag: "SaaS" },
+      { caption: "Event feedback in 4 questions", tag: "Events" },
+    ],
+    faq: [
+      { q: "Typeform is the default", a: "If you need deep logic trees and enterprise data residency, that can be right. Forge is for a hosted, branded, fast first version inside your existing Forge work." },
+      { q: "Do you support 50-question research?", a: "You can, but the composer nudges toward what mobile respondents tolerate." },
+    ],
+    compare: {
+      vs: "Typeform, Google Forms, SurveyMonkey",
+      honest: [
+        { forge: "Same org as the rest of your pages", other: "Mature form logic" },
+        { forge: "Language-first iteration", other: "Template-first" },
+        { forge: "Narrow, opinionated design", other: "Broader, heavier" },
+      ],
+    },
+    templatesQuery: "survey",
+  },
+  quiz: {
+    slug: "quiz",
+    path: "/workflows/quiz",
+    meta: {
+      title: "Quizzes and product finders that convert | Forge",
+      description: "Outcome quizzes and light knowledge checks on a single hosted page, with a Studio workflow behind them.",
+    },
+    label: "Quiz",
+    tileLabel: "Quiz",
+    heroHighlight: "When you need a reason to click “next” that is not a wall of form fields.",
+    workflowQuery: "quiz",
+    sectionLabel: "Quizzes",
+    h1: "Quizzes that",
+    h1Accent: "convert.",
+    intro:
+      "Recommend a tier, a path, or a product line with a few sharp questions. " + commonExport,
+    whatYouGet: [
+      { title: "A narrative, not a spreadsheet", body: "Each step earns the next; outcomes feel inevitable." },
+      { title: "Outcomes and scores in copy", body: "Personality, recommendation, or a score screen — you decide the frame." },
+      { title: "Handoff-ready", body: "End on a CTA that matches the recommended path." },
+    ],
+    howItWorks: {
+      title: "How it works",
+      steps: [
+        "Describe the audience, possible outcomes, and the decision you are driving.",
+        "Forge drafts the quiz flow; you tune tone and order.",
+        "Publish a link; pair with a simple ad or email to learn fast.",
+      ],
+    },
+    builtFor: {
+      title: "Built for",
+      who: [
+        "Marketers testing positioning before a big page build",
+        "Sales teams with three obvious paths",
+        "Founders with a 'which plan' question to answer in public",
+      ],
+    },
+    exampleGallery: [
+      { caption: "SaaS plan finder", tag: "Product" },
+      { caption: "Style quiz for a course", tag: "Education" },
+    ],
+    faq: [
+      { q: "Is this Interact or Outgrow?", a: "Those are strong when quizzes are your product. Forge is a fast, hosted quiz inside a broader page system." },
+      { q: "What about proctoring?", a: "Not the goal. This is a marketing and recommendation surface, not an exam product." },
+    ],
+    compare: {
+      vs: "Outgrow, Interact, Typeform quizzes",
+      honest: [
+        { forge: "Faster from prompt to a live page in Forge", other: "Deeper logic + analytics for quiz-first teams" },
+        { forge: "The rest of your site lives next door", other: "Separate login and plan" },
+      ],
+    },
+    templatesQuery: "quiz",
+  },
+  "coming-soon": {
+    slug: "coming-soon",
+    path: "/workflows/coming-soon",
+    meta: {
+      title: "Waitlist and coming soon pages | Forge",
+      description: "Pre-launch capture with a single clear promise — and the same handoff as every other Forge page.",
+    },
+    label: "Coming soon",
+    tileLabel: "Coming soon",
+    heroHighlight: "A waitlist you can stand behind before the product is ready to demo.",
+    workflowQuery: "coming_soon",
+    sectionLabel: "Coming soon",
+    h1: "Build a waitlist",
+    h1Accent: "before the product build.",
+    intro:
+      "The page should answer three questions: what, when-ish, and why should I care now. " + commonExport,
+    whatYouGet: [
+      { title: "A focused ask", body: "Email and maybe one more field — not a pre-product CRM dump." },
+      { title: "Space for a credible teaser", body: "Three short bullets, not a manifesto." },
+      { title: "Same org story", body: "Your kit, your domain when ready, your analytics." },
+    ],
+    howItWorks: {
+      title: "How it works",
+      steps: [
+        "Name the product, the audience, and what early supporters get.",
+        "Forge composes a coming-soon page; you tune tone and CTA in Studio.",
+        "Swap to a real landing when you launch — or iterate this page into it.",
+      ],
+    },
+    builtFor: {
+      title: "Built for",
+      who: [
+        "Pre-seed teams whose site is still a single promise",
+        "Creators with a list-first launch",
+        "Local openings where foot traffic is not a channel yet",
+      ],
+    },
+    exampleGallery: [
+      { caption: "SaaS waitlist with teaser", tag: "Launch" },
+      { caption: "Shop opening with date window", tag: "Retail" },
+    ],
+    faq: [
+      { q: "Carrd already does a coming-soon", a: "Carrd is great at a one-off page. Forge is for the moment that page becomes one of many assets in a single org." },
+      { q: "Countdowns and referrals?", a: "The composer nudges toward copy that can grow into those — wire-up depth depends on the roadmap." },
+    ],
+    compare: {
+      vs: "Carrd, Mailchimp LPs, Webflow",
+      honest: [
+        { forge: "Faster to the first pass from a brief", other: "More visual control" },
+        { forge: "Same home as forms, decks, and more", other: "Often project-by-project" },
+      ],
+    },
+    templatesQuery: "waitlist",
+  },
+  gallery: {
+    slug: "gallery",
+    path: "/workflows/gallery",
+    meta: {
+      title: "Photography and design portfolio | Forge",
+      description: "Image-forward portfolio pages with a structured inquiry form — for photographers, designers, and makers.",
+    },
+    label: "Gallery / portfolio",
+    tileLabel: "Gallery",
+    heroHighlight: "A gallery that is not just a drive link — and a way to start a real conversation.",
+    workflowQuery: "gallery",
+    sectionLabel: "Galleries",
+    h1: "Your portfolio,",
+    h1Accent: "beautifully.",
+    intro:
+      "The job is to show the work, earn trust, and make the first contact easy. " + commonExport,
+    whatYouGet: [
+      { title: "A grid with intent", body: "Captions and hierarchy that tell a client what you actually do." },
+      { title: "An inquiry that respects time", body: "A short form — not a 20-field nightmare." },
+      { title: "A single hosted story", body: "Same brand kit as the rest of your org." },
+    ],
+    howItWorks: {
+      title: "How it works",
+      steps: [
+        "Name your field, the kind of work, and the next step for a client.",
+        "Forge sets up hero + grid + form; you refine in Studio with specifics.",
+        "Share a link to bookers, art directors, or local leads.",
+      ],
+    },
+    builtFor: {
+      title: "Built for",
+      who: [
+        "Wedding and portrait photographers",
+        "Designers and illustrators with a few hero projects",
+        "Studios with a public inquiry path",
+      ],
+    },
+    exampleGallery: [
+      { caption: "Wedding — highlight reel + inquiry", tag: "Photo" },
+      { caption: "UI kit — 4 case cards", tag: "Design" },
+    ],
+    faq: [
+      { q: "Squarespace or Format?", a: "Those are strong, site-first hosts. Forge targets a live page fast inside a broader workstream — not a full personal site product." },
+      { q: "Print sales?", a: "The roadmap can extend into commerce; v1 is lead capture and proof." },
+    ],
+    compare: {
+      vs: "Squarespace, Format, Adobe Portfolio",
+      honest: [
+        { forge: "Speed from a short brief in Studio", other: "Deeper long-run site features" },
+        { forge: "Same org as the rest of Forge", other: "Isolated site builder account" },
+      ],
+    },
+    templatesQuery: "galleries",
+  },
+  resume: {
+    slug: "resume",
+    path: "/workflows/resume",
+    meta: {
+      title: "Resume and personal site — better than a PDF | Forge",
+      description: "A scannable, mobile-friendly resume page with projects and contact — in your brand system.",
+    },
+    label: "Resume / site",
+    tileLabel: "Resume",
+    heroHighlight: "A link that is easier to read than a two-column PDF on a phone.",
+    workflowQuery: "resume",
+    sectionLabel: "Resumes",
+    h1: "Your resume site,",
+    h1Accent: "smarter than a PDF.",
+    intro:
+      "Hiring teams skim. Give them a page with hierarchy, not a file that fights zoom. " + commonExport,
+    whatYouGet: [
+      { title: "Readable structure", body: "Experience, impact, and skills in an order you control." },
+      { title: "Project proof", body: "A few tight cards beat ten anonymous bullets." },
+      { title: "A link you are not ashamed to send", body: "Consistent with the rest of your public Forge pages when you have them." },
+    ],
+    howItWorks: {
+      title: "How it works",
+      steps: [
+        "Tell us the role, the industries, and the three wins you need visible.",
+        "Forge drafts a first pass; you refine in Studio for nuance and accuracy.",
+        "Send a link; export paths mature on the handoff page where enabled.",
+      ],
+    },
+    builtFor: {
+      title: "Built for",
+      who: [
+        "Operators job-searching in public",
+        "Freelancers with a case-led story",
+        "Leaders with a public bio that is not a LinkedIn clone",
+      ],
+    },
+    exampleGallery: [
+      { caption: "PM — outcomes + projects", tag: "Tech" },
+      { caption: "Design — 4 case links", tag: "Creative" },
+    ],
+    faq: [
+      { q: "Is this a replacement for LinkedIn?", a: "No — it is a page you own for applications and intros when PDFs fail on phones." },
+      { q: "ATS import?", a: "The composer aims at readable first; file-oriented ATS is a different problem." },
+    ],
+    compare: {
+      vs: "Notion, About.me, Squarespace",
+      honest: [
+        { forge: "Fast, opinionated page in Forge", other: "Long-running personal site feature depth" },
+        { forge: "Same org as the rest of your work", other: "Separate toolchains" },
+      ],
+    },
+    templatesQuery: "resume",
   },
 };
 

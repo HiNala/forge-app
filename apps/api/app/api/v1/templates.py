@@ -81,7 +81,7 @@ async def list_templates(
         )
     stmt = stmt.order_by(Template.sort_order.asc(), Template.name.asc())
     rows = (await db.execute(stmt)).scalars().all()
-    return [TemplateListItemOut.model_validate(r) for r in rows]
+    return [TemplateListItemOut.from_template_row(r) for r in rows]
 
 
 @router.get("/{template_id}", response_model=TemplateDetailOut)

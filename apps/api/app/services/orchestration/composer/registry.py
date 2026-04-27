@@ -14,6 +14,13 @@ from app.services.orchestration.composer.generic import GenericComposer
 from app.services.orchestration.composer.landing import LandingComposer, PromotionComposer
 from app.services.orchestration.composer.menu_rsvp_gallery import GalleryComposer, MenuComposer, RsvpComposer
 from app.services.orchestration.composer.proposal_composer import ProposalComposer
+from app.services.orchestration.composer.specialized import (
+    ComingSoonComposer,
+    LinkInBioComposer,
+    QuizComposer,
+    ResumeComposer,
+    SurveyComposer,
+)
 from app.services.orchestration.models import PageIntent
 from app.services.orchestration.planning_models import PagePlan
 
@@ -25,6 +32,11 @@ _COMPOSERS: dict[str, BaseComposer] = {
     "event_rsvp": RsvpComposer(),
     "gallery": GalleryComposer(),
     "proposal": ProposalComposer(),
+    "link_in_bio": LinkInBioComposer(),
+    "survey": SurveyComposer(),
+    "quiz": QuizComposer(),
+    "coming_soon": ComingSoonComposer(),
+    "resume": ResumeComposer(),
     "generic": GenericComposer(),
 }
 
@@ -37,6 +49,10 @@ def workflow_key_for_intent(intent: PageIntent) -> str:
         return "gallery"
     if wf == "promotion":
         return "promotion"
+    if wf == "link_in_bio":
+        return "link_in_bio"
+    if wf in ("survey", "quiz", "coming_soon", "resume"):
+        return wf
     if pt in ("contact-form", "booking-form"):
         return "contact_form"
     if pt == "landing":
@@ -47,6 +63,18 @@ def workflow_key_for_intent(intent: PageIntent) -> str:
         return "event_rsvp"
     if pt == "proposal":
         return "proposal"
+    if pt == "link_in_bio":
+        return "link_in_bio"
+    if pt == "gallery":
+        return "gallery"
+    if pt == "survey":
+        return "survey"
+    if pt == "quiz":
+        return "quiz"
+    if pt == "coming_soon":
+        return "coming_soon"
+    if pt == "resume":
+        return "resume"
     if pt == "custom":
         return "generic"
     if wf in ("contact_form", "landing", "menu", "event_rsvp", "proposal"):

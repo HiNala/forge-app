@@ -730,6 +730,9 @@ export type PageOut = {
 /** From GET `/pages/{id}` — includes generated HTML for preview. */
 export type PageDetailOut = PageOut & {
   current_html: string;
+  form_schema: Record<string, unknown> | null;
+  intent_json: Record<string, unknown> | null;
+  brand_kit_snapshot: Record<string, unknown> | null;
 };
 
 export async function listPages(
@@ -764,6 +767,8 @@ export type TemplateListItemOut = {
   category: string;
   preview_image_url: string | null;
   sort_order: number;
+  /** From template intent_json.page_type (P-06) */
+  page_type: string | null;
 };
 
 export async function listTemplates(
@@ -1057,7 +1062,13 @@ export async function patchPage(
   getToken: () => Promise<string | null>,
   activeOrgId: string | null,
   pageId: string,
-  body: { title?: string; slug?: string; status?: string },
+  body: {
+    title?: string;
+    slug?: string;
+    status?: string;
+    form_schema?: Record<string, unknown>;
+    intent_json?: Record<string, unknown>;
+  },
 ): Promise<PageOut> {
   return apiRequest<PageOut>(`/pages/${pageId}`, {
     method: "PATCH",

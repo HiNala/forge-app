@@ -154,6 +154,19 @@
   document.addEventListener(
     "click",
     function (ev) {
+      var fa = ev.target.closest("[data-forge-analytics]");
+      if (fa) {
+        var evName = fa.getAttribute("data-forge-analytics");
+        if (evName) {
+          var md = { page_id: C.pageId };
+          var lbl = fa.getAttribute("data-link-label");
+          if (lbl) md.link_label = lbl;
+          var href = fa.getAttribute("href");
+          if (href) md.url = href;
+          push(evName, md);
+          return;
+        }
+      }
       var t = ev.target.closest("[data-forge-track-cta], [data-forge-cta]");
       if (t)
         push("cta_click", {

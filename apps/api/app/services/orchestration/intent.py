@@ -27,6 +27,32 @@ _BOOKING_RE = re.compile(
     re.I,
 )
 
+_LINK_IN_BIO_RE = re.compile(
+    r"\b(link in bio|link-in-bio|linktree|beacons\.?ai|stan store|bio link|profile link page)\b",
+    re.I,
+)
+_SURVEY_RE = re.compile(
+    r"\b(survey|nps\b|customer satisfaction|feedback survey|questionnaire|employee survey|quick poll)\b",
+    re.I,
+)
+_QUIZ_RE = re.compile(
+    r"\b(quiz|trivia|personality test|which \w+ are you|test your \w+ knowledge)\b",
+    re.I,
+)
+_RESUME_RE = re.compile(
+    r"\b(resume|curriculum vitae|\bcv\b|hire me page|personal site for my career|executive bio page)\b",
+    re.I,
+)
+_COMING_SOON_RE = re.compile(
+    r"\b(coming soon|pre-?launch page|launch countdown|join the waitlist before|notify me when we launch)\b",
+    re.I,
+)
+_GALLERY_RE = re.compile(
+    r"\b(photo gallery|wedding photography portfolio|portrait photographer|"
+    r"showcase my (photos|images|work) in a grid)\b",
+    re.I,
+)
+
 
 def _prompt_suggests_booking(prompt: str) -> bool:
     return bool(_BOOKING_RE.search(prompt))
@@ -38,10 +64,17 @@ Workflow taxonomy (pick exactly one `workflow`):
 - proposal: scope of work, estimate, bid, contractor proposal.
 - pitch_deck: investor deck, pitch slides, fundraising deck.
 - landing: marketing landing, product page, promotion (single scroll page).
-- menu: restaurant menu, food & drink list.
+- menu: restaurant menu, food & drink list, spa/salon service menu.
 - event_rsvp: RSVP, register for event, save the date response.
-- gallery: photo gallery, portfolio grid (visual-first).
+- gallery: photo gallery, portfolio grid (visual-first, photography/design showcase).
+- link_in_bio: one link list for Instagram/TikTok bio, creator links page.
+- survey: NPS, customer satisfaction, multi-question research, pollfish-style form.
+- quiz: personality quiz, product finder, knowledge test, "which X are you?".
+- coming_soon: pre-launch, waitlist, launch countdown, "notify me" before release.
+- resume: personal resume site, hire-me page, CV as a page.
+- waitlist: generic email capture (without fixed launch / countdown copy).
 - promotion: sale, limited offer, campaign landing (can overlap landing).
+- portfolio: case study grid for an agency (not pure photography gallery).
 - other: does not fit above; still commit to best page_type.
 
 Rules:
@@ -121,6 +154,62 @@ def _heuristic_intent(prompt: str) -> PageIntent:
             alternatives=[
                 AlternativeInterpretation(workflow="landing", confidence=0.25),
             ],
+        )
+    if _LINK_IN_BIO_RE.search(prompt):
+        return PageIntent(
+            workflow="link_in_bio",
+            page_type="link_in_bio",
+            confidence=0.78,
+            title_suggestion=prompt[:80] or "Link in bio",
+            headline=prompt[:120] or "Links",
+            tone="playful",
+            business_type="creator or small brand",
+        )
+    if _QUIZ_RE.search(prompt):
+        return PageIntent(
+            workflow="quiz",
+            page_type="quiz",
+            confidence=0.75,
+            title_suggestion=prompt[:80] or "Quiz",
+            headline=prompt[:120] or "Quiz",
+            tone="playful",
+        )
+    if _SURVEY_RE.search(prompt):
+        return PageIntent(
+            workflow="survey",
+            page_type="survey",
+            confidence=0.76,
+            title_suggestion=prompt[:80] or "Survey",
+            headline=prompt[:120] or "We'd love your input",
+            tone="warm",
+        )
+    if _COMING_SOON_RE.search(prompt):
+        return PageIntent(
+            workflow="coming_soon",
+            page_type="coming_soon",
+            confidence=0.74,
+            title_suggestion=prompt[:80] or "Coming soon",
+            headline=prompt[:120] or "Something new is on the way",
+            tone="warm",
+            primary_action="join the waitlist",
+        )
+    if _RESUME_RE.search(prompt):
+        return PageIntent(
+            workflow="resume",
+            page_type="resume",
+            confidence=0.77,
+            title_suggestion=prompt[:80] or "Resume",
+            headline=prompt[:120] or "Professional profile",
+            tone="formal",
+        )
+    if _GALLERY_RE.search(prompt):
+        return PageIntent(
+            workflow="gallery",
+            page_type="gallery",
+            confidence=0.7,
+            title_suggestion=prompt[:80] or "Portfolio",
+            headline=prompt[:120] or "Gallery",
+            tone="warm",
         )
     if _prompt_suggests_booking(prompt):
         return PageIntent(

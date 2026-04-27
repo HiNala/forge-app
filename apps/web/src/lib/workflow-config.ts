@@ -3,7 +3,21 @@
  */
 
 import type { LucideIcon } from "lucide-react";
-import { FileText, Globe, LayoutGrid, Link2, Mail, Presentation, Rocket } from "lucide-react";
+import {
+  BarChart3,
+  Camera,
+  FileText,
+  Globe,
+  HelpCircle,
+  LayoutGrid,
+  Link2,
+  Mail,
+  Presentation,
+  Rocket,
+  Timer,
+  UserRound,
+  UtensilsCrossed,
+} from "lucide-react";
 
 export type DashboardWorkflowFilter = "all" | "contact" | "proposal" | "deck" | "other";
 
@@ -39,11 +53,29 @@ export function pageMatchesWorkflowFilter(
   return true;
 }
 
+/** Maps Studio empty-state row labels to ``pages.page_type`` values used in template seeds. */
+const TEMPLATE_GALLERY_ROW_PAGE_TYPES: Record<string, readonly string[]> = {
+  "Pages & sites": ["landing", "coming_soon", "waitlist"],
+  "Forms & gathering": ["contact-form", "booking-form", "survey", "quiz", "rsvp"],
+  "Sales & business": ["proposal", "pitch_deck", "menu", "gallery"],
+  "Personal & social": ["link_in_bio", "resume", "portfolio"],
+};
+
+export function templateMatchesStudioRow(
+  pageType: string | null | undefined,
+  rowCategory: string,
+): boolean {
+  if (!pageType) return false;
+  const allowed = TEMPLATE_GALLERY_ROW_PAGE_TYPES[rowCategory];
+  return allowed ? allowed.includes(pageType) : false;
+}
+
 export type WorkflowSurfaceConfig = {
   chipIcon: LucideIcon;
   chipLabel: string;
   chipClassName: string;
-  middleTab: { id: string; label: string; hrefSuffix: string };
+  /** Third tab — flows, webhooks, and inbox routing (path `/automations`). */
+  automationsTabLabel: string;
   submissionsTabLabel: string;
   headerActions: "default" | "proposal" | "deck";
 };
@@ -52,7 +84,7 @@ const fallback: WorkflowSurfaceConfig = {
   chipIcon: LayoutGrid,
   chipLabel: "Page",
   chipClassName: "bg-bg-elevated text-text-muted",
-  middleTab: { id: "automations", label: "Automations", hrefSuffix: "/automations" },
+  automationsTabLabel: "Automations",
   submissionsTabLabel: "Submissions",
   headerActions: "default",
 };
@@ -63,7 +95,7 @@ export function getWorkflowSurfaceConfig(pageType: string): WorkflowSurfaceConfi
       chipIcon: Presentation,
       chipLabel: "Deck",
       chipClassName: "bg-violet-500/10 text-violet-800",
-      middleTab: { id: "export", label: "Export", hrefSuffix: "/export" },
+      automationsTabLabel: "Automations",
       submissionsTabLabel: "Viewers",
       headerActions: "deck",
     };
@@ -73,7 +105,7 @@ export function getWorkflowSurfaceConfig(pageType: string): WorkflowSurfaceConfi
       chipIcon: FileText,
       chipLabel: "Proposal",
       chipClassName: "bg-amber-500/10 text-amber-900",
-      middleTab: { id: "automations", label: "Automations", hrefSuffix: "/automations" },
+      automationsTabLabel: "Automations",
       submissionsTabLabel: "Viewers & decisions",
       headerActions: "proposal",
     };
@@ -83,7 +115,7 @@ export function getWorkflowSurfaceConfig(pageType: string): WorkflowSurfaceConfi
       chipIcon: Globe,
       chipLabel: "Portfolio",
       chipClassName: "bg-emerald-500/10 text-emerald-800",
-      middleTab: { id: "automations", label: "Automations", hrefSuffix: "/automations" },
+      automationsTabLabel: "Automations",
       submissionsTabLabel: "Inquiries",
       headerActions: "default",
     };
@@ -93,8 +125,8 @@ export function getWorkflowSurfaceConfig(pageType: string): WorkflowSurfaceConfi
       chipIcon: Link2,
       chipLabel: "Link in bio",
       chipClassName: "bg-pink-500/10 text-pink-800",
-      middleTab: { id: "automations", label: "Automations", hrefSuffix: "/automations" },
-      submissionsTabLabel: "Clicks",
+      automationsTabLabel: "Links",
+      submissionsTabLabel: "Submissions",
       headerActions: "default",
     };
   }
@@ -103,8 +135,68 @@ export function getWorkflowSurfaceConfig(pageType: string): WorkflowSurfaceConfi
       chipIcon: Rocket,
       chipLabel: "Waitlist",
       chipClassName: "bg-orange-500/10 text-orange-800",
-      middleTab: { id: "automations", label: "Automations", hrefSuffix: "/automations" },
+      automationsTabLabel: "Automations",
       submissionsTabLabel: "Sign-ups",
+      headerActions: "default",
+    };
+  }
+  if (pageType === "coming_soon") {
+    return {
+      chipIcon: Timer,
+      chipLabel: "Coming soon",
+      chipClassName: "bg-amber-500/10 text-amber-900",
+      automationsTabLabel: "Waitlist",
+      submissionsTabLabel: "Sign-ups",
+      headerActions: "default",
+    };
+  }
+  if (pageType === "survey") {
+    return {
+      chipIcon: BarChart3,
+      chipLabel: "Survey",
+      chipClassName: "bg-indigo-500/10 text-indigo-900",
+      automationsTabLabel: "Logic & routing",
+      submissionsTabLabel: "Responses",
+      headerActions: "default",
+    };
+  }
+  if (pageType === "quiz") {
+    return {
+      chipIcon: HelpCircle,
+      chipLabel: "Quiz",
+      chipClassName: "bg-fuchsia-500/10 text-fuchsia-900",
+      automationsTabLabel: "Scoring & routing",
+      submissionsTabLabel: "Completions",
+      headerActions: "default",
+    };
+  }
+  if (pageType === "resume") {
+    return {
+      chipIcon: UserRound,
+      chipLabel: "Resume",
+      chipClassName: "bg-slate-500/10 text-slate-900",
+      automationsTabLabel: "Sections",
+      submissionsTabLabel: "Viewers",
+      headerActions: "default",
+    };
+  }
+  if (pageType === "gallery") {
+    return {
+      chipIcon: Camera,
+      chipLabel: "Gallery",
+      chipClassName: "bg-teal-500/10 text-teal-900",
+      automationsTabLabel: "Images & CTAs",
+      submissionsTabLabel: "Inquiries",
+      headerActions: "default",
+    };
+  }
+  if (pageType === "menu") {
+    return {
+      chipIcon: UtensilsCrossed,
+      chipLabel: "Menu",
+      chipClassName: "bg-lime-500/10 text-lime-900",
+      automationsTabLabel: "Menu items",
+      submissionsTabLabel: "Inquiries",
       headerActions: "default",
     };
   }
@@ -114,7 +206,7 @@ export function getWorkflowSurfaceConfig(pageType: string): WorkflowSurfaceConfi
       chipIcon: Mail,
       chipLabel: booking ? "Booking" : "Contact",
       chipClassName: "bg-sky-500/10 text-sky-900",
-      middleTab: { id: "automations", label: "Automations", hrefSuffix: "/automations" },
+      automationsTabLabel: "Automations",
       submissionsTabLabel: "Submissions",
       headerActions: "default",
     };

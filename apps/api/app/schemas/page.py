@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -23,6 +24,9 @@ class PageDetailOut(PageOut):
     """Single-page fetch — includes generated HTML for Studio / preview."""
 
     current_html: str
+    form_schema: dict[str, Any] | None = None
+    intent_json: dict[str, Any] | None = None
+    brand_kit_snapshot: dict[str, Any] | None = None
 
     model_config = {"from_attributes": True}
 
@@ -37,6 +41,8 @@ class PagePatch(BaseModel):
     title: str | None = None
     slug: str | None = None
     status: str | None = None
+    form_schema: dict[str, Any] | None = None
+    intent_json: dict[str, Any] | None = None
 
 
 class PublishOut(BaseModel):

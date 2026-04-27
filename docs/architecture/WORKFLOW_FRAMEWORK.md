@@ -1,46 +1,57 @@
 # Workflow framework (extending Forge)
 
-Use this pattern when adding a new `page_type` / workflow.
+Use this pattern when adding a new `page_type` / workflow. **Mission P-06** expanded the surface to **15 marketing workflow landings** and **~14 page-backed types** in Studio (plus `mobile_app` and `website` canvas modes).
 
-## 1. Data & constraints
+## 1. Single sources of truth
 
-- Register `page_type` in the DB check constraint (BI-01) and any specialized tables (e.g. `decks` for `pitch_deck`).
+- **`app/services/workflows/registry.py`** — `WORKFLOW_DEFINITION` metadata (display name, category, `page_type`, `composer_key`, credits, comparison blurb) for product surfaces.
+- **`app/services/orchestration/planning_models.py`** — add to `WorkflowPlanType`.
+- **`app/services/orchestration/models.py`** — extend `PageType`, `WORKFLOW_TO_PAGE_TYPE`, `PAGE_TYPE_TO_WORKFLOW`.
+- **Intent** — `app/services/orchestration/intent.py` taxonomy + heuristics; optional **`forced_workflow`** on `/studio/generate` resolved by `app/services/orchestration/forced_workflow.py`.
+
+## 2. Planners & composers
+
+- **Planner** — `app/services/orchestration/planners/<name>.py`, registered in `planners/__init__.py:plan_for_intent`.
+- **Composer** — `app/services/orchestration/composer/*.py` + `app/services/llm/prompts/composers/<name>.v1.md`, registered in `composer/registry.py` (`_COMPOSERS`, `workflow_key_for_intent`).
+
+## 3. Components
+
+- Add IDs to `component_lib/catalog.py` and **either** a Jinja template in `component_lib/templates/` **or** rely on `generic_semantic.jinja.html` for early iterations.
+
+## 4. Data & constraints
+
+- `pages.page_type` is `String(32)`; Alembic **`p06_page_type_check`** adds a PostgreSQL `CHECK` aligned with `PageType` in code.
 - RLS: tenant-scoped rows on `organization_id`.
 
-## 2. Intent & composition
+## 5. Studio
 
-- **Intent parser** (`app/services/orchestration/intent_parser.py`): extend JSON shape / heuristics so the model returns your `page_type` and fields.
-- **Assembly** (`page_composer`, `pipeline.py`): map intent → HTML sections; validate with `html_validate`.
-- **SSE** (`stream_page_generation`): same `intent` → `html.chunk` → `html.complete` stream.
+- **Empty state** — `apps/web/src/components/studio/studio-workflow-grid.tsx` (4×4 with category labels).
+- `forced_workflow` is sent on generate when a tile (or `?workflow=`) sets `pendingForcedWorkflowRef` in `studio-workspace.tsx`.
 
-## 3. Studio
+## 6. Surface config (web)
 
-- Add refine chips in `_refine_suggestions_for_page_type` if needed.
-- Optional: `workflow_clarify` heuristic in `workflow_clarify.py` when multiple workflows overlap.
+- `apps/web/src/lib/workflow-config.ts` — `getWorkflowSurfaceConfig(pageType)` drives dashboard chips, Page Detail labels, and tab copy.
 
-## 4. Surface config (web)
+## 7. Page Detail & analytics
 
-- `apps/web/src/lib/workflow-config.ts` — `getWorkflowSurfaceConfig(pageType)` drives:
-  - Dashboard chips and filters
-  - Page Detail tabs (e.g. Export vs Automations)
-  - Header actions (Present, Share, etc.)
+- Overview + workflow-specific language via `getWorkflowSurfaceConfig`.
+- **Analytics** — `app/services/analytics/track_public._workflow_for_page_type` should map new `page_type` strings for funnel metadata.
 
-## 5. Page Detail & analytics
+## 8. Templates & seeds
 
-- Overview: workflow-specific widgets (appointments, pipeline status, deck snapshot).
-- **Analytics** (`page_analytics` / `org_analytics`): emit events for funnel, engagement, presenter sessions as appropriate.
+- Curated rows in `app/seed_templates_data.py` and optional YAML in `apps/api/fixtures/templates/`.
+- `scripts/seed_templates.py` upserts; `intent_json.page_type` powers template browser hints (`TemplateListItemOut.page_type` on list API).
 
-## 6. Templates & seeds
+## 9. Marketing
 
-- Seed `templates` with `page_type` and gallery category tags.
-- Gallery links use `?q=` to filter marketing copy.
+- `apps/web/src/lib/workflow-landings.ts` — `WORKFLOW_SLUGS` + `WORKFLOW_LANDINGS` for `/workflows/[slug]`.
+- Index: `/workflows` lists all slugs; linked from the marketing nav.
 
-## 7. Public runtime
+## 10. Public runtime
 
-- `public_runtime.py`: inject trackers, proposal/deck runtime, and **Made with Forge** badge (`public_brand_badge.py`) for Starter/trial plans.
+- `public_runtime.py`: inject trackers, proposal/deck runtime, and **Made with Forge** where applicable.
 
-## 8. Tests
+## 11. Tests
 
-- Contract tests for new API routes.
-- Heuristic tests for intent/clarify.
-- UI smoke: dashboard filters, Page Detail tabs, Studio priming.
+- Workflow registry / intent / `forced_workflow` — see `apps/api/tests/test_p06_workflow_surface.py`.
+- Contract tests for any new API fields (e.g. template list `page_type`).

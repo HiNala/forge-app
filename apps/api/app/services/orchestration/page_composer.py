@@ -150,7 +150,14 @@ def apply_plan_constraints(intent: PageIntent, plan: AssemblyPlan) -> AssemblyPl
     secs = list(plan.sections)
     names = [s.component for s in secs]
 
-    if intent.page_type in ("booking-form", "contact-form", "rsvp") and not any(
+    if intent.page_type in (
+        "booking-form",
+        "contact-form",
+        "rsvp",
+        "survey",
+        "quiz",
+        "coming_soon",
+    ) and not any(
         n.startswith("form") for n in names
     ):
         fl: list[dict[str, Any]] = []

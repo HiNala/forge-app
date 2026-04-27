@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from redis.asyncio import Redis
@@ -11,13 +11,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.llm_routing_policy import LlmRoutingPolicy
-from app.services.llm.llm_router import ModelRoute, ROUTES
+
+if TYPE_CHECKING:
+    from app.services.llm.llm_router import ModelRoute
 
 logger = logging.getLogger(__name__)
 
 ROUTING_REDIS_KEY = "forge:llm_routing:version"
 
-_route_cache: dict[str, ModelRoute] = {}
+_route_cache: dict[str, Any] = {}
 
 
 def _ck(rver: int, org: UUID | None, role: str) -> str:
@@ -32,7 +34,7 @@ async def bump_routing_version(redis: Redis | None) -> int:
         await redis.publish("forge:llm_routing:invalidate", str(v))
         return int(v)
     except Exception as e:  # noqa: BLE001
-        logger.warning("routing_version_bump_failed %s", e)
+        logger.warning("routing_version_bump %s", e)
         return 0
 
 
@@ -50,7 +52,9 @@ async def _load_org_policies(
     return out
 
 
-def _row_to_model_route(row: LlmRoutingPolicy) -> ModelRoute:
+def _row_to_model_route(row: LlmRoutingPolicy) -> "ModelRoute":
+    from app.services.llm.llm_router import ROUTES, ModelRoute
+
     fbs: list[tuple[str, str]] = []
     raw = row.fallbacks or []
     for item in raw:
@@ -71,11 +75,13 @@ async def effective_model_route(
     *,
     role: str,
     organization_id: UUID | None,
-) -> ModelRoute:
+) -> "ModelRoute":
     """
     DB policies override in-process ROUTES; org rows override platform rows.
     When DB empty, return built-in ROUTES.
     """
+    from app.services.llm.llm_router import ROUTES
+
     rver = 0
     if redis is not None:
         try:

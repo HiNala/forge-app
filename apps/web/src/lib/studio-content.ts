@@ -2,14 +2,22 @@
  * Studio copy — aligned with marketing hero placeholders (FE-02) and mission FE-04 chips.
  */
 
-/** Same rotation as `HeroDemo` PLACEHOLDERS (marketing) — six workflow families (V2-P01). */
+/** Rotates in the empty-state textarea — one line per workflow surface (P-06). */
 export const STUDIO_PLACEHOLDERS = [
   "a mobile app screen for service appointments with date and notes",
   "a two-page website for a local coffee shop with menu and contact",
-  "a booking form for my small construction business",
+  "a focused web page for my coaching offer with testimonials and a booking CTA",
+  "a coming soon page with waitlist for my SaaS beta and three teaser bullets",
+  "a contact form for my small construction business",
+  "a 7-question customer satisfaction survey after checkout",
+  "a 6-question quiz that recommends which service tier fits the customer",
+  "an RSVP page for a company party with meal choice and plus-one",
   "a one-page sales proposal with accept and decline",
   "a 6-slide pitch deck for a pre-seed robotics startup",
-  "a one-page product launch with waitlist and social proof",
+  "a dinner menu for a bistro with appetizers, mains, and wine by the glass",
+  "a wedding photography portfolio with gallery grid and booking form",
+  "a link-in-bio for a music teacher with lesson booking, YouTube, and newsletter",
+  "a resume site for a product designer with projects, skills, and contact",
 ] as const;
 
 export type StudioStarterId =

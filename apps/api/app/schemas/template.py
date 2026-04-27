@@ -17,8 +17,21 @@ class TemplateListItemOut(BaseModel):
     category: str
     preview_image_url: str | None
     sort_order: int
+    page_type: str | None = Field(
+        default=None,
+        description="Hint from intent_json.page_type for workflow browsing (P-06).",
+    )
 
     model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_template_row(cls, row: object) -> TemplateListItemOut:
+        """Fill page_type from JSON intent when present."""
+        raw = TemplateListItemOut.model_validate(row)
+        ij = getattr(row, "intent_json", None)
+        if isinstance(ij, dict) and ij.get("page_type"):
+            return raw.model_copy(update={"page_type": str(ij["page_type"])})
+        return raw
 
 
 class TemplateDetailOut(BaseModel):

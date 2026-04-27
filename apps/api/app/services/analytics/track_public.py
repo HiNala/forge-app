@@ -32,9 +32,19 @@ def _workflow_for_page_type(page_type: str) -> str | None:
     m = {
         "contact-form": "contact_form",
         "booking-form": "booking",
-        "rsvp": "rsvp",
+        "rsvp": "event_rsvp",
         "proposal": "proposal",
-        "pitch-deck": "pitch_deck",
+        "pitch_deck": "pitch_deck",
+        "menu": "menu",
+        "link_in_bio": "link_in_bio",
+        "gallery": "gallery",
+        "waitlist": "waitlist",
+        "landing": "landing",
+        "survey": "survey",
+        "quiz": "quiz",
+        "coming_soon": "coming_soon",
+        "resume": "resume",
+        "portfolio": "portfolio",
     }
     return m.get(page_type)
 

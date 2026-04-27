@@ -21,6 +21,8 @@ import {
   postTemplateUse,
   type TemplateListItemOut,
 } from "@/lib/api";
+import { STUDIO_WORKFLOW_GRID_ROWS } from "@/components/studio/studio-workflow-grid";
+import { templateMatchesStudioRow } from "@/lib/workflow-config";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +35,7 @@ export default function TemplatesGalleryPage() {
   const [loading, setLoading] = React.useState(true);
   const [q, setQ] = React.useState(() => searchParams.get("q") ?? "");
   const [category, setCategory] = React.useState<string | null>(null);
+  const [workflowRow, setWorkflowRow] = React.useState<string | null>(null);
   const [detail, setDetail] = React.useState<TemplateListItemOut | null>(null);
   const [detailHtml, setDetailHtml] = React.useState<string | null>(null);
   const [detailLoading, setDetailLoading] = React.useState(false);
@@ -64,9 +67,12 @@ export default function TemplatesGalleryPage() {
   }, [allItems]);
 
   const items = React.useMemo(() => {
-    if (!category) return allItems;
-    return allItems.filter((t) => t.category === category);
-  }, [allItems, category]);
+    let rows = allItems;
+    if (category) rows = rows.filter((t) => t.category === category);
+    if (workflowRow)
+      rows = rows.filter((t) => templateMatchesStudioRow(t.page_type ?? null, workflowRow));
+    return rows;
+  }, [allItems, category, workflowRow]);
 
   async function openDetail(t: TemplateListItemOut) {
     setDetail(t);
@@ -164,6 +170,41 @@ export default function TemplatesGalleryPage() {
         </Button>
       </div>
 
+      <div className="mt-6">
+        <p className="mb-2 font-body text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+          Workflow groups
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setWorkflowRow(null)}
+            className={cn(
+              "rounded-full border px-3 py-1 text-xs font-medium transition",
+              workflowRow === null
+                ? "border-accent bg-accent/10 text-text"
+                : "border-border bg-surface text-text-muted hover:border-accent/40",
+            )}
+          >
+            All workflows
+          </button>
+          {STUDIO_WORKFLOW_GRID_ROWS.map((row) => (
+            <button
+              key={row.category}
+              type="button"
+              onClick={() => setWorkflowRow(row.category)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-medium transition",
+                workflowRow === row.category
+                  ? "border-accent bg-accent/10 text-text"
+                  : "border-border bg-surface text-text-muted hover:border-accent/40",
+              )}
+            >
+              {row.category}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
@@ -175,7 +216,7 @@ export default function TemplatesGalleryPage() {
               : "border-border bg-surface text-text-muted hover:border-accent/40",
           )}
         >
-          All
+          All categories
         </button>
         {categories.map((c) => (
           <button

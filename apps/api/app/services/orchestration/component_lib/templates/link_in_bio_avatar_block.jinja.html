@@ -1,0 +1,13 @@
+<section data-forge-section="{{ section_id | e }}" class="forge-sec" data-component="link_in_bio_avatar_block">
+  <div class="forge-container forge-center" style="max-width:28rem;margin:0 auto;text-align:center;padding-top:1rem;">
+    {% if props.avatar_url %}
+    <img src="{{ props.avatar_url | e }}" alt="" width="96" height="96" style="border-radius:9999px;object-fit:cover;border:3px solid rgba(15,23,42,.08);"/>
+    {% else %}
+    <div style="width:96px;height:96px;border-radius:9999px;margin:0 auto;background:linear-gradient(135deg,var(--p,#2563eb),#64748b);opacity:.9;"></div>
+    {% endif %}
+    <h1 class="forge-h1" style="font-size:1.5rem;margin:1rem 0 .25rem;">{{ (props.headline or props.name or props.title or 'Your name') | e }}</h1>
+    {% if props.subtitle or props.bio %}
+    <p class="forge-lead" style="font-size:.95rem;opacity:.85;">{{ (props.subtitle or props.bio) | e }}</p>
+    {% endif %}
+  </div>
+</section>

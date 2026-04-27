@@ -248,18 +248,16 @@ export default function PageDetailLayout({
     );
   }
 
-  const middlePath = `${base}${wf.middleTab.hrefSuffix}`;
-  const middleActive = wf.middleTab.id === "export" ? isExport : isAutomations && !isExport;
-
   const tabs: { href: string; label: string; active: boolean; badge?: string }[] = [
-    { href: base, label: "Share", active: isShare },
+    { href: base, label: "Overview", active: isShare },
     {
       href: `${base}/submissions`,
       label: wf.submissionsTabLabel,
       active: isSubmissions,
       badge: subLabel !== "0" ? subLabel : undefined,
     },
-    { href: middlePath, label: wf.middleTab.label, active: middleActive },
+    { href: `${base}/automations`, label: wf.automationsTabLabel, active: isAutomations },
+    { href: `${base}/export`, label: "Export", active: isExport },
     { href: `${base}/analytics`, label: "Analytics", active: isAnalytics },
   ];
 

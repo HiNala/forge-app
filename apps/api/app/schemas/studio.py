@@ -11,11 +11,13 @@ class StudioGenerateRequest(BaseModel):
     prompt: str = Field(examples=["Small jobs booking page for Reds Construction"])
     page_id: UUID | None = Field(default=None, examples=[None])
     provider: Literal["openai", "anthropic", "gemini"] = Field(default="openai")
-    forced_workflow: (
-        Literal["contact-form", "booking-form", "proposal", "pitch_deck"] | None
-    ) = Field(
+    forced_workflow: str | None = Field(
         default=None,
-        description="Optional — user disambiguation overrides auto intent for this generation.",
+        description=(
+            "Optional — user disambiguation overrides auto intent for this generation. "
+            "Use page-backed types (e.g. contact-form, survey, quiz, coming_soon, resume, link_in_bio, "
+            "gallery) or marketing keys from /workflows."
+        ),
     )
     session_id: str = Field(
         default="default",

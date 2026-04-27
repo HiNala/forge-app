@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.ai import router as ai_router
 from app.services.ai.exceptions import LLMSchemaError
 from app.services.llm.pricing import estimate_cost_cents
-from app.services.llm.routing_config_service import effective_model_route
 from app.services.llm.types import Message
 
 logger = logging.getLogger(__name__)
@@ -93,6 +92,8 @@ async def structured_completion[T: BaseModel](
     organization_id: UUID | None = None,
 ) -> T:
     """Parse JSON into `schema`; retry once with validation error appended."""
+    from app.services.llm.routing_config_service import effective_model_route
+
     base_route = ROUTES.get(role)
     task = ROLE_TO_TASK.get(role, "intent")
     if base_route is None:

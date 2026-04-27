@@ -55,6 +55,10 @@ WorkflowPlanType = Literal[
     "link_in_bio",
     "waitlist",
     "faq",
+    "survey",
+    "quiz",
+    "coming_soon",
+    "resume",
     "other",
 ]
 
