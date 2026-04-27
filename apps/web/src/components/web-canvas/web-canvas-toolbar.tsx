@@ -27,7 +27,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { orphanPageIds } from "@/lib/web-canvas-nav-graph";
-import { buildSingleFileStaticSite } from "@/lib/web-canvas-static-export";
+import { buildMultiPageStaticZip, buildSingleFileStaticSite } from "@/lib/web-canvas-static-export";
 import { useWebCanvasStore, type SiteNavLink } from "./web-canvas-store";
 import type { WebCanvasFocusBreakpoint } from "./types";
 import { cn } from "@/lib/utils";
@@ -97,12 +97,19 @@ export function WebCanvasToolbar() {
   const orphanIds =
     pages.length > 1 ? orphanPageIds(pages.map((p) => p.id), homePageId, edges) : [];
 
-  function downloadStaticHtml() {
+  function exportTheme() {
     const accent = `hsl(${accentHue} 78% 48%)`;
+    if (theme === "dark") {
+      return { accent, bg: "#0f1419", fg: "#e6edf3" };
+    }
+    return { accent, bg: "#ffffff", fg: "#0f172a" };
+  }
+
+  function downloadStaticHtml() {
     const doc = buildSingleFileStaticSite(
       pages.map((p) => ({ path: p.path, title: p.title, html: p.html })),
       "Forge site preview",
-      { accent, bg: "#ffffff", fg: "#0f172a" },
+      exportTheme(),
     );
     const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -112,6 +119,28 @@ export function WebCanvasToolbar() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Downloaded static preview");
+  }
+
+  function downloadMultiPageZip() {
+    try {
+      const zipped = buildMultiPageStaticZip(
+        pages.map((p) => ({ path: p.path, title: p.title, html: p.html })),
+        "Forge site preview",
+        exportTheme(),
+      );
+      const bytes = new Uint8Array(zipped.length);
+      bytes.set(zipped);
+      const blob = new Blob([bytes], { type: "application/zip" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "forge-site-pages.zip";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Downloaded ZIP — unzip and open index.html");
+    } catch {
+      toast.error("Could not build ZIP export.");
+    }
   }
 
   return (
@@ -260,6 +289,9 @@ export function WebCanvasToolbar() {
           <DropdownMenuContent align="start" className="font-body">
             <DropdownMenuItem className="cursor-pointer" onSelect={() => downloadStaticHtml()}>
               Static site (single HTML file)
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onSelect={() => downloadMultiPageZip()}>
+              Multi-page HTML (ZIP)
             </DropdownMenuItem>
             <DropdownMenuItem disabled className="text-text-muted">
               Next.js zip (API pipeline)

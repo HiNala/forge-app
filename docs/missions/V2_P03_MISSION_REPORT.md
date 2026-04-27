@@ -15,7 +15,7 @@ P-03 delivers a **client-first** web canvas aligned with the mobile workflow: xy
 | Routing edges from nav + manual; orphan detection | **Partial** — sync from links + orphans + xyflow edges; preview `<a href="/path">` focuses + fits the target page node (still no minimap click-to-pan) |
 | Forms embed + Forge submissions | **Not done** (requires page type + API) |
 | Responsive linter + auto-fix | **Not done** |
-| Five exports (HTML zip, Next, Framer, Webflow, Figma) | **Partial** — single-file HTML MVP only |
+| Five exports (HTML zip, Next, Framer, Webflow, Figma) | **Partial** — single-file HTML + **client ZIP** of per-page HTML (not Next/Framer/Webflow/Figma) |
 | Page Detail variants | **Not done** |
 | 50 pages @ 60fps; latency budgets | **Not verified** (thumbnail mode at low zoom **not** implemented) |
 | All tests pass | **Targeted unit tests pass**; full suite / E2E per mission **not** completed here |
@@ -25,14 +25,14 @@ P-03 delivers a **client-first** web canvas aligned with the mobile workflow: xy
 
 - `homePageId`, `updatePagePath`, `arrangePagesInGrid`, `syncFlowEdgesFromNavLinks`.
 - Toolbar: **Export** (static HTML), **Grid**, **Sync links**, orphan badge.
-- `buildSingleFileStaticSite`, nav-graph helpers, unit tests.
+- `buildSingleFileStaticSite`, `buildMultiPageStaticZip` (per-page HTML + `fflate`), nav-graph helpers, unit cases extended.
 - `components/canvas/WebCanvas.tsx` re-export for mission naming.
 - W-04 doc addendum clarifying `/studio` vs `/studio/web`.
 
 ## Recommended next slices
 
 1. **API:** `SiteOutline` + `WebsiteComposer` / streaming `page.complete`.
-2. **Exports:** zip of HTML/CSS; Next.js scaffold job; Figma plugin/API.
+2. **Exports:** ~~plain HTML zip (client)~~; Next.js scaffold job; Figma plugin/API.
 3. **Product:** Page Detail **Pages / Canvas / Flow / SEO** tabs for `website` type.
 4. **Canvas:** ~~Link click → focus target node~~ (shipped: internal nav in preview); low-zoom thumbnails; responsive linter.
 

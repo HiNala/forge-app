@@ -24,7 +24,8 @@ Spec alias: `components/canvas/WebCanvas.tsx` re-exports the implementation from
 | Grid arrange + fit view | Shipped |
 | **Sync links** — edges from internal `<a href="/path">` (data `fromNav: true`; manual edges preserved) | Shipped |
 | Orphan page hint (no incoming edge, excluding homepage) | Shipped |
-| Static export — single downloadable `.html` preview | Shipped |
+| Static export — single `.html` preview | Shipped |
+| Static export — multi-page **ZIP** (standalone HTML + relative nav) | Shipped (`buildMultiPageStaticZip`, `fflate`) |
 | Multi-page orchestration (`SiteOutline`, `WebsiteComposer`, streaming) | **API / P-05** |
 | Next.js zip, Framer/Webflow JSON, Figma API, hosted multi-route site | **Pipeline** |
 | Responsive linter + auto-fix | **Not started** |
