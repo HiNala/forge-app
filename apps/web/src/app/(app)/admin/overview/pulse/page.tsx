@@ -68,24 +68,36 @@ export default function AdminPulsePage() {
         <p className="type-body text-text-muted">Loading…</p>
       ) : t && a ? (
         <div className="max-w-2xl space-y-8">
-          <div className="rounded-xl border border-border bg-surface p-6">
-            <UsageBar
-              label="7-day active / registered users"
-              description="How much of the user base was active this week"
-              percent={activeOverTotalPct}
-              used={t.active_users_7d}
-              cap={t.users}
-            />
-          </div>
-          <div className="rounded-xl border border-border bg-surface p-6">
-            <UsageBar
-              label="Live pages (share of all pages)"
-              description="All-time — published vs total drafts"
-              percent={liveOverTotalPct}
-              used={a.pages.live}
-              cap={a.pages.total}
-            />
-          </div>
+          {t.users > 0 ? (
+            <div className="rounded-xl border border-border bg-surface p-6">
+              <UsageBar
+                label="7-day active / registered users"
+                description="How much of the user base was active this week"
+                percent={activeOverTotalPct}
+                used={t.active_users_7d}
+                cap={t.users}
+              />
+            </div>
+          ) : (
+            <p className="type-caption rounded-xl border border-border bg-surface p-4 text-text-muted">
+              No registered users yet. These bars need at least one user in the system.
+            </p>
+          )}
+          {a.pages.total > 0 ? (
+            <div className="rounded-xl border border-border bg-surface p-6">
+              <UsageBar
+                label="Live pages (share of all pages)"
+                description="All-time — published vs total drafts"
+                percent={liveOverTotalPct}
+                used={a.pages.live}
+                cap={a.pages.total}
+              />
+            </div>
+          ) : (
+            <p className="type-caption rounded-xl border border-border bg-surface p-4 text-text-muted">
+              No pages in the system yet.
+            </p>
+          )}
           <div className="grid gap-3 sm:grid-cols-3">
             <PulseCard label="LLM cost 30d (¢)" value={a.llm.cost_cents_in_window} />
             <PulseCard label="Submissions 30d" value={a.submissions_in_window} />

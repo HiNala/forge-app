@@ -8,13 +8,13 @@ import { getPlatformSession } from "@/lib/api";
 
 export default function InternalDesignLayout({ children }: { children: React.ReactNode }) {
   const { getToken } = useAuth();
+  const isDev = process.env.NODE_ENV === "development";
   const sessionQ = useQuery({
     queryKey: ["platform-session"],
     queryFn: () => getPlatformSession(getToken),
     retry: false,
+    enabled: !isDev,
   });
-
-  const isDev = process.env.NODE_ENV === "development";
   const allowed = isDev || Boolean(sessionQ.data);
 
   if (!isDev && sessionQ.isLoading) {
