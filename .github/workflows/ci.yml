@@ -23,6 +23,8 @@ jobs:
         run: pnpm --filter web lint:strict
       - name: Typecheck web
         run: pnpm --filter web typecheck
+      - name: Copy / positioning lint (V2-P01)
+        run: pnpm --filter web copy:check
 
   test-api:
     runs-on: ubuntu-latest

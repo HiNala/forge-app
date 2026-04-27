@@ -25,7 +25,7 @@ Positioning is unified around the **mini-app platform** story end-to-end: canoni
 | Handoff promise on workflow pages + `/handoff` | Done |
 | Press `/press` | Done (placeholders for photos and asset zip) |
 | Launch drafts | Done (`docs/launch/V2_P01_ANNOUNCEMENT_DRAFTS.md`) |
-| Copy linter in CI | Done (`pnpm --filter web copy:check` in root `verify`) |
+| Copy linter in CI | Done — `pnpm --filter web copy:check` in root `verify` **and** `.github/workflows/ci.yml` (`test-web` job) |
 | Mission report | This file |
 
 ## Follow-ups (not blocking P01)
