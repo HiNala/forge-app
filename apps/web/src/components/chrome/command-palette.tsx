@@ -28,7 +28,7 @@ import { useForgeSession } from "@/providers/session-provider";
 const NAV_CORE = [
   { href: "/dashboard", label: "Dashboard", value: "dashboard", icon: LayoutDashboard },
   { href: "/pages", label: "Pages", value: "pages list", icon: FileText },
-  { href: "/studio", label: "Studio — create a page", value: "studio new page", icon: Sparkles },
+  { href: "/studio", label: "Studio — build a mini-app", value: "studio new page", icon: Sparkles },
   { href: "/analytics", label: "Analytics", value: "analytics org", icon: BarChart3 },
   { href: "/templates", label: "Templates", value: "templates", icon: LayoutTemplate },
 ] as const;
@@ -216,7 +216,9 @@ export function CommandPalette() {
               </Command.Item>
             ))}
             {!pagesQ.isLoading && pages.length === 0 && activeOrganizationId ? (
-              <div className="px-2 py-2 text-xs text-text-muted">No pages yet — open Studio to create one.</div>
+              <div className="px-2 py-2 text-xs text-text-muted">
+                Nothing here yet — open Studio to describe a mini-app.
+              </div>
             ) : null}
 
             <Command.Group

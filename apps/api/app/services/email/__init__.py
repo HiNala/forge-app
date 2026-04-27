@@ -112,7 +112,7 @@ class EmailService:
         html, text = _render_pair("notification", ctx)
         return await _send_raw(
             to=[to_email],
-            subject=subject or f"New submission on {page_title}",
+            subject=subject or f"New response — {page_title}",
             html=html,
             text=text,
             attachments=attachments,
@@ -201,7 +201,7 @@ class EmailService:
         html, text = _render_pair("invitation", ctx)
         return await _send_raw(
             to=[to_email],
-            subject=f"You've been invited to {org_name}",
+            subject=f"You're invited to {org_name} on Forge (mini-app platform)",
             html=html,
             text=text,
         )

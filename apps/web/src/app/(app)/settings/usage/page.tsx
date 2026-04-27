@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import { RefreshCw } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 import { getBillingPlan, getBillingUsage } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
@@ -163,9 +164,9 @@ export default function UsageSettingsPage() {
             </p>
             <p className="mt-1 font-body text-xs text-text-muted">
               Limits reset at the start of each billing period.{" "}
-              <a href="/settings/billing" className="text-accent hover:underline">
+              <Link href="/settings/billing" className="text-accent hover:underline">
                 Manage billing →
-              </a>
+              </Link>
             </p>
           </div>
         </section>

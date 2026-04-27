@@ -5,8 +5,8 @@
   <table role="presentation" style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;">
     <tr><td>
       {% if logo_url %}<img src="{{ logo_url }}" alt="" height="40" style="margin-bottom:16px;"/>{% endif %}
-      <h1 style="color:{{ primary_color|default('#111') }};">You've been invited to {{ org_name }}</h1>
-      <p style="color:#374151;">Open Forge to accept your invitation.</p>
+      <h1 style="color:{{ primary_color|default('#111') }};">You're invited to {{ org_name }}</h1>
+      <p style="color:#374151;">Forge is the mini-app platform — open the link to join this workspace.</p>
       {% if cta_url %}<p><a href="{{ cta_url }}" style="color:{{ primary_color|default('#2563eb') }};">Continue</a></p>{% endif %}
     </td></tr>
   </table>

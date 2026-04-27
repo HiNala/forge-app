@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Search, Shield } from "lucide-react";
 import * as React from "react";
@@ -9,21 +10,17 @@ import { listAdminUsers, type AdminUserListItem } from "@/lib/api";
 
 export default function AdminUsersPage() {
   const { getToken } = useAuth();
-  const [items, setItems] = React.useState<AdminUserListItem[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [err, setErr] = React.useState<string | null>(null);
   const [q, setQ] = React.useState("");
 
-  React.useEffect(() => {
-    setLoading(true);
-    void listAdminUsers(getToken, q || undefined)
-      .then((r) => {
-        setItems(r.items);
-        setErr(null);
-      })
-      .catch(() => setErr("Unable to load users."))
-      .finally(() => setLoading(false));
-  }, [getToken, q]);
+  const usersQ = useQuery({
+    queryKey: ["admin-users", q],
+    queryFn: () => listAdminUsers(getToken, q || undefined),
+    staleTime: 30_000,
+  });
+
+  const items: AdminUserListItem[] = usersQ.data?.items ?? [];
+  const loading = usersQ.isLoading;
+  const err = usersQ.isError ? "Unable to load users." : null;
 
   return (
     <div className="space-y-5">
@@ -78,23 +75,14 @@ export default function AdminUsersPage() {
                         Admin
                       </span>
                     ) : (
-                      <span className="text-text-subtle text-xs">User</span>
+                      <span className="text-text-muted">Member</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-text-subtle tabular-nums">
-                    {u.created_at
-                      ? format(new Date(u.created_at), "MMM d, yyyy")
-                      : "—"}
+                  <td className="px-4 py-3 text-text-muted">
+                    {u.created_at ? format(new Date(u.created_at), "MMM d, yyyy") : "—"}
                   </td>
                 </tr>
               ))}
-              {items.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-text-muted">
-                    No users found.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>

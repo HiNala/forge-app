@@ -168,9 +168,9 @@ export default function BillingSettingsPage() {
                 {format(new Date(usage.period_start), "MMM d")} – {format(new Date(usage.period_end), "MMM d, yyyy")}
               </p>
             </div>
-            <a href="/settings/usage" className="font-body text-xs text-accent hover:underline shrink-0">
+            <Link href="/settings/usage" className="font-body text-xs text-accent hover:underline shrink-0">
               View details →
-            </a>
+            </Link>
           </div>
           <UsageBar
             label="Pages generated"

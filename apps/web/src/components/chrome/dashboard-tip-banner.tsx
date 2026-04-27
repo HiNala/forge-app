@@ -39,7 +39,7 @@ export function DashboardTipBanner() {
       aria-label="Tip"
     >
       <p className="text-sm font-medium text-text font-body">
-        Tip: Click <strong>Studio</strong> in the sidebar to describe your first page.
+        Tip: Click <strong>Studio</strong> in the sidebar to describe your first mini-app.
       </p>
       <div className="flex shrink-0 items-center gap-2">
         <Button

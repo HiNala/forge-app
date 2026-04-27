@@ -3,12 +3,13 @@ import { PricingPageClient } from "@/components/marketing/pricing-page-client";
 import { SITE_URL } from "@/lib/marketing-content";
 
 export const metadata: Metadata = {
-  title: "Pricing",
-  description: "Starter, Pro, and Enterprise plans for Forge — trials, comparison, and billing FAQ.",
+  title: "Pricing — Free, Pro, Max | Forge",
+  description:
+    "Free, Pro, and Max tiers for the Forge mini-app platform. Session-based usage with a weekly cap — honest limits, no surprise AI line items. Details finalize with billing (V2-P04).",
   alternates: { canonical: "/pricing" },
   openGraph: {
     title: "Pricing · Forge",
-    description: "Simple tiers for solo operators and teams. Annual billing saves two months.",
+    description: "Free, Pro, and Max. See usage the way you will feel it: one clear percentage bar.",
     url: `${SITE_URL}/pricing`,
     type: "website",
   },

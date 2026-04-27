@@ -7,13 +7,13 @@ export function MarketingJsonLd() {
     name: "Forge",
     url: SITE_URL,
     description:
-      "Describe what you need in plain English. Forge builds a branded, hosted page — forms, RSVPs, menus, and more.",
+      "The mini-app platform: describe a form, landing page, proposal, deck, or site. Forge builds it, hosts it, and tracks it — or hands off exports when you are ready.",
   };
   const app = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "Forge",
-    applicationCategory: "BusinessApplication",
+    applicationCategory: "WebApplication",
     operatingSystem: "Web",
     offers: {
       "@type": "Offer",

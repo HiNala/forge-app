@@ -1,6 +1,6 @@
-# Forge — AI-Powered Mini-App Builder
+# Forge — mini-app platform
 
-Forge turns a plain-English prompt into a finished, hosted, single-purpose web page — a booking form, a contact form, an event RSVP, a daily menu, a sales proposal — and gives the creator an admin surface to manage it afterward.
+Forge is the fastest way to ship a **mini-app**: a form, landing page, proposal, pitch deck, website idea, or (on the roadmap) mobile and web canvas outputs. Describe it in the Studio, share a link, see analytics, export when the work moves elsewhere — you never run a database for it.
 
 ## What’s in this repo
 

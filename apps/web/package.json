@@ -10,6 +10,7 @@
     "lint": "eslint",
     "lint:strict": "eslint --max-warnings 0 .",
     "typecheck": "node scripts/check-api-duplicates.cjs && tsc --noEmit",
+    "copy:check": "node scripts/scan-forbidden-copy.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ci": "playwright test",

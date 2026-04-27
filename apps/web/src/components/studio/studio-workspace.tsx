@@ -24,6 +24,7 @@ import {
 import { debounce } from "@/lib/debounce";
 import { MOTION_TRANSITIONS, SPRINGS } from "@/lib/motion";
 import { SIDEBAR_AUTO_COLLAPSE_EVENT } from "@/lib/shell-events";
+import { brand } from "@/lib/copy";
 import {
   DEFAULT_REFINE_CHIPS,
   SECTION_EDIT_QUICK_CHIPS,
@@ -186,6 +187,9 @@ export function StudioWorkspace() {
       contact_form: "A contact form for my business — ",
       proposal: "A proposal for ",
       pitch_deck: "A pitch deck for ",
+      mobile_app: "A mobile app screen for ",
+      website: "A simple website for ",
+      landing_page: "A one-page landing for ",
     };
     const prime = map[workflowFromUrl];
     if (prime) setPromptEmpty((prev) => prev || prime);
@@ -712,7 +716,7 @@ export function StudioWorkspace() {
       if (typeof window === "undefined" || localStorage.getItem(CELEBRATION_KEY)) return;
       localStorage.setItem(CELEBRATION_KEY, "1");
       void fireFirstPublishConfetti();
-      toast.success("Your first page is live", {
+      toast.success("Your mini-app is live", {
         description: "Share it with your world.",
         duration: 6000,
         className: "bg-accent/10 border border-accent/30",
@@ -794,10 +798,13 @@ export function StudioWorkspace() {
                 layout
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mb-8 text-center font-display text-2xl font-bold tracking-tight text-text"
+                className="mb-2 text-center font-display text-2xl font-bold tracking-tight text-text"
               >
                 {timeOfDayGreeting(firstName)}
               </motion.p>
+              <p className="mb-8 max-w-xl text-center text-sm font-light leading-relaxed text-text-muted font-body">
+                {brand.studioEmptyHint}
+              </p>
               {usage ? (
                 <p className="mb-4 text-xs text-text-muted font-body">
                   This month: {usage.pages_generated}/{usage.pages_quota} pages
@@ -836,7 +843,7 @@ export function StudioWorkspace() {
                   {busy ? (
                     <>
                       <span className="sr-only" aria-live="polite">
-                        Working on your page…
+                        Working on your mini-app…
                       </span>
                       <DotPulse />
                     </>

@@ -60,89 +60,85 @@ export const TEMPLATE_CARDS: {
 
 export const LANDING_FAQ: { q: string; a: string }[] = [
   {
+    q: "What is a mini-app?",
+    a: "A single-purpose, hosted surface you ship with Forge: a form, a landing page, a proposal, a deck, a simple site. One link, analytics in Forge, no database to configure.",
+  },
+  {
     q: "Can I use my own domain?",
-    a: "Yes on Pro and above — point your DNS at Forge and we’ll provision TLS. Starter uses forge-hosted links until you upgrade.",
+    a: "Yes on Pro and above — point DNS at Forge and we provision TLS. The Free tier uses Forge-hosted links until you upgrade.",
   },
   {
-    q: "What happens if I exceed my submission quota?",
-    a: "We’ll email you before hard blocks. You can upgrade, archive old pages, or add a metered bundle.",
+    q: "Is Forge like Lovable, Bolt, or Cursor?",
+    a: "No — those are for shipping full applications and code. Forge is for fast, on-brand pages and content mini-apps: forms, proposals, decks, and landing pages you can share and track without running infrastructure.",
   },
   {
-    q: "Is this like Lovable or Bolt?",
-    a: "Forge is narrower and calmer: one hosted page per use case (forms, RSVPs, menus), brand kit baked in, and a Studio built for refinement — not a full app IDE.",
+    q: "What AI powers Studio?",
+    a: "We route prompts through providers we can change for quality and cost. You do not pick a model — details for teams are in our security pages.",
   },
   {
-    q: "What AI model powers it?",
-    a: "We route prompts through providers we can rotate for quality and latency; you don’t pick a model in v1. Details are in our security page for teams.",
+    q: "Do you charge per form submission?",
+    a: "No separate per-submission fee on the published plans. Fair use and rate limits are expressed as session-based usage with weekly caps (see Pricing).",
   },
   {
-    q: "Do you charge per submission?",
-    a: "No — plans are by seats, pages, and automation volume. Heavy public traffic may need Enterprise.",
+    q: "Can I take my work elsewhere?",
+    a: "Yes — that is the point. Export formats depend on the workflow; everything can stay live on Forge in the meantime.",
   },
   {
     q: "GDPR and data residency?",
-    a: "We process as a processor under our DPA (Enterprise). EU hosting options are on the roadmap; talk to us if required now.",
-  },
-  {
-    q: "Can I export my page HTML?",
-    a: "Yes — snapshots are yours. Studio also keeps publish history for rollback.",
+    a: "We process as a processor under our DPA where contractually in place. EU hosting is on the roadmap; talk to us if you have a hard requirement now.",
   },
   {
     q: "Do you offer refunds?",
-    a: "Monthly plans can be cancelled anytime; we don’t prorate the current period. Annual plans follow the terms at checkout.",
+    a: "Monthly plans can be cancelled anytime; we do not prorate the current period. Annual terms are shown at checkout.",
   },
 ];
 
 export const PRICING_FAQ: { q: string; a: string }[] = [
   {
-    q: "What’s included in the trial?",
-    a: "Full product on Starter limits for 14 days. Card required only when you pick a paid plan.",
+    q: "What happens if I hit my limit?",
+    a: "You will see a clear usage bar (session-based with a weekly cap). We email before hard blocks. Upgrade or wait for the next window — final numbers land with billing (V2-P04).",
   },
   {
-    q: "Can I switch plans mid-cycle?",
-    a: "Yes — upgrades prorate; downgrades apply on the next renewal.",
+    q: "Can I upgrade or downgrade anytime?",
+    a: "Yes — upgrades take effect on the terms shown at checkout; downgrades apply on the next renewal where applicable.",
   },
   {
-    q: "Do you invoice for Enterprise?",
-    a: "Yes — NET30 available on annual contracts.",
+    q: "Is the Free tier really free?",
+    a: "Yes — a real tier for trying Forge. Paid tiers add usage headroom, domains, and team features. Exact entitlements follow Stripe when wired.",
   },
   {
-    q: "Nonprofits or education pricing?",
-    a: "Contact us — we keep a small discount pool.",
+    q: "Do you charge for AI separately?",
+    a: "No surprise AI line items — usage is part of the plan limits you see, presented honestly as a percentage bar, not a wall of token math.",
+  },
+  {
+    q: "What is the difference between Pro and Max?",
+    a: "Max is for people who live in Forge: higher limits, priority support, and headroom for daily shipping. Pro is the best fit for most growing teams. Details track V2-P04.",
   },
   {
     q: "How does annual billing work?",
-    a: "Pay yearly and get roughly two months free versus month-to-month. You can switch at renewal.",
+    a: "Pay yearly and save versus month-to-month. You can switch at renewal.",
   },
   {
     q: "What payment methods do you take?",
-    a: "Stripe checkout accepts major cards. Enterprise can pay by invoice where agreed.",
+    a: "Stripe checkout for cards. Invoicing for larger seats is available where we agree in writing.",
   },
   {
     q: "Do taxes apply?",
-    a: "Where required, tax is calculated at checkout based on your billing address.",
-  },
-  {
-    q: "Can I cancel anytime?",
-    a: "Yes — monthly plans stop at period end; annual plans follow the terms shown at purchase.",
+    a: "Where required, tax is calculated at checkout from your billing address.",
   },
 ];
 
-export const PRICING_COMPARISON: { feature: string; starter: string; pro: string; enterprise: string }[] =
-  [
-    { feature: "Live pages", starter: "5", pro: "50", enterprise: "Custom" },
-    { feature: "Submissions / mo", starter: "500", pro: "10k", enterprise: "Custom" },
-    { feature: "Custom domain", starter: "—", pro: "Yes", enterprise: "Yes" },
-    { feature: "Team seats", starter: "1", pro: "5", enterprise: "Unlimited" },
-    { feature: "Automations", starter: "Basic", pro: "Full", enterprise: "Full + SLA" },
-    { feature: "Analytics retention", starter: "30 days", pro: "12 months", enterprise: "Custom" },
-    { feature: "Support", starter: "Email", pro: "Priority", enterprise: "Dedicated" },
-    { feature: "SSO / SAML", starter: "—", pro: "—", enterprise: "Add-on" },
-    { feature: "Data export", starter: "Yes", pro: "Yes", enterprise: "Yes" },
-    { feature: "Uptime commitment", starter: "Best effort", pro: "Best effort", enterprise: "SLA" },
-    { feature: "Billing", starter: "Card", pro: "Card", enterprise: "Invoice" },
-    { feature: "Sandbox / staging", starter: "—", pro: "1", enterprise: "Unlimited" },
-    { feature: "Calendar integrations", starter: "—", pro: "Yes", enterprise: "Yes" },
-    { feature: "API access", starter: "—", pro: "Read", enterprise: "Read/write" },
-    { feature: "White-label remove Forge", starter: "—", pro: "—", enterprise: "Add-on" },
-  ];
+export const PRICING_COMPARISON: { feature: string; free: string; pro: string; max: string }[] = [
+  { feature: "Live mini-apps (pages)", free: "3", pro: "25", max: "100" },
+  { feature: "Form submissions / mo (guidance)", free: "200", pro: "5k", max: "25k" },
+  { feature: "Session usage & weekly cap", free: "Entry", pro: "Standard", max: "High" },
+  { feature: "Custom domain + TLS", free: "—", pro: "Yes", max: "Yes" },
+  { feature: "Team seats", free: "1", pro: "5", max: "15" },
+  { feature: "Automations", free: "—", pro: "Core", max: "Full" },
+  { feature: "Analytics retention", free: "14 days", pro: "12 months", max: "24 months" },
+  { feature: "Support", free: "Email", pro: "Priority", max: "Priority + same-day" },
+  { feature: "Exports (PDF, PPTX, HTML, …)", free: "Core", pro: "Full", max: "Full" },
+  { feature: "Calendar integrations", free: "—", pro: "Yes", max: "Yes" },
+  { feature: "API access", free: "—", pro: "Read", max: "Read/write" },
+  { feature: "SSO / SAML", free: "—", pro: "—", max: "Add-on" },
+];

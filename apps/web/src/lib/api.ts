@@ -167,7 +167,15 @@ export async function postSwitchOrg(
 export async function patchUserPreferences(
   getToken: () => Promise<string | null>,
   body: {
-    onboarded_for_workflow?: "contact_form" | "proposal" | "pitch_deck" | "unsure" | null;
+    onboarded_for_workflow?:
+      | "contact-form"
+      | "proposal"
+      | "pitch_deck"
+      | "mobile_app"
+      | "website"
+      | "landing_page"
+      | "undecided"
+      | null;
     sidebar_collapsed?: boolean;
     dashboard_tip_dismissed?: boolean;
     notification_daily_automation_digest?: boolean;

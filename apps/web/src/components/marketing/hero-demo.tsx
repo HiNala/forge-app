@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { streamPublicDemo } from "@/lib/public-demo";
 
 const PLACEHOLDERS = [
+  "a mobile app screen for check-ins with a big primary button",
+  "a two-page website for a photographer with gallery and book",
   "a booking page for my construction business",
-  "a contact form with file uploads for photographers",
   "a one-page sales proposal with accept and decline",
-  "an RSVP page for a company holiday party",
-  "a daily specials menu for our café",
+  "a 6-slide pitch deck for a climate hardware seed round",
+  "a product launch page with a waitlist and three testimonials",
 ] as const;
 
 const CHIPS = [

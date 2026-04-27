@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ForgeMark } from "@/components/chrome/forge-logo";
+import { brand } from "@/lib/copy";
 import { SignupClient } from "./signup-client";
 
 export const metadata: Metadata = {
@@ -19,7 +20,7 @@ export default function SignUpPage() {
             Forge
           </p>
           <p className="mt-2 font-body text-sm font-light text-text-muted">
-            Type a sentence. Get a live page.
+            {brand.tagline} — describe it, ship it, track it.
           </p>
         </div>
       </div>

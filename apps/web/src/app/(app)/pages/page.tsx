@@ -26,7 +26,7 @@ export default function PagesIndexPage() {
   if (!activeOrganizationId) {
     return (
       <p className="font-body text-sm text-text-muted">
-        Choose a workspace to see your pages.
+        Choose a workspace to see your mini-apps.
       </p>
     );
   }
@@ -73,12 +73,12 @@ export default function PagesIndexPage() {
           className="font-display font-bold text-text"
           style={{ fontSize: "clamp(24px, 3vw, 30px)", letterSpacing: "-0.01em", lineHeight: 1 }}
         >
-          My Pages
+          My pages
         </h1>
         <p className="mt-1 font-body text-[13px] font-light text-text-muted">
           {live.length} live
           {draft.length > 0 && ` · ${draft.length} draft${draft.length === 1 ? "" : "s"}`}
-          {pages.length === 0 && " · Start with a prompt in Studio"}
+          {pages.length === 0 && " — forms, decks, and other mini-apps start in Studio"}
         </p>
       </div>
 

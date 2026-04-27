@@ -134,7 +134,6 @@ export default function PageDetailLayout({
   const qc = useQueryClient();
 
   const tabRefs = React.useRef<Record<string, HTMLButtonElement | null>>({});
-  const [indicatorStyle, setIndicatorStyle] = React.useState({ left: 0, width: 0 });
 
   const q = useQuery({
     queryKey: ["page", activeOrganizationId, pageId],
@@ -263,8 +262,6 @@ export default function PageDetailLayout({
     { href: middlePath, label: wf.middleTab.label, active: middleActive },
     { href: `${base}/analytics`, label: "Analytics", active: isAnalytics },
   ];
-
-  const activeTabEl = tabRefs.current[tabs.find((t) => t.active)?.href ?? ""];
 
   return (
     <PageDetailProvider page={p} refetch={refetch}>

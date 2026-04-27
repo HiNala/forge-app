@@ -6,7 +6,7 @@
     <tr>
       <td>
         {% if logo_url %}<img src="{{ logo_url }}" alt="" height="40" style="margin-bottom:16px;display:block;"/>{% endif %}
-        <h1 style="margin:0 0 12px;font-size:20px;color:{{ primary_color|default('#111827') }};">New submission on {{ page_title }}</h1>
+        <h1 style="margin:0 0 12px;font-size:20px;color:{{ primary_color|default('#111827') }};">New response — {{ page_title }}</h1>
         <p style="margin:0 0 16px;font-size:15px;line-height:1.5;color:#374151;">{{ org_name }} received a new response.</p>
         <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:14px;white-space:pre-wrap;">{{ submission_summary }}</div>
         {% if voice_note %}<p style="margin-top:16px;font-size:13px;color:#6b7280;font-style:italic;">{{ voice_note }}</p>{% endif %}

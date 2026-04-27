@@ -206,10 +206,10 @@ export function DashboardView() {
             className="font-display font-bold text-text"
             style={{ fontSize: "clamp(24px, 3.5vw, 30px)", letterSpacing: "-0.01em", lineHeight: 1 }}
           >
-            My Pages
+            My pages
           </h1>
           <p className="mt-1.5 font-body text-[13px] font-light text-text-muted">
-            Every generated page with its own URL, submissions, and settings.
+            Every mini-app you have published — each with its own link, submissions, and settings.
           </p>
         </div>
         <Button

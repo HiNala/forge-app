@@ -4,12 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import * as React from "react";
-import {
-  getAdminOverviewSummary,
-  getAdminPlatformAnalytics,
-  type AdminOverviewSummary,
-  type AdminPlatformAnalytics,
-} from "@/lib/api";
+import { getAdminOverviewSummary, getAdminPlatformAnalytics } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export default function AdminOverviewPage() {

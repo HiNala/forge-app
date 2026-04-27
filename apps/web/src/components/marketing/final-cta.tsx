@@ -30,12 +30,12 @@ export function FinalCta() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
           <h2 className="font-display text-[clamp(32px,5vw,62px)] font-bold leading-[0.95] tracking-tight text-text">
-            Your first page
+            Your first mini-app
             <br />
             <span className="text-accent">is free.</span>
           </h2>
           <p className="mx-auto mt-5 max-w-[400px] font-body text-base font-light leading-relaxed text-text-muted">
-            No account needed to start. Just describe what you need.
+            Sign up, describe the outcome, and ship a link you can stand behind.
           </p>
 
           <div className="mx-auto mt-10 max-w-[440px]">

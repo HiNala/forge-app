@@ -6,7 +6,9 @@ const LINKS = {
   Product: [
     { href: "/#how", label: "How it works" },
     { href: "/pricing", label: "Pricing" },
+    { href: "/handoff", label: "Exports & handoff" },
     { href: "/examples", label: "Examples" },
+    { href: "/press", label: "Press" },
     { href: "/signup", label: "Start free" },
   ],
   Legal: [
@@ -32,7 +34,7 @@ export function MarketingFooter() {
               Forge
             </Link>
             <p className="mt-4 font-body text-sm font-light leading-relaxed text-text-muted">
-              Type a sentence. Get a live, hosted page. No code, no designer, no wait.
+              Mini-apps in minutes — forms, pages, proposals, decks, and more. Describe it, ship it, track it.
             </p>
             <p className="mt-6 font-body text-xs text-text-subtle">
               © {new Date().getFullYear()} Digital Studio Labs

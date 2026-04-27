@@ -15,32 +15,50 @@ import { patchOrg, patchUserPreferences, postBrandLogo, putBrand } from "@/lib/a
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
 
-type OnboardWorkflow = "contact_form" | "proposal" | "pitch_deck" | "unsure" | null;
+type OnboardWorkflow =
+  | "contact-form"
+  | "proposal"
+  | "pitch_deck"
+  | "mobile_app"
+  | "website"
+  | "landing_page"
+  | "undecided"
+  | null;
 
 const WORKFLOW_CARDS: {
-  id: NonNullable<OnboardWorkflow>;
+  id: OnboardWorkflow;
   title: string;
   description: string;
 }[] = [
   {
-    id: "contact_form",
+    id: "mobile_app",
+    title: "Mobile app",
+    description: "Prototype a screen or small flow to react to.",
+  },
+  {
+    id: "website",
+    title: "Website",
+    description: "A simple site or page set with a clear next step.",
+  },
+  {
+    id: "contact-form",
     title: "Contact form",
     description: "Capture leads with booking-ready flows.",
   },
   {
     id: "proposal",
     title: "Proposal",
-    description: "Send signed quotes clients can accept online.",
+    description: "Send a quote clients can read and act on.",
   },
   {
     id: "pitch_deck",
     title: "Pitch deck",
-    description: "Turn your story into a polished slide deck.",
+    description: "Turn your story into a presentable deck.",
   },
   {
-    id: "unsure",
-    title: "I'll figure it out",
-    description: "Start with a blank Studio and explore.",
+    id: "landing_page",
+    title: "Landing page",
+    description: "One page with a hero, proof, and a CTA.",
   },
 ];
 
@@ -68,6 +86,12 @@ function suggestedWorkspaceName(email: string | undefined): string {
   return local ? `${local.charAt(0).toUpperCase()}${local.slice(1)}` : "My workspace";
 }
 
+/** Accept legacy `contact_form` query param from older links. */
+function normalizeWorkflowParam(w: string | null): string | null {
+  if (w === "contact_form") return "contact-form";
+  return w;
+}
+
 export default function OnboardingPage() {
   const session = useForgeSession();
   const { user, activeOrganizationId: activeOrgId } = session;
@@ -80,7 +104,6 @@ export default function OnboardingPage() {
     () => suggestedWorkspaceName(user?.email),
     [user?.email],
   );
-  /** Null = user has not edited yet; show server/email-derived suggestion. */
   const [workspaceDraft, setWorkspaceDraft] = React.useState<string | null>(null);
   const workspaceName = workspaceDraft ?? suggested;
   const [color, setColor] = React.useState("#2a9d8f");
@@ -88,10 +111,19 @@ export default function OnboardingPage() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [done, setDone] = React.useState(false);
-  const workflowParam = searchParams.get("workflow");
+  const workflowParam = normalizeWorkflowParam(searchParams.get("workflow"));
   const workflowFromUrl = React.useMemo((): OnboardWorkflow | null => {
     const w = workflowParam;
-    if (w === "contact_form" || w === "proposal" || w === "pitch_deck") return w;
+    const ok = (x: string): x is NonNullable<OnboardWorkflow> =>
+      [
+        "contact-form",
+        "proposal",
+        "pitch_deck",
+        "mobile_app",
+        "website",
+        "landing_page",
+      ].includes(x);
+    if (w && ok(w)) return w;
     return null;
   }, [workflowParam]);
 
@@ -115,6 +147,16 @@ export default function OnboardingPage() {
     [color],
   );
 
+  function studioPathForWorkflow(w: OnboardWorkflow): string {
+    if (w === "contact-form") return "/studio?workflow=contact_form";
+    if (w === "proposal") return "/studio?workflow=proposal";
+    if (w === "pitch_deck") return "/studio?workflow=pitch_deck";
+    if (w === "mobile_app") return "/studio?workflow=mobile_app";
+    if (w === "website") return "/studio?workflow=website";
+    if (w === "landing_page") return "/studio?workflow=landing_page";
+    return "/dashboard";
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!activeOrgId) {
@@ -133,31 +175,25 @@ export default function OnboardingPage() {
         await postBrandLogo(getToken, activeOrgId, file);
       }
       markOnboardingSeen(activeOrgId);
-      const wfPref =
-        workflowChoice && workflowChoice !== "unsure" ? workflowChoice : null;
-      if (wfPref) {
+      if (workflowChoice && workflowChoice !== "undecided") {
         try {
-          await patchUserPreferences(getToken, { onboarded_for_workflow: wfPref });
+          await patchUserPreferences(getToken, { onboarded_for_workflow: workflowChoice });
         } catch {
           /* non-fatal */
         }
-      } else if (workflowChoice === "unsure") {
+      } else {
         try {
-          await patchUserPreferences(getToken, { onboarded_for_workflow: "unsure" });
+          await patchUserPreferences(getToken, { onboarded_for_workflow: "undecided" });
         } catch {
           /* ignore */
         }
       }
       setDone(true);
-      const studioPath =
-        workflowChoice === "contact_form"
-          ? "/studio?workflow=contact_form"
-          : workflowChoice === "proposal"
-            ? "/studio?workflow=proposal"
-            : workflowChoice === "pitch_deck"
-              ? "/studio?workflow=pitch_deck"
-              : "/dashboard";
-      setTimeout(() => router.replace(studioPath), 700);
+      const sp =
+        workflowChoice && workflowChoice !== "undecided"
+          ? studioPathForWorkflow(workflowChoice)
+          : "/dashboard";
+      setTimeout(() => router.replace(sp), 700);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
@@ -211,9 +247,9 @@ export default function OnboardingPage() {
         <button
           type="button"
           className="font-body text-xs font-medium text-text-subtle underline-offset-4 hover:text-text-muted hover:underline"
-          onClick={() => setWorkflowOverride("unsure")}
+          onClick={() => setWorkflowOverride("undecided")}
         >
-          Skip this step
+          I&apos;ll figure it out
         </button>
       </div>
 

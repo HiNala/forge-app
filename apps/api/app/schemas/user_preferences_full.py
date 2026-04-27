@@ -33,7 +33,16 @@ class UserPreferencesPartial(BaseModel):
     """PATCH body — omitted fields preserved."""
 
     onboarded_for_workflow: (
-        Literal["contact-form", "proposal", "pitch_deck", "undecided"] | None
+        Literal[
+            "contact-form",
+            "proposal",
+            "pitch_deck",
+            "mobile_app",
+            "website",
+            "landing_page",
+            "undecided",
+        ]
+        | None
     ) = None
     sidebar_collapsed: bool | None = None
     theme: Literal["light", "dark", "system"] | None = None
@@ -56,7 +65,13 @@ class UserPreferences(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     onboarded_for_workflow: Literal[
-        "contact-form", "proposal", "pitch_deck", "undecided"
+        "contact-form",
+        "proposal",
+        "pitch_deck",
+        "mobile_app",
+        "website",
+        "landing_page",
+        "undecided",
     ] = "undecided"
     sidebar_collapsed: bool = False
     theme: Literal["light", "dark", "system"] = "light"

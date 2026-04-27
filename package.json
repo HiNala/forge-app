@@ -17,6 +17,6 @@
     "ruff": "uv --directory apps/api run --active ruff check .",
     "ruff:fix": "uv --directory apps/api run --active ruff check --fix .",
     "mypy": "uv --directory apps/api run --active mypy",
-    "verify": "pnpm lint:strict && pnpm typecheck && pnpm -r test && pnpm ruff && pnpm mypy"
+    "verify": "pnpm lint:strict && pnpm typecheck && pnpm --filter web copy:check && pnpm -r test && pnpm ruff && pnpm mypy"
   }
 }
