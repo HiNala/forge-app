@@ -11,6 +11,7 @@ import {
   ReactFlowProvider,
   PanOnScrollMode,
   useStore,
+  useReactFlow,
   type Edge,
   type EdgeChange,
   type Node,
@@ -64,6 +65,36 @@ function ZoomReadout() {
       </span>
     </Panel>
   );
+}
+
+/** When preview `<a href="/path">` matches another page, frame that node on the canvas. */
+function WebCanvasPendingFocus() {
+  const rf = useReactFlow();
+  const pending = useWebCanvasStore((s) => s.pendingFocusPageId);
+  const clear = useWebCanvasStore((s) => s.clearPendingFocusPageId);
+  const nodeList = useWebCanvasStore((s) => s.nodes);
+
+  useEffect(() => {
+    if (!pending) return;
+    if (!nodeList.some((n) => n.id === pending)) {
+      clear();
+      return;
+    }
+    const id = pending;
+    clear();
+    const handle = requestAnimationFrame(() => {
+      void rf.fitView({
+        nodes: [{ id }],
+        padding: 0.35,
+        duration: 300,
+        minZoom: 0.25,
+        maxZoom: 2,
+      });
+    });
+    return () => cancelAnimationFrame(handle);
+  }, [pending, nodeList, rf, clear]);
+
+  return null;
 }
 
 function DotGridBackground() {
@@ -174,6 +205,7 @@ function WebFlowBody() {
           maskColor="rgba(0,0,0,0.1)"
         />
         <ZoomReadout />
+        <WebCanvasPendingFocus />
       </ReactFlow>
     </div>
   );

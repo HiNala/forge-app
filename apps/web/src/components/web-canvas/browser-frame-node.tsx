@@ -13,6 +13,7 @@ import {
 } from "@/lib/web-canvas-viewports";
 import { getWebFontStacks } from "@/lib/web-canvas-fonts";
 import { collectForgeHits, marqueeCoverageRatio, type ForgeTaggedHit } from "@/lib/web-marquee-hit";
+import { normalizeWebPath } from "@/lib/web-canvas-nav-graph";
 import { useWebCanvasStore } from "./web-canvas-store";
 import type { WebBrowserNodeData, WebCanvasFocusBreakpoint } from "./types";
 import { cn } from "@/lib/utils";
@@ -100,6 +101,8 @@ type RefineState = {
 type WebPreviewRowProps = {
   bp: WebBreakpointSpec;
   displayUrl: string;
+  /** Logical site path for this preview (e.g. `/pricing`) — used for internal nav focus. */
+  pagePath: string;
   theme: "light" | "dark";
   html: string;
   styleVars: React.CSSProperties;
@@ -111,6 +114,7 @@ type WebPreviewRowProps = {
 function WebPreviewRow({
   bp,
   displayUrl,
+  pagePath,
   theme,
   html,
   styleVars,
@@ -217,6 +221,32 @@ function WebPreviewRow({
     },
     [],
   );
+
+  React.useEffect(() => {
+    const root = htmlHostRef.current?.querySelector<HTMLElement>(".forge-web-html");
+    if (!root) return;
+    const onClick = (e: MouseEvent) => {
+      if (marqueeMode) return;
+      const t = e.target as HTMLElement | null;
+      const a = t?.closest("a[href]");
+      if (!a) return;
+      const href = a.getAttribute("href")?.trim() ?? "";
+      if (!href || href.startsWith("#")) return;
+      if (/^[a-z][a-z0-9+.-]*:/i.test(href)) return;
+      const pathOnly = href.split(/[?#]/)[0] ?? href;
+      const norm = normalizeWebPath(pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`);
+      const selfPath = normalizeWebPath(pagePath);
+      if (norm === selfPath) {
+        e.preventDefault();
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      useWebCanvasStore.getState().requestFocusPageByPath(href);
+    };
+    root.addEventListener("click", onClick);
+    return () => root.removeEventListener("click", onClick);
+  }, [html, marqueeMode, pagePath]);
 
   const scale = scaleForCanvasRow(bp.width);
   const { dim, strong } = rowEmphasis(focusBreakpoint, bp.id);
@@ -525,6 +555,7 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
               key={bp.id}
               bp={bp}
               displayUrl={displayUrl}
+              pagePath={data.path}
               theme={theme}
               html={data.html}
               styleVars={styleVars}

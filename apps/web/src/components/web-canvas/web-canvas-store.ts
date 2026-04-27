@@ -140,6 +140,11 @@ type Store = {
   arrangePagesInGrid: () => void;
   /** Replace auto-generated edges (from &lt;a href&gt;) while keeping manual links */
   syncFlowEdgesFromNavLinks: () => void;
+  /** Set by preview link clicks; consumed by React Flow to fit/select the target page node. */
+  pendingFocusPageId: string | null;
+  clearPendingFocusPageId: () => void;
+  /** Internal same-site links in preview HTML: focus + frame matching canvas page (V2-P03). */
+  requestFocusPageByPath: (hrefPath: string) => void;
 };
 
 export const useWebCanvasStore = create<Store>((set, get) => ({
@@ -195,6 +200,19 @@ export const useWebCanvasStore = create<Store>((set, get) => ({
   setApplyTweaksToAll: (applyTweaksToAll) => set({ applyTweaksToAll }),
   nodes: buildNodes(INITIAL_PAGES, "light", new Map(), INITIAL_HOME_ID),
   edges: [] as Edge[],
+  pendingFocusPageId: null as string | null,
+  clearPendingFocusPageId: () => set({ pendingFocusPageId: null }),
+  requestFocusPageByPath: (raw) => {
+    const pathOnly = raw.split(/[?#]/)[0]?.trim() ?? "";
+    if (!pathOnly || pathOnly === "#") return;
+    const norm = normalizeWebPath(pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`);
+    const page = get().pages.find((p) => normalizeWebPath(p.path) === norm);
+    if (!page) return;
+    set((s) => ({
+      pendingFocusPageId: page.id,
+      nodes: s.nodes.map((n) => ({ ...n, selected: n.id === page.id })),
+    }));
+  },
   setNodes: (u) => set({ nodes: typeof u === "function" ? u(get().nodes) : u }),
   setEdges: (u) => set({ edges: typeof u === "function" ? u(get().edges) : u }),
   onConnect: (c) => {

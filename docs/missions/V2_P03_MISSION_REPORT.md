@@ -12,7 +12,7 @@ P-03 delivers a **client-first** web canvas aligned with the mobile workflow: xy
 | Multi-page site generation 5–10 pages, shared nav/footer | **Partial** — nav/footer sync client-side; generator = `WebsiteComposer` / API |
 | Site-wide style sync without LLM | **Done** (tokens: accent, radius, fonts, theme on all nodes) |
 | Shared regions + per-page override | **Partial** — shared header/footer + hover affordance; override UI **not** built |
-| Routing edges from nav + manual; orphan detection | **Partial** — sync from links + orphans + xyflow edges; no click-to-pan |
+| Routing edges from nav + manual; orphan detection | **Partial** — sync from links + orphans + xyflow edges; preview `<a href="/path">` focuses + fits the target page node (still no minimap click-to-pan) |
 | Forms embed + Forge submissions | **Not done** (requires page type + API) |
 | Responsive linter + auto-fix | **Not done** |
 | Five exports (HTML zip, Next, Framer, Webflow, Figma) | **Partial** — single-file HTML MVP only |
@@ -34,7 +34,7 @@ P-03 delivers a **client-first** web canvas aligned with the mobile workflow: xy
 1. **API:** `SiteOutline` + `WebsiteComposer` / streaming `page.complete`.
 2. **Exports:** zip of HTML/CSS; Next.js scaffold job; Figma plugin/API.
 3. **Product:** Page Detail **Pages / Canvas / Flow / SEO** tabs for `website` type.
-4. **Canvas:** Link click → focus target node; low-zoom thumbnails; responsive linter.
+4. **Canvas:** ~~Link click → focus target node~~ (shipped: internal nav in preview); low-zoom thumbnails; responsive linter.
 
 ## Human sign-off
 
