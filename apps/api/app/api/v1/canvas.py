@@ -654,20 +654,14 @@ async def refine_canvas_screen(
     ctx: TenantContext = Depends(require_role("owner", "editor")),
     user: User = Depends(require_user),
 ) -> dict[str, object]:
-    """Non-streaming refine — applies small HTML append + revision (full SSE in roadmap)."""
+    """Record a canvas refine note and revision without implying live AI rewrite."""
 
     await _get_project_checked(db, ctx, project_id)
     scr = await db.get(CanvasScreen, screen_id)
     if scr is None or scr.project_id != project_id or scr.organization_id != ctx.organization_id:
         raise HTTPException(status_code=404, detail="Screen not found")
 
-    snippet = (
-        "\n<!-- canvas refine:\n"
-        + body.prompt.replace("--", "\\-\\-")[:1800]
-        + "\n-->\n"
-        + '<p data-forge-canvas-note style="opacity:.6;font:14px system-ui">'
-        + "Refinement queued — regenerate in Studio.</p>"
-    )
+    snippet = "\n<!-- canvas refine note:\n" + body.prompt.replace("--", "\\-\\-")[:1800] + "\n-->\n"
     merged = scr.html.rstrip() + snippet
     scr.html = merged
     vn = await _next_revision_version(db, scr.id)
@@ -699,7 +693,8 @@ async def refine_canvas_screen(
     return {
         "screen_id": str(scr.id),
         "revision": vn,
-        "message": "Refine recorded — connect LLM SSE in Studio for live preview.",
+        "html": merged,
+        "message": "Refinement note saved to this screen.",
     }
 
 

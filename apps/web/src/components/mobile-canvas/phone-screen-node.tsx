@@ -15,6 +15,7 @@ import { ArtifactFeedbackStrip } from "@/components/feedback/artifact-feedback-s
 import { useLastOrchestrationRunId } from "@/hooks/use-last-orchestration-run";
 import { toast } from "sonner";
 import { useForgeSession } from "@/providers/session-provider";
+import { refineCanvasScreen } from "@/lib/canvas-api";
 import { useMobileCanvasStore } from "./mobile-canvas-store";
 import type { MobilePhoneNodeData } from "./types";
 import { cn } from "@/lib/utils";
@@ -511,6 +512,7 @@ export function PhoneScreenNode({ data, selected }: NodeProps<Node<MobilePhoneNo
   const accentHue = useMobileCanvasStore((s) => s.accentHue);
   const corner = useMobileCanvasStore((s) => s.cornerRadius);
   const marqueeMode = useMobileCanvasStore((s) => s.marqueeMode);
+  const canvasProjectId = useMobileCanvasStore((s) => s.canvasProjectId);
   const updateScreenHtml = useMobileCanvasStore((s) => s.updateScreenHtml);
   const theme = data.theme;
   const shellBg = theme === "dark" ? FP.phoneBezelDark : FP.mobileShellLight;
@@ -532,6 +534,7 @@ export function PhoneScreenNode({ data, selected }: NodeProps<Node<MobilePhoneNo
 
   const [refine, setRefine] = React.useState<MobileRefineState | null>(null);
   const [refinePrompt, setRefinePrompt] = React.useState("");
+  const [refineSaving, setRefineSaving] = React.useState(false);
   const [elementSelection, setElementSelection] = React.useState<string[]>([]);
 
   const handleRefineOpen = React.useCallback((s: MobileRefineState | null) => {
@@ -571,6 +574,40 @@ export function PhoneScreenNode({ data, selected }: NodeProps<Node<MobilePhoneNo
         REFINE_PANEL_H,
       )
     : null;
+
+  async function saveRefineNote() {
+    if (!refine || !canvasProjectId || !activeOrganizationId) {
+      toast.error("Open a saved canvas project before saving refinements.");
+      return;
+    }
+    const prompt = refinePrompt.trim();
+    if (!prompt && !refine.fullScreen && refine.hits.length === 0) return;
+    const scope = refine.fullScreen ? "screen" : refine.hits.length ? "region" : "screen";
+    const elementRef = refine.fullScreen
+      ? null
+      : refine.hits
+          .map((h) => h.forgeNodeId || h.forgeRegionId || h.tagName)
+          .filter(Boolean)
+          .join(", ")
+          .slice(0, 500);
+    setRefineSaving(true);
+    try {
+      const out = await refineCanvasScreen(getToken, activeOrganizationId, canvasProjectId, data.screenId, {
+        prompt: prompt || "Review this selected region.",
+        scope,
+        element_ref: elementRef || null,
+      });
+      updateScreenHtml(data.screenId, out.html);
+      toast.success("Refinement note saved", {
+        description: "This screen now carries the note for review or a later Studio rewrite.",
+      });
+      handleRefineOpen(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save refinement");
+    } finally {
+      setRefineSaving(false);
+    }
+  }
 
   return (
     <div className="relative w-max">
@@ -678,20 +715,11 @@ export function PhoneScreenNode({ data, selected }: NodeProps<Node<MobilePhoneNo
                 <Button
                   type="button"
                   size="sm"
-                  disabled={!refine.fullScreen && refine.hits.length === 0 && !refinePrompt.trim()}
-                  onClick={() => {
-                    const scope = refine.fullScreen
-                      ? "full screen"
-                      : refine.hits.length
-                        ? summarizeHits(refine.hits)
-                        : "empty selection";
-                    toast.success("Refine recorded", {
-                      description: `${scope} — “${refinePrompt.trim() || "(no note)"}”. Orchestration will apply this in P-05.`,
-                    });
-                    handleRefineOpen(null);
-                  }}
+                  loading={refineSaving}
+                  disabled={refineSaving || (!refine.fullScreen && refine.hits.length === 0 && !refinePrompt.trim())}
+                  onClick={() => void saveRefineNote()}
                 >
-                  Send to GlideDesign
+                  Save note
                 </Button>
               </div>
             </div>,

@@ -43,6 +43,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArtifactFeedbackStrip } from "@/components/feedback/artifact-feedback-strip";
 import { toast } from "sonner";
+import { refineCanvasScreen } from "@/lib/canvas-api";
 
 function isKeyEventFromEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -600,6 +601,7 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
   const corner = useWebCanvasStore((s) => s.cornerRadius);
   const focusBreakpoint = useWebCanvasStore((s) => s.focusBreakpoint);
   const fontPairId = useWebCanvasStore((s) => s.fontPairId);
+  const canvasProjectId = useWebCanvasStore((s) => s.canvasProjectId);
   const renamePage = useWebCanvasStore((s) => s.renamePage);
   const duplicatePage = useWebCanvasStore((s) => s.duplicatePage);
   const deletePage = useWebCanvasStore((s) => s.deletePage);
@@ -616,6 +618,7 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
 
   const [refine, setRefine] = React.useState<RefineState | null>(null);
   const [refinePrompt, setRefinePrompt] = React.useState("");
+  const [refineSaving, setRefineSaving] = React.useState(false);
   const [elementSelection, setElementSelection] = React.useState<string[]>([]);
   const [renameOpen, setRenameOpen] = React.useState(false);
   const [renameDraft, setRenameDraft] = React.useState(data.title);
@@ -677,6 +680,40 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
   };
 
   const canDelete = pages.length > 1;
+
+  async function saveRefineNote() {
+    if (!refine || !canvasProjectId || !activeOrganizationId) {
+      toast.error("Open a saved canvas project before saving refinements.");
+      return;
+    }
+    const prompt = refinePrompt.trim();
+    if (!prompt && !refine.fullScreen && refine.hits.length === 0) return;
+    const scope = refine.fullScreen ? "screen" : refine.hits.length ? "region" : "screen";
+    const elementRef = refine.fullScreen
+      ? null
+      : refine.hits
+          .map((h) => h.forgeNodeId || h.forgeRegionId || h.tagName)
+          .filter(Boolean)
+          .join(", ")
+          .slice(0, 500);
+    setRefineSaving(true);
+    try {
+      const out = await refineCanvasScreen(getToken, activeOrganizationId, canvasProjectId, data.pageId, {
+        prompt: prompt || "Review this selected region.",
+        scope,
+        element_ref: elementRef || null,
+      });
+      updatePageHtml(data.pageId, out.html);
+      toast.success("Refinement note saved", {
+        description: "This screen now carries the note for review or a later Studio rewrite.",
+      });
+      handleRefineOpen(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save refinement");
+    } finally {
+      setRefineSaving(false);
+    }
+  }
 
   return (
     <div className="relative w-max" style={{ width: 392 }}>
@@ -882,20 +919,11 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
                 <Button
                   type="button"
                   size="sm"
-                  disabled={!refine.fullScreen && refine.hits.length === 0 && !refinePrompt.trim()}
-                  onClick={() => {
-                    const scope = refine.fullScreen
-                      ? "full screen"
-                      : refine.hits.length
-                        ? summarizeHits(refine.hits)
-                        : "empty selection";
-                    toast.success("Refine recorded", {
-                      description: `${scope} — “${refinePrompt.trim() || "(no note)"}”. Orchestration will apply this in P-05.`,
-                    });
-                    handleRefineOpen(null);
-                  }}
+                  loading={refineSaving}
+                  disabled={refineSaving || (!refine.fullScreen && refine.hits.length === 0 && !refinePrompt.trim())}
+                  onClick={() => void saveRefineNote()}
                 >
-                  Send to GlideDesign
+                  Save note
                 </Button>
               </div>
             </div>,

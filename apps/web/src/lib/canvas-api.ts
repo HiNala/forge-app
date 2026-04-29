@@ -84,6 +84,32 @@ export async function patchCanvasScreen(
   });
 }
 
+export type CanvasRefineOut = {
+  screen_id: string;
+  revision: number;
+  html: string;
+  message: string;
+};
+
+export async function refineCanvasScreen(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  projectId: string,
+  screenId: string,
+  body: { prompt: string; scope?: "element" | "region" | "screen"; element_ref?: string | null },
+): Promise<CanvasRefineOut> {
+  return apiRequest<CanvasRefineOut>(`/canvas/projects/${projectId}/screens/${screenId}/refine`, {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({
+      prompt: body.prompt,
+      scope: body.scope ?? "screen",
+      element_ref: body.element_ref ?? null,
+    }),
+  });
+}
+
 export type CanvasProjectCreateBody = {
   kind: CanvasProjectKind;
   title: string;

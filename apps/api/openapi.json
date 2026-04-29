@@ -4652,7 +4652,7 @@
           "canvas"
         ],
         "summary": "Refine Canvas Screen",
-        "description": "Non-streaming refine — applies small HTML append + revision (full SSE in roadmap).",
+        "description": "Record a canvas refine note and revision without implying live AI rewrite.",
         "operationId": "refine_canvas_screen_api_v1_canvas_projects__project_id__screens__screen_id__refine_post",
         "parameters": [
           {

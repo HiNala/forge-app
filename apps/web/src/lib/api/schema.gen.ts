@@ -1552,7 +1552,7 @@ export interface paths {
         put?: never;
         /**
          * Refine Canvas Screen
-         * @description Non-streaming refine — applies small HTML append + revision (full SSE in roadmap).
+         * @description Record a canvas refine note and revision without implying live AI rewrite.
          */
         post: operations["refine_canvas_screen_api_v1_canvas_projects__project_id__screens__screen_id__refine_post"];
         delete?: never;
