@@ -109,8 +109,8 @@ importers:
         specifier: ^4.11.2
         version: 4.11.2(playwright-core@1.59.1)
       '@next/bundle-analyzer':
-        specifier: 16.3.0-canary.2
-        version: 16.3.0-canary.2
+        specifier: 16.3.0-canary.5
+        version: 16.3.0-canary.5
       '@next/env':
         specifier: 16.3.0-canary.2
         version: 16.3.0-canary.2
@@ -575,8 +575,8 @@ packages:
       '@emnapi/core': ^1.7.1
       '@emnapi/runtime': ^1.7.1
 
-  '@next/bundle-analyzer@16.3.0-canary.2':
-    resolution: {integrity: sha512-6fcFO4tQzk4UrSdnVC8WgjanU6DmNDCMRZtesRYk7AOGA2QfoVn+1+t6U6/Hfz6maDa18Sp42pe7msG1OH5zCg==}
+  '@next/bundle-analyzer@16.3.0-canary.5':
+    resolution: {integrity: sha512-z7KD2uQP4F6V5+CFe0wmTj9I649U8z4hX/loaITfdVok4JBP+vBkSGq90hC2NqXgPaxZ9czWByHVJ9giXVqodA==}
 
   '@next/env@16.3.0-canary.2':
     resolution: {integrity: sha512-B6fBLo7P2gT+BOCeTR0DC2qboDZE7d2lJ0jt0Yx7N7LXP+JeP04t8M5e6r5bzq2xA+9jucOm1wROSPXWe2nAMw==}
@@ -2912,6 +2912,10 @@ packages:
     resolution: {integrity: sha512-pMMHxBOZKFU6HgAZ4eyGnwXF/EvPGGqUr0MnZ5+99485wwW41kW91A4LOGxSHhgugZmSChL5AlElNdwlNgcnLQ==}
     engines: {node: ^10 || ^12 || >=14}
 
+  postcss@8.5.12:
+    resolution: {integrity: sha512-W62t/Se6rA0Az3DfCL0AqJwXuKwBeYg6nOaIgzP+xZ7N5BFCI7DYi1qs6ygUYT6rvfi6t9k65UMLJC+PHZpDAA==}
+    engines: {node: ^10 || ^12 || >=14}
+
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -4068,7 +4072,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.1
     optional: true
 
-  '@next/bundle-analyzer@16.3.0-canary.2':
+  '@next/bundle-analyzer@16.3.0-canary.5':
     dependencies:
       webpack-bundle-analyzer: 4.10.1
     transitivePeerDependencies:
@@ -6455,6 +6459,12 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+  postcss@8.5.12:
+    dependencies:
+      nanoid: 3.3.11
+      picocolors: 1.1.1
+      source-map-js: 1.2.1
+
   prelude-ls@1.2.1: {}
 
   prettier-plugin-tailwindcss@0.7.2(prettier@3.8.3):
@@ -7058,7 +7068,7 @@ snapshots:
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
-      postcss: 8.5.10
+      postcss: 8.5.12
       rolldown: 1.0.0-rc.15
       tinyglobby: 0.2.16
     optionalDependencies:
