@@ -1,0 +1,10 @@
+﻿<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="512" height="512" rx="44" fill="#d8c5ff"/>
+<circle cx="399.36" cy="112.64" r="92.16" fill="#ff3fb7" opacity="0.7"/>
+<rect x="40.96" y="61.44" width="276.48" height="61.44" rx="28" fill="#151120" opacity="0.88"/>
+<rect x="40.96" y="174.08" width="399.36" height="235.52" rx="40" fill="white" opacity="0.86"/>
+<rect x="66.56" y="215.04" width="122.88" height="122.88" rx="28" fill="#151120" opacity="0.12"/>
+<rect x="215.04" y="215.04" width="174.08" height="30.72" rx="18" fill="#6651ff" opacity="0.26"/>
+<rect x="215.04" y="271.36" width="133.12" height="30.72" rx="18" fill="#ff6e57" opacity="0.26"/>
+<text x="40.96" y="465.92" fill="#151120" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="800" letter-spacing="-2">Persona 3</text>
+</svg>

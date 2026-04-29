@@ -59,6 +59,8 @@ WorkflowPlanType = Literal[
     "quiz",
     "coming_soon",
     "resume",
+    "mobile_app",
+    "website",
     "other",
 ]
 

@@ -28,6 +28,18 @@ jobs:
       - name: Install Railway CLI
         run: npm i -g @railway/cli@3
 
+      - name: Audit Railway env vs .env.example (blocks deploy when strict fails)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          AUDIT_ENV_STRICT: "1"
+        run: |
+          chmod +x scripts/deployment/audit_env.sh
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "RAILWAY_TOKEN missing — skipping audit." >&2
+            exit 1
+          fi
+          ./scripts/deployment/audit_env.sh production --strict || exit 1
+
       - name: Deploy
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

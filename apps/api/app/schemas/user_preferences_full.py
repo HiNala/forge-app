@@ -59,6 +59,24 @@ class UserPreferencesPartial(BaseModel):
     notification_product_updates: bool | None = None
     timezone: str | None = None
     locale: str | None = None
+    forge_apply_memory: bool | None = Field(default=None, title="GlideDesign Apply Memory")
+    forge_memory_share_across_orgs: bool | None = Field(
+        default=None,
+        title="GlideDesign Memory Share Across Orgs",
+    )
+    forge_contribute_feedback_to_platform: bool | None = Field(
+        default=None,
+        title="GlideDesign Contribute Feedback To Platform",
+    )
+    forge_weekly_learning_digest: bool | None = Field(default=None, title="GlideDesign Weekly Learning Digest")
+    studio_war_room_layout: bool | None = None
+    # BP-04 — predictable credits / generation UX (defaults wired in merged model)
+    forge_auto_improve: bool | None = Field(default=None, title="GlideDesign Auto Improve")
+    credit_confirm_threshold_cents: int | None = None
+    credit_confirm_skip_under_credits: int | None = None
+    credit_estimate_display: Literal["always", "big_only", "never"] | None = None
+    credit_post_action_toast: Literal["always", "big_only", "never"] | None = None
+    studio_concurrency_behavior: Literal["queue", "reject"] | None = None
 
 
 class UserPreferences(BaseModel):
@@ -90,3 +108,27 @@ class UserPreferences(BaseModel):
     notification_product_updates: bool | None = None
     timezone: str | None = None
     locale: str | None = None
+    forge_apply_memory: bool = Field(default=True, title="GlideDesign Apply Memory")
+    forge_memory_share_across_orgs: bool = Field(default=False, title="GlideDesign Memory Share Across Orgs")
+    forge_contribute_feedback_to_platform: bool = Field(
+        default=True,
+        title="GlideDesign Contribute Feedback To Platform",
+    )
+    forge_weekly_learning_digest: bool = Field(default=False, title="GlideDesign Weekly Learning Digest")
+    studio_war_room_layout: bool = False  # BP-03 Product War Room layout
+    forge_auto_improve: bool = Field(default=True, title="GlideDesign Auto Improve")
+    credit_confirm_threshold_cents: int = Field(
+        default=50,
+        ge=10,
+        le=500,
+        description="Pre-action modal when estimate exceeds threshold (cents USD equivalent for comparison).",
+    )
+    credit_confirm_skip_under_credits: int = Field(
+        default=75,
+        ge=0,
+        le=500,
+        description="Never show confirm modal when estimate is under this credit count (unless session cap breach).",
+    )
+    credit_estimate_display: Literal["always", "big_only", "never"] = "always"
+    credit_post_action_toast: Literal["always", "big_only", "never"] = "big_only"
+    studio_concurrency_behavior: Literal["queue", "reject"] = "queue"

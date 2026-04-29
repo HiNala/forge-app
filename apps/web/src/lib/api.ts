@@ -1,20 +1,17 @@
 /**
- * Typed API client: Bearer Clerk JWT + Forge active-org header.
+ * Typed API client: Bearer GlideDesign JWT + active organization header.
  * Backend tenant header: `x-forge-active-org-id` (see apps/api/app/deps/tenant.py).
  */
 import { toast } from "sonner";
+import { getApiUrl } from "@/lib/api-url";
 
 export const FORGE_ACTIVE_ORG_HEADER = "x-forge-active-org-id";
-
-/** Base URL for JSON API calls (`/api/v1`). Accepts env with or without `/api/v1` suffix. */
-export function getApiUrl(): string {
-  let base = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").trim();
-  base = base.replace(/\/+$/, "");
-  if (base.endsWith("/api/v1")) {
-    return base;
-  }
-  return `${base}/api/v1`;
-}
+export {
+  getAnalyticsTrackUrl,
+  getApiUrl,
+  getPublicPageApiUrl,
+  normalizeApiOrigin,
+} from "@/lib/api-url";
 
 export type MembershipOut = {
   organization_id: string;
@@ -41,7 +38,7 @@ export type MeResponse = {
 
 type ApiRequestOptions = RequestInit & {
   getToken: () => Promise<string | null>;
-  /** Forge organization UUID; omit only for /auth/me first load. */
+  /** GlideDesign organization UUID; omit only for /auth/me first load. */
   activeOrgId?: string | null;
 };
 
@@ -182,6 +179,17 @@ export async function patchUserPreferences(
     notification_weekly_submissions?: boolean;
     notification_product_updates?: boolean;
     workspace_timezone?: string | null;
+    forge_apply_memory?: boolean;
+    forge_memory_share_across_orgs?: boolean;
+    forge_contribute_feedback_to_platform?: boolean;
+    forge_weekly_learning_digest?: boolean;
+    studio_war_room_layout?: boolean;
+    forge_auto_improve?: boolean;
+    credit_confirm_threshold_cents?: number;
+    credit_confirm_skip_under_credits?: number;
+    credit_estimate_display?: "always" | "big_only" | "never";
+    credit_post_action_toast?: "always" | "big_only" | "never";
+    studio_concurrency_behavior?: "queue" | "reject";
   },
 ): Promise<{ ok: boolean }> {
   return apiRequest("/auth/me/preferences", {
@@ -616,6 +624,7 @@ export async function getOrgAnalyticsSummary(
 
 export type BillingPlanOut = {
   plan: string;
+  currency?: string;
   status: string | null;
   trial_ends_at: string | null;
   next_invoice_at: string | null;
@@ -632,7 +641,7 @@ export type BillingUsageOut = {
   tokens_completion: number;
   period_start: string;
   period_end: string;
-  /** Forge Credits — rolling session (5 h) and week (7 d); see PRICING_MODEL */
+  /** Generation credits — rolling session (5 h) and week (7 d); see PRICING_MODEL */
   credits_tier: string;
   credits_session_used: number;
   credits_session_cap: number;
@@ -672,13 +681,14 @@ export async function getBillingUsage(
 export async function postBillingCheckout(
   getToken: () => Promise<string | null>,
   activeOrgId: string | null,
-  plan: "starter" | "pro",
+  plan: "starter" | "pro" | "max_5x" | "max_20x",
+  billingInterval: "monthly" | "annual" = "monthly",
 ): Promise<{ url: string }> {
   return apiRequest<{ url: string }>("/billing/checkout", {
     method: "POST",
     getToken,
     activeOrgId,
-    body: JSON.stringify({ plan }),
+    body: JSON.stringify({ plan, billing_interval: billingInterval }),
   });
 }
 
@@ -690,6 +700,41 @@ export async function postBillingPortal(
     method: "POST",
     getToken,
     activeOrgId,
+  });
+}
+
+/** Latest non-dismissed row from `plan_recommendations`, or null. */
+export type PlanRecommendationPayload = {
+  id: string;
+  current_plan: string;
+  recommended_plan: string;
+  savings_cents: number;
+  reasoning: string;
+  currency: string;
+  generated_at: string;
+};
+
+export async function getBillingPlanRecommendation(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<{ recommendation: PlanRecommendationPayload | null }> {
+  return apiRequest<{ recommendation: PlanRecommendationPayload | null }>("/billing/plan-recommendation", {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function postDismissPlanRecommendation(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  recommendationId: string,
+): Promise<{ ok: boolean }> {
+  return apiRequest<{ ok: boolean }>("/billing/plan-recommendation/dismiss", {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({ recommendation_id: recommendationId }),
   });
 }
 
@@ -733,6 +778,9 @@ export type PageDetailOut = PageOut & {
   form_schema: Record<string, unknown> | null;
   intent_json: Record<string, unknown> | null;
   brand_kit_snapshot: Record<string, unknown> | null;
+  last_review_quality_score?: number | null;
+  last_review_report?: Record<string, unknown> | null;
+  review_degraded_quality?: boolean | null;
 };
 
 export async function listPages(
@@ -1127,6 +1175,97 @@ export async function getStudioConversation(
   });
 }
 
+export type StudioEstimateOut = {
+  estimated_credits: number;
+  estimated_cost_cents_hint: number | null;
+  estimated_seconds: number;
+  confidence: "low" | "medium" | "high";
+};
+
+export type StudioPresignOut = {
+  url: string;
+  storage_key: string;
+  max_size_bytes: number;
+};
+
+export async function postStudioAttachmentPresign(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  body: { session_id?: string; filename: string; content_type: string },
+): Promise<StudioPresignOut> {
+  return apiRequest<StudioPresignOut>("/studio/attachments/presign", {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({
+      session_id: body.session_id ?? "default",
+      filename: body.filename,
+      content_type: body.content_type,
+    }),
+  });
+}
+
+export type StudioRegisterAttachmentOut = {
+  id: string;
+  storage_key: string;
+};
+
+export async function postStudioAttachmentRegister(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  body: {
+    session_id?: string;
+    storage_key: string;
+    kind?: string;
+    mime_type: string;
+    width?: number | null;
+    height?: number | null;
+    description?: string | null;
+  },
+): Promise<StudioRegisterAttachmentOut> {
+  return apiRequest<StudioRegisterAttachmentOut>("/studio/attachments/register", {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({
+      session_id: body.session_id ?? "default",
+      storage_key: body.storage_key,
+      kind: body.kind ?? "screenshot",
+      mime_type: body.mime_type,
+      width: body.width ?? null,
+      height: body.height ?? null,
+      description: body.description ?? null,
+    }),
+  });
+}
+
+export async function postStudioEstimate(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  body: {
+    prompt: string;
+    page_id?: string | null;
+    forced_workflow?: string | null;
+    provider?: "openai" | "anthropic" | "gemini";
+    session_id?: string;
+    vision_attachment_ids?: string[];
+  },
+): Promise<StudioEstimateOut> {
+  return apiRequest<StudioEstimateOut>("/studio/estimate", {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify({
+      prompt: body.prompt,
+      page_id: body.page_id ?? null,
+      forced_workflow: body.forced_workflow ?? null,
+      provider: body.provider ?? "openai",
+      session_id: body.session_id ?? "default",
+      vision_attachment_ids: body.vision_attachment_ids ?? [],
+    }),
+  });
+}
+
 export type StudioUsageOut = {
   plan: string;
   pages_generated: number;
@@ -1498,4 +1637,67 @@ export async function deleteCalendarConnection(
     getToken,
     activeOrgId,
   });
+}
+
+export type FeedbackSubmitBody = {
+  run_id: string;
+  artifact_kind: "screen" | "slide" | "page" | "code_file" | "reasoning" | "suggestion";
+  artifact_ref?: string;
+  sentiment: "positive" | "negative" | "improvement_request";
+  structured_reasons: string[];
+  free_text?: string | null;
+  action_taken?: string | null;
+  preceded_refine_run_id?: string | null;
+};
+
+export async function postArtifactFeedback(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+  body: FeedbackSubmitBody,
+): Promise<{ id: string; memory_writes: Record<string, unknown>[] }> {
+  return apiRequest(`/feedback`, {
+    method: "POST",
+    getToken,
+    activeOrgId,
+    body: JSON.stringify(body),
+  });
+}
+
+export type DesignMemoryRow = {
+  id: string;
+  kind: string;
+  key: string;
+  value: Record<string, unknown>;
+  strength: number;
+  updated_at: string | null;
+};
+
+export async function listDesignMemory(
+  getToken: () => Promise<string | null>,
+  activeOrgId: string | null,
+): Promise<DesignMemoryRow[]> {
+  return apiRequest(`/design-memory`, {
+    method: "GET",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function resetDesignMemory(getToken: () => Promise<string | null>, activeOrgId: string | null) {
+  return apiRequest<{ deleted: number }>(`/design-memory/reset`, {
+    method: "POST",
+    getToken,
+    activeOrgId,
+  });
+}
+
+export async function getAdminPatternsFeed(getToken: () => Promise<string | null>, days = 7) {
+  return apiRequest<{ items: Record<string, unknown>[]; generated_at: string }>(
+    `/admin/patterns/feed?days=${days}`,
+    {
+      method: "GET",
+      getToken,
+      activeOrgId: null,
+    },
+  );
 }

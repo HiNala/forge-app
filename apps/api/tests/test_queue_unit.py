@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.services.queue import enqueue_purge_deleted_user, enqueue_run_automations
+from app.services.queue import enqueue_deck_export, enqueue_purge_deleted_user, enqueue_run_automations
 
 
 @pytest.mark.asyncio
@@ -25,6 +25,23 @@ async def test_enqueue_run_automations_delegates_to_pool() -> None:
     state.arq_pool = pool
     await enqueue_run_automations(state, "abc-123")
     pool.enqueue_job.assert_called_once_with("run_automations", "abc-123")
+
+
+@pytest.mark.asyncio
+async def test_enqueue_deck_export_returns_false_when_pool_missing() -> None:
+    state = MagicMock()
+    state.arq_pool = None
+    assert await enqueue_deck_export(state, "page-id", "pdf") is False
+
+
+@pytest.mark.asyncio
+async def test_enqueue_deck_export_returns_true_when_job_enqueued() -> None:
+    pool = MagicMock()
+    pool.enqueue_job = AsyncMock()
+    state = MagicMock()
+    state.arq_pool = pool
+    assert await enqueue_deck_export(state, "page-id", "pptx") is True
+    pool.enqueue_job.assert_called_once_with("deck_export", "page-id", "pptx")
 
 
 @pytest.mark.asyncio

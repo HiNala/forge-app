@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import UUID
 
 from redis.asyncio import Redis
@@ -11,22 +11,20 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.llm_routing_policy import LlmRoutingPolicy
-
-if TYPE_CHECKING:
-    from app.services.llm.llm_router import ModelRoute
+from app.services.llm.llm_router import ModelRoute
 
 logger = logging.getLogger(__name__)
 
 ROUTING_REDIS_KEY = "forge:llm_routing:version"
 
-_route_cache: dict[str, Any] = {}
+_route_cache: dict[str, ModelRoute] = {}
 
 
 def _ck(rver: int, org: UUID | None, role: str) -> str:
     return f"{rver}|{org or 'p'}|{role}"
 
 
-async def bump_routing_version(redis: Redis | None) -> int:
+async def bump_routing_version(redis: Redis[Any] | None) -> int:
     if redis is None:
         return 0
     try:
@@ -52,7 +50,7 @@ async def _load_org_policies(
     return out
 
 
-def _row_to_model_route(row: LlmRoutingPolicy) -> "ModelRoute":
+def _row_to_model_route(row: LlmRoutingPolicy) -> ModelRoute:
     from app.services.llm.llm_router import ROUTES, ModelRoute
 
     fbs: list[tuple[str, str]] = []
@@ -69,18 +67,23 @@ def _row_to_model_route(row: LlmRoutingPolicy) -> "ModelRoute":
     )
 
 
+def _default_route(role: str) -> ModelRoute:
+    from app.services.llm.llm_router import ROUTES
+
+    return ROUTES.get(role, ROUTES["composer"])
+
+
 async def effective_model_route(
     db: AsyncSession | None,
-    redis: Redis | None,
+    redis: Redis[Any] | None,
     *,
     role: str,
     organization_id: UUID | None,
-) -> "ModelRoute":
+) -> ModelRoute:
     """
     DB policies override in-process ROUTES; org rows override platform rows.
     When DB empty, return built-in ROUTES.
     """
-    from app.services.llm.llm_router import ROUTES
 
     rver = 0
     if redis is not None:
@@ -94,7 +97,7 @@ async def effective_model_route(
         return _route_cache[key]
 
     if db is None:
-        r = ROUTES[role]
+        r = _default_route(role)
         _route_cache[key] = r
         return r
 
@@ -102,14 +105,11 @@ async def effective_model_route(
         policies = await _load_org_policies(db, organization_id)
     except Exception as e:  # noqa: BLE001
         logger.warning("load_routing_policies %s", e)
-        r = ROUTES[role]
+        r = _default_route(role)
         _route_cache[key] = r
         return r
 
-    if role not in policies:
-        route = ROUTES[role]
-    else:
-        route = _row_to_model_route(policies[role])
+    route = _default_route(role) if role not in policies else _row_to_model_route(policies[role])
     if len(_route_cache) > 2000:
         _route_cache.clear()
     _route_cache[key] = route

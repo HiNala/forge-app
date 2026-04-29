@@ -6,10 +6,10 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="mx-auto max-w-prose px-4 py-16 sm:px-6">
-      <h1 className="font-display text-3xl font-bold text-text">Terms of service</h1>
-      <p className="mt-6 text-sm leading-relaxed text-text-muted">
-        Placeholder — legal review and final copy ship before public launch (Mission FE-07).
+    <div className="mx-auto max-w-prose px-4 py-16 sm:px-6 sm:py-24">
+      <h1 className="text-display-md text-text">Terms of service</h1>
+      <p className="mt-6 text-body-sm text-text-muted">
+        These terms govern use of GlideDesign. Final legal review ships before public launch; until then, use this page as the canonical GlideDesign legal surface placeholder.
       </p>
     </div>
   );

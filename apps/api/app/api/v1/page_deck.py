@@ -128,8 +128,9 @@ async def export_page_deck(
     ).scalar_one_or_none()
     if row is None:
         raise HTTPException(status_code=404, detail="Deck not found")
-    # Stub: worker implements PPTX/PDF (W-03 Phase 10)
-    await enqueue_deck_export(request.app.state, str(p.id), body.format)
+    queued = await enqueue_deck_export(request.app.state, str(p.id), body.format)
+    if not queued:
+        raise HTTPException(status_code=503, detail="Deck export worker is unavailable")
     return DeckExportOut(
         status="queued",
         format=body.format,

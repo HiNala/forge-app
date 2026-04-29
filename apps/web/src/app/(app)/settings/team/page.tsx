@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import * as React from "react";
@@ -416,7 +416,7 @@ export default function TeamSettingsPage() {
             <DialogTitle>Transfer ownership</DialogTitle>
             <DialogDescription>
               Select a member to become Owner. You will become an Editor. This cannot target yourself. Re-authenticate in
-              your account portal if your organization requires it — Forge will swap roles in one step once confirmed.
+              your account portal if your organization requires it — GlideDesign will swap roles in one step once confirmed.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { getBillingUsage } from "@/lib/api";

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { StudioWorkspace } from "@/components/studio/studio-workspace";
+import { StudioGate } from "@/components/studio/studio-gate";
 
 export const metadata: Metadata = {
-  title: "Studio | Forge",
+  title: "Studio | GlideDesign",
 };
 
 export default function StudioPage() {
@@ -16,7 +16,7 @@ export default function StudioPage() {
         </div>
       }
     >
-      <StudioWorkspace />
+      <StudioGate />
     </Suspense>
   );
 }

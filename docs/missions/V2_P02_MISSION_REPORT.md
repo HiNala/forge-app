@@ -10,8 +10,8 @@ The **client-first** mobile canvas is in place: **xyflow** infinite surface, dev
 |-----------|--------|
 | xyflow infinite canvas + multiple phone shells | **Done** (demo screens) |
 | Single / multi-screen generation end-to-end | **Not done** — generation is not wired from this route; P-05 |
-| Element selection at zoom ≥75%, hover, FAB menus | **Partial** — tappable attributes in demo HTML; full hit-testing UX TBD |
-| Marquee (Cmd-drag / M / toolbar), overlap logic | **Partial** — toolbar + M; Cmd-drag same pattern as web where implemented |
+| Element selection at zoom ≥75%, hover, FAB menus | **Partial** — pick/hover/FAB/**↑**/**Refine** only when **canvas zoom ≥ 75%**; **Duplicate** / **Delete** update preview HTML via `updateScreenHtml` (client demo). **Replace** swap menu still TBD |
+| Marquee (Cmd-drag / M / toolbar), overlap logic | **Partial** — toolbar + M; **Cmd/Ctrl-drag** (or marquee mode) draws a box over preview HTML, hits `data-forge-node-id` via `collectForgeHits`, opens same style **Region refine** panel as web (orchestration wiring still P-05) |
 | Region refine validator (no drift outside box) | **Not done** |
 | 40+ mobile components | **Not done** |
 | Tweaks panel live across screens | **Done** (accent, radius, density, apply-all) |

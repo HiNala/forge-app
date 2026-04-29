@@ -1,9 +1,11 @@
 "use client";
 
 /**
- * Root-level error UI — avoid globals.css and design-system imports so the
- * `/_global-error` route stays prerender-safe during `next build`.
+ * Root-level error UI — avoids loading `globals.css` so `/_global-error` stays prerender-safe during `next build`.
+ * Uses static GlideDesign fallback colors so the route remains prerender-safe.
  */
+import { forgeFallbackHex as H } from "@/lib/design/forge-html-fallback-colors";
+
 export default function GlobalError({
   error,
   reset,
@@ -25,11 +27,25 @@ export default function GlobalError({
           alignItems: "center",
           justifyContent: "center",
           padding: "2rem",
-          fontFamily: "system-ui, sans-serif",
-          background: "#faf8f5",
-          color: "#1c1917",
+          fontFamily:
+            "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+          background: H.bone,
+          color: H.graphiteInk,
         }}
       >
+        <div
+          aria-hidden
+          style={{
+            width: "min(20rem, 82vw)",
+            aspectRatio: "640 / 420",
+            marginBottom: "1.5rem",
+            backgroundImage: "url('/brand/illustrations/error-glide.svg')",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "contain",
+            backgroundPosition: "center",
+            filter: "drop-shadow(0 18px 36px rgba(26, 18, 56, 0.14))",
+          }}
+        />
         <p style={{ fontSize: "1.5rem", fontWeight: 700 }}>We hit a wall</p>
         <p
           style={{
@@ -37,14 +53,14 @@ export default function GlobalError({
             maxWidth: "28rem",
             textAlign: "center",
             fontSize: "0.875rem",
-            color: "#57534e",
+            color: H.slateCaption,
           }}
         >
-          Something went wrong while loading the app. Try reloading — if it keeps happening, contact support and share
-          the error reference below (we use it the same way as a Sentry event ID).
+          GlideDesign could not finish loading the app shell. Reload once — if it keeps happening, contact support and
+          share the error reference below.
         </p>
         {digest ? (
-          <p style={{ marginTop: "1rem", fontFamily: "ui-monospace, monospace", fontSize: "11px", color: "#78716c" }}>
+          <p style={{ marginTop: "1rem", fontFamily: "ui-monospace, monospace", fontSize: "11px", color: H.mistSecondary }}>
             Error reference: <span style={{ userSelect: "all" }}>{digest}</span>
           </p>
         ) : null}
@@ -58,8 +74,8 @@ export default function GlobalError({
             fontSize: "0.875rem",
             fontWeight: 600,
             cursor: "pointer",
-            background: "#1c1917",
-            color: "#faf8f5",
+            background: H.copperAccent,
+            color: H.white,
           }}
           onClick={() => reset()}
         >

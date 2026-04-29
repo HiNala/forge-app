@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/tooltip";
 import { orphanPageIds } from "@/lib/web-canvas-nav-graph";
 import { buildMultiPageStaticZip, buildSingleFileStaticSite } from "@/lib/web-canvas-static-export";
+import { forgeFallbackHex as H } from "@/lib/design/forge-html-fallback-colors";
 import { useWebCanvasStore, type SiteNavLink } from "./web-canvas-store";
 import type { WebCanvasFocusBreakpoint } from "./types";
 import { cn } from "@/lib/utils";
@@ -98,24 +99,24 @@ export function WebCanvasToolbar() {
     pages.length > 1 ? orphanPageIds(pages.map((p) => p.id), homePageId, edges) : [];
 
   function exportTheme() {
-    const accent = `hsl(${accentHue} 78% 48%)`;
+    const accent = `oklch(0.66 0.14 ${accentHue})`;
     if (theme === "dark") {
-      return { accent, bg: "#0f1419", fg: "#e6edf3" };
+      return { accent, bg: H.deviceDarkChromeBg, fg: H.deviceDarkFg };
     }
-    return { accent, bg: "#ffffff", fg: "#0f172a" };
+    return { accent, bg: H.deviceLightChromeBg, fg: H.deviceLightFg };
   }
 
   function downloadStaticHtml() {
     const doc = buildSingleFileStaticSite(
       pages.map((p) => ({ path: p.path, title: p.title, html: p.html })),
-      "Forge site preview",
+      "GlideDesign site preview",
       exportTheme(),
     );
     const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "forge-site-preview.html";
+    a.download = "glidedesign-site-preview.html";
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Downloaded static preview");
@@ -125,7 +126,7 @@ export function WebCanvasToolbar() {
     try {
       const zipped = buildMultiPageStaticZip(
         pages.map((p) => ({ path: p.path, title: p.title, html: p.html })),
-        "Forge site preview",
+        "GlideDesign site preview",
         exportTheme(),
       );
       const bytes = new Uint8Array(zipped.length);
@@ -134,7 +135,7 @@ export function WebCanvasToolbar() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "forge-site-pages.zip";
+      a.download = "glidedesign-site-pages.zip";
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Downloaded ZIP — unzip and open index.html");

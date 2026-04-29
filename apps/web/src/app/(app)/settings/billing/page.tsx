@@ -1,7 +1,7 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
-import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/providers/forge-auth-provider";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -20,17 +20,21 @@ import {
 import {
   getBillingInvoices,
   getBillingPlan,
+  getBillingPlanRecommendation,
   getBillingUsage,
   postBillingCheckout,
   postBillingPortal,
+  postDismissPlanRecommendation,
 } from "@/lib/api";
+import { formatCurrency } from "@/lib/format/currency";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
 
 export default function BillingSettingsPage() {
   const { getToken } = useAuth();
   const sp = useSearchParams();
-  const { activeOrganizationId } = useForgeSession();
+  const queryClient = useQueryClient();
+  const { activeOrganizationId, me } = useForgeSession();
   const [planDialogOpen, setPlanDialogOpen] = React.useState(false);
   const [busy, setBusy] = React.useState<string | null>(null);
 
@@ -58,6 +62,44 @@ export default function BillingSettingsPage() {
     queryFn: () => getBillingInvoices(getToken, activeOrganizationId),
   });
 
+  const planRecQ = useQuery({
+    queryKey: ["billing-plan-recommendation", activeOrganizationId],
+    enabled: !!activeOrganizationId,
+    queryFn: () => getBillingPlanRecommendation(getToken, activeOrganizationId),
+    staleTime: 60_000,
+  });
+
+  const localeMoney =
+    me?.preferences && typeof (me.preferences as { locale?: string }).locale === "string"
+      ? (me.preferences as { locale: string }).locale
+      : "en-US";
+
+  async function dismissRecommendation(recId: string) {
+    setBusy(`dismiss-${recId}`);
+    try {
+      await postDismissPlanRecommendation(getToken, activeOrganizationId, recId);
+      await queryClient.invalidateQueries({ queryKey: ["billing-plan-recommendation", activeOrganizationId] });
+      toast.success("Suggestion dismissed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not dismiss");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function checkoutRecommendedPlan(plan: string) {
+    if (plan !== "pro" && plan !== "max_5x" && plan !== "max_20x") return;
+    setBusy(`rec-${plan}`);
+    try {
+      const { url } = await postBillingCheckout(getToken, activeOrganizationId, plan, "monthly");
+      window.location.href = url;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Checkout failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function openPortal() {
     setBusy("portal");
     try {
@@ -70,10 +112,10 @@ export default function BillingSettingsPage() {
     }
   }
 
-  async function startCheckout(plan: "starter" | "pro") {
+  async function startCheckout(plan: "pro" | "max_5x" | "max_20x") {
     setBusy(`checkout-${plan}`);
     try {
-      const { url } = await postBillingCheckout(getToken, activeOrganizationId, plan);
+      const { url } = await postBillingCheckout(getToken, activeOrganizationId, plan, "monthly");
       window.location.href = url;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Checkout failed");
@@ -89,6 +131,13 @@ export default function BillingSettingsPage() {
   const trialDays =
     plan?.trial_ends_at && new Date(plan.trial_ends_at) > new Date()
       ? Math.max(0, differenceInCalendarDays(new Date(plan.trial_ends_at), new Date()))
+      : null;
+
+  const extraCapRatio =
+    usage?.extra_usage_enabled &&
+    usage.extra_usage_monthly_cap_cents != null &&
+    usage.extra_usage_monthly_cap_cents > 0
+      ? usage.extra_usage_spent_period_cents / usage.extra_usage_monthly_cap_cents
       : null;
 
   function barTone(pct: number) {
@@ -116,6 +165,98 @@ export default function BillingSettingsPage() {
             Open billing portal
           </Button>
         </div>
+      ) : null}
+
+      {extraCapRatio != null && extraCapRatio >= 0.75 ? (
+        <div
+          className={`rounded-2xl border px-5 py-4 text-sm font-body ${
+            extraCapRatio >= 1 ? "border-danger/40 bg-danger/10 text-danger" : "border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-100"
+          }`}
+          role="status"
+        >
+          <p className="font-semibold">
+            {extraCapRatio >= 1
+              ? "Extra-usage monthly cap reached"
+              : extraCapRatio >= 0.95
+                ? "You are at about 95% of your GlideDesign extra-usage cap"
+                : "You are approaching your GlideDesign extra-usage cap (~75%)"}
+          </p>
+          <p className="mt-1 text-xs opacity-90">
+            {usage ? (
+              <>
+                Spent {((usage.extra_usage_spent_period_cents ?? 0) / 100).toFixed(2)} of{" "}
+                {((usage.extra_usage_monthly_cap_cents ?? 0) / 100).toFixed(2)}{" "}
+                {plan?.currency?.toUpperCase() ?? "USD"} this Stripe period. Raise the cap under Usage or upgrade for
+                more included credits.
+              </>
+            ) : null}
+          </p>
+          <Link href="/settings/usage" className="mt-2 inline-block text-sm font-medium underline-offset-4 hover:underline">
+            Open usage controls →
+          </Link>
+        </div>
+      ) : null}
+
+      {planRecQ.data?.recommendation ? (
+        <aside
+          className="rounded-2xl border border-accent/30 bg-accent-light/35 px-5 py-4 font-body text-sm text-text shadow-sm"
+          role="status"
+        >
+          <p className="font-display font-bold text-text">Plan suggestion</p>
+          <p className="mt-2 text-sm leading-relaxed">
+            Consider <span className="font-semibold">{planRecQ.data.recommendation.recommended_plan}</span>{" "}
+            instead of{" "}
+            <span className="text-text-muted">{planRecQ.data.recommendation.current_plan}</span>
+            {" — "}save about{" "}
+            <span className="font-semibold">
+              {formatCurrency(
+                planRecQ.data.recommendation.savings_cents,
+                planRecQ.data.recommendation.currency,
+                localeMoney,
+              )}
+            </span>{" "}
+            / month.
+          </p>
+          {planRecQ.data.recommendation.reasoning ? (
+            <p className="mt-2 text-xs text-text-muted">{planRecQ.data.recommendation.reasoning}</p>
+          ) : null}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {planRecQ.data.recommendation.recommended_plan === "pro" ||
+            planRecQ.data.recommendation.recommended_plan === "max_5x" ||
+            planRecQ.data.recommendation.recommended_plan === "max_20x" ? (
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                loading={busy === `rec-${planRecQ.data.recommendation.recommended_plan}`}
+                onClick={() =>
+                  void checkoutRecommendedPlan(planRecQ.data!.recommendation!.recommended_plan)
+                }
+              >
+                Continue to Stripe
+              </Button>
+            ) : (
+              <Button type="button" variant="primary" size="sm" asChild>
+                <Link href="/settings/billing/plans">View plans</Link>
+              </Button>
+            )}
+            <Link
+              href="/settings/billing/plans"
+              className="inline-flex items-center px-3 py-1.5 font-body text-xs font-medium text-accent underline-offset-4 hover:underline"
+            >
+              Compare monthly vs annual →
+            </Link>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              loading={busy === `dismiss-${planRecQ.data.recommendation.id}`}
+              onClick={() => void dismissRecommendation(planRecQ.data.recommendation!.id)}
+            >
+              Dismiss
+            </Button>
+          </div>
+        </aside>
       ) : null}
 
       {trialDays !== null ? (
@@ -227,40 +368,62 @@ export default function BillingSettingsPage() {
       </section>
 
       <p className="text-xs text-text-muted font-body">
-        <Link href="/pricing" className="text-accent hover:underline">
-          Compare plans
+        <Link href="/settings/billing/plans" className="text-accent hover:underline">
+          In-app plan picker
         </Link>{" "}
-        on the marketing site — self-serve checkout uses Stripe.
+        ·{" "}
+        <Link href="/pricing" className="text-accent hover:underline">
+          Marketing pricing
+        </Link>{" "}
+        — self-serve checkout uses Stripe.
       </p>
 
       <Dialog open={planDialogOpen} onOpenChange={setPlanDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Choose a plan</DialogTitle>
-            <DialogDescription>Checkout opens on Stripe’s secure page.</DialogDescription>
+            <DialogDescription>
+              Checkout opens on Stripe — for annual billing switch the interval first on{" "}
+              <Link href="/settings/billing/plans" className="text-accent underline">
+                Plans
+              </Link>
+              .
+            </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-border p-5">
-              <p className="font-display text-lg font-bold text-text">Starter</p>
-              <p className="mt-1 font-body text-sm text-text-muted">Core publishing and forms.</p>
+              <p className="font-display text-lg font-bold text-text">Pro</p>
+              <p className="mt-1 font-body text-xs text-text-muted">$50/mo — solid limits for individuals and small teams.</p>
               <Button
                 className="mt-5 w-full"
                 variant="secondary"
-                loading={busy === "checkout-starter"}
-                onClick={() => void startCheckout("starter")}
-              >
-                Select Starter
-              </Button>
-            </div>
-            <div className="rounded-2xl border border-text bg-text p-5">
-              <p className="font-display text-lg font-bold text-bg">Pro</p>
-              <p className="mt-1 font-body text-sm text-bg/70">Higher limits, automations, analytics retention.</p>
-              <Button
-                className="mt-5 w-full bg-bg text-text hover:opacity-90"
                 loading={busy === "checkout-pro"}
                 onClick={() => void startCheckout("pro")}
               >
                 Select Pro
+              </Button>
+            </div>
+            <div className="rounded-2xl border border-accent/40 bg-accent-light/30 p-5">
+              <p className="font-display text-lg font-bold text-text">Max</p>
+              <p className="mt-1 font-body text-xs text-text-muted">$100/mo — higher concurrency and weekly credits.</p>
+              <Button
+                className="mt-5 w-full"
+                variant="secondary"
+                loading={busy === "checkout-max_5x"}
+                onClick={() => void startCheckout("max_5x")}
+              >
+                Select Max
+              </Button>
+            </div>
+            <div className="rounded-2xl border border-text bg-text p-5">
+              <p className="font-display text-lg font-bold text-bg">Max Enterprise</p>
+              <p className="mt-1 font-body text-xs text-bg/75">$100/mo — maximum GlideDesign throughput.</p>
+              <Button
+                className="mt-5 w-full bg-bg text-text hover:opacity-90"
+                loading={busy === "checkout-max_20x"}
+                onClick={() => void startCheckout("max_20x")}
+              >
+                Contact for Enterprise
               </Button>
             </div>
           </div>

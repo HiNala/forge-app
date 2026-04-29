@@ -1,5 +1,5 @@
 /**
- * Single import surface for Lucide icons + Forge logo. Tree-shaking still applies per icon.
+ * Single import surface for Lucide icons + GlideDesign logo. Tree-shaking still applies per icon.
  * Prefer importing from here in app code so we can audit icon usage in one place.
  */
 export type { LucideIcon } from "lucide-react";

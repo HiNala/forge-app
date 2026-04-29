@@ -153,13 +153,28 @@ async def add_custom_domain(
 @router.delete("/custom-domains/{domain_id}")
 async def delete_custom_domain(
     domain_id: UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_role("owner")),
 ) -> dict[str, bool]:
     row = await db.get(CustomDomain, domain_id)
     if row is None or row.organization_id != ctx.organization_id:
         raise HTTPException(status_code=404, detail="Not found")
+    before_host = row.hostname
+    prev_status = row.status
     row.status = "revoked"
+    await write_audit(
+        db,
+        organization_id=ctx.organization_id,
+        actor_user_id=getattr(request.state, "user_id", None),
+        action="custom_domain.deleted",
+        resource_type="custom_domain",
+        resource_id=row.id,
+        changes={
+            "hostname": [before_host, before_host],
+            "status": [prev_status, "revoked"],
+        },
+    )
     await db.commit()
     return {"ok": True}
 

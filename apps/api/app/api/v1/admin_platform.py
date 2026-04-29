@@ -241,6 +241,42 @@ async def admin_llm_summary(
     }
 
 
+@router.get("/orchestration-runs")
+async def admin_orchestration_runs_list(
+    min_quality: float | None = Query(None, ge=0, le=100),
+    max_quality: float | None = Query(None, ge=0, le=100),
+    limit: int = Query(80, ge=1, le=400),
+    _u: User = Depends(require_platform_permission("llm:read_run_traces")),
+    db: AsyncSession = Depends(get_admin_db),
+) -> dict[str, Any]:
+    """Recent runs — optional coarse filter when ``quality_score`` is populated on rows."""
+    stmt = select(OrchestrationRun).order_by(OrchestrationRun.created_at.desc()).limit(limit)
+    if min_quality is not None:
+        stmt = stmt.where(
+            OrchestrationRun.quality_score.isnot(None), OrchestrationRun.quality_score >= min_quality
+        )
+    if max_quality is not None:
+        stmt = stmt.where(
+            OrchestrationRun.quality_score.isnot(None), OrchestrationRun.quality_score <= max_quality
+        )
+    rows = (await db.execute(stmt)).scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(r.id),
+                "organization_id": str(r.organization_id),
+                "status": r.status,
+                "graph_name": r.graph_name,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "quality_score": float(r.quality_score) if r.quality_score is not None else None,
+                "total_duration_ms": r.total_duration_ms,
+                "prompt_excerpt": (r.prompt[:120] + "…") if r.prompt and len(r.prompt) > 120 else r.prompt,
+            }
+            for r in rows
+        ]
+    }
+
+
 @router.get("/orchestration-runs/{run_id}")
 async def admin_orchestration_run_detail(
     run_id: UUID,
@@ -263,6 +299,10 @@ async def admin_orchestration_run_detail(
         "plan": row.plan,
         "review_findings": row.review_findings,
         "node_timings": row.node_timings,
+        "agent_calls": row.agent_calls,
+        "four_layer_output": row.four_layer_output,
+        "quality_score": float(row.quality_score) if row.quality_score is not None else None,
+        "dimension_scores": row.dimension_scores,
         "total_tokens_input": row.total_tokens_input,
         "total_tokens_output": row.total_tokens_output,
         "total_cost_cents": row.total_cost_cents,

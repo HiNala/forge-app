@@ -20,6 +20,7 @@ class User(Base, UUIDPrimaryKeyMixin):
     display_name: Mapped[str | None] = mapped_column(Text)
     avatar_url: Mapped[str | None] = mapped_column(Text)
     auth_provider_id: Mapped[str | None] = mapped_column(Text, index=True)
+    password_hash: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -35,6 +36,8 @@ class User(Base, UUIDPrimaryKeyMixin):
     user_preferences: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     memberships = relationship("Membership", back_populates="user")
+    oauth_identities = relationship("OAuthIdentity", back_populates="user")
+    auth_sessions = relationship("AuthSession", back_populates="user")
     invitations_sent = relationship(
         "Invitation",
         foreign_keys="Invitation.invited_by_user_id",

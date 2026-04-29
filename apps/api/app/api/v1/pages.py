@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -11,7 +12,7 @@ from sqlalchemy import String, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.db.models import Organization, Page, PageVersion, Submission, User
+from app.db.models import Organization, Page, PageRevision, PageVersion, Submission, User
 from app.deps import get_db, require_role, require_tenant
 from app.deps.api_scopes import require_api_scopes
 from app.deps.auth import require_user
@@ -21,6 +22,7 @@ from app.schemas.page import (
     PageDetailOut,
     PageOut,
     PagePatch,
+    PageRevisionOut,
     PageVersionOut,
     PublishOut,
 )
@@ -98,6 +100,30 @@ async def create_page(
     await db.commit()
     await db.refresh(p)
     return p
+
+
+@router.get(
+    "/{page_id}/revisions",
+    response_model=list[PageRevisionOut],
+)
+async def list_page_revisions(
+    page_id: UUID,
+    _: None = Depends(require_api_scopes("read:pages")),
+    db: AsyncSession = Depends(get_db),
+    ctx: TenantContext = Depends(require_tenant),
+) -> list[PageRevision]:
+    p = await db.get(Page, page_id)
+    if p is None or p.organization_id != ctx.organization_id:
+        raise HTTPException(status_code=404, detail="Not found")
+    rows = (
+        await db.execute(
+            select(PageRevision)
+            .where(PageRevision.page_id == page_id)
+            .order_by(PageRevision.created_at.desc())
+            .limit(200)
+        )
+    ).scalars().all()
+    return list(rows)
 
 
 @router.get(
@@ -460,7 +486,7 @@ async def export_page_html(
     safe_slug = "".join(c if c.isalnum() or c in "-_" else "-" for c in (p.slug or "page"))[:80]
     filename = f"{safe_slug}.html"
 
-    async def _stream():
+    async def _stream() -> AsyncIterator[bytes]:
         yield html.encode("utf-8")
 
     return StreamingResponse(

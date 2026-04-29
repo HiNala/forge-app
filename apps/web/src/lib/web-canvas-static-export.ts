@@ -5,6 +5,7 @@
 
 import { strToU8, zipSync } from "fflate";
 import { normalizeWebPath } from "@/lib/web-canvas-nav-graph";
+import { forgeFallbackHex } from "@/lib/design/forge-html-fallback-colors";
 
 export type StaticExportPage = { path: string; title: string; html: string };
 
@@ -65,7 +66,7 @@ function buildStandalonePageHtml(
   <style>
     :root { --accent:${opts.accent}; --bg:${opts.bg}; --fg:${opts.fg}; }
     body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--fg); }
-    .forge-export-nav { position:sticky; top:0; z-index:10; padding:12px 16px; background:var(--bg); border-bottom:1px solid rgba(0,0,0,.1); display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:14px; }
+    .forge-export-nav { position:sticky; top:0; z-index:10; padding:12px 16px; background:var(--bg); border-bottom:1px solid color-mix(in oklch, var(--fg) 10%, transparent); display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:14px; }
     .forge-export-nav a { color:var(--accent); font-weight:600; text-decoration:none; }
     .forge-export-nav a[aria-current="page"] { text-decoration:underline; }
     main { padding:24px 16px 48px; max-width:960px; margin:0 auto; }
@@ -76,9 +77,32 @@ function buildStandalonePageHtml(
   <main>
 ${page.html}
   </main>
-  <p style="padding:24px; font-size:12px; opacity:.6; text-align:center;">Exported from Forge (preview).</p>
+  <p style="padding:24px; font-size:12px; opacity:.6; text-align:center;">Exported from GlideDesign (preview).</p>
 </body>
 </html>`;
+}
+
+/** Pre-zip filenames + HTML payloads (deterministic keys for tests; zip round-trip validated separately). */
+export function buildMultiPageStaticFiles(
+  pages: readonly StaticExportPage[],
+  siteName: string,
+  options?: { accent?: string; bg?: string; fg?: string },
+): Record<string, Uint8Array> {
+  if (pages.length === 0) {
+    throw new Error("buildMultiPageStaticZip: at least one page required");
+  }
+  const accent = options?.accent ?? forgeFallbackHex.defaultAccent;
+  const bg = options?.bg ?? forgeFallbackHex.bone;
+  const fg = options?.fg ?? forgeFallbackHex.graphiteInk;
+  const pathToName = assignExportFilenames(pages);
+  const files: Record<string, Uint8Array> = {};
+  for (const p of pages) {
+    const name = pathToName.get(normalizeWebPath(p.path));
+    if (!name) continue;
+    const doc = buildStandalonePageHtml(p, pages, pathToName, siteName, { accent, bg, fg });
+    files[name] = strToU8(doc);
+  }
+  return files;
 }
 
 /**
@@ -89,20 +113,7 @@ export function buildMultiPageStaticZip(
   siteName: string,
   options?: { accent?: string; bg?: string; fg?: string },
 ): Uint8Array {
-  if (pages.length === 0) {
-    throw new Error("buildMultiPageStaticZip: at least one page required");
-  }
-  const accent = options?.accent ?? "#2563eb";
-  const bg = options?.bg ?? "#ffffff";
-  const fg = options?.fg ?? "#0f172a";
-  const pathToName = assignExportFilenames(pages);
-  const files: Record<string, Uint8Array> = {};
-  for (const p of pages) {
-    const name = pathToName.get(normalizeWebPath(p.path));
-    if (!name) continue;
-    const doc = buildStandalonePageHtml(p, pages, pathToName, siteName, { accent, bg, fg });
-    files[name] = strToU8(doc);
-  }
+  const files = buildMultiPageStaticFiles(pages, siteName, options);
   return zipSync(files, { level: 6 });
 }
 
@@ -111,9 +122,9 @@ export function buildSingleFileStaticSite(
   siteName: string,
   options?: { accent?: string; bg?: string; fg?: string },
 ): string {
-  const accent = options?.accent ?? "#2563eb";
-  const bg = options?.bg ?? "#ffffff";
-  const fg = options?.fg ?? "#0f172a";
+  const accent = options?.accent ?? forgeFallbackHex.defaultAccent;
+  const bg = options?.bg ?? forgeFallbackHex.bone;
+  const fg = options?.fg ?? forgeFallbackHex.graphiteInk;
   const nav = pages
     .map((p) => {
       const slug = sectionSlug(p.path);
@@ -140,9 +151,9 @@ export function buildSingleFileStaticSite(
   <style>
     :root { --accent:${accent}; --bg:${bg}; --fg:${fg}; }
     body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--fg); }
-    .forge-export-nav { position:sticky; top:0; z-index:10; padding:12px 16px; background:var(--bg); border-bottom:1px solid rgba(0,0,0,.1); display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:14px; }
+    .forge-export-nav { position:sticky; top:0; z-index:10; padding:12px 16px; background:var(--bg); border-bottom:1px solid color-mix(in oklch, var(--fg) 10%, transparent); display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:14px; }
     .forge-export-nav a { color:var(--accent); font-weight:600; text-decoration:none; }
-    .forge-static-page { padding:24px 16px 48px; max-width:960px; margin:0 auto; border-bottom:1px solid rgba(0,0,0,.06); }
+    .forge-static-page { padding:24px 16px 48px; max-width:960px; margin:0 auto; border-bottom:1px solid color-mix(in oklch, var(--fg) 6%, transparent); }
     .forge-static-page-title { font-size:1.25rem; margin:0 0 16px; }
     .forge-static-page-body { overflow:auto; }
   </style>
@@ -150,7 +161,7 @@ export function buildSingleFileStaticSite(
 <body>
   <nav class="forge-export-nav" aria-label="Site">${nav}</nav>
   ${sections}
-  <p style="padding:24px; font-size:12px; opacity:.6; text-align:center;">Exported from Forge (preview). Forms use Forge when hosted; replace action URLs for fully static hosting.</p>
+  <p style="padding:24px; font-size:12px; opacity:.6; text-align:center;">Exported from GlideDesign (preview). Forms use GlideDesign when hosted; replace action URLs for fully static hosting.</p>
 </body>
 </html>`;
 }

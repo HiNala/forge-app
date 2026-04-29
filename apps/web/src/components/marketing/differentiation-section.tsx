@@ -17,7 +17,7 @@ const CARDS: { kicker: string; body: string }[] = [
 
 export function DifferentiationSection() {
   return (
-    <section className="border-y border-border bg-bg-elevated/50 py-12 sm:py-16" aria-label="How Forge is different">
+    <section className="border-y border-border bg-bg-elevated/50 py-12 sm:py-16" aria-label="How GlideDesign is different">
       <Container max="xl">
         <div className="grid gap-4 sm:grid-cols-3">
           {CARDS.map((c) => (

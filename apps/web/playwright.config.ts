@@ -5,7 +5,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const appDir = path.resolve(__dirname);
 
-/** Load `.env.local` / `.env` so `webServer` inherits real Clerk keys (placeholders are rejected by Clerk). */
+/** Load `.env.local` / `.env` so `webServer` inherits first-party auth and API settings. */
 function mergeEnvFile(relative: string) {
   const full = path.join(appDir, relative);
   if (!fs.existsSync(full)) return;

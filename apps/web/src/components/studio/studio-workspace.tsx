@@ -1,9 +1,9 @@
 "use client";
 
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@/providers/forge-auth-provider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
-import { Monitor, PanelsTopLeft, Send } from "lucide-react";
+import { ImagePlus, Monitor, PanelsTopLeft, Send, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -15,15 +15,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   apiRequest,
+  getBillingPlan,
   getBillingUsage,
   getPage,
   getStudioConversation,
   getStudioUsage,
+  patchUserPreferences,
+  postStudioAttachmentPresign,
+  postStudioAttachmentRegister,
+  postStudioEstimate,
   publishPage,
   type BillingUsageOut,
   type PageDetailOut,
+  type StudioEstimateOut,
   type StudioUsageOut,
 } from "@/lib/api";
+import {
+  CreditConfirmDialog,
+  type CreditConfirmEstimate,
+} from "@/components/billing/credit-confirm-dialog";
+import { formatCurrency } from "@/lib/format/currency";
+import { shouldShowCreditConfirm, type CreditConfirmPrefsLike } from "@/lib/credit-preaction";
 import { debounce } from "@/lib/debounce";
 import { MOTION_TRANSITIONS, SPRINGS } from "@/lib/motion";
 import { SIDEBAR_AUTO_COLLAPSE_EVENT } from "@/lib/shell-events";
@@ -45,8 +57,10 @@ import {
   wrapStudioPreviewHtml,
 } from "@/lib/studio-preview-html";
 import { createChunkBuffer } from "@/lib/studio-buffer";
+import type { ForgeFourLayerPayload } from "@/lib/forge-four-layer";
 import { streamStudioSse } from "@/lib/sse";
 import { fireFirstPublishConfetti } from "@/lib/confetti";
+import { rememberLastOrchestrationRunId } from "@/lib/forge-last-run";
 import { slugifyPageTitle } from "@/lib/slugify-page";
 import { useForgeSession } from "@/providers/session-provider";
 import { useUIStore } from "@/stores/ui";
@@ -60,6 +74,13 @@ import { StudioSessionUsageStrip } from "@/components/usage/studio-session-usage
 const TRANSITION_PANEL = { ...SPRINGS.soft };
 
 const CELEBRATION_KEY = "forge:first-page-live-celebration";
+const STUDIO_ATTACHMENT_ACCEPT = "image/png,image/jpeg,image/webp,image/gif,application/pdf";
+
+type StudioPendingAttachment = {
+  id: string;
+  name: string;
+  mimeType: string;
+};
 
 function inferSummary(page: PageDetailOut): string {
   const t = page.title || "Untitled";
@@ -89,16 +110,23 @@ export function StudioWorkspace() {
   const { getToken } = useAuth();
   const { user } = useUser();
   const queryClient = useQueryClient();
-  const { activeOrganizationId, activeOrg } = useForgeSession();
+  const { activeOrganizationId, activeOrg, me } = useForgeSession();
   const creditsUsageQ = useQuery({
     queryKey: ["billing-usage", activeOrganizationId],
     queryFn: () => getBillingUsage(getToken, activeOrganizationId),
     enabled: !!activeOrganizationId,
     staleTime: 15_000,
   });
+  const billingPlanQ = useQuery({
+    queryKey: ["billing-plan", activeOrganizationId],
+    queryFn: () => getBillingPlan(getToken, activeOrganizationId),
+    enabled: !!activeOrganizationId,
+    staleTime: 60_000,
+  });
   const setSidebarCollapsed = useUIStore((s) => s.setSidebarCollapsed);
 
-  const firstName = user?.firstName || user?.emailAddresses?.[0]?.emailAddress?.split("@")[0] || "there";
+  const firstName =
+    user?.firstName || user?.primaryEmailAddress?.emailAddress?.split("@")[0] || "there";
 
   const [usage, setUsage] = React.useState<StudioUsageOut | null>(null);
   const [active, setActive] = React.useState(false);
@@ -118,6 +146,9 @@ export function StudioWorkspace() {
 
   const [streamPhase, setStreamPhase] = React.useState<"idle" | "intent" | "building">("idle");
   const [streamBanner, setStreamBanner] = React.useState<string | null>(null);
+  /** BP-01 product orchestrator status line (agent phase / judge). */
+  const [orchestrationStatus, setOrchestrationStatus] = React.useState<string | null>(null);
+  const fourLayerAccRef = React.useRef<ForgeFourLayerPayload | null>(null);
   const abortRef = React.useRef<AbortController | null>(null);
   const reviewFindingBufferRef = React.useRef<StudioChatMsg[]>([]);
   const lastStreamRef = React.useRef<{ kind: "generate" | "refine"; payload: Record<string, unknown> } | null>(null);
@@ -146,6 +177,18 @@ export function StudioWorkspace() {
   const [sectionFocusIdx, setSectionFocusIdx] = React.useState(0);
   const liveAnnounceRef = React.useRef<HTMLDivElement>(null);
   const [origin, setOrigin] = React.useState("");
+  /** BP-04 — provisional SSE running total credits for this streaming run. */
+  const [streamingRunCredits, setStreamingRunCredits] = React.useState<number | null>(null);
+  const [emptyEstimate, setEmptyEstimate] = React.useState<StudioEstimateOut | null>(null);
+  const [creditConfirmOpen, setCreditConfirmOpen] = React.useState(false);
+  const [creditConfirmEstimate, setCreditConfirmEstimate] = React.useState<CreditConfirmEstimate | null>(null);
+  const pendingCreditRunRef = React.useRef<{ kind: "generate" | "refine"; body: Record<string, unknown>; userText: string } | null>(
+    null,
+  );
+  const [pendingAttachments, setPendingAttachments] = React.useState<StudioPendingAttachment[]>([]);
+  const [attachmentBusy, setAttachmentBusy] = React.useState(false);
+  const emptyAttachmentInputRef = React.useRef<HTMLInputElement>(null);
+  const chatAttachmentInputRef = React.useRef<HTMLInputElement>(null);
 
   const sk = studioSessionKey(pageId);
   const storeMessages = useStudioStore((s) => s.sessions[sk]?.messages ?? []);
@@ -207,6 +250,37 @@ export function StudioWorkspace() {
     const prime = map[wfKey];
     if (prime) setPromptEmpty((prev) => prev || prime);
   }, [workflowFromUrl, active]);
+
+  React.useEffect(() => {
+    const raw = me?.preferences as Record<string, unknown> | undefined;
+    if (raw?.credit_estimate_display === "never") {
+      setEmptyEstimate(null);
+      return;
+    }
+    if (active || busy || !promptEmpty.trim() || !activeOrganizationId) {
+      setEmptyEstimate(null);
+      return;
+    }
+    const wf = searchParams.get("workflow");
+    const tid = window.setTimeout(() => {
+      void postStudioEstimate(getToken, activeOrganizationId, {
+        prompt: promptEmpty.slice(0, 8000),
+        page_id: null,
+        forced_workflow: wf && !urlWorkflowConsumedRef.current ? wf : null,
+      })
+        .then(setEmptyEstimate)
+        .catch(() => setEmptyEstimate(null));
+    }, 400);
+    return () => clearTimeout(tid);
+  }, [
+    promptEmpty,
+    active,
+    busy,
+    activeOrganizationId,
+    getToken,
+    searchParams,
+    me?.preferences,
+  ]);
 
   React.useEffect(() => {
     if (emptyFocused) return;
@@ -402,6 +476,25 @@ export function StudioWorkspace() {
     return () => window.removeEventListener("beforeunload", beforeUnload);
   }, [busy, promptEmpty, chatInput, active]);
 
+  /** Comfort-save: draft is auto-persisted; flash confirmation on explicit ⌘S / Ctrl+S. */
+  React.useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const t = e.target as HTMLElement | null;
+      const inField = t?.closest("input, textarea, [contenteditable=true]");
+      if (!active || !inField) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        toast.success("Saved", {
+          description: "Your draft is synced to this device.",
+          duration: 2000,
+          className: "font-body",
+        });
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [active]);
+
   function abortSse() {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -430,7 +523,10 @@ export function StudioWorkspace() {
     }
     lastStreamRef.current = { kind, payload: body };
     setBusy(true);
+    setStreamingRunCredits(0);
     setStreamBanner(null);
+    setOrchestrationStatus(null);
+    fourLayerAccRef.current = null;
     setStreamPhase("intent");
     setActive(true);
 
@@ -451,36 +547,82 @@ export function StudioWorkspace() {
         body,
         { getToken, activeOrgId: activeOrganizationId, signal: ac.signal },
         async (event, data) => {
+          if (event === "orchestration.phase" && data && typeof data === "object") {
+            const d = data as { label?: string };
+            if (d.label) setOrchestrationStatus(d.label);
+          }
+          if (event === "orchestration.four_layer" && data && typeof data === "object") {
+            fourLayerAccRef.current = data as ForgeFourLayerPayload;
+          }
+          if (event === "orchestration.judge" && data && typeof data === "object") {
+            const d = data as { verdict?: string; quality?: number };
+            const parts = ["Review"];
+            if (d.verdict) parts.push(String(d.verdict));
+            if (typeof d.quality === "number") parts.push(Number(d.quality).toFixed(1));
+            setOrchestrationStatus(parts.join(" · "));
+          }
+          if (event === "clarify" && data && typeof data === "object") {
+            const d = data as {
+              candidates?: { workflow?: string; confidence?: number }[];
+              non_blocking?: boolean;
+            };
+            const raw = Array.isArray(d.candidates) ? d.candidates : [];
+            const mapped = raw
+              .filter((c): c is { workflow: string; confidence: number } => typeof c?.workflow === "string")
+              .map((c) => ({
+                workflow: c.workflow,
+                confidence: typeof c.confidence === "number" ? c.confidence : 0,
+                rationale: "",
+              }));
+            if (mapped.length > 0) {
+              setMessagesStore(pageId ?? null, (m) => [
+                ...m,
+                {
+                  id: crypto.randomUUID(),
+                  role: "assistant",
+                  kind: "workflow_clarify",
+                  text: d.non_blocking
+                    ? "We started with the best match — pick another workflow if you prefer."
+                    : "Which workflow fits best?",
+                  clarifyMeta: { candidates: mapped },
+                },
+              ]);
+            }
+          }
           if (event === "workflow_clarify" && data && typeof data === "object") {
             const d = data as {
               message?: string;
               candidates?: { workflow: string; confidence: number; rationale: string }[];
               default?: string;
             };
-            setMessagesStore(null, (m) => [
-              ...m,
-              {
-                id: crypto.randomUUID(),
-                role: "assistant",
-                kind: "workflow_clarify",
-                text: d.message ?? "Which workflow should I use?",
-                clarifyMeta: {
-                  message: d.message ?? "",
-                  candidates: Array.isArray(d.candidates) ? d.candidates : [],
-                  default: typeof d.default === "string" ? d.default : "custom",
+            const candidates = Array.isArray(d.candidates) ? d.candidates : [];
+            const hasExplicitMessage =
+              typeof d.message === "string" && d.message.trim().length > 0;
+
+            /** Avoid duplicate SSE handlers: legacy path used `null` vs `pageId` store keys. */
+            if (hasExplicitMessage) {
+              setMessagesStore(null, (m) => [
+                ...m,
+                {
+                  id: crypto.randomUUID(),
+                  role: "assistant",
+                  kind: "workflow_clarify",
+                  text: d.message!,
+                  clarifyMeta: {
+                    message: d.message ?? "",
+                    candidates,
+                    default:
+                      typeof d.default === "string"
+                        ? d.default
+                        : candidates[0]?.workflow ?? "custom",
+                  },
                 },
-              },
-            ]);
-          }
-          if (event === "intent") setStreamPhase("intent");
-          if (event === "workflow_clarify" && data && typeof data === "object") {
-            const d = data as {
-              candidates?: { workflow: string; confidence: number; rationale: string }[];
-              default?: string;
-            };
-            if (Array.isArray(d.candidates) && d.candidates.length > 0) {
+              ]);
+            } else if (candidates.length > 0) {
               const defaultWorkflow =
-                d.default ?? d.candidates[0]?.workflow ?? "";
+                (typeof d.default === "string" && d.default) ||
+                candidates[0]?.workflow ||
+                "";
               setMessagesStore(pageId ?? null, (m) => [
                 ...m,
                 {
@@ -489,13 +631,29 @@ export function StudioWorkspace() {
                   kind: "workflow_clarify",
                   text: "",
                   clarifyMeta: {
-                    candidates: d.candidates!,
+                    candidates,
                     ...(defaultWorkflow ? { default: defaultWorkflow } : {}),
+                  },
+                },
+              ]);
+            } else {
+              setMessagesStore(null, (m) => [
+                ...m,
+                {
+                  id: crypto.randomUUID(),
+                  role: "assistant",
+                  kind: "workflow_clarify",
+                  text: "Which workflow should I use?",
+                  clarifyMeta: {
+                    message: "",
+                    candidates: [],
+                    default: typeof d.default === "string" ? d.default : "custom",
                   },
                 },
               ]);
             }
           }
+          if (event === "intent") setStreamPhase("intent");
           if (event === "review.finding" && data && typeof data === "object") {
             const rf = data as {
               expert?: string;
@@ -529,7 +687,14 @@ export function StudioWorkspace() {
             }
           }
           if (event === "credit.charged" && data && typeof data === "object" && activeOrganizationId) {
-            const d = data as { usage?: Partial<BillingUsageOut> };
+            const d = data as {
+              provisional?: boolean;
+              running_total?: number;
+              usage?: Partial<BillingUsageOut>;
+            };
+            if (d.provisional && typeof d.running_total === "number") {
+              setStreamingRunCredits(d.running_total);
+            }
             if (d.usage && typeof d.usage === "object") {
               queryClient.setQueryData(
                 ["billing-usage", activeOrganizationId],
@@ -557,7 +722,12 @@ export function StudioWorkspace() {
               quality_score?: number;
               degraded_quality?: boolean;
               publish_ack_required?: boolean;
+              four_layer?: ForgeFourLayerPayload;
+              run_id?: string;
             };
+            if (typeof d.run_id === "string" && d.run_id.trim().length > 0) {
+              rememberLastOrchestrationRunId(d.run_id.trim());
+            }
             if (d.page_id && activeOrganizationId) {
               const p = await getPage(getToken, activeOrganizationId, d.page_id);
               setFinalHtml(p.current_html);
@@ -582,6 +752,7 @@ export function StudioWorkspace() {
                 const fromEmpty = useStudioStore.getState().getSession(null).messages;
                 const pending = reviewFindingBufferRef.current;
                 reviewFindingBufferRef.current = [];
+                const mergedFour = d.four_layer ?? fourLayerAccRef.current ?? undefined;
                 const artifact: StudioChatMsg = {
                   id: crypto.randomUUID(),
                   role: "assistant",
@@ -596,12 +767,14 @@ export function StudioWorkspace() {
                     summary: inferSummary(p),
                     qualityScore: typeof d.quality_score === "number" ? d.quality_score : undefined,
                     degradedQuality: !!d.degraded_quality,
+                    fourLayer: mergedFour ?? null,
+                    runId: typeof d.run_id === "string" ? d.run_id : undefined,
                   },
                 };
                 setMessagesStore(p.id, [...fromEmpty, ...pending, artifact]);
                 if (d.publish_ack_required) {
                   toast.message("Low quality score", {
-                    description: "Forge suggests reviewing before publishing.",
+                    description: "GlideDesign suggests reviewing before publishing.",
                   });
                 }
                 bootstrapSession(null, { messages: [], draftInput: "" });
@@ -619,6 +792,7 @@ export function StudioWorkspace() {
               setPageId(p.id);
             }
             setStreamPhase("idle");
+            setOrchestrationStatus(null);
             if (activeOrganizationId) {
               void getStudioUsage(getToken, activeOrganizationId).then(setUsage).catch(() => {});
               void queryClient.invalidateQueries({ queryKey: ["billing-usage", activeOrganizationId] });
@@ -653,6 +827,7 @@ export function StudioWorkspace() {
       if (!ac.signal.aborted) {
         setBusy(false);
         setStreamPhase("idle");
+        setStreamingRunCredits(null);
       }
       abortRef.current = null;
     }
@@ -671,6 +846,21 @@ export function StudioWorkspace() {
     return false;
   }
 
+  function creditPrefsMerged(): CreditConfirmPrefsLike {
+    const p = me?.preferences as Record<string, unknown> | undefined;
+    return {
+      credit_confirm_threshold_cents:
+        typeof p?.credit_confirm_threshold_cents === "number" ? p.credit_confirm_threshold_cents : 50,
+      credit_confirm_skip_under_credits:
+        typeof p?.credit_confirm_skip_under_credits === "number" ? p.credit_confirm_skip_under_credits : 75,
+    };
+  }
+
+  function localeForMoney(): string {
+    const p = me?.preferences as Record<string, unknown> | undefined;
+    return typeof p?.locale === "string" && p.locale.length >= 2 ? p.locale : "en-US";
+  }
+
   function heavySessionWarning(kind: "generate" | "refine"): string | null {
     const bu = creditsUsageQ.data;
     if (!bu || (bu.credits_session_cap ?? 0) <= 0) return null;
@@ -679,6 +869,67 @@ export function StudioWorkspace() {
     if (rem <= 0) return null;
     if (est / rem <= 0.5) return null;
     return `This will use a large share of your remaining session credits (about ${est} of ${rem} left).`;
+  }
+
+  const attachmentIds = React.useCallback(
+    () => pendingAttachments.map((a) => a.id),
+    [pendingAttachments],
+  );
+
+  async function onAttachFiles(files: FileList | null) {
+    if (!files?.length || !activeOrganizationId) return;
+    setAttachmentBusy(true);
+    try {
+      const next: StudioPendingAttachment[] = [];
+      for (const file of Array.from(files).slice(0, 5 - pendingAttachments.length)) {
+        if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+          toast.error(`${file.name} is not supported`, {
+            description: "Upload PNG, JPEG, WebP, GIF, or PDF files.",
+          });
+          continue;
+        }
+        const sessionId = pageId ?? "new";
+        const presign = await postStudioAttachmentPresign(getToken, activeOrganizationId, {
+          session_id: sessionId,
+          filename: file.name,
+          content_type: file.type,
+        });
+        if (file.size > presign.max_size_bytes) {
+          toast.error(`${file.name} is too large`, {
+            description: `Max upload size is ${Math.round(presign.max_size_bytes / 1024 / 1024)} MB.`,
+          });
+          continue;
+        }
+        const uploaded = await fetch(presign.url, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        if (!uploaded.ok) throw new Error(`Upload failed for ${file.name}`);
+        const reg = await postStudioAttachmentRegister(getToken, activeOrganizationId, {
+          session_id: sessionId,
+          storage_key: presign.storage_key,
+          kind: file.type.startsWith("image/") ? "screenshot" : "pdf",
+          mime_type: file.type,
+          description: file.name,
+        });
+        next.push({ id: reg.id, name: file.name, mimeType: file.type });
+      }
+      if (next.length) {
+        setPendingAttachments((prev) => [...prev, ...next].slice(0, 5));
+        toast.success(next.length === 1 ? "Attachment added" : `${next.length} attachments added`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not upload attachment");
+    } finally {
+      setAttachmentBusy(false);
+      if (emptyAttachmentInputRef.current) emptyAttachmentInputRef.current.value = "";
+      if (chatAttachmentInputRef.current) chatAttachmentInputRef.current.value = "";
+    }
+  }
+
+  function removeAttachment(id: string) {
+    setPendingAttachments((prev) => prev.filter((a) => a.id !== id));
   }
 
   function onSubmitEmpty(e?: React.FormEvent) {
@@ -691,14 +942,72 @@ export function StudioWorkspace() {
       });
       return;
     }
-    const genBody: Record<string, unknown> = { prompt: text, page_id: null, provider: "openai" };
+    const ids = attachmentIds();
+    const genBody: Record<string, unknown> = {
+      prompt: text,
+      page_id: null,
+      provider: "openai",
+      vision_attachment_ids: ids,
+    };
     const wfUrl = searchParams.get("workflow");
     if (wfUrl && !urlWorkflowConsumedRef.current && !pendingForcedWorkflowRef.current) {
       pendingForcedWorkflowRef.current = wfUrl;
       urlWorkflowConsumedRef.current = true;
     }
-    void runGenerateOrRefine("generate", genBody, text);
-    setPromptEmpty("");
+    void (async () => {
+      if (!activeOrganizationId) {
+        toast.error("No active workspace.");
+        return;
+      }
+      let est: StudioEstimateOut;
+      try {
+        est = await postStudioEstimate(getToken, activeOrganizationId, {
+          prompt: text,
+          page_id: null,
+          forced_workflow: pendingForcedWorkflowRef.current ?? searchParams.get("workflow"),
+          vision_attachment_ids: ids,
+        });
+      } catch {
+        void runGenerateOrRefine("generate", genBody, text);
+        setPromptEmpty("");
+        return;
+      }
+      const bu = creditsUsageQ.data;
+      const cur = (billingPlanQ.data?.currency ?? "usd").toLowerCase();
+      const squeeze =
+        !!bu &&
+        (bu.credits_session_cap ?? 0) > 0 &&
+        bu.credits_session_used / bu.credits_session_cap >= 0.7;
+      const show = shouldShowCreditConfirm({
+        estimatedCredits: est.estimated_credits,
+        estimatedCostCentsHint: est.estimated_cost_cents_hint,
+        sessionCapCredits: bu?.credits_session_cap ?? 0,
+        sessionUsedCredits: bu?.credits_session_used ?? 0,
+        prefs: creditPrefsMerged(),
+        squeezeSession: squeeze,
+      });
+      const confidences: Record<string, string> = {
+        low: "Low",
+        medium: "Medium",
+        high: "High",
+      };
+      if (show) {
+        pendingCreditRunRef.current = { kind: "generate", body: genBody, userText: text };
+        setCreditConfirmEstimate({
+          estimatedCredits: est.estimated_credits,
+          estimatedSeconds: est.estimated_seconds,
+          estimatedCostDisplay: formatCurrency(est.estimated_cost_cents_hint ?? 0, cur, localeForMoney()),
+          confidenceLabel: confidences[est.confidence] ?? est.confidence,
+          sessionCap: bu?.credits_session_cap ?? 0,
+          sessionUsedBefore: bu?.credits_session_used ?? 0,
+        });
+        setCreditConfirmOpen(true);
+        return;
+      }
+      void runGenerateOrRefine("generate", genBody, text);
+      setPromptEmpty("");
+      setPendingAttachments([]);
+    })();
   }
 
   function onSecondaryChipPrime(prompt: string) {
@@ -710,7 +1019,11 @@ export function StudioWorkspace() {
     const p = lastGeneratePromptRef.current.trim();
     if (!p || busy) return;
     workflowHintRef.current = workflow;
-    void runGenerateOrRefine("generate", { prompt: p, page_id: null, provider: "openai" }, p);
+    void runGenerateOrRefine(
+      "generate",
+      { prompt: p, page_id: null, provider: "openai", vision_attachment_ids: attachmentIds() },
+      p,
+    );
   }
 
   function onSubmitChat(e?: React.FormEvent) {
@@ -724,13 +1037,68 @@ export function StudioWorkspace() {
       });
       return;
     }
-    debouncedPersistDraft(pageId, "");
-    setChatInput("");
-    void runGenerateOrRefine(
-      "refine",
-      { message: text, page_id: pageId, provider: "openai" },
-      text,
-    );
+    const ids = attachmentIds();
+    const refineBody: Record<string, unknown> = {
+      message: text,
+      page_id: pageId,
+      provider: "openai",
+      vision_attachment_ids: ids,
+    };
+    void (async () => {
+      if (!activeOrganizationId) {
+        toast.error("No active workspace.");
+        return;
+      }
+      let est: StudioEstimateOut;
+      try {
+        est = await postStudioEstimate(getToken, activeOrganizationId, {
+          prompt: text,
+          page_id: pageId,
+          vision_attachment_ids: ids,
+        });
+      } catch {
+        void runGenerateOrRefine("refine", refineBody, text);
+        debouncedPersistDraft(pageId, "");
+        setChatInput("");
+        return;
+      }
+      const bu = creditsUsageQ.data;
+      const cur = (billingPlanQ.data?.currency ?? "usd").toLowerCase();
+      const squeeze =
+        !!bu &&
+        (bu.credits_session_cap ?? 0) > 0 &&
+        bu.credits_session_used / bu.credits_session_cap >= 0.7;
+      const show = shouldShowCreditConfirm({
+        estimatedCredits: est.estimated_credits,
+        estimatedCostCentsHint: est.estimated_cost_cents_hint,
+        sessionCapCredits: bu?.credits_session_cap ?? 0,
+        sessionUsedCredits: bu?.credits_session_used ?? 0,
+        prefs: creditPrefsMerged(),
+        squeezeSession: squeeze,
+      });
+      const confidences: Record<string, string> = {
+        low: "Low",
+        medium: "Medium",
+        high: "High",
+      };
+      if (show) {
+        pendingCreditRunRef.current = { kind: "refine", body: refineBody, userText: text };
+        setCreditConfirmEstimate({
+          estimatedCredits: est.estimated_credits,
+          estimatedSeconds: est.estimated_seconds,
+          estimatedCostDisplay: formatCurrency(est.estimated_cost_cents_hint ?? 0, cur, localeForMoney()),
+          confidenceLabel: confidences[est.confidence] ?? est.confidence,
+          sessionCap: bu?.credits_session_cap ?? 0,
+          sessionUsedBefore: bu?.credits_session_used ?? 0,
+        });
+        setCreditConfirmOpen(true);
+        return;
+      }
+      void runGenerateOrRefine("refine", refineBody, text);
+      debouncedPersistDraft(pageId, "");
+      setChatInput("");
+      setPendingAttachments([]);
+    })();
   }
 
   function onReconnect() {
@@ -931,7 +1299,8 @@ export function StudioWorkspace() {
                   value={promptEmpty}
                   onChange={(e) => setPromptEmpty(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
+                    const submitChord = (e.metaKey || e.ctrlKey) && e.key === "Enter";
+                    if (submitChord || (e.key === "Enter" && !e.shiftKey)) {
                       e.preventDefault();
                       onSubmitEmpty();
                     }
@@ -970,7 +1339,52 @@ export function StudioWorkspace() {
                     </button>
                   )}
                 </div>
+                <div className="absolute bottom-3 left-3">
+                  <input
+                    ref={emptyAttachmentInputRef}
+                    type="file"
+                    multiple
+                    accept={STUDIO_ATTACHMENT_ACCEPT}
+                    className="sr-only"
+                    onChange={(e) => void onAttachFiles(e.currentTarget.files)}
+                  />
+                  <button
+                    type="button"
+                    disabled={busy || attachmentBusy || pendingAttachments.length >= 5}
+                    onClick={() => emptyAttachmentInputRef.current?.click()}
+                    className="flex items-center gap-1 rounded-lg border border-border bg-bg-elevated px-2 py-1.5 text-xs font-medium text-text-muted transition-colors hover:text-accent disabled:opacity-40 font-body"
+                  >
+                    <ImagePlus className="size-3.5" />
+                    {attachmentBusy ? "Uploading" : "Attach"}
+                  </button>
+                </div>
               </form>
+              {pendingAttachments.length ? (
+                <div className="mt-2 flex w-full flex-wrap justify-center gap-1.5">
+                  {pendingAttachments.map((a) => (
+                    <span
+                      key={a.id}
+                      className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-1 text-[11px] text-text-muted font-body"
+                    >
+                      {a.name}
+                      <button type="button" onClick={() => removeAttachment(a.id)} aria-label={`Remove ${a.name}`}>
+                        <X className="size-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              {emptyEstimate && !active && (me?.preferences as Record<string, unknown> | undefined)?.credit_estimate_display !== "never" ? (
+                <p className="mt-2 text-[11px] text-text-muted font-body">
+                  ~
+                  <span className="tabular-nums">{emptyEstimate.estimated_credits}</span> credits · ~
+                  <span>{formatCurrency(emptyEstimate.estimated_cost_cents_hint ?? 0, billingPlanQ.data?.currency ?? "usd", localeForMoney())}</span> ·
+                  ~
+                  <span className="tabular-nums">{emptyEstimate.estimated_seconds}</span>s ·{" "}
+                  {emptyEstimate.confidence.charAt(0).toUpperCase() + emptyEstimate.confidence.slice(1)}{" "}
+                  confidence
+                </p>
+              ) : null}
 
               <StudioWorkflowGrid
                 disabled={busy}
@@ -997,7 +1411,7 @@ export function StudioWorkspace() {
               </motion.div>
 
               <Link
-                href="/templates"
+                href="/app-templates"
                 className="mt-8 text-sm text-accent underline-offset-4 hover:underline font-body"
               >
                 Browse templates →
@@ -1017,19 +1431,19 @@ export function StudioWorkspace() {
               layout
               transition={TRANSITION_PANEL}
               className={cn(
-                "flex min-h-[320px] w-full min-w-0 flex-col border-border bg-surface-dark text-white",
+                "flex min-h-[320px] w-full min-w-0 flex-col border-border bg-surface-dark text-white shadow-xl",
                 "lg:max-w-[480px] lg:min-w-[360px] lg:flex-[0_0_40%] lg:border-r",
                 "rounded-none",
               )}
               style={{ willChange: "transform, opacity" }}
             >
-              <header className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
+              <header className="flex items-center justify-between gap-2 border-b border-white/10 bg-white/2.5 px-4 py-3">
                 <div className="min-w-0">
                   <p className="truncate text-xs font-medium uppercase tracking-wide text-white/50 font-body">
                     Studio · {pageTitle || "Untitled page"}
                   </p>
                 </div>
-                <Button type="button" size="sm" variant="ghost" className="shrink-0 text-white" onClick={resetToEmpty}>
+                <Button type="button" size="sm" variant="ghost" className="shrink-0 text-white hover:bg-white/10" onClick={resetToEmpty}>
                   New page
                 </Button>
               </header>
@@ -1057,6 +1471,9 @@ export function StudioWorkspace() {
                         msg={msg}
                         orgSlug={activeOrg?.organization_slug ?? ""}
                         onWorkflowClarifyPick={onWorkflowClarifyPick}
+                        getToken={getToken}
+                        activeOrgId={activeOrganizationId}
+                        setDraftStore={setDraftStore}
                       />
                     )}
                   />
@@ -1069,6 +1486,9 @@ export function StudioWorkspace() {
                           msg={msg}
                           orgSlug={activeOrg?.organization_slug ?? ""}
                           onWorkflowClarifyPick={onWorkflowClarifyPick}
+                          getToken={getToken}
+                          activeOrgId={activeOrganizationId}
+                          setDraftStore={setDraftStore}
                         />
                       ))}
                     </AnimatePresence>
@@ -1076,13 +1496,14 @@ export function StudioWorkspace() {
                 )}
                 {busy ? (
                   <div
-                    className="flex items-center gap-2 border-t border-white/10 px-4 py-2 text-xs text-white/60 font-body"
+                  className="flex items-center gap-2 border-t border-white/10 bg-white/2 px-4 py-2 font-body text-xs text-white/60"
                     role="status"
                     aria-live="polite"
                   >
                     <DotPulse />
                     <span>
-                      {streamPhase === "intent" ? "Understanding what you need…" : "Building the page…"}
+                      {orchestrationStatus ??
+                        (streamPhase === "intent" ? "Understanding what you need…" : "Building the page…")}
                     </span>
                   </div>
                 ) : null}
@@ -1090,7 +1511,7 @@ export function StudioWorkspace() {
 
               {cannotUseForgeCredits() ? (
                 <div className="border-t border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-amber-100 font-body">
-                  <p className="font-medium">Forge Credits limit reached for this window.</p>
+                  <p className="font-medium">Generation credit limit reached for this window.</p>
                   <p className="mt-0.5 text-white/60">
                     <Link href="/settings/usage" className="text-accent hover:underline">
                       Usage
@@ -1111,9 +1532,9 @@ export function StudioWorkspace() {
                   {heavySessionWarning("refine")}
                 </div>
               ) : null}
-              <StudioSessionUsageStrip active={active} />
+              <StudioSessionUsageStrip active={active} streamingRunCredits={streamingRunCredits ?? undefined} />
 
-              <footer className="border-t border-white/10 p-3">
+              <footer className="border-t border-white/10 bg-white/2.5 p-3">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -1130,7 +1551,8 @@ export function StudioWorkspace() {
                         debouncedPersistDraft(pageId, v);
                       }}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
+                        const submitChord = (e.metaKey || e.ctrlKey) && e.key === "Enter";
+                        if (submitChord || (e.key === "Enter" && !e.shiftKey)) {
                           e.preventDefault();
                           onSubmitChat();
                         }
@@ -1139,7 +1561,7 @@ export function StudioWorkspace() {
                       maxRows={4}
                       disabled={busy || !pageId || cannotUseForgeCredits()}
                       placeholder="Refine this page…"
-                      className="min-h-0 flex-1 resize-none rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 font-body focus-visible:border-accent focus-visible:outline-none"
+                      className="min-h-0 flex-1 resize-none rounded-lg border border-white/20 bg-white/5 px-3 py-2 font-body text-sm text-white shadow-sm transition-[border-color,box-shadow,background-color] placeholder:text-white/40 hover:bg-white/[0.07] focus-visible:border-accent focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_color-mix(in_oklch,var(--accent)_24%,transparent)]"
                     />
                     <Button
                       type="submit"
@@ -1151,6 +1573,36 @@ export function StudioWorkspace() {
                       <Send className="size-4" />
                     </Button>
                   </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <input
+                      ref={chatAttachmentInputRef}
+                      type="file"
+                      multiple
+                      accept={STUDIO_ATTACHMENT_ACCEPT}
+                      className="sr-only"
+                      onChange={(e) => void onAttachFiles(e.currentTarget.files)}
+                    />
+                    <button
+                      type="button"
+                      disabled={busy || attachmentBusy || pendingAttachments.length >= 5}
+                      onClick={() => chatAttachmentInputRef.current?.click()}
+                      className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 font-body text-[11px] text-white/70 transition-colors hover:bg-white/10 disabled:opacity-40"
+                    >
+                      <ImagePlus className="size-3" />
+                      {attachmentBusy ? "Uploading" : "Attach image/PDF"}
+                    </button>
+                    {pendingAttachments.map((a) => (
+                      <span
+                        key={a.id}
+                        className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 font-body text-[11px] text-white/70"
+                      >
+                        {a.name}
+                        <button type="button" onClick={() => removeAttachment(a.id)} aria-label={`Remove ${a.name}`}>
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
                   {pageId && refineChips.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {refineChips.map((chip) => (
@@ -1158,16 +1610,71 @@ export function StudioWorkspace() {
                           key={chip}
                           type="button"
                           disabled={busy}
-                          className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] text-white/80 hover:bg-white/10 font-body"
+                          className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 font-body text-[11px] text-white/80 transition-colors hover:border-white/25 hover:bg-white/10"
                           onClick={() => {
-                            setChatInput(chip);
-                            debouncedPersistDraft(pageId, chip);
-                            void runGenerateOrRefine(
-                              "refine",
-                              { message: chip, page_id: pageId, provider: "openai" },
-                              chip,
-                            );
-                            setChatInput("");
+                            if (!pageId || busy || cannotUseForgeCredits()) return;
+                            const refineBody: Record<string, unknown> = {
+                              message: chip,
+                              page_id: pageId,
+                              provider: "openai",
+                            };
+                            void (async () => {
+                              if (!activeOrganizationId) {
+                                toast.error("No active workspace.");
+                                return;
+                              }
+                              let est: StudioEstimateOut;
+                              try {
+                                est = await postStudioEstimate(getToken, activeOrganizationId, {
+                                  prompt: chip,
+                                  page_id: pageId,
+                                });
+                              } catch {
+                                void runGenerateOrRefine("refine", refineBody, chip);
+                                debouncedPersistDraft(pageId, "");
+                                setChatInput("");
+                                return;
+                              }
+                              const bu = creditsUsageQ.data;
+                              const cur = (billingPlanQ.data?.currency ?? "usd").toLowerCase();
+                              const squeeze =
+                                !!bu &&
+                                (bu.credits_session_cap ?? 0) > 0 &&
+                                bu.credits_session_used / bu.credits_session_cap >= 0.7;
+                              const show = shouldShowCreditConfirm({
+                                estimatedCredits: est.estimated_credits,
+                                estimatedCostCentsHint: est.estimated_cost_cents_hint,
+                                sessionCapCredits: bu?.credits_session_cap ?? 0,
+                                sessionUsedCredits: bu?.credits_session_used ?? 0,
+                                prefs: creditPrefsMerged(),
+                                squeezeSession: squeeze,
+                              });
+                              const confidences: Record<string, string> = {
+                                low: "Low",
+                                medium: "Medium",
+                                high: "High",
+                              };
+                              if (show) {
+                                pendingCreditRunRef.current = { kind: "refine", body: refineBody, userText: chip };
+                                setCreditConfirmEstimate({
+                                  estimatedCredits: est.estimated_credits,
+                                  estimatedSeconds: est.estimated_seconds,
+                                  estimatedCostDisplay: formatCurrency(
+                                    est.estimated_cost_cents_hint ?? 0,
+                                    cur,
+                                    localeForMoney(),
+                                  ),
+                                  confidenceLabel: confidences[est.confidence] ?? est.confidence,
+                                  sessionCap: bu?.credits_session_cap ?? 0,
+                                  sessionUsedBefore: bu?.credits_session_used ?? 0,
+                                });
+                                setCreditConfirmOpen(true);
+                                return;
+                              }
+                              void runGenerateOrRefine("refine", refineBody, chip);
+                              debouncedPersistDraft(pageId, "");
+                              setChatInput("");
+                            })();
                           }}
                         >
                           {chip}
@@ -1186,8 +1693,8 @@ export function StudioWorkspace() {
               className="flex min-h-[420px] min-w-0 flex-1 flex-col border-border bg-bg"
               style={{ willChange: "transform, opacity" }}
             >
-              <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
-                <div className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 py-1">
+              <div className="flex flex-wrap items-center gap-2 border-b border-border bg-bg-elevated/35 px-3 py-2">
+                <div className="flex items-center gap-1.5 rounded-lg border border-border/80 bg-surface/90 px-2 py-1 shadow-sm">
                   <span className="flex gap-1" aria-hidden>
                     <span className="size-2.5 rounded-full bg-red-400/80" />
                     <span className="size-2.5 rounded-full bg-amber-400/80" />
@@ -1234,13 +1741,13 @@ export function StudioWorkspace() {
                 </div>
               </div>
 
-              <div className="relative min-h-0 flex-1 overflow-hidden bg-bg-elevated/40">
+              <div className="relative min-h-0 flex-1 overflow-hidden bg-[radial-gradient(circle_at_50%_0%,color-mix(in_oklch,var(--accent)_8%,transparent),transparent_42%),var(--bg-elevated)] p-3">
                 <iframe
                   ref={iframeRef}
                   title="Live page preview"
                   aria-label="Live page preview"
-                  sandbox="allow-forms allow-same-origin allow-scripts"
-                  className="h-full min-h-[360px] w-full bg-white"
+                  sandbox="allow-forms allow-scripts"
+                  className="h-full min-h-[360px] w-full rounded-xl border border-border/70 bg-white shadow-sm"
                 />
                 {busy ? (
                   <div
@@ -1329,6 +1836,31 @@ export function StudioWorkspace() {
         )}
       </div>
 
+      <CreditConfirmDialog
+        open={creditConfirmOpen}
+        onOpenChange={(v) => {
+          setCreditConfirmOpen(v);
+          if (!v) pendingCreditRunRef.current = null;
+        }}
+        estimate={creditConfirmEstimate}
+        onConfirm={({ raiseSkipUnderCreditsTo }) => {
+          if (raiseSkipUnderCreditsTo != null) {
+            void patchUserPreferences(getToken, {
+              credit_confirm_skip_under_credits: raiseSkipUnderCreditsTo,
+            }).then(() => queryClient.invalidateQueries({ queryKey: ["me"] }));
+          }
+          const p = pendingCreditRunRef.current;
+          pendingCreditRunRef.current = null;
+          if (!p) return;
+          void runGenerateOrRefine(p.kind, p.body, p.userText);
+          if (p.kind === "generate") setPromptEmpty("");
+          if (p.kind === "refine" && pageId) {
+            debouncedPersistDraft(pageId, "");
+            setChatInput("");
+          }
+        }}
+      />
+
       {pageId ? (
         <StudioPublishDialog
           open={publishOpen}
@@ -1355,10 +1887,16 @@ function ChatRow({
   msg,
   orgSlug,
   onWorkflowClarifyPick,
+  getToken,
+  activeOrgId,
+  setDraftStore,
 }: {
   msg: StudioChatMsg;
   orgSlug: string;
   onWorkflowClarifyPick: (workflow: string) => void;
+  getToken: () => Promise<string | null>;
+  activeOrgId: string | null;
+  setDraftStore: (pageId: string | null, text: string) => void;
 }) {
   const router = useRouter();
 
@@ -1371,7 +1909,7 @@ function ChatRow({
         className="mb-2 flex justify-start gap-2 opacity-90"
       >
         <ForgeLogo size="sm" className="mt-0.5 shrink-0 opacity-80" />
-        <div className="max-w-[95%] rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2 font-body text-xs text-white/90">
+        <div className="max-w-[95%] rounded-lg border border-white/10 bg-white/4 px-4 py-2 font-body text-xs text-white/90">
           <p className="text-[11px] text-white/60 font-body">Design review</p>
           <p className="mt-2 text-[11px] text-white/75 font-body">{msg.text}</p>
         </div>
@@ -1388,7 +1926,7 @@ function ChatRow({
         className="mb-2 flex justify-start gap-2"
       >
         <ForgeLogo size="sm" className="mt-0.5 shrink-0 opacity-80" />
-        <div className="max-w-[95%] rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2 font-body text-xs text-white/90">
+        <div className="max-w-[95%] rounded-lg border border-white/10 bg-white/4 px-4 py-2 font-body text-xs text-white/90">
           <p className="text-[11px] text-white/60 font-body">Review summary</p>
           <p className="mt-2 text-white/80 font-body">{msg.text}</p>
         </div>
@@ -1440,6 +1978,11 @@ function ChatRow({
           <StudioPageArtifactCard
             meta={m}
             orgSlug={orgSlug}
+            getToken={getToken}
+            activeOrgId={activeOrgId}
+            onDraftRefinePrefill={(prefill) => {
+              setDraftStore(m.pageId ?? null, prefill);
+            }}
             onOpen={() => {
               const base = window.location.origin;
               const url =

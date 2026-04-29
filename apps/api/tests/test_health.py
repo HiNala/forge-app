@@ -5,7 +5,7 @@ from app.main import app
 
 
 @pytest.mark.asyncio
-async def test_health():
+async def test_health() -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         r = await client.get("/health")
@@ -14,13 +14,9 @@ async def test_health():
 
 
 @pytest.mark.asyncio
-async def test_health_deep_shape():
+async def test_health_live() -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        r = await client.get("/health/deep")
+        r = await client.get("/health/live")
     assert r.status_code == 200
-    body = r.json()
-    assert body["status"] in ("ok", "degraded")
-    assert "checks" in body
-    assert "postgres" in body["checks"]
-    assert "redis" in body["checks"]
+    assert r.json()["status"] == "ok"

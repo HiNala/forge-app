@@ -1,4 +1,4 @@
-"""Outbound webhook dispatch — HMAC-signed HTTP POST on Forge events (BI-04)."""
+"""Outbound webhook dispatch — HMAC-signed HTTP POST on platform events (BI-04)."""
 
 from __future__ import annotations
 

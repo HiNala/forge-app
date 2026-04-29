@@ -26,13 +26,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            "flex h-10 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text",
-            "font-body shadow-sm transition-[box-shadow,border-color,opacity] duration-200 ease-[var(--ease-legacy-out)]",
-            "placeholder:text-text-subtle",
-            "focus-visible:border-accent focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--accent-light)]",
-            "disabled:cursor-not-allowed disabled:opacity-50",
+            "flex h-11 w-full rounded-[14px] border border-border bg-bg-overlay px-4 py-2 text-base text-text",
+            "font-body font-medium shadow-sm transition-[box-shadow,border-color,background-color,opacity] duration-200 ease-(--ease-legacy-out)",
+            "placeholder:text-text-muted hover:border-border-strong hover:bg-bg-raised/70",
+            "focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+            "disabled:cursor-not-allowed disabled:bg-bg-elevated/50 disabled:opacity-60",
             error &&
-              "border-danger focus-visible:border-danger focus-visible:shadow-[0_0_0_3px_color-mix(in_oklch,var(--danger)_25%,transparent)]",
+              "border-danger focus-visible:border-danger focus-visible:ring-danger",
             className,
           )}
           {...props}

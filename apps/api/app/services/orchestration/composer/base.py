@@ -64,7 +64,7 @@ class BaseComposer:
     def _build_system_prompt(self, plan: PagePlan, bundle: ContextBundle | None) -> str:
         base = load_composer_prompt(self.prompt_file)
         if not base:
-            base = "You are Forge's page composer. Output JSON only matching the schema."
+            base = "You are GlideDesign's page composer. Output JSON only matching the schema."
         base = base.replace("{{ voice_profile_summary }}", _voice_block(plan, bundle))
         base = base.replace("{{ brand_tokens_json }}", _brand_block(plan.brand_tokens))
         base = base.replace("{{ component_catalog }}", catalog_markdown_summary())

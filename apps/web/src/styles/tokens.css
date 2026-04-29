@@ -1,68 +1,73 @@
 /**
- * Forge design tokens — single source of truth (FE-01, tightened V2 P-09).
- * Principles: warm terracotta + cream, three background layers, four foreground steps,
- * one accent, restrained radius and motion. Legacy aliases keep existing Tailwind
- * `bg-bg`, `text-text`, etc. working.
- *
- * P-09 reference: calm, generous whitespace, no decorative noise.
+ * GlideDesign design tokens.
+ * OKLCH is canonical; legacy `--bg`, `--text`, Tailwind `@theme` aliases preserved.
  */
 
 :root {
-  /* —— Core palette (OKLCH) ——
-   * Base: warm cream. Accent: terracotta (Claude-style warmth; single brand hue). */
-  --color-bg: oklch(97% 0.02 70);
-  --color-bg-raised: oklch(99.2% 0.008 75);
-  --color-bg-overlay: oklch(100% 0.005 80);
+  /* Legacy compatibility fallback. GlideDesign overrides begin below. */
+  --color-bg-base: oklch(0.98 0.005 80); /* Bone */
+  --color-bg-raised: oklch(0.96 0.008 80); /* Sand — cards */
+  --color-bg-overlay: oklch(0.99 0.003 80); /* Dialogs */
+  --color-bg-canvas: oklch(0.94 0.01 80); /* Studio / linen chrome */
 
-  /* Cards / “elevated” surfaces (same family as raised; legacy: surface) */
-  --color-surface: oklch(99.2% 0.008 75);
-  --color-surface-dark: oklch(16% 0.012 72);
+  /* Mid step between bone and sand (tables, zebra rows) */
+  --color-bg-elevated-layer: oklch(0.965 0.0065 80);
 
-  /* Kept for older named “elevated” — maps to cream step between base and card */
-  --color-bg-elevated: oklch(95.5% 0.02 72);
+  /* Ink */
+  --color-fg-strong: oklch(0.21 0.012 80);
+  --color-fg-default: oklch(0.32 0.011 80);
+  --color-fg-muted: oklch(0.52 0.008 80);
+  --color-fg-faint: oklch(0.72 0.005 80);
 
-  /* Foreground (four stops; legacy --text* map here) */
-  --color-fg-strong: oklch(20% 0.02 70);
-  --color-fg-default: oklch(28% 0.02 70);
-  --color-fg-muted: oklch(45% 0.022 72);
-  --color-fg-faint: oklch(58% 0.02 72);
+  /* Surfaces mapped to legacy names */
+  --color-bg: var(--color-bg-base);
+  --color-bg-elevated: var(--color-bg-elevated-layer);
+  --color-surface: var(--color-bg-raised);
+  --color-surface-dark: oklch(0.16 0.012 82);
 
   --color-text: var(--color-fg-default);
   --color-text-muted: var(--color-fg-muted);
   --color-text-subtle: var(--color-fg-faint);
 
-  /* Borders: two only */
-  --color-border: oklch(90% 0.012 80);
-  --color-border-strong: oklch(82% 0.016 78);
+  /* Borders */
+  --color-border: oklch(0.91 0.008 80);
+  --color-border-strong: oklch(0.82 0.01 80);
 
-  /* One accent + tint (focus/hover/selection) */
-  --color-accent: oklch(70% 0.14 45);
-  --color-accent-hover: oklch(64% 0.14 45);
-  --color-accent-tint: color-mix(in oklch, var(--color-accent) 10%, transparent);
+  /* Legacy action accent. */
+  --color-accent: oklch(0.66 0.14 40);
+  --accent-primary: var(--color-accent);
+  --color-accent-hover: oklch(0.62 0.15 40);
+  --color-accent-strong-press: oklch(0.55 0.17 40);
+  --color-accent-tint: oklch(0.94 0.04 40);
   --color-accent-light: var(--color-accent-tint);
   --color-accent-mid: color-mix(in oklch, var(--color-accent) 22%, transparent);
   --color-accent-bold: color-mix(in oklch, var(--color-accent) 34%, transparent);
 
-  /* Status (functional only) */
-  --color-success: oklch(52% 0.12 155);
-  --color-warning: oklch(72% 0.12 80);
-  --color-danger: oklch(52% 0.18 25);
-  --color-info: oklch(58% 0.08 230);
+  /* Data / SYSTEM lane */
+  --color-data-accent: oklch(0.55 0.1 165);
+  --color-data-tint: oklch(0.93 0.03 165);
 
-  /* Usage meters (P-09): track + fills — warm amber at limit, not error-red */
-  --color-usage-track: color-mix(in oklch, var(--color-border) 70%, var(--color-bg) 30%);
+  /* Status */
+  --color-success: oklch(0.62 0.12 145);
+  --color-warning: oklch(0.7 0.13 65);
+  --color-danger: oklch(0.55 0.18 25);
+  --color-info-internal: oklch(0.6 0.1 240);
+  --color-info: var(--color-info-internal);
+
+  /* Usage meters */
+  --color-usage-track: color-mix(in oklch, var(--color-border) 70%, var(--color-bg-base) 30%);
   --color-usage-fill: var(--color-accent);
-  --color-usage-fill-approach: oklch(70% 0.11 78);
-  --color-usage-fill-full: oklch(72% 0.1 75);
+  --color-usage-fill-approach: oklch(0.7 0.11 78);
+  --color-usage-fill-full: oklch(0.72 0.1 75);
 
-  /* Charts (restrained warm set — use for Recharts / analytics) */
-  --chart-1: var(--color-accent);
-  --chart-2: oklch(72% 0.06 65);
-  --chart-3: oklch(58% 0.04 85);
-  --chart-4: oklch(62% 0.05 140);
-  --chart-5: oklch(55% 0.04 45);
+  /* Legacy chart fallback. */
+  --chart-1: var(--color-data-accent);
+  --chart-2: oklch(0.66 0.12 42);
+  --chart-3: oklch(0.58 0.09 165);
+  --chart-4: oklch(0.55 0.06 82);
+  --chart-5: oklch(0.52 0.05 115);
 
-  /* —— Typography scale (P-09: 5 steps + code/chip) —— */
+  /* Typography scale */
   --text-display: 1.875rem;
   --text-heading: 1.25rem;
   --text-subhead: 1rem;
@@ -94,9 +99,8 @@
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
-  --font-weight-bold: 600;
+  --font-weight-bold: 700;
 
-  /* Spacing: 4-pt scale — 4,8,12,16,20,24,32,40,56,72 */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -112,35 +116,31 @@
   --space-18: 4.5rem;
   --space-20: 5rem;
 
-  /* Radius: sm | md | lg | pill */
   --radius-sm: 0.375rem;
   --radius-md: 0.625rem;
   --radius-lg: 0.875rem;
   --radius-pill: 9999px;
-  /* legacy: map xl → lg to avoid a fifth radius */
   --radius-xl: var(--radius-lg);
   --radius-full: 9999px;
 
-  /* Shadow: minimal; prefer borders */
-  --shadow-sm: 0 1px 2px color-mix(in oklch, oklch(25% 0.02 80) 8%, transparent);
-  --shadow-md: 0 4px 16px color-mix(in oklch, oklch(25% 0.02 80) 10%, transparent);
-  --shadow-lg: 0 12px 40px color-mix(in oklch, oklch(22% 0.02 80) 12%, transparent);
-  --shadow-xl: 0 20px 50px color-mix(in oklch, oklch(20% 0.02 80) 16%, transparent);
-  --shadow-2xl: 0 25px 60px color-mix(in oklch, oklch(18% 0.02 80) 18%, transparent);
+  --shadow-sm: 0 1px 2px color-mix(in oklch, oklch(25% 0.015 80) 7%, transparent);
+  --shadow-md: 0 4px 16px color-mix(in oklch, oklch(22% 0.015 80) 10%, transparent);
+  --shadow-lg: 0 12px 40px color-mix(in oklch, oklch(20% 0.015 80) 12%, transparent);
+  --shadow-xl: 0 20px 50px color-mix(in oklch, oklch(18% 0.015 80) 15%, transparent);
+  --shadow-2xl: 0 25px 60px color-mix(in oklch, oklch(17% 0.015 80) 16%, transparent);
 
-  /* Motion: standard ease + durations */
-  --duration-instant: 100ms;
-  --duration-fast: 180ms;
+  /* Motion durations — legacy + BP-05 motion aliases (motion.css overlays easings/tempos naming) */
+  --duration-instant: 120ms;
+  --duration-fast: 220ms;
   --duration-base: 220ms;
-  --duration-slow: 400ms;
-  --duration-slower: 600ms;
+  --duration-slow: 320ms;
+  --duration-slower: 480ms;
   --duration-usage: 600ms;
 
   --ease-linear: linear;
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  /* legacy (micro-celebrations only) */
   --ease-legacy-out: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
 
@@ -154,16 +154,17 @@
 
   --border-width: 1px;
 
-  /* Semantic aliases (P-09 docs / mission vocabulary — same values as --color-* ) */
-  --bg-base: var(--color-bg);
+  /* Semantic foundation vocabulary */
+  --bg-base: var(--color-bg-base);
   --bg-raised: var(--color-bg-raised);
   --bg-overlay: var(--color-bg-overlay);
+  --bg-canvas: var(--color-bg-canvas);
   --fg-strong: var(--color-fg-strong);
   --fg-default: var(--color-fg-default);
   --fg-muted: var(--color-fg-muted);
   --fg-faint: var(--color-fg-faint);
 
-  /* Legacy aliases (components reference these) */
+  /* Legacy alias layer (historic component props) */
   --bg: var(--color-bg);
   --bg-elevated: var(--color-bg-elevated);
   --surface: var(--color-surface);
@@ -183,45 +184,295 @@
   --danger: var(--color-danger);
 }
 
-/* Studio / app subtree dark — warm dark, not cold black */
-.dark {
-  --color-bg: oklch(18% 0.012 72);
-  --color-bg-raised: oklch(22% 0.014 70);
-  --color-bg-overlay: oklch(24% 0.016 68);
-  --color-surface: oklch(22% 0.014 70);
-  --color-surface-dark: oklch(16% 0.012 72);
-  --color-bg-elevated: oklch(20% 0.013 71);
+/* GD-01 GlideDesign identity override. The legacy aliases above stay in place
+   so existing components inherit the new system without a churny mass rename. */
+:root,
+[data-theme="light"],
+[data-theme="glidedesign-light"] {
+  --marketing-lime: oklch(0.94 0.18 125);
+  --marketing-sky: oklch(0.85 0.13 230);
+  --marketing-coral: oklch(0.78 0.18 25);
+  --marketing-mint: oklch(0.84 0.1 165);
+  --marketing-lavender: oklch(0.85 0.1 295);
+  --marketing-mustard: oklch(0.81 0.15 90);
+  --marketing-magenta: oklch(0.62 0.27 330);
+  --marketing-ink: oklch(0.13 0.02 280);
 
-  --color-fg-strong: oklch(98% 0.01 85);
-  --color-fg-default: oklch(95% 0.012 85);
-  --color-fg-muted: oklch(78% 0.02 82);
-  --color-fg-faint: oklch(62% 0.02 78);
+  --brand-violet: oklch(0.55 0.21 285);
+  --brand-coral: oklch(0.7 0.2 25);
+  --brand-gradient: linear-gradient(95deg, var(--brand-violet) 0%, var(--brand-coral) 100%);
+  --brand-gradient-radial: radial-gradient(circle at 30% 30%, var(--brand-violet), var(--brand-coral) 70%);
+
+  --color-bg-base: oklch(1 0 0);
+  --color-bg-raised: oklch(0.98 0.005 280);
+  --color-bg-overlay: oklch(1 0 0);
+  --color-bg-canvas: oklch(0.97 0.005 280);
+  --color-bg-elevated-layer: oklch(0.955 0.018 285);
+  --bg-tinted: oklch(0.95 0.04 285);
+
+  --color-fg-strong: oklch(0.13 0.02 280);
+  --color-fg-default: oklch(0.27 0.012 280);
+  --color-fg-muted: oklch(0.5 0.008 280);
+  --color-fg-faint: oklch(0.55 0.008 280);
+
+  --color-bg: var(--color-bg-base);
+  --color-bg-elevated: var(--color-bg-elevated-layer);
+  --color-surface: var(--color-bg-raised);
+  --color-surface-dark: var(--marketing-ink);
+  --color-text: var(--color-fg-default);
+  --color-text-muted: var(--color-fg-muted);
+  --color-text-subtle: var(--color-fg-faint);
+
+  --color-border: oklch(0.92 0.005 280);
+  --color-border-strong: oklch(0.84 0.008 280);
+  --border-subtle: var(--color-border);
+  --border-strong: var(--color-border-strong);
+
+  --color-accent: var(--brand-violet);
+  --accent-primary: var(--brand-violet);
+  --accent-secondary: var(--brand-coral);
+  --color-accent-hover: oklch(0.5 0.22 285);
+  --color-accent-strong-press: oklch(0.44 0.21 285);
+  --color-accent-tint: oklch(0.95 0.05 285);
+  --color-accent-light: var(--color-accent-tint);
+  --color-accent-mid: color-mix(in oklch, var(--brand-violet) 24%, transparent);
+  --color-accent-bold: color-mix(in oklch, var(--brand-violet) 38%, transparent);
+
+  --color-data-accent: var(--marketing-mint);
+  --color-data-tint: oklch(0.94 0.035 165);
+
+  --color-success: oklch(0.66 0.16 145);
+  --color-warning: oklch(0.74 0.16 70);
+  --color-danger: oklch(0.6 0.21 25);
+  --color-info-internal: oklch(0.62 0.16 240);
+  --color-info: var(--color-info-internal);
+
+  --color-usage-track: color-mix(in oklch, var(--color-border) 70%, var(--color-bg-base) 30%);
+  --color-usage-fill: var(--brand-violet);
+  --color-usage-fill-approach: var(--marketing-mustard);
+  --color-usage-fill-full: var(--brand-coral);
+
+  --chart-1: var(--marketing-mint);
+  --chart-2: var(--marketing-lavender);
+  --chart-3: var(--marketing-mustard);
+  --chart-4: var(--brand-violet);
+  --chart-5: var(--brand-coral);
+
+  --text-display-xl: clamp(4rem, 9vw, 5.5rem);
+  --text-display-lg: clamp(3rem, 7vw, 4rem);
+  --text-display-md: clamp(2.5rem, 5vw, 3rem);
+  --text-display: var(--text-display-md);
+  --text-heading: 2rem;
+  --text-subhead: 1rem;
+  --text-body: 1rem;
+  --text-caption: 0.8125rem;
+  --text-base: var(--text-body);
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.5rem;
+  --text-5xl: 3.5rem;
+
+  --leading-tight: 1.05;
+  --leading-snug: 1.2;
+  --leading-subhead: 1.35;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.65;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+
+  --shadow-sm: 0 1px 2px color-mix(in oklch, var(--marketing-ink) 7%, transparent);
+  --shadow-md: 0 8px 24px color-mix(in oklch, var(--marketing-ink) 10%, transparent);
+  --shadow-lg: 0 18px 52px color-mix(in oklch, var(--marketing-ink) 13%, transparent);
+  --shadow-xl: 0 28px 72px color-mix(in oklch, var(--marketing-ink) 16%, transparent);
+  --shadow-2xl: 0 36px 92px color-mix(in oklch, var(--marketing-ink) 18%, transparent);
+
+  --bg-base: var(--color-bg-base);
+  --bg-raised: var(--color-bg-raised);
+  --bg-overlay: var(--color-bg-overlay);
+  --bg-canvas: var(--color-bg-canvas);
+  --fg-strong: var(--color-fg-strong);
+  --fg-default: var(--color-fg-default);
+  --fg-muted: var(--color-fg-muted);
+  --fg-faint: var(--color-fg-faint);
+
+  --bg: var(--color-bg);
+  --bg-elevated: var(--color-bg-elevated);
+  --surface: var(--color-surface);
+  --surface-dark: var(--color-surface-dark);
+  --text: var(--color-text);
+  --text-muted: var(--color-text-muted);
+  --text-subtle: var(--color-text-subtle);
+  --border: var(--color-border);
+  --accent: var(--color-accent);
+  --accent-light: var(--color-accent-light);
+  --accent-mid: var(--color-accent-mid);
+  --accent-bold: var(--color-accent-bold);
+  --accent-tint: var(--color-accent-tint);
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --danger: var(--color-danger);
+}
+
+[data-theme="dark"],
+[data-theme="glidedesign-dark"],
+.dark {
+  --color-bg-base: oklch(0.1 0.01 280);
+  --color-bg-raised: oklch(0.14 0.012 280);
+  --color-bg-overlay: oklch(0.17 0.013 280);
+  --color-bg-canvas: oklch(0.08 0.008 280);
+  --color-bg-elevated-layer: oklch(0.18 0.018 280);
+  --bg-tinted: oklch(0.2 0.06 285);
+
+  --color-fg-strong: oklch(0.99 0.005 280);
+  --color-fg-default: oklch(0.86 0.005 280);
+  --color-fg-muted: oklch(0.62 0.006 280);
+  --color-fg-faint: oklch(0.42 0.005 280);
+
+  --color-bg: var(--color-bg-base);
+  --color-bg-elevated: var(--color-bg-elevated-layer);
+  --color-surface: var(--color-bg-raised);
+  --color-surface-dark: oklch(0.06 0.008 280);
+  --color-text: var(--color-fg-default);
+  --color-text-muted: var(--color-fg-muted);
+  --color-text-subtle: var(--color-fg-faint);
+
+  --color-border: oklch(0.22 0.012 280);
+  --color-border-strong: oklch(0.36 0.014 280);
+  --border-subtle: var(--color-border);
+  --border-strong: var(--color-border-strong);
+
+  --color-accent: oklch(0.7 0.22 285);
+  --accent-primary: var(--color-accent);
+  --accent-secondary: oklch(0.78 0.2 25);
+  --color-accent-hover: oklch(0.76 0.22 285);
+  --color-accent-strong-press: oklch(0.8 0.22 285);
+  --color-accent-tint: oklch(0.22 0.06 285);
+  --color-accent-light: var(--color-accent-tint);
+  --color-accent-mid: color-mix(in oklch, var(--color-accent) 30%, transparent);
+  --color-accent-bold: color-mix(in oklch, var(--color-accent) 44%, transparent);
+
+  --color-data-accent: oklch(0.74 0.12 165);
+  --color-data-tint: oklch(0.2 0.04 165);
+
+  --color-usage-track: oklch(0.2 0.012 280);
+  --color-usage-fill: var(--color-accent);
+
+  --shadow-sm: 0 1px 2px color-mix(in oklch, black 40%, transparent);
+  --shadow-md: 0 8px 24px color-mix(in oklch, black 38%, transparent);
+  --shadow-lg: 0 18px 52px color-mix(in oklch, black 42%, transparent);
+  --shadow-xl: 0 28px 72px color-mix(in oklch, black 46%, transparent);
+  --shadow-2xl: 0 36px 92px color-mix(in oklch, black 50%, transparent);
+
+  --bg-base: var(--color-bg-base);
+  --bg-raised: var(--color-bg-raised);
+  --bg-overlay: var(--color-bg-overlay);
+  --bg-canvas: var(--color-bg-canvas);
+  --fg-strong: var(--color-fg-strong);
+  --fg-default: var(--color-fg-default);
+  --fg-muted: var(--color-fg-muted);
+  --fg-faint: var(--color-fg-faint);
+
+  --bg: var(--color-bg);
+  --bg-elevated: var(--color-bg-elevated);
+  --surface: var(--color-surface);
+  --surface-dark: var(--color-surface-dark);
+  --text: var(--color-text);
+  --text-muted: var(--color-text-muted);
+  --text-subtle: var(--color-text-subtle);
+  --border: var(--color-border);
+  --accent: var(--color-accent);
+  --accent-light: var(--color-accent-light);
+  --accent-mid: var(--color-accent-mid);
+  --accent-bold: var(--color-accent-bold);
+  --accent-tint: var(--color-accent-tint);
+}
+
+/* App chrome dark aliases. The values below mirror the GlideDesign dark system. */
+.dark {
+  --color-bg-base: oklch(0.1 0.01 280);
+  --color-bg-raised: oklch(0.14 0.012 280);
+  --color-bg-overlay: oklch(0.17 0.013 280);
+  --color-bg-canvas: oklch(0.08 0.008 280);
+  --color-bg-elevated-layer: oklch(0.18 0.018 280);
+
+  --color-bg: var(--color-bg-base);
+  --color-bg-elevated: var(--color-bg-elevated-layer);
+  --color-surface: var(--color-bg-raised);
+  --color-surface-dark: oklch(0.06 0.008 280);
+
+  --color-fg-strong: oklch(0.99 0.005 280);
+  --color-fg-default: oklch(0.86 0.005 280);
+  --color-fg-muted: oklch(0.62 0.006 280);
+  --color-fg-faint: oklch(0.42 0.005 280);
 
   --color-text: var(--color-fg-default);
   --color-text-muted: var(--color-fg-muted);
   --color-text-subtle: var(--color-fg-faint);
 
-  --color-border: oklch(32% 0.02 72);
-  --color-border-strong: oklch(40% 0.022 70);
+  --color-border: oklch(0.22 0.012 280);
+  --color-border-strong: oklch(0.36 0.014 280);
 
-  --color-accent-tint: color-mix(in oklch, var(--color-accent) 14%, transparent);
+  --color-accent: oklch(0.7 0.22 285);
+  --color-accent-hover: oklch(0.76 0.22 285);
+  --color-accent-strong-press: oklch(0.8 0.22 285);
+  --color-accent-tint: oklch(0.22 0.06 285);
   --color-accent-light: var(--color-accent-tint);
   --color-accent-mid: color-mix(in oklch, var(--color-accent) 28%, transparent);
   --color-accent-bold: color-mix(in oklch, var(--color-accent) 40%, transparent);
 
-  --color-usage-track: oklch(32% 0.02 72);
+  --color-data-accent: oklch(0.74 0.12 165);
+  --color-data-tint: oklch(0.2 0.04 165);
 
-  --shadow-sm: 0 1px 2px color-mix(in oklch, oklch(8% 0.02 80) 45%, transparent);
-  --shadow-md: 0 4px 16px color-mix(in oklch, oklch(6% 0.02 80) 55%, transparent);
-  --shadow-lg: 0 12px 40px color-mix(in oklch, oklch(5% 0.02 80) 60%, transparent);
-  --shadow-xl: 0 20px 50px color-mix(in oklch, oklch(5% 0.02 80) 65%, transparent);
-  --shadow-2xl: 0 25px 60px color-mix(in oklch, oklch(4% 0.02 80) 70%, transparent);
+  --color-success: oklch(0.68 0.11 148);
+  --color-warning: oklch(0.75 0.12 72);
+  --color-danger: oklch(0.62 0.16 26);
+  --color-info-internal: oklch(0.62 0.09 238);
+  --color-info: var(--color-info-internal);
 
-  --bg-base: var(--color-bg);
+  --color-usage-track: oklch(0.2 0.012 280);
+
+  --chart-1: var(--color-data-accent);
+  --chart-2: var(--marketing-lavender);
+  --chart-3: var(--marketing-mustard);
+  --chart-4: var(--brand-violet);
+  --chart-5: var(--brand-coral);
+
+  --shadow-sm: 0 1px 2px color-mix(in oklch, black 40%, transparent);
+  --shadow-md: 0 8px 24px color-mix(in oklch, black 38%, transparent);
+  --shadow-lg: 0 18px 52px color-mix(in oklch, black 42%, transparent);
+  --shadow-xl: 0 28px 72px color-mix(in oklch, black 46%, transparent);
+  --shadow-2xl: 0 36px 92px color-mix(in oklch, black 50%, transparent);
+
+  --bg-base: var(--color-bg-base);
   --bg-raised: var(--color-bg-raised);
   --bg-overlay: var(--color-bg-overlay);
+  --bg-canvas: var(--color-bg-canvas);
   --fg-strong: var(--color-fg-strong);
   --fg-default: var(--color-fg-default);
   --fg-muted: var(--color-fg-muted);
   --fg-faint: var(--color-fg-faint);
+
+  /* Legacy alias layer (mirror :root so subtree tokens re-resolve) */
+  --bg: var(--color-bg);
+  --bg-elevated: var(--color-bg-elevated);
+  --surface: var(--color-surface);
+  --surface-dark: var(--color-surface-dark);
+  --text: var(--color-text);
+  --text-muted: var(--color-text-muted);
+  --text-subtle: var(--color-text-subtle);
+  --border: var(--color-border);
+  --border-strong: var(--color-border-strong);
+  --accent: var(--color-accent);
+  --accent-light: var(--color-accent-light);
+  --accent-mid: var(--color-accent-mid);
+  --accent-bold: var(--color-accent-bold);
+  --accent-tint: var(--color-accent-tint);
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --danger: var(--color-danger);
 }

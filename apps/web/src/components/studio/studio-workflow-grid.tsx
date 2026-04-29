@@ -182,7 +182,7 @@ export function StudioWorkflowGrid({
                 return (
                   <Link
                     key={t.id}
-                    href="/templates"
+                    href="/app-templates"
                     className={cn(
                       "group flex min-h-[88px] flex-col rounded-2xl border border-dashed px-3 py-3 text-left transition-colors",
                       "border-border bg-bg-elevated/40 text-text hover:border-accent hover:text-accent",

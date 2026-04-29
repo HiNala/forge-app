@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@/providers/forge-auth-provider";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -135,3 +135,6 @@ export function useForgeSession(): SessionContextValue {
 
 /** FE-03 alias — same as `useForgeSession`. */
 export const useSession = useForgeSession;
+
+/** GD-02 alias — prefer this name in newly rebranded UI while preserving stored/header compatibility. */
+export const useGlideDesignSession = useForgeSession;

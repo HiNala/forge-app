@@ -36,16 +36,16 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-full items-center justify-between gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm",
-        "font-body text-text shadow-sm outline-none",
+        "flex w-full items-center justify-between gap-2 rounded-[14px] border border-border bg-bg-overlay px-4 py-2 text-base",
+        "font-body font-medium text-text shadow-sm outline-none",
         "transition-[box-shadow,border-color] duration-[180ms] ease-[cubic-bezier(0.4,0,0.2,1)]",
-        "focus-visible:border-accent focus-visible:shadow-[0_0_0_3px_var(--accent-light)]",
-        "data-[placeholder]:text-text-subtle",
+        "focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+        "data-[placeholder]:text-text-muted",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "[&>span]:line-clamp-1",
-        size === "sm" && "h-8 text-xs",
-        size === "default" && "h-10",
-        size === "lg" && "h-12 text-base",
+        size === "sm" && "h-9 text-sm",
+        size === "default" && "h-11",
+        size === "lg" && "h-13 text-base",
         className,
       )}
       {...props}
@@ -70,7 +70,7 @@ function SelectContent({
         data-slot="select-content"
         className={cn(
           "relative z-50 max-h-[var(--radix-select-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden",
-          "rounded-md border border-border bg-surface py-1 text-text shadow-lg",
+          "rounded-[16px] border border-border bg-surface py-1 text-text shadow-xl",
           position === "popper" &&
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className,
@@ -120,9 +120,9 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm py-2 pr-8 pl-2 text-sm outline-none",
-        "font-body text-text",
-        "focus:bg-accent-light/80 data-[state=checked]:font-medium",
+        "relative flex w-full cursor-pointer select-none items-center gap-2 rounded-[10px] py-2.5 pr-8 pl-2.5 text-sm outline-none",
+        "font-body font-medium text-text",
+        "focus:bg-accent-tint data-[state=checked]:font-semibold",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-45",
         className,
       )}

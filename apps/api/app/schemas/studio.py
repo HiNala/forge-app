@@ -30,13 +30,35 @@ class StudioGenerateRequest(BaseModel):
 
 
 class StudioGenerateContinueRequest(BaseModel):
-    """Non-blocking clarify follow-up (F-04 session wiring)."""
+    """Follow-up generation after clarify chip — same pipeline as `/generate` with locked workflow."""
 
     workflow: str = Field(
-        description="User-selected workflow key from clarify chips",
+        description="Workflow key chosen from clarify chips (maps to `forced_workflow` on generate).",
         examples=["contact_form"],
     )
-    session_id: UUID | None = Field(default=None, description="Optional Studio session id when available")
+    prompt: str = Field(
+        min_length=1,
+        description="Next user message after workflow selection (required — no empty continue).",
+    )
+    page_id: UUID | None = Field(
+        default=None,
+        description="Existing draft page when refining after clarify (optional).",
+    )
+    provider: Literal["openai", "anthropic", "gemini"] = Field(default="openai")
+    session_id: str = Field(
+        default="default",
+        description="Studio session key for grouped attachments (matches `/generate`).",
+    )
+    vision_attachment_ids: list[UUID] = Field(
+        default_factory=list,
+        description="Vision attachment ids to pass through (matches `/generate`).",
+    )
+    run_id: UUID | None = Field(
+        default=None,
+        description="Orchestration run with a pending clarify — checked against clarify_expires_at (AL-03).",
+    )
+    clarification_choice: str | None = Field(default=None, description="Chosen chip label / key.")
+    additional_context: str | None = None
 
 
 class StudioRefineRequest(BaseModel):
@@ -107,3 +129,13 @@ class StudioConversationResponse(BaseModel):
     page_id: UUID
     conversation_id: UUID
     messages: list[StudioMessageOut]
+
+
+class StudioEstimateOut(BaseModel):
+    estimated_credits: int
+    estimated_cost_cents_hint: int | None = Field(
+        default=None,
+        description="Rough retail equivalent in USD cents (generation credits × configured overage rate tier).",
+    )
+    estimated_seconds: int
+    confidence: Literal["low", "medium", "high"] = "medium"

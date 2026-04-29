@@ -40,7 +40,7 @@ export function buildPageHtml(title: string, path: string, navLinks: SiteNavLink
     .join('<span style="opacity:.25">·</span>');
 
   return `
-<header class="forge-shared-region" data-forge-region="header" data-forge-shared="1" style="padding:12px 20px;border-bottom:1px solid rgba(0,0,0,.08);background:var(--fc-bg-elevated);">
+<header class="forge-shared-region" data-forge-region="header" data-forge-shared="1" style="padding:12px 20px;border-bottom:1px solid color-mix(in oklch, var(--fc-fg) 8%, transparent);background:var(--fc-bg-elevated);">
   <nav style="display:flex;gap:14px;align-items:center;justify-content:space-between;font:14px/1.2 var(--fc-font-body,system-ui,sans-serif);">
     <span data-forge-node-id="brand" style="font-weight:700;color:var(--fc-accent)">Acme</span>
     <span style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">${navItems}</span>
@@ -50,9 +50,9 @@ export function buildPageHtml(title: string, path: string, navLinks: SiteNavLink
 <main style="padding:24px 20px;max-width:100%;font-family:var(--fc-font-body,system-ui,sans-serif);">
   <h1 data-forge-node-id="h1" style="font-size:clamp(1.5rem,4vw,2.25rem);font-weight:700;margin:0 0 12px;letter-spacing:-.02em;font-family:var(--fc-font-heading,inherit);">${t}</h1>
   <p data-forge-node-id="p1" style="font-size:16px;line-height:1.5;opacity:.88;margin:0 0 20px;">F-pattern friendly intro copy. The same page renders at three widths on the canvas.</p>
-  <a data-forge-node-id="a1" href="#" style="display:inline-block;padding:10px 18px;border-radius:8px;background:var(--fc-accent);color:#fff;font-weight:600;font-size:15px;text-decoration:none;">Call to action</a>
+  <a data-forge-node-id="a1" href="#" style="display:inline-block;padding:10px 18px;border-radius:8px;background:var(--fc-accent);color:var(--fc-on-accent, oklch(0.99 0.003 80));font-weight:600;font-size:15px;text-decoration:none;">Call to action</a>
 </main>
-<footer class="forge-shared-region" data-forge-region="footer" data-forge-shared="1" style="padding:16px 20px;font-size:12px;opacity:.6;border-top:1px solid rgba(0,0,0,.08);font-family:var(--fc-font-body,system-ui,sans-serif);">© Forge preview — shared site footer</footer>
+<footer class="forge-shared-region" data-forge-region="footer" data-forge-shared="1" style="padding:16px 20px;font-size:12px;opacity:.6;border-top:1px solid color-mix(in oklch, var(--fc-fg) 8%, transparent);font-family:var(--fc-font-body,system-ui,sans-serif);">© GlideDesign preview — shared site footer</footer>
 `;
 }
 
@@ -137,6 +137,8 @@ type Store = {
   duplicatePage: (id: string) => void;
   deletePage: (id: string) => void;
   updatePagePath: (id: string, rawPath: string) => boolean;
+  /** Replace one page’s preview HTML without rebuilding from site nav template */
+  updatePageHtml: (id: string, html: string) => void;
   arrangePagesInGrid: () => void;
   /** Replace auto-generated edges (from &lt;a href&gt;) while keeping manual links */
   syncFlowEdgesFromNavLinks: () => void;
@@ -145,7 +147,27 @@ type Store = {
   clearPendingFocusPageId: () => void;
   /** Internal same-site links in preview HTML: focus + frame matching canvas page (V2-P03). */
   requestFocusPageByPath: (hrefPath: string) => void;
+
+  canvasProjectId: string | null;
+  setCanvasProjectId: (id: string | null) => void;
+  hydratePagesFromServer: (
+    projectId: string,
+    screens: ReadonlyArray<{
+      id: string;
+      name: string;
+      slug: string;
+      html: string;
+      position_x: string | number;
+      position_y: string | number;
+    }>,
+  ) => void;
 };
+
+function slugToWebPath(slug: string): string {
+  const raw = slug.trim();
+  if (!raw || raw.toLowerCase() === "home") return "/";
+  return normalizeWebPath(raw.startsWith("/") ? raw : `/${raw}`);
+}
 
 export const useWebCanvasStore = create<Store>((set, get) => ({
   focusBreakpoint: "all",
@@ -285,6 +307,11 @@ export const useWebCanvasStore = create<Store>((set, get) => ({
     set({ pages: next, nodes: buildNodes(next, theme, positionsByPageId(nodes), homePageId) });
     return true;
   },
+  updatePageHtml: (id, html) => {
+    const { pages, theme, nodes, homePageId } = get();
+    const next = pages.map((p) => (p.id === id ? { ...p, html } : p));
+    set({ pages: next, nodes: buildNodes(next, theme, positionsByPageId(nodes), homePageId) });
+  },
   arrangePagesInGrid: () => {
     const { pages, theme, homePageId } = get();
     const pos = new Map<string, { x: number; y: number }>();
@@ -320,5 +347,40 @@ export const useWebCanvasStore = create<Store>((set, get) => ({
       }
     }
     set({ edges: [...kept, ...newEdges] });
+  },
+
+  canvasProjectId: null,
+  setCanvasProjectId: (canvasProjectId) => set({ canvasProjectId }),
+
+  hydratePagesFromServer: (canvasProjectId, screens) => {
+    const { theme, siteNavLinks } = get();
+    const pos = positionsByPageId(get().nodes);
+    for (const sc of screens) {
+      const x = Number(sc.position_x);
+      const y = Number(sc.position_y);
+      if (Number.isFinite(x) && Number.isFinite(y)) pos.set(sc.id, { x, y });
+    }
+    if (!screens.length) {
+      set({ canvasProjectId });
+      return;
+    }
+    const nextPages: WebPageRecord[] = screens.map((sc, i) => {
+      const path = slugToWebPath(sc.slug);
+      const title = sc.name.trim() ? sc.name : `Page ${i + 1}`;
+      const html =
+        sc.html && sc.html.trim().length > 0 ? sc.html : buildPageHtml(title, path, siteNavLinks);
+      return { id: sc.id, title, path, html };
+    });
+    const homePageId =
+      nextPages.find((p) => normalizeWebPath(p.path) === normalizeWebPath("/"))?.id ??
+      nextPages[0]!.id;
+    set({
+      canvasProjectId,
+      pages: nextPages,
+      homePageId,
+      edges: [],
+      nodes: buildNodes(nextPages, theme, pos, homePageId),
+    });
+    get().syncFlowEdgesFromNavLinks();
   },
 }));

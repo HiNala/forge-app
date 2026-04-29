@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import * as React from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,10 @@ import {
 import { useForgeSession } from "@/providers/session-provider";
 
 function parseOperatorOrgIds(): string[] {
-  const raw = process.env.NEXT_PUBLIC_FORGE_OPERATOR_ORG_IDS ?? "";
+  const raw =
+    process.env.NEXT_PUBLIC_GLIDEDESIGN_OPERATOR_ORG_IDS ??
+    process.env.NEXT_PUBLIC_FORGE_OPERATOR_ORG_IDS ??
+    "";
   return raw
     .split(",")
     .map((s) => s.trim())
@@ -68,9 +71,11 @@ export default function AdminTemplatesPage() {
         <h1 className="font-display text-2xl font-bold text-text">Templates admin</h1>
         <p className="mt-3 text-sm text-text-muted">
           This view is only available when your active workspace is listed in{" "}
-          <code className="rounded bg-surface-muted px-1">NEXT_PUBLIC_FORGE_OPERATOR_ORG_IDS</code>{" "}
+          <code className="rounded bg-surface-muted px-1">
+            NEXT_PUBLIC_GLIDEDESIGN_OPERATOR_ORG_IDS
+          </code>{" "}
           and matches the API&apos;s{" "}
-          <code className="rounded bg-surface-muted px-1">FORGE_OPERATOR_ORG_IDS</code>.
+          <code className="rounded bg-surface-muted px-1">GLIDEDESIGN_OPERATOR_ORG_IDS</code>.
         </p>
       </div>
     );

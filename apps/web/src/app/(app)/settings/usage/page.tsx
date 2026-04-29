@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import { RefreshCw } from "lucide-react";
@@ -64,12 +64,12 @@ export default function UsageSettingsPage() {
         <div>
           <h1 className="type-display text-text">Usage</h1>
           <p className="mt-1 max-w-prose type-body text-text-muted">
-            Forge Credits, session and weekly windows, and plan entitlements.
+            Generation credits, session and weekly windows, and plan entitlements.
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <span className="rounded-full border border-border bg-bg-elevated px-3 py-1 font-body text-sm font-medium text-text">
+            <span className="rounded-full border border-border/80 bg-bg-elevated/85 px-3 py-1 font-body text-sm font-medium text-text shadow-sm">
               {displayTier}
             </span>
             {usage?.extra_usage_enabled && capCents > 0 ? (
@@ -93,7 +93,7 @@ export default function UsageSettingsPage() {
       {/* Plan usage — session */}
       <section>
         <h2 className="type-heading mb-4 text-text">Current session</h2>
-        <div className="rounded-lg border border-border bg-surface p-6">
+        <div className="surface-panel rounded-2xl p-6">
           {usageQ.isLoading ? (
             <div className="space-y-2">
               <div className="h-3.5 w-40 animate-pulse rounded bg-bg-elevated" />
@@ -117,7 +117,7 @@ export default function UsageSettingsPage() {
       {/* Weekly */}
       <section>
         <h2 className="type-heading mb-4 text-text">Weekly limit — all workflows</h2>
-        <div className="rounded-lg border border-border bg-surface p-6">
+        <div className="surface-panel rounded-2xl p-6">
           {usageQ.isLoading || !usage ? null : usage.credits_week_cap > 0 ? (
             <UsageBar
               label="This week"
@@ -134,7 +134,7 @@ export default function UsageSettingsPage() {
       {/* Entitlements (non-credit) */}
       <section>
         <h2 className="type-heading mb-4 text-text">Plan resources</h2>
-        <div className="space-y-0 divide-y divide-border rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="surface-panel divide-y divide-border/80 overflow-hidden rounded-2xl">
           {usageQ.isLoading ? (
             <div className="p-5">
               <div className="h-3.5 w-48 animate-pulse rounded bg-bg-elevated" />
@@ -163,7 +163,7 @@ export default function UsageSettingsPage() {
       {usage && (plan?.plan && plan.plan !== "free" && plan.plan !== "starter" && plan.plan !== "trial") ? (
         <section>
           <h2 className="type-heading mb-4 text-text">Extra usage</h2>
-          <div className="rounded-lg border border-border bg-surface p-6">
+          <div className="surface-panel rounded-2xl p-6">
             <p className="type-body text-text-muted">
               When session and weekly credits are used up, you can allow metered overage (paid plans) with a
               monthly cap.{" "}
@@ -193,15 +193,15 @@ export default function UsageSettingsPage() {
       {usage ? (
         <section>
           <h2 className="type-heading mb-4 text-text">AI token detail</h2>
-          <div className="rounded-lg border border-border bg-surface overflow-hidden">
-            <div className="divide-y divide-border">
+          <div className="surface-panel overflow-hidden rounded-2xl">
+            <div className="divide-y divide-border/80">
               <TokenRow label="Prompt tokens" value={usage.tokens_prompt} />
               <TokenRow label="Completion tokens" value={usage.tokens_completion} />
               <TokenRow label="Total tokens" value={usage.tokens_prompt + usage.tokens_completion} bold />
             </div>
           </div>
           <p className="mt-2 font-body text-xs text-text-subtle">
-            Tokens are for transparency. Limits follow Forge Credits, not token counts, in the product.
+            Tokens are for transparency. Limits follow generation credits, not token counts, in the product.
           </p>
         </section>
       ) : null}
@@ -209,7 +209,7 @@ export default function UsageSettingsPage() {
       {usage ? (
         <section>
           <h2 className="type-heading mb-4 text-text">Calendar month</h2>
-          <div className="rounded-lg border border-border bg-surface px-6 py-5">
+          <div className="surface-panel rounded-2xl px-6 py-5">
             <p className="font-body text-sm text-text">
               <span className="font-semibold">{format(new Date(usage.period_start), "MMMM d")}</span> —{" "}
               <span className="font-semibold">{format(new Date(usage.period_end), "MMMM d, yyyy")}</span>

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.context.models import ContextBundle
 from app.services.orchestration.composer.base import BaseComposer
+from app.services.orchestration.composer.canvas_composers import MobileAppComposer, WebsiteComposer
 from app.services.orchestration.composer.composed_page import ComposedPage
 from app.services.orchestration.composer.contact import ContactFormComposer
 from app.services.orchestration.composer.generic import GenericComposer
@@ -38,6 +39,8 @@ _COMPOSERS: dict[str, BaseComposer] = {
     "coming_soon": ComingSoonComposer(),
     "resume": ResumeComposer(),
     "generic": GenericComposer(),
+    "mobile_app": MobileAppComposer(),
+    "website": WebsiteComposer(),
 }
 
 
@@ -53,6 +56,10 @@ def workflow_key_for_intent(intent: PageIntent) -> str:
         return "link_in_bio"
     if wf in ("survey", "quiz", "coming_soon", "resume"):
         return wf
+    if wf == "mobile_app":
+        return "mobile_app"
+    if wf == "website":
+        return "website"
     if pt in ("contact-form", "booking-form"):
         return "contact_form"
     if pt == "landing":

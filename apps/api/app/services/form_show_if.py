@@ -9,7 +9,8 @@ Schema shape (TypeScript names in docs; JSON-compatible here):
 from __future__ import annotations
 
 import logging
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +47,7 @@ def _get_field(payload: Mapping[str, Any], field: str) -> Any:
 def _is_empty(v: Any) -> bool:
     if v is None:
         return True
-    if isinstance(v, str) and not v.strip():
-        return True
-    return False
+    return bool(isinstance(v, str) and not v.strip())
 
 
 def _eval_condition(payload: Mapping[str, Any], c: Any) -> bool:
@@ -69,13 +68,15 @@ def _eval_condition(payload: Mapping[str, Any], c: Any) -> bool:
     if op == "not_empty":
         return not _is_empty(left)
     if op == "eq":
-        return left == value
+        return bool(left == value)
     if op == "neq":
-        return left != value
+        return bool(left != value)
     if op in ("gt", "lt", "gte", "lte"):
         try:
-            ln = float(left)  # type: ignore[arg-type]
-            rn = float(value)  # type: ignore[arg-type]
+            if value is None:
+                return False
+            ln = float(left)
+            rn = float(value)
         except (TypeError, ValueError):
             return False
         if op == "gt":
@@ -198,10 +199,13 @@ def validate_payload_against_form_schema_and_show_if(
                 continue
             if fname not in known:
                 continue
-            if not field_is_visible(form_schema, str(fname), pay):
-                if value is not None and (not isinstance(value, str) or value.strip()):
-                    return (
-                        False,
-                        f"Unexpected field for current answers: {fname}",
-                    )
+            if (
+                not field_is_visible(form_schema, str(fname), pay)
+                and value is not None
+                and (not isinstance(value, str) or value.strip())
+            ):
+                return (
+                    False,
+                    f"Unexpected field for current answers: {fname}",
+                )
     return True, ""

@@ -10,6 +10,8 @@ Spec alias: `components/canvas/WebCanvas.tsx` re-exports the implementation from
 - `apps/web/src/components/web-canvas/browser-frame-node.tsx` — Three stacked preview rows (desktop 1440px, tablet 834px, mobile 390px) with macOS-style chrome. **Shared** header/footer use `forge-shared-region` + diagonal stripe on hover (“site shell”).
 - `apps/web/src/lib/web-canvas-viewports.ts` — Breakpoint sizes and `scaleForCanvasRow()`.
 - `apps/web/src/lib/web-marquee-hit.ts` — Marquee hit-testing against `data-forge-node-id` / `data-forge-region`.
+- `apps/web/src/lib/forge-preview-hit.ts` — Shared element pick helpers + `MIN_ELEMENT_PICK_ZOOM` (75% canvas zoom).
+- `apps/web/src/lib/mobile-screen-html-mutate.ts` — Duplicate/delete tagged nodes in preview HTML (web + mobile).
 - `apps/web/src/lib/web-canvas-nav-graph.ts` — `normalizeWebPath`, `collectInternalNavTargetsFromHtml`, `orphanPageIds` for flow UX.
 - `apps/web/src/lib/web-canvas-static-export.ts` — `buildSingleFileStaticSite()` MVP export (one HTML file with hash sections).
 
@@ -19,6 +21,8 @@ Spec alias: `components/canvas/WebCanvas.tsx` re-exports the implementation from
 |--------|--------|
 | Breakpoint emphasis (All / Desktop / Tablet / Mobile) | Shipped |
 | Marquee + refine panel (orchestration wiring = P-05) | Client shipped |
+| Element pick + FAB (Refine / Duplicate / Delete) at ≥75% zoom; cross-page `<a href>` still navigates | Client shipped |
+| `updatePageHtml` — edit preview HTML without re-running `buildPageHtml` | Shipped |
 | Site nav modal → rebuild all pages via `buildPageHtml` | Shipped |
 | Homepage flag, change path, rename, duplicate, delete | Shipped |
 | Grid arrange + fit view | Shipped |

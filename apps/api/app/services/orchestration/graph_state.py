@@ -9,8 +9,8 @@ from pydantic import BaseModel, Field
 
 from app.services.context.models import ContextBundle
 from app.services.orchestration.models import PageIntent
-from app.services.orchestration.scope import ScopeLevel
 from app.services.orchestration.planning_models import PagePlan
+from app.services.orchestration.scope import ScopeLevel
 
 
 class RunBudget(BaseModel):

@@ -1,8 +1,7 @@
 import { ImageResponse } from "next/og";
-
 export const runtime = "edge";
 
-export const alt = "Forge — Examples & templates";
+export const alt = "GlideDesign — Examples & templates";
 
 export const size = { width: 1200, height: 630 };
 
@@ -19,30 +18,52 @@ export default function ExamplesOgImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(165deg, #f9f7f3 0%, #eeebe4 100%)",
+          background: "#fff8e8",
           padding: 64,
+          gap: 28,
         }}
       >
         <div
           style={{
-            fontSize: 64,
-            fontWeight: 600,
-            fontFamily: "Georgia, serif",
-            color: "#1a1714",
-            textAlign: "center",
+            display: "flex",
+            gap: 20,
           }}
         >
-          Examples
+          {["#b6f45f", "#93e6ff", "#ff6d4d", "#cfc4ff"].map((color, index) => (
+            <div
+              key={color}
+              style={{
+                width: 178,
+                height: 212,
+                borderRadius: 34,
+                background: color,
+                transform: `rotate(${[-5, 3, -2, 5][index]}deg)`,
+                border: "4px solid #141026",
+              }}
+            />
+          ))}
         </div>
         <div
           style={{
-            marginTop: 24,
-            fontSize: 26,
-            color: "#0d9488",
-            fontFamily: "ui-sans-serif, system-ui",
+            fontSize: 72,
+            fontWeight: 800,
+            fontFamily: "Inter, ui-sans-serif, system-ui",
+            color: "#141026",
+            textAlign: "center",
+            letterSpacing: "-0.07em",
           }}
         >
-          Bookings, RSVPs, menus, proposals
+          Templates that ship.
+        </div>
+        <div
+          style={{
+            fontSize: 26,
+            color: "#6651ff",
+            fontWeight: 700,
+            fontFamily: "Inter, ui-sans-serif, system-ui",
+          }}
+        >
+          Websites · apps · decks · forms · proposals
         </div>
       </div>
     ),

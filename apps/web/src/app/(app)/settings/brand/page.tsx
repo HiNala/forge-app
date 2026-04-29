@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { getBrand, postBrandLogo, putBrand, type BrandKitOut } from "@/lib/api";
+import { forgeFallbackHex } from "@/lib/design/forge-html-fallback-colors";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +31,7 @@ const GOOGLE_FONTS = [
   "Newsreader",
 ] as const;
 
-const DEFAULT_PRIMARY = "#2a9d8f";
+const DEFAULT_PRIMARY = forgeFallbackHex.copperAccent;
 
 export default function BrandSettingsPage() {
   const { activeOrganizationId } = useForgeSession();
@@ -132,7 +133,7 @@ function BrandSettingsInner() {
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight text-text">Brand kit</h1>
         <p className="mt-1.5 font-body text-sm text-text-muted">
-          Colors and type apply to the Forge app while you work. Published pages use their own snapshots.
+          Colors and type apply to GlideDesign while you work. Published pages use their own snapshots.
         </p>
       </div>
 

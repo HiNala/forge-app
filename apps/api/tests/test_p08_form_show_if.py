@@ -1,6 +1,5 @@
 """P-08 — conditional form logic + tamper checks."""
 
-import pytest
 
 from app.services.form_show_if import (
     field_is_visible,
@@ -12,7 +11,12 @@ from app.services.form_show_if import (
 def test_show_if_eq_hides_and_shows() -> None:
     schema = {
         "fields": [
-            {"name": "q1", "label": "Q1", "type": "text", "show_if": {"all": [{"field": "gate", "op": "eq", "value": "yes"}]}},
+            {
+                "name": "q1",
+                "label": "Q1",
+                "type": "text",
+                "show_if": {"all": [{"field": "gate", "op": "eq", "value": "yes"}]},
+            },
             {"name": "gate", "label": "Yes?", "type": "text"},
         ],
         "required": ["q1", "gate"],

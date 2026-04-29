@@ -6,13 +6,13 @@ import { Container } from "@/components/ui/container";
 const TESTIMONIALS = [
   {
     quote:
-      '"I needed a booking page for my cleaning service on a Saturday afternoon. Forge had it live before I finished my coffee."',
+      '"I needed a booking page for my cleaning service on a Saturday afternoon. GlideDesign had it live before I finished my coffee."',
     name: "Rachel M.",
     role: "Owner, SparkClean",
   },
   {
     quote:
-      '"My clients kept asking for a way to book online. I tried builders for weeks. Forge did it in one sentence."',
+      '"My clients kept asking for a way to book online. I tried builders for weeks. GlideDesign did it in one sentence."',
     name: "Tom B.",
     role: "Freelance Electrician",
   },

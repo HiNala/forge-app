@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -44,7 +44,7 @@ const SETTINGS_LINKS = [
 ] as const;
 
 const itemClass =
-  "flex cursor-pointer items-center gap-2 rounded-md px-2 py-2.5 text-text aria-selected:bg-accent-light";
+  "flex cursor-pointer items-center gap-3 rounded-[14px] px-3 py-3 font-body font-semibold text-text aria-selected:bg-accent-tint aria-selected:text-accent";
 
 export function CommandPalette() {
   const { open, setOpen } = useCommandPalette();
@@ -81,19 +81,19 @@ export function CommandPalette() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="overflow-hidden p-0 sm:max-w-lg" showClose={false} aria-describedby="cmdk-desc">
+      <DialogContent className="overflow-hidden p-0 sm:max-w-2xl" showClose={false} aria-describedby="cmdk-desc">
         <div id="cmdk-desc" className="sr-only">
           Search pages, team, settings, and navigation. Use arrow keys to move and Enter to open.
         </div>
         <h2 className="sr-only">Command palette</h2>
-        <Command className="rounded-2xl bg-surface font-body" shouldFilter>
-          <div className="border-b border-border px-3 py-2">
+        <Command className="rounded-[24px] bg-surface font-body" shouldFilter>
+          <div className="border-b border-border p-4">
             <Command.Input
-              placeholder="Search pages, people, settings…"
-              className="w-full rounded-md border border-transparent bg-bg-elevated/60 px-3 py-2 text-sm text-text outline-none transition-[box-shadow] duration-[var(--duration-fast)] placeholder:text-text-subtle focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-light)] focus:ring-0"
+              placeholder="Search pages, templates, settings, actions..."
+              className="w-full rounded-full border border-border bg-bg-overlay px-5 py-3 text-base font-semibold text-text outline-none transition-[box-shadow] duration-[var(--duration-fast)] placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg"
             />
           </div>
-          <Command.List className="max-h-[min(60vh,420px)] overflow-y-auto p-2 text-sm">
+          <Command.List className="max-h-[min(64vh,520px)] overflow-y-auto p-3 text-sm">
             <Command.Empty className="py-8 text-center text-sm text-text-muted">
               No matches — try a page title, email, or setting name.
             </Command.Empty>
@@ -217,7 +217,7 @@ export function CommandPalette() {
             ))}
             {!pagesQ.isLoading && pages.length === 0 && activeOrganizationId ? (
               <div className="px-2 py-2 text-xs text-text-muted">
-                Nothing here yet — open Studio to describe a mini-app.
+                Nothing here yet — open Studio to describe what you want to build.
               </div>
             ) : null}
 

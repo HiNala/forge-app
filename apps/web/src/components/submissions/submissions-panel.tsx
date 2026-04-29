@@ -1,12 +1,13 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import * as React from "react";
 import { toast } from "sonner";
 import { Archive, ChevronDown, Download, Loader2, Mail } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { EmptyState } from "@/components/chrome/empty-state";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -28,6 +29,7 @@ import {
   postSubmissionReply,
   type SubmissionOut,
 } from "@/lib/api";
+import { forgeFallbackHex } from "@/lib/design/forge-html-fallback-colors";
 import { MOTION_TRANSITIONS } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useForgeSession } from "@/providers/session-provider";
@@ -386,10 +388,11 @@ export function SubmissionsPanel() {
           ))}
         </div>
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border px-6 py-12 text-center">
-          <p className="font-body text-sm text-text-muted">No submissions yet.</p>
-          <p className="mt-1 font-body text-xs text-text-subtle">Share your live page to collect responses.</p>
-        </div>
+        <EmptyState
+          title="No submissions yet."
+          description="Share your page to start receiving responses. New leads, RSVPs, and replies will collect here."
+          primaryAction={{ label: "Share page", onClick: () => router.push(`${pathname}?share=1`) }}
+        />
       ) : (
         <div className="overflow-auto rounded-2xl border border-border">
           <table className="min-w-[540px] w-full text-left text-sm font-body">
@@ -534,7 +537,7 @@ export function SubmissionsPanel() {
                 className="rounded-2xl border border-border bg-bg-elevated p-3 text-xs font-body"
                 style={{
                   borderLeftWidth: 4,
-                  borderLeftColor: brandQ.data.primary_color ?? "#6366f1",
+                  borderLeftColor: brandQ.data.primary_color ?? forgeFallbackHex.copperAccent,
                 }}
               >
                 <p className="text-[10px] uppercase tracking-wide text-text-muted">Preview</p>

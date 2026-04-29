@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { Check, Upload } from "lucide-react";
@@ -125,7 +125,7 @@ export default function CalendarsSettingsPage() {
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight text-text">Calendars</h1>
         <p className="mt-1.5 font-body text-sm text-text-muted">
-          Connect or import a calendar, set business hours, and Forge turns that into bookable slots on your live pages.
+          Connect or import a calendar, set business hours, and GlideDesign turns that into bookable slots on your live pages.
         </p>
       </div>
 

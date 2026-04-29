@@ -1,4 +1,4 @@
-"""Resolve the Forge :class:`~app.db.models.user.User` from Clerk JWT or API token."""
+"""Resolve the GlideDesign :class:`~app.db.models.user.User` from session JWT or API token."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from sqlalchemy import select, text
 from app.config import settings
 from app.db.models import ApiToken, User
 from app.db.session import AsyncSessionLocal
-from app.security.clerk_jwt import verify_clerk_jwt
+from app.security.session_jwt import verify_access_token
 
 FORGE_LIVE_PREFIX = "forge_live_"
 
@@ -86,7 +86,7 @@ async def _authenticate_api_token(request: Request, bearer: str) -> User:
 
 
 async def require_user(request: Request) -> User:
-    """Load user from ``Authorization: Bearer`` (API token, Clerk JWT, or test headers)."""
+    """Load user from ``Authorization: Bearer`` (API token, session JWT, or test headers)."""
     token = _bearer_token(request)
     if token and token.startswith(FORGE_LIVE_PREFIX):
         return await _authenticate_api_token(request, token)
@@ -111,7 +111,7 @@ async def require_user(request: Request) -> User:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     try:
-        payload = verify_clerk_jwt(token)
+        payload = verify_access_token(token)
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token") from None
 
@@ -134,11 +134,13 @@ async def require_user(request: Request) -> User:
     sub = payload.get("sub")
     if not sub or not isinstance(sub, str):
         raise HTTPException(status_code=401, detail="Invalid token payload")
+    try:
+        uid = UUID(sub)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid token payload") from None
 
     async with AsyncSessionLocal() as session:
-        user = (
-            await session.execute(select(User).where(User.auth_provider_id == sub))
-        ).scalar_one_or_none()
+        user = await session.get(User, uid)
         if user is None or user.deleted_at is not None:
             raise HTTPException(status_code=401, detail="User not registered")
         request.state.user_id = user.id

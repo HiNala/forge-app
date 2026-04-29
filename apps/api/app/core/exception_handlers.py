@@ -1,4 +1,4 @@
-"""Map exceptions to Forge JSON error bodies (BI-02)."""
+"""Map exceptions to GlideDesign JSON error bodies (BI-02)."""
 
 from __future__ import annotations
 

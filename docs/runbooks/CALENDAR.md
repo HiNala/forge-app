@@ -4,11 +4,11 @@
 
 1. Create an OAuth **Web application** client (not desktop).
 2. Authorized redirect URIs must include:
-   - Production: `https://api.forge.app/api/v1/calendar/callback/google` (replace host with your API public URL)
+   - Production: `https://api.glidedesign.ai/api/v1/calendar/callback/google` (replace host with your API public URL)
    - Local: `http://localhost:8000/api/v1/calendar/callback/google`
 3. Enable the **Google Calendar API** for the project.
 
-## Forge configuration
+## GlideDesign configuration
 
 Set on the API:
 

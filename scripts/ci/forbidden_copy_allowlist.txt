@@ -1,0 +1,16 @@
+# Lines matched by scripts/ci/forbidden_copy_check.mjs that are allowed (substring per line).
+# Example: path:pattern — keep minimal; prefer fixing copy over allowlisting.
+**/node_modules/**
+**/.next/**
+scan-forbidden-copy.mjs
+apps/web/src/lib/api/schema.gen.ts
+X-Forge-
+ForgeLogo
+ForgeMark
+ForgeFourLayerPayload
+ForgeTaggedHit
+collectForgeHits
+newForgeNodeId
+data-forge-
+FORGE_
+__FORGE_

@@ -9,14 +9,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const paths = [
     "",
     "/pricing",
+    "/templates",
     "/examples",
+    "/workflows",
+    "/compare",
+    "/about",
+    "/blog",
+    "/help",
+    "/roadmap",
     "/signin",
     "/signup",
     "/terms",
     "/privacy",
     "/handoff",
     "/press",
-    "/blog/introducing-forge",
+    "/blog/introducing-glidedesign",
   ] as const;
   const out: MetadataRoute.Sitemap = paths.map((p) => ({
     url: p === "" ? `${base}/` : `${base}${p}`,
@@ -42,7 +49,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }
   for (const slug of COMPARE_SLUGS) {
     out.push({
-      url: `${base}/compare/forge-vs-${slug}`,
+      url: `${base}/compare/${slug}`,
       lastModified: last,
       changeFrequency: "monthly",
       priority: 0.65,

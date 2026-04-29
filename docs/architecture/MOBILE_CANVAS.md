@@ -8,7 +8,7 @@ Phone-shaped **xyflow** surface for the mobile design workflow: pan/zoom (`trans
 |------|------|
 | `apps/web/src/app/(app)/studio/mobile/page.tsx` | Studio route shell; mounts `MobileCanvas`. |
 | `apps/web/src/components/mobile-canvas/mobile-canvas.tsx` | `ReactFlowProvider`, `phoneScreen` node type, keyboard `M` for marquee. |
-| `apps/web/src/components/mobile-canvas/phone-screen-node.tsx` | Device chrome (status bar 9:41, signal/battery, home indicator), HTML preview via `dangerouslySetInnerHTML`, xyflow handles. |
+| `apps/web/src/components/mobile-canvas/phone-screen-node.tsx` | Device chrome (status bar 9:41, signal/battery, home indicator), HTML preview, **marquee overlay** (shared `collectForgeHits` / `marqueeCoverageRatio` with web), region refine panel stub, `nodrag nopan` on shell. |
 | `apps/web/src/components/mobile-canvas/mobile-canvas-toolbar.tsx` | Device picker, theme, zoom + editable %, fit, marquee, add screen. |
 | `apps/web/src/components/mobile-canvas/mobile-canvas-tweaks.tsx` | Brand sliders (accent, radius, density) + “apply to all”. |
 | `apps/web/src/components/mobile-canvas/mobile-canvas-store.ts` | Zustand: `screens`, `nodes`/`edges`, `deviceId`, theme, marquee, tweaks. |
@@ -19,7 +19,7 @@ Phone-shaped **xyflow** surface for the mobile design workflow: pan/zoom (`trans
 | Area | Status |
 |------|--------|
 | xyflow canvas, minimap, grid, zoom, fit, device shell | **Shipped** (client demo content) |
-| Marquee + tagged hits (`data-forge-node-id`, `data-forge-tappable`) | **Partial** — parity with web marquee/validator still evolving |
+| Marquee + tagged hits (`data-forge-node-id`, `data-forge-tappable`) | **Partial** — drag + refine; **element pick** gated at **viewport zoom ≥ 75%**; FAB **Refine / Duplicate / Delete** (Duplicate/Delete use `mobile-screen-html-mutate` + `updateScreenHtml`); **server-side drift validator** still P-05 |
 | Multi-screen **orchestration** (outline, parallel generation, SSE `screen.complete`) | **API / P-05** |
 | Four exports (Figma, Expo, HTML, PNG) | **Not shipped** in UI |
 | 40+ component catalog, drift validator, Playwright E2E | **Not shipped** |
@@ -31,5 +31,6 @@ Phone-shaped **xyflow** surface for the mobile design workflow: pan/zoom (`trans
 
 ## Related docs
 
+- `apps/web/src/lib/forge-preview-hit.ts` — shared with web canvas (`MIN_ELEMENT_PICK_ZOOM`, hit helpers).
 - `docs/user/MOBILE_APP_GUIDE.md` — user-facing how-to.
 - `docs/missions/V2_P02_MISSION_REPORT.md` — mission status vs acceptance criteria.

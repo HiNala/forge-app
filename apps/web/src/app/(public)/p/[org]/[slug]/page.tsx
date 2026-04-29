@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { PDraftPreview } from "@/components/public/p-draft-preview";
+import { getPublicPageApiUrl } from "@/lib/api-url";
 import { injectDeckParentSearchParams } from "@/lib/deck-parent-query";
+import { PUBLIC_IFRAME_SANDBOX, withPublicSrcDocSecurity } from "@/lib/public-page-html";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +16,7 @@ type PublicPayload = {
 };
 
 async function fetchPublicPage(org: string, slug: string): Promise<PublicPayload | null> {
-  const base = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/?$/, "");
-  const res = await fetch(`${base}/api/v1/public/pages/${org}/${slug}`, {
+  const res = await fetch(getPublicPageApiUrl(org, slug), {
     next: { revalidate: 60 },
   });
   if (!res.ok) return null;
@@ -55,18 +56,20 @@ export default async function PublicPublishedPage({
   const data = await fetchPublicPage(org, slug);
   if (!data) notFound();
 
-  const html = injectDeckParentSearchParams(data.html, {
-    mode: sp.mode,
-    notes: sp.notes,
-    presenter: sp.presenter,
-  });
+  const html = withPublicSrcDocSecurity(
+    injectDeckParentSearchParams(data.html, {
+      mode: sp.mode,
+      notes: sp.notes,
+      presenter: sp.presenter,
+    }),
+  );
 
   return (
     <iframe
       title={data.title}
       className="h-screen w-full border-0 bg-white"
       srcDoc={html}
-      sandbox="allow-same-origin allow-forms allow-popups allow-modals allow-scripts"
+      sandbox={PUBLIC_IFRAME_SANDBOX}
     />
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@/providers/forge-auth-provider";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { postSignup, postTemplateUse } from "@/lib/api";

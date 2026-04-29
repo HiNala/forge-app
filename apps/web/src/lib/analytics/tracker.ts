@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { getAnalyticsTrackUrl } from "@/lib/api-url";
 
 type TrackPayload = Record<string, unknown>;
 
@@ -12,12 +13,12 @@ function clientEventId(): string {
   return crypto.randomUUID();
 }
 
-async function flushBatch(apiBase: string) {
+async function flushBatch() {
   if (!Q.length) return;
   const batch = Q.splice(0, 20);
   const body = JSON.stringify({ events: batch });
   try {
-    await fetch(`${apiBase}/api/v1/analytics/track`, {
+    await fetch(getAnalyticsTrackUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body,
@@ -29,15 +30,19 @@ async function flushBatch(apiBase: string) {
   }
 }
 
-export function useAnalytics(apiBase: string) {
+/**
+ * Dashboard / app-shell analytics batcher. Uses `getAnalyticsTrackUrl()` so the path never
+ * double-appends `/api/v1` when `NEXT_PUBLIC_API_URL` includes that suffix (AL-01).
+ */
+export function useAnalytics() {
   const pathname = usePathname();
   const schedule = useCallback(() => {
     if (flushTimer) return;
     flushTimer = setTimeout(() => {
       flushTimer = null;
-      void flushBatch(apiBase);
+      void flushBatch();
     }, 2000);
-  }, [apiBase]);
+  }, []);
 
   const track = useCallback(
     (eventType: string, metadata?: TrackPayload) => {
@@ -46,14 +51,13 @@ export function useAnalytics(apiBase: string) {
         metadata: metadata ?? {},
         client_event_id: clientEventId(),
       });
-      if (Q.length >= 10) void flushBatch(apiBase);
+      if (Q.length >= 10) void flushBatch();
       else schedule();
     },
-    [apiBase, schedule]
+    [schedule],
   );
 
   useEffect(() => {
-    // `page_view` requires `page_id` (public pages). Shell navigation uses `dashboard_view`.
     track("dashboard_view", { route: pathname, surface: "web_app" });
   }, [pathname, track]);
 

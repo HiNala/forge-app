@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import * as React from "react";
 import { getAdminLlmSummary, type AdminLlmSummary } from "@/lib/api";
 

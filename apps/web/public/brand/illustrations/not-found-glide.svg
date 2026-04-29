@@ -1,0 +1,20 @@
+<svg width="640" height="420" viewBox="0 0 640 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">GlideDesign not found illustration</title>
+  <desc id="desc">A bright map-like path with cards, search dots, and a GlideDesign cursor.</desc>
+  <rect width="640" height="420" rx="40" fill="#FFF8E8"/>
+  <rect x="72" y="78" width="168" height="114" rx="30" fill="#B6F45F" stroke="#1A1238" stroke-width="4"/>
+  <rect x="402" y="218" width="164" height="116" rx="30" fill="#93E6FF" stroke="#1A1238" stroke-width="4"/>
+  <path d="M182 264C244 196 314 330 380 252C443 178 465 143 524 164" stroke="#6651FF" stroke-width="12" stroke-linecap="round" stroke-dasharray="2 26"/>
+  <circle cx="174" cy="264" r="18" fill="#FF6D4D" stroke="#1A1238" stroke-width="4"/>
+  <circle cx="524" cy="164" r="18" fill="#FF6D4D" stroke="#1A1238" stroke-width="4"/>
+  <rect x="198" y="116" width="244" height="152" rx="34" fill="white" stroke="#1A1238" stroke-width="4"/>
+  <circle cx="286" cy="184" r="42" fill="#D9D3FF"/>
+  <path d="M316 214L356 254" stroke="#1A1238" stroke-width="12" stroke-linecap="round"/>
+  <path d="M352 96L405 230L438 177L494 166L352 96Z" fill="url(#cursorGradient)" stroke="#1A1238" stroke-width="4" stroke-linejoin="round"/>
+  <defs>
+    <linearGradient id="cursorGradient" x1="352" y1="96" x2="492" y2="239" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6651FF"/>
+      <stop offset="1" stop-color="#FF6D4D"/>
+    </linearGradient>
+  </defs>
+</svg>

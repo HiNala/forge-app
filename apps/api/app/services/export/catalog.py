@@ -22,6 +22,8 @@ class ExportFormatSpec:
     # If True, user must not expect immediate file — background worker.
     async_worker: bool = False
     whats_inside: tuple[str, ...] = ()
+    # AL-03 — roadmap items stay in catalog.json but disappear from picker UIs.
+    hidden_in_ui: bool = False
 
 
 # Stable ids (also referenced from workflow registry).
@@ -30,15 +32,15 @@ ExportFormatId = str
 _EXPORT: dict[str, ExportFormatSpec] = {
     "hosted": ExportFormatSpec(
         id="hosted",
-        label="Keep on Forge (hosted link)",
+        label="Keep on GlideDesign (hosted link)",
         description="Default — live URL, SSL, analytics, and updates from Studio. No file export needed.",
-        whats_inside=("Public page URL on your org slug", "Forge analytics and submissions inbox"),
+        whats_inside=("Public page URL on your org slug", "GlideDesign analytics and submissions inbox"),
     ),
     "html_static": ExportFormatSpec(
         id="html_static",
         label="Single HTML file",
         description=" Self-contained .html of the current page. Open locally or host on any static host.",
-        whats_inside=("One .html with inline styles where possible", "Form posts go to Forge by default"),
+        whats_inside=("One .html with inline styles where possible", "Form posts go to GlideDesign by default"),
     ),
     "html_zip": ExportFormatSpec(
         id="html_zip",
@@ -87,7 +89,7 @@ _EXPORT: dict[str, ExportFormatSpec] = {
     "embed_iframe": ExportFormatSpec(
         id="embed_iframe",
         label="Embeddable iframe",
-        description="One snippet to drop into your existing site. Submissions still hit Forge.",
+        description="One snippet to drop into your existing site. Submissions still hit GlideDesign.",
         plan_minimum="pro",
         implemented=True,
         whats_inside=('<iframe src="…/embed">', "responsive height, optional theme param"),
@@ -104,7 +106,7 @@ _EXPORT: dict[str, ExportFormatSpec] = {
         label="Webhook + API example",
         description="Copy-paste Node and curl samples for automations and migration planning.",
         implemented=True,
-        whats_inside=("Create automation in Forge", "OpenAPI-style POST examples"),
+        whats_inside=("Create automation in GlideDesign", "OpenAPI-style POST examples"),
     ),
     "typeform_json": ExportFormatSpec(
         id="typeform_json",
@@ -303,10 +305,19 @@ _EXPORT: dict[str, ExportFormatSpec] = {
     "domain_handoff_txt": ExportFormatSpec(
         id="domain_handoff_txt",
         label="Domain & data handoff kit (text)",
-        description="Plain checklist: your live URL, export paths, and where to point DNS on Vercel/Netlify/Cloudflare if you self-host later.",
+        description=(
+            "Plain checklist: your live URL, export paths, and where to point DNS on "
+            "Vercel/Netlify/Cloudflare if you self-host later."
+        ),
         implemented=True,
         whats_inside=("Current public URL", "Submissions + export links", "Good-faith migration pointers"),
     ),
 }
 
 EXPORT_CATALOG: dict[str, ExportFormatSpec] = _EXPORT
+
+
+def get_user_facing_export_specs() -> tuple[ExportFormatSpec, ...]:
+    """implemented + catalogued + not intentionally hidden."""
+
+    return tuple(spec for spec in EXPORT_CATALOG.values() if spec.implemented and not spec.hidden_in_ui)

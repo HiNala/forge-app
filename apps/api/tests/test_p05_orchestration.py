@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.services.orchestration.brand_drift import colors_outside_palette, drift_report
+from app.services.orchestration.brand_drift import drift_report
 from app.services.orchestration.region_hash import detect_drift, hash_outside_region
 from app.services.orchestration.scope import Scope, ScopeLevel
 
@@ -37,6 +37,17 @@ def test_brand_drift_colors() -> None:
     html = '<div style="color: #ff0000">x</div>'
     r = drift_report(html, {"primary": "#2563EB", "secondary": "#0F172A"})
     assert "#ff0000".lower() in [x.lower() for x in r["color_drift"]]
+
+
+def test_model_ids_from_route_dedupes() -> None:
+    from app.services.llm.llm_router import ModelRoute, model_ids_from_route
+
+    r = ModelRoute(
+        role="composer",
+        primary=("openai", "gpt-4o"),
+        fallbacks=[("anthropic", "anthropic/claude-x"), ("gemini", "gpt-4o")],
+    )
+    assert model_ids_from_route(r) == ["gpt-4o", "anthropic/claude-x"]
 
 
 @pytest.mark.asyncio

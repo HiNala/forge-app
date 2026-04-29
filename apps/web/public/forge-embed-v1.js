@@ -1,4 +1,4 @@
-/* Forge inline embed v1 — loads published pages into a placeholder div (P-07). */
+/* GlideDesign inline embed v1 — legacy data-forge-* attributes remain supported. */
 (function () {
   function run() {
     var nodes = document.querySelectorAll("[data-forge-org][data-forge-page]");
@@ -17,7 +17,7 @@
       var ifr = document.createElement("iframe");
       ifr.setAttribute("data-forge-inline", "1");
       ifr.src = src;
-      ifr.title = "Forge";
+      ifr.title = "GlideDesign";
       ifr.style.cssText =
         "width:100%;min-height:520px;border:0;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);";
       ifr.loading = "lazy";

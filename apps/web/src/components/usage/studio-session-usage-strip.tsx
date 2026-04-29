@@ -1,8 +1,8 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useQuery } from "@tanstack/react-query";
-import { useForgeSession } from "@/providers/session-provider";
+import { useGlideDesignSession } from "@/providers/session-provider";
 import { formatSessionResetsIn } from "@/lib/usage-credits";
 import { cn } from "@/lib/utils";
 import { getBillingUsage } from "@/lib/api";
@@ -12,12 +12,18 @@ import Link from "next/link";
 type Props = {
   className?: string;
   active?: boolean;
+  /** BP-04 — provisional running total credits from SSE during streaming. */
+  streamingRunCredits?: number;
 };
 
 /** Studio footer: session credits — compact row; click “Details” for the same bar pattern as Settings. */
-export function StudioSessionUsageStrip({ className, active: studioActive = true }: Props) {
+export function StudioSessionUsageStrip({
+  className,
+  active: studioActive = true,
+  streamingRunCredits,
+}: Props) {
   const { getToken } = useAuth();
-  const { activeOrganizationId } = useForgeSession();
+  const { activeOrganizationId } = useGlideDesignSession();
   const q = useQuery({
     queryKey: ["billing-usage", activeOrganizationId],
     queryFn: () => getBillingUsage(getToken, activeOrganizationId),
@@ -45,12 +51,17 @@ export function StudioSessionUsageStrip({ className, active: studioActive = true
       </p>
       <UsageBar
         variant="inverse"
-        label="Forge Credits"
+        label="generation credits"
         percentUsed={pct}
         used={u.credits_session_used}
         cap={u.credits_session_cap}
         resetText={reset}
       />
+      {typeof streamingRunCredits === "number" && streamingRunCredits > 0 ? (
+        <p className="mt-2 font-body text-[11px] leading-snug text-white/65">
+          This run ~<span className="tabular-nums">{streamingRunCredits}</span> credits accrued (streaming)
+        </p>
+      ) : null}
     </div>
   );
 }

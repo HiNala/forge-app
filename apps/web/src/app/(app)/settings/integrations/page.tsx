@@ -1,24 +1,23 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, MessageSquare, Webhook, Zap } from "lucide-react";
+import { Calendar, Webhook, Zap } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { listCalendarConnections } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
 
-type StatusKind = "connected" | "not-connected" | "coming-soon";
+type StatusKind = "connected" | "not-connected";
 
 function StatusPill({ kind, label }: { kind: StatusKind; label: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-body text-[11px] font-semibold",
-        kind === "connected" && "bg-success/10 text-success",
-        kind === "not-connected" && "bg-bg-elevated text-text-subtle",
-        kind === "coming-soon" && "bg-bg-elevated text-text-subtle",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-body text-[11px] font-semibold",
+        kind === "connected" && "border-success/20 bg-success/10 text-success",
+        kind === "not-connected" && "border-border/70 bg-bg-elevated/80 text-text-subtle",
       )}
     >
       <span
@@ -54,12 +53,12 @@ function IntegrationCard({
   return (
     <li
       className={cn(
-        "flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5 transition-shadow hover:shadow-sm sm:flex-row sm:items-center sm:justify-between",
+        "surface-panel interaction-lift flex flex-col gap-4 rounded-2xl p-5 sm:flex-row sm:items-center sm:justify-between",
         disabled && "opacity-60",
       )}
     >
       <div className="flex gap-4">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-bg-elevated">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-bg-elevated/75 shadow-sm">
           <Icon className="size-5 text-text-muted" aria-hidden />
         </div>
         <div className="min-w-0">
@@ -94,7 +93,7 @@ export default function SettingsIntegrationsPage() {
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight text-text">Integrations</h1>
         <p className="mt-1.5 font-body text-sm text-text-muted">
-          Connect the tools your workflow already uses. Upcoming integrations are shown honestly.
+          Connect the tools your workflow already uses, with only ready surfaces shown.
         </p>
       </div>
 
@@ -116,36 +115,28 @@ export default function SettingsIntegrationsPage() {
           }
         />
         <IntegrationCard
-          icon={Calendar}
-          title="Apple Calendar"
-          description="Subscribe to your Forge page calendar and sync events with Apple Calendar."
-          statusKind="coming-soon"
-          statusLabel="Coming soon"
-          disabled
-        />
-        <IntegrationCard
-          icon={MessageSquare}
-          title="Slack"
-          description="Send a Slack message when a new form submission arrives."
-          statusKind="coming-soon"
-          statusLabel="Coming soon"
-          disabled
+          icon={Webhook}
+          title="HTTP webhooks"
+          description="Automations can POST payloads to HTTPS endpoints — pair with Zapier/Make or bespoke backends instead of brittle copy-paste snippets."
+          statusKind="not-connected"
+          statusLabel="See roadmap"
+          action={
+            <Button type="button" variant="secondary" size="sm" asChild>
+              <Link href="/roadmap#webhooks">How we ship this</Link>
+            </Button>
+          }
         />
         <IntegrationCard
           icon={Zap}
-          title="Zapier"
-          description="Trigger any Zap when submissions arrive — connect thousands of apps."
-          statusKind="coming-soon"
-          statusLabel="Coming soon"
-          disabled
-        />
-        <IntegrationCard
-          icon={Webhook}
-          title="Custom webhooks"
-          description="POST a JSON payload to your own server on any form submission event."
-          statusKind="coming-soon"
-          statusLabel="Coming soon"
-          disabled
+          title="Packaged Zapier marketplace app"
+          description="A first-party Zap lands after webhook automation exits beta — timelines live on the public roadmap."
+          statusKind="not-connected"
+          statusLabel="Planned — not gated as available"
+          action={
+            <Button type="button" variant="secondary" size="sm" asChild>
+              <Link href="/roadmap#integrations">Roadmap</Link>
+            </Button>
+          }
         />
       </ul>
     </div>

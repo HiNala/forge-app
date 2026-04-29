@@ -52,7 +52,7 @@ export function FinalCta() {
                 onSubmit={handleSubmit}
                 className={cn(
                   "input-focus-ring flex overflow-hidden rounded-2xl border border-border bg-surface",
-                  "shadow-[0_4px_20px_rgba(0,0,0,0.06)]",
+                  "shadow-sm",
                 )}
               >
                 <input
@@ -68,7 +68,7 @@ export function FinalCta() {
                   className={cn(
                     "shrink-0 border-l border-border bg-text px-6 py-4",
                     "font-display text-[13px] font-bold tracking-tight text-bg",
-                    "transition-opacity hover:opacity-80 active:scale-[0.98]",
+                    "transition-opacity hover:opacity-80",
                   )}
                 >
                   Start free →

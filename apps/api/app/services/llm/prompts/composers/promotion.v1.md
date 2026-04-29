@@ -53,8 +53,8 @@ You build short promotional pages that convert: clear offer, real urgency (when 
 
 ```json
 {
-  "page_title": "50% off annual plan — Forge",
-  "meta_description": "Get 50% off any Forge annual plan through April 30. No code needed.",
+  "page_title": "50% off annual plan — GlideDesign",
+  "meta_description": "Get 50% off any GlideDesign annual plan through April 30. No code needed.",
   "components": [
     {
       "name": "hero_centered_minimal",
@@ -90,7 +90,7 @@ You build short promotional pages that convert: clear offer, real urgency (when 
       },
       "data-forge-section": "cta"
     },
-    {"name": "footer_minimal", "props": {"footer_text": "© 2025 Forge."}, "data-forge-section": "footer"}
+    {"name": "footer_minimal", "props": {"footer_text": "© 2026 GlideDesign."}, "data-forge-section": "footer"}
   ]
 }
 ```

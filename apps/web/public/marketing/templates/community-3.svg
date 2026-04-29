@@ -1,0 +1,10 @@
+﻿<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="800" height="600" rx="44" fill="#d8c5ff"/>
+<circle cx="624" cy="132" r="108" fill="#ff3fb7" opacity="0.7"/>
+<rect x="64" y="72" width="432" height="72" rx="28" fill="#151120" opacity="0.88"/>
+<rect x="64" y="204" width="624" height="276" rx="40" fill="white" opacity="0.86"/>
+<rect x="104" y="252" width="192" height="144" rx="28" fill="#151120" opacity="0.12"/>
+<rect x="336" y="252" width="272" height="36" rx="18" fill="#6651ff" opacity="0.26"/>
+<rect x="336" y="318" width="208" height="36" rx="18" fill="#ff6e57" opacity="0.26"/>
+<text x="64" y="546" fill="#151120" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="800" letter-spacing="-2">Community 3</text>
+</svg>

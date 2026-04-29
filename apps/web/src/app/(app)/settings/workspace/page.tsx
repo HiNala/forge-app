@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
@@ -139,11 +139,11 @@ export default function WorkspaceSettingsPage() {
 
           <SettingRow
             label="URL slug"
-            hint="Used in public page URLs — forge.app/p/your-slug. Must be unique."
+            hint="Used in public page URLs — glidedesign.ai/p/your-slug. Must be unique."
           >
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <span className="shrink-0 font-body text-sm text-text-subtle">forge.app/p/</span>
+                <span className="shrink-0 font-body text-sm text-text-subtle">glidedesign.ai/p/</span>
                 <Input
                   id="ws-slug"
                   value={slug}

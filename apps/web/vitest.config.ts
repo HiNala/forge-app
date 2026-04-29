@@ -12,5 +12,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],
+    // Fork workers occasionally hang or hit timeouts on Windows under parallel load;
+    // threads pool is more reliable for local CI and dev machines.
+    pool: "threads",
+    maxConcurrency: 4,
   },
 });

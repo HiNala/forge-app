@@ -1,5 +1,8 @@
-import { redirect } from "next/navigation";
+import { CompareDetail } from "@/components/marketing/compare-detail";
+import { compareMetadata } from "@/lib/compare-pages";
 
-export default function CompareTypeformAlias() {
-  redirect("/compare/forge-vs-typeform");
+export const metadata = compareMetadata("typeform");
+
+export default function CompareTypeformPage() {
+  return <CompareDetail slug="typeform" />;
 }

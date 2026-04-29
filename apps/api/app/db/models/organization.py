@@ -36,7 +36,7 @@ class Organization(Base, UUIDPrimaryKeyMixin):
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )
     account_status: Mapped[str] = mapped_column(Text, nullable=False, server_default="active")
-    # V2 P-04 — rolling Forge Credit windows (denormalized; ledger is source of truth)
+    # V2 P-04 — rolling generation credit windows (denormalized; ledger is source of truth)
     credits_consumed_session: Mapped[int] = mapped_column(
         BigInteger, nullable=False, server_default="0"
     )

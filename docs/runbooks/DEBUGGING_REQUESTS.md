@@ -12,7 +12,7 @@ Every response includes `X-Request-ID` (also mirrored from `X-Request-ID` on the
 
 | Symptom | Likely cause | Where to look |
 |--------|----------------|---------------|
-| `401` + `detail` string | Missing/invalid `Authorization: Bearer` | Clerk JWKS / JWT expiry; test bypass headers only in `ENVIRONMENT=test` |
+| `401` + `detail` string | Missing/invalid `Authorization: Bearer` | First-party JWT secret/issuer/audience, token expiry, or test bypass headers only in `ENVIRONMENT=test` |
 | `400` + `org_not_specified` | Multi-org user without `x-forge-active-org-id` | Frontend org switcher |
 | `403` + `not_a_member` | User not in org from header | `memberships` row, invitations |
 | `429` + `rate_limited` | Redis-backed limiter (or in-process fallback) | Per-user bearer hash, per-IP for anonymous `/api/v1/*` |

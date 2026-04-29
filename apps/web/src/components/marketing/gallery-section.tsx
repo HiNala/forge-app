@@ -40,14 +40,14 @@ function GalleryCard({
       <Link
         href={href}
         className={cn(
-          "group block overflow-hidden rounded-2xl border border-border bg-surface",
+          "surface-panel group block overflow-hidden rounded-2xl",
           "transition-[transform,box-shadow,border-color] duration-200 ease-out",
-          "hover:-translate-y-1 hover:border-accent/30 hover:shadow-lg",
+          "hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-md",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
         )}
       >
         {/* Thumbnail */}
-        <div className="relative aspect-[16/9] overflow-hidden bg-bg-elevated">
+        <div className="relative aspect-video overflow-hidden bg-bg-elevated">
           {/* Gradient base */}
           <div
             className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-0"
@@ -111,7 +111,7 @@ export function GallerySection() {
         <div className="mb-14 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <span className="section-label mb-3">What you can build</span>
-            <h2 className="font-display text-[clamp(28px,3.5vw,46px)] font-bold leading-[1] tracking-tight text-text">
+          <h2 className="font-display text-[clamp(28px,3.5vw,46px)] font-bold leading-none tracking-tight text-text">
               Six examples, ready now.
             </h2>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import Link from "next/link";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { successSpring } from "@/lib/motion";
 import { markOnboardingSeen } from "@/components/chrome/onboarding-gate";
+import { forgeFallbackHex as H } from "@/lib/design/forge-html-fallback-colors";
 import { patchOrg, patchUserPreferences, postBrandLogo, putBrand } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
 import { cn } from "@/lib/utils";
@@ -63,14 +64,12 @@ const WORKFLOW_CARDS: {
 ];
 
 const CURATED_SWATCHES = [
-  "#2a9d8f",
-  "#2563eb",
-  "#7c3aed",
-  "#db2777",
-  "#ea580c",
-  "#ca8a04",
-  "#0d9488",
-  "#4b5563",
+  H.copperAccent,
+  H.emeraldData,
+  H.copperStrong,
+  H.graphiteInk,
+  H.slateCaption,
+  H.mistSecondary,
 ] as const;
 
 function greeting(): string {
@@ -106,7 +105,7 @@ export default function OnboardingPage() {
   );
   const [workspaceDraft, setWorkspaceDraft] = React.useState<string | null>(null);
   const workspaceName = workspaceDraft ?? suggested;
-  const [color, setColor] = React.useState("#2a9d8f");
+  const [color, setColor] = React.useState<string>(H.copperAccent);
   const [file, setFile] = React.useState<File | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -282,7 +281,7 @@ export default function OnboardingPage() {
                 key={c}
                 type="button"
                 className={cn(
-                  "size-10 rounded-full border-2 transition-transform hover:scale-105",
+                  "size-10 rounded-full border-2 transition-colors hover:border-accent/50",
                   color.toLowerCase() === c.toLowerCase()
                     ? "border-text ring-2 ring-offset-2 ring-offset-bg ring-accent"
                     : "border-transparent",
@@ -302,8 +301,8 @@ export default function OnboardingPage() {
               type="color"
               className={cn(
                 "h-12 w-14 cursor-pointer rounded-md border border-border bg-surface p-1",
-                "transition-transform duration-200 ease-[var(--ease-spring)]",
-                "hover:scale-[1.02] active:scale-[1.08]",
+                "transition-colors duration-200 ease-[var(--ease-standard)]",
+                "hover:border-accent",
               )}
               value={color}
               onChange={(e) => setColor(e.target.value)}
@@ -387,7 +386,7 @@ export default function OnboardingPage() {
             variants={successSpring}
             initial="hidden"
             animate="show"
-            className="flex size-16 items-center justify-center rounded-full bg-accent text-white shadow-lg"
+            className="flex size-16 items-center justify-center rounded-full bg-accent text-bg-base shadow-lg"
             aria-hidden
           >
             <Check className="size-8" strokeWidth={2.5} />

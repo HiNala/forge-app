@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class PageOut(BaseModel):
@@ -53,6 +53,20 @@ class PublishOut(BaseModel):
     public_url: str
 
 
+class PageRevisionOut(BaseModel):
+    """In-session orchestration edits (timeline)."""
+
+    id: UUID
+    created_at: datetime
+    edit_type: str
+    user_prompt: str | None = None
+    change_reason: str | None = None
+    change_kind: str | None = None
+    quality_score: float | None = None
+
+    model_config = {"from_attributes": True}
+
+
 class PageVersionOut(BaseModel):
     id: UUID
     version_number: int
@@ -70,4 +84,4 @@ class PublicPageOut(BaseModel):
     organization_slug: str
     page_id: str
     page_type: str = "landing"
-    show_forge_branding: bool = True
+    show_forge_branding: bool = Field(default=True, title="Show GlideDesign Branding")

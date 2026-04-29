@@ -33,7 +33,7 @@ def page_plan_to_assembly_plan(plan: PagePlan, intent: PageIntent) -> AssemblyPl
                 "phone": "",
             }
         elif comp == "footer-minimal":
-            props = {"footer_text": "Built with Forge"}
+            props = {"footer_text": "Built with GlideDesign"}
         elif comp == "proposal-accept-decline":
             props = {
                 "accept_label": "Accept proposal",

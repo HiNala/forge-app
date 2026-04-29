@@ -10,6 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.ai.exceptions import LLMConfigurationError
 from app.services.ai.router import completion_text
+from app.services.llm.llm_router import ROUTES, model_ids_from_route
+from app.services.llm.routing_config_service import effective_model_route
 from app.services.orchestration.html_validate import validate_section_html
 from app.services.orchestration.prompts import load_prompt
 
@@ -34,14 +36,19 @@ async def edit_section_html(
         {"role": "system", "content": system},
         {"role": "user", "content": user},
     ]
+    if db is not None:
+        route = await effective_model_route(db, None, role="section_editor", organization_id=organization_id)
+    else:
+        route = ROUTES["section_editor"]
     try:
         text, _ = await completion_text(
             messages,
             task="section_edit",
             provider=provider,
-            temperature=0.2,
+            temperature=route.temperature,
             db=db,
             organization_id=organization_id,
+            model_chain=model_ids_from_route(route) if provider is None else None,
         )
     except LLMConfigurationError:
         logger.warning("section_edit_no_llm")

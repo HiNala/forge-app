@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect } from "@playwright/test";
 
-/** Public marketing routes (Mission FE-02). Auth pages may embed Clerk; we scope exclusions if needed. */
+/** Public marketing routes (Mission FE-02). Auth pages use first-party forms. */
 const PATHS = [
   "/",
   "/pricing",

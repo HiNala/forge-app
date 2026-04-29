@@ -1,4 +1,9 @@
-"""LiteLLM-backed routing with timeouts, fallback chain, and usage metrics."""
+"""LiteLLM-backed routing with timeouts, fallback chain, and usage metrics.
+
+Production LLM provider: all calls go through LiteLLM (see routing + fallbacks below).
+Do not add separate OpenAI/Gemini SDK wrapper classes — extend role routes in
+``app.services.llm.llm_router`` and env-based model strings instead.
+"""
 
 from __future__ import annotations
 
@@ -89,6 +94,36 @@ def _model_chain(task: TaskName, provider: str | None) -> list[str]:
     return out
 
 
+def _explicit_model_chain(task: TaskName, model_chain: list[str]) -> list[str]:
+    """DB/policy route primary + fallbacks, then env fallback list (deduped)."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for m in model_chain:
+        s = (m or "").strip()
+        if s and s not in seen:
+            seen.add(s)
+            out.append(s)
+    if not out:
+        return _model_chain(task, None)
+    for m in settings.llm_fallback_model_list():
+        if m and m not in seen:
+            seen.add(m)
+            out.append(m)
+    return out
+
+
+def _resolve_completion_models(
+    task: TaskName,
+    provider: str | None,
+    model_chain: list[str] | None,
+) -> list[str]:
+    if provider is not None:
+        return _model_chain(task, provider)
+    if model_chain is not None:
+        return _explicit_model_chain(task, model_chain)
+    return _model_chain(task, None)
+
+
 def _usage_dict(response: Any) -> dict[str, Any]:
     u = getattr(response, "usage", None)
     if u is None:
@@ -118,13 +153,19 @@ async def completion_text(
     temperature: float = 0.2,
     db: AsyncSession | None = None,
     organization_id: UUID | None = None,
+    model_chain: list[str] | None = None,
 ) -> tuple[str, dict[str, Any]]:
-    """Single non-streaming completion; returns (text, usage_metadata)."""
+    """Single non-streaming completion; returns (text, usage_metadata).
+
+    When ``provider`` is set (session override), env/provider defaults drive the chain.
+    Otherwise, optional ``model_chain`` comes from ``llm_routing_policies`` (via LLMRouter).
+    """
     if not _has_any_llm_key():
         raise LLMConfigurationError("No LLM API keys configured (OPENAI / ANTHROPIC / GOOGLE)")
 
+    models = _resolve_completion_models(task, provider, model_chain)
     errors: list[str] = []
-    for model in _model_chain(task, provider):
+    for idx, model in enumerate(models):
         try:
             _ensure_keys_for_model(model)
         except LLMConfigurationError as e:
@@ -172,7 +213,7 @@ async def completion_text(
                         "completion_tokens": usage.get("completion_tokens"),
                         "latency_ms": latency_ms,
                         "cache_hit": ch,
-                        "cost_cents": None,
+                        "cost_cents": cost,
                     },
                     default=str,
                 )
@@ -196,6 +237,10 @@ async def completion_text(
                 completion_tokens=usage.get("completion_tokens"),
                 cache_hit=ch,
             )
+        if idx > 0:
+            from app.services.llm.llm_router import record_fallback_metric
+
+            record_fallback_metric(models[0], model)
         return text.strip(), meta
 
     err_detail = "; ".join(errors) if errors else "none"

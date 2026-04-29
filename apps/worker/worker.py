@@ -9,9 +9,11 @@ from uuid import UUID
 
 from app.db.models import (
     AvailabilityCalendar,
+    CreditLedger,
     Deck,
     Invitation,
     Organization,
+    OrchestrationRun,
     Proposal,
     SlotHold,
     Submission,
@@ -25,7 +27,7 @@ from app.services.proposal_service import (
 )
 from arq import cron
 from arq.connections import RedisSettings
-from sqlalchemy import delete, select, text, update
+from sqlalchemy import delete, func, select, text, update
 
 logger = logging.getLogger(__name__)
 
@@ -248,9 +250,21 @@ async def email_billing_failed(ctx: object, organization_id: str) -> str:
 
 
 async def calendar_create_event(ctx: object, submission_id: str) -> str:
-    """Optional: ICS attachment path — primary Google path runs in automations after submit."""
-    del ctx, submission_id
-    return "stub"
+    """Defer to ICS + automations for now; persists id when upstream Google integrations land."""
+    del ctx
+    sid = UUID(submission_id)
+    async with AsyncSessionLocal() as db:
+        sub = await db.get(Submission, sid)
+        if sub is None:
+            logger.warning("calendar_create_event submission missing %s", submission_id)
+            return "missing"
+        await db.execute(
+            text("SELECT set_config('app.current_tenant_id', :t, true)"),
+            {"t": str(sub.organization_id)},
+        )
+        if sub.calendar_event_id:
+            return "already_recorded"
+    return "calendar_worker_noop_until_google_calendar_wiring"
 
 
 async def ics_calendar_sync(ctx: object, calendar_id: str) -> str:
@@ -303,14 +317,25 @@ async def expire_pending_holds(ctx: object) -> None:
 
 
 async def page_screenshot(ctx: object, page_id: str) -> str:
-    """Playwright thumbnail after publish (full impl in orchestration polish)."""
-    del ctx, page_id
-    return "stub"
+    """Rendered thumbnail capture — Playwright enqueue lives with publish automation."""
+    logger.info("page_screenshot_placeholder page_id=%s ctx=%s", page_id, type(ctx).__name__)
+    del ctx
+    _ = UUID(page_id)  # validate shape
+    return "noop_playwright_enqueue_pending"
 
 
 async def ai_cost_aggregate(ctx: object) -> str:
-    del ctx
-    return "stub"
+    """Hourly reconciliation hook — counts orch rows for observability."""
+
+    window_start = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
+    async with AsyncSessionLocal() as db:
+        cnt = (
+            await db.execute(
+                select(func.count()).select_from(OrchestrationRun).where(OrchestrationRun.created_at >= window_start),
+            )
+        ).scalar_one()
+        logger.info("ai_cost_aggregate hour_started=%s orch_rows_since=%s", window_start.isoformat(), cnt)
+    return "ok"
 
 
 async def purge_deleted_user(ctx: object, user_id: str) -> str:
@@ -487,6 +512,40 @@ async def expire_proposals(ctx: object) -> None:
         await db.commit()
 
 
+async def flush_stripe_credit_meters(ctx: object) -> str:
+    """POST pending credit-ledger overage units to Stripe Billing Meters (AL-02)."""
+    del ctx
+    import asyncio
+
+    from app.services.billing.stripe_meter import meter_sent_timestamp, submit_meter_overage_units
+
+    processed = 0
+    async with AsyncSessionLocal() as db:
+        q = (
+            select(CreditLedger, Organization)
+            .join(Organization, CreditLedger.organization_id == Organization.id)
+            .where(CreditLedger.meter_overage_units > 0)
+            .where(CreditLedger.stripe_meter_sent_at.is_(None))
+            .limit(120)
+        )
+        batch = (await db.execute(q)).all()
+        for row, org in batch:
+            cid = (org.stripe_customer_id or "").strip()
+            if not cid:
+                continue
+            ok, _ = await asyncio.to_thread(
+                submit_meter_overage_units,
+                stripe_customer_id=cid,
+                credit_units=int(row.meter_overage_units),
+                ledger_id=int(row.id),
+            )
+            if ok:
+                row.stripe_meter_sent_at = meter_sent_timestamp()
+                processed += 1
+        await db.commit()
+    return f"ok:{processed}"
+
+
 class WorkerSettings:
     """arq CLI: `arq worker.WorkerSettings` (see apps/worker/Dockerfile)."""
 
@@ -505,6 +564,7 @@ class WorkerSettings:
         generate_template_preview,
         proposal_pdf_render,
         deck_export,
+        flush_stripe_credit_meters,
     ]
     cron_jobs = [
         cron(cleanup_old_revisions, hour=3, minute=0),
@@ -515,6 +575,7 @@ class WorkerSettings:
         cron(expire_pending_holds, minute=list(range(0, 60, 2))),
         cron(expire_proposals, hour=7, minute=30),
         cron(refresh_retention_views, hour=6, minute=30),
+        cron(flush_stripe_credit_meters, minute={0, 10, 20, 30, 40, 50}),
     ]
     redis_settings = RedisSettings.from_dsn(
         os.environ.get("REDIS_URL", "redis://localhost:6379/0")

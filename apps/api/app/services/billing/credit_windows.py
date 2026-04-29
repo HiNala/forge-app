@@ -1,8 +1,9 @@
-"""Rolling session (5h) and week (7d) windows for Forge Credits (P-04)."""
+"""Rolling session (5h) and week (7d) windows for generation credits (P-04)."""
 
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,7 +31,7 @@ def apply_rolling_resets_in_memory(org: Organization, *, now: datetime | None = 
         org.week_window_start = n
 
 
-async def ensure_windows(db: AsyncSession, organization_id, *, now: datetime | None = None) -> None:
+async def ensure_windows(db: AsyncSession, organization_id: UUID, *, now: datetime | None = None) -> None:
     """Load org, apply window resets, flush (caller commits)."""
     org = (await db.execute(select(Organization).where(Organization.id == organization_id))).scalar_one_or_none()
     if org is None:

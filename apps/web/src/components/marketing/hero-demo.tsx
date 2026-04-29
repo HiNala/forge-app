@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { forgeFallbackHex as H } from "@/lib/design/forge-html-fallback-colors";
 import { streamPublicDemo } from "@/lib/public-demo";
 
 const PLACEHOLDERS = [
@@ -43,7 +44,7 @@ async function loadDemoFallback(): Promise<string> {
     if (!r.ok) throw new Error(String(r.status));
     return await r.text();
   } catch {
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Forge</title></head><body style="font-family:system-ui;padding:2rem;background:#f9f7f3"><p style="color:#666">Preview sample — connect the API for live generation.</p></body></html>`;
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>GlideDesign</title></head><body style="font-family:system-ui;padding:2rem;background:${H.bone}"><p style="color:${H.slateCaption}">Preview sample — connect the API for live generation.</p></body></html>`;
   }
 }
 
@@ -241,7 +242,7 @@ export function HeroDemo() {
               <span className="size-3 rounded-full bg-success/70" />
             </span>
             <div className="mx-3 flex flex-1 items-center justify-center rounded-md bg-bg px-3 py-1">
-              <span className="font-body text-[11px] text-text-subtle">forge.app / preview</span>
+              <span className="font-body text-[11px] text-text-subtle">glidedesign.ai / preview</span>
             </div>
           </div>
           {/* Preview area */}

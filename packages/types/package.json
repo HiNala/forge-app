@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "openapi-typescript http://127.0.0.1:8000/openapi.json -o ./src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "node ../../apps/web/node_modules/typescript/lib/tsc.js -p tsconfig.json --noEmit"
   },
   "devDependencies": {
     "openapi-typescript": "^7.13.0",

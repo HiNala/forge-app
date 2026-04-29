@@ -22,13 +22,13 @@ from app.services.context.models import (
     VisionInput,
     VoiceProfile,
 )
-from app.services.vision.extract import vision_input_from_row
 from app.services.context.site_extract import (
     extract_site_brand,
     extract_site_products_stub,
     extract_site_voice_stub,
 )
 from app.services.context.urls import domain_from_email, extract_urls_from_prompt
+from app.services.vision.extract import vision_input_from_row
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +127,11 @@ async def _load_vision_for_prompt(
     )
     out: list[VisionInput] = []
     for r in rows:
+        feats = r.extracted_features
+        if feats is None:
+            from app.services.vision.extract import extract_image_features_async
+
+            feats = await extract_image_features_async(r.kind, r.mime_type)
         out.append(
             vision_input_from_row(
                 r.storage_key,
@@ -135,7 +140,7 @@ async def _load_vision_for_prompt(
                 r.width,
                 r.height,
                 r.description,
-                r.extracted_features,
+                feats,
             ),
         )
     return out

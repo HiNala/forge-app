@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { X } from "lucide-react";

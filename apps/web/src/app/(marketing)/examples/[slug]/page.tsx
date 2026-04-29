@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { getPublicTemplateBySlug, listPublicTemplateSlugs } from "@/lib/api";
 import { SITE_URL } from "@/lib/marketing-content";
+import { PUBLIC_IFRAME_SANDBOX, withPublicSrcDocSecurity } from "@/lib/public-page-html";
 
 export const revalidate = 3600;
 
@@ -24,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const t = await getPublicTemplateBySlug(slug);
     const title = `${t.name} · Example`;
     const desc =
-      t.description ?? `Preview the ${t.name} template — built with Forge.`;
+      t.description ?? `Preview the ${t.name} template — built with GlideDesign.`;
     return {
       title,
       description: desc,
@@ -96,8 +97,8 @@ export default async function ExampleDetailPage({ params }: Props) {
         <iframe
           title={`Preview: ${t.name}`}
           className="min-h-[560px] w-full border-0 bg-white"
-          sandbox="allow-scripts allow-same-origin"
-          srcDoc={t.html}
+          sandbox={PUBLIC_IFRAME_SANDBOX}
+          srcDoc={withPublicSrcDocSecurity(t.html)}
         />
       </div>
 

@@ -1,4 +1,4 @@
-"""Append-only Forge Credit charges (V2 P-04)."""
+"""Append-only generation credit charges (V2 P-04)."""
 
 from __future__ import annotations
 
@@ -46,6 +46,8 @@ class CreditLedger(Base):
     provider: Mapped[str | None] = mapped_column(Text, nullable=True)
     model: Mapped[str | None] = mapped_column(Text, nullable=True)
     cost_cents_actual: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    meter_overage_units: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    stripe_meter_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -1,0 +1,45 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="900" rx="44" fill="#DFFF57"/>
+  <circle cx="1008" cy="160" r="132" fill="#BCAEFF" opacity=".9"/>
+  <path d="M76 185c0-48 39-87 87-87h678c48 0 87 39 87 87v515c0 48-39 87-87 87H163c-48 0-87-39-87-87V185Z" fill="#151120"/>
+  <path d="M116 206c0-38 31-69 69-69h632c38 0 69 31 69 69v468c0 38-31 69-69 69H185c-38 0-69-31-69-69V206Z" fill="white"/>
+  <rect x="154" y="174" width="128" height="22" rx="11" fill="#151120"/>
+  <rect x="661" y="174" width="72" height="22" rx="11" fill="#E7DEFF"/>
+  <rect x="752" y="174" width="94" height="22" rx="11" fill="#151120"/>
+  <rect x="154" y="238" width="412" height="46" rx="16" fill="#151120"/>
+  <rect x="154" y="306" width="284" height="28" rx="14" fill="#6651FF"/>
+  <rect x="154" y="352" width="506" height="18" rx="9" fill="#151120" opacity=".16"/>
+  <rect x="154" y="382" width="438" height="18" rx="9" fill="#151120" opacity=".16"/>
+  <rect x="154" y="438" width="152" height="48" rx="24" fill="#151120"/>
+  <rect x="326" y="438" width="152" height="48" rx="24" fill="#FF6E57"/>
+  <rect x="628" y="240" width="208" height="286" rx="32" fill="#EDE8FF"/>
+  <path d="M656 448c46-92 116-149 162-170v248H656v-78Z" fill="#6651FF"/>
+  <circle cx="709" cy="337" r="50" fill="#FF6E57"/>
+  <rect x="154" y="588" width="198" height="116" rx="28" fill="#F2FFD1"/>
+  <rect x="382" y="588" width="198" height="116" rx="28" fill="#E7DEFF"/>
+  <rect x="610" y="588" width="198" height="116" rx="28" fill="#FFDED6"/>
+  <rect x="190" y="626" width="100" height="18" rx="9" fill="#151120"/>
+  <rect x="418" y="626" width="100" height="18" rx="9" fill="#151120"/>
+  <rect x="646" y="626" width="100" height="18" rx="9" fill="#151120"/>
+  <rect x="190" y="666" width="126" height="14" rx="7" fill="#151120" opacity=".22"/>
+  <rect x="418" y="666" width="126" height="14" rx="7" fill="#151120" opacity=".22"/>
+  <rect x="646" y="666" width="126" height="14" rx="7" fill="#151120" opacity=".22"/>
+  <g filter="url(#shadow)">
+    <rect x="736" y="400" width="360" height="290" rx="34" fill="#151120"/>
+    <rect x="774" y="446" width="136" height="28" rx="14" fill="#DFFF57"/>
+    <rect x="774" y="500" width="252" height="20" rx="10" fill="white" opacity=".2"/>
+    <rect x="774" y="540" width="206" height="20" rx="10" fill="white" opacity=".2"/>
+    <rect x="774" y="595" width="74" height="52" rx="18" fill="#6651FF"/>
+    <rect x="872" y="595" width="74" height="52" rx="18" fill="#FF6E57"/>
+    <rect x="970" y="595" width="74" height="52" rx="18" fill="#7DEBCB"/>
+  </g>
+  <path d="M921 713 873 592l121 47-48 22 52 52-25 25-52-52-20 27Z" fill="white" stroke="#151120" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M1034 111h73v73h-73z" fill="#FF6E57"/>
+  <path d="M1000 229c52 0 95 42 95 95h-190c0-53 43-95 95-95Z" fill="#27D07D"/>
+  <text x="76" y="846" fill="#151120" font-family="Inter, Arial, sans-serif" font-size="62" font-weight="900" letter-spacing="-3">websites that ship</text>
+  <defs>
+    <filter id="shadow" x="690" y="360" width="452" height="382" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="26" stdDeviation="18" flood-color="#151120" flood-opacity=".28"/>
+    </filter>
+  </defs>
+</svg>

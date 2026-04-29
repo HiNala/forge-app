@@ -1,9 +1,10 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { EmptyState } from "@/components/chrome/empty-state";
 import { WorkspacePageGrid } from "@/components/pages/workspace-page-grid";
 import { listPages } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
@@ -90,7 +91,7 @@ export default function PagesIndexPage() {
             type="button"
             onClick={() => setFilter(value)}
             className={cn(
-              "mb-[-1px] px-4 py-2 font-body text-[13px] transition-colors border-b-2",
+              "-mb-px border-b-2 px-4 py-2 font-body text-[13px] transition-colors",
               filter === value
                 ? "font-semibold text-text border-text"
                 : "font-medium text-text-muted border-transparent hover:text-text hover:border-border-strong",
@@ -106,25 +107,22 @@ export default function PagesIndexPage() {
 
       {/* Grid */}
       {filtered.length === 0 && filter === "all" ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface px-6 py-12 text-center">
-          <p className="font-body text-sm text-text-muted">No pages yet.</p>
-          <p className="mt-1 font-body text-xs text-text-subtle">
-            Start from Studio with a plain-English prompt.
-          </p>
-          <button
-            type="button"
-            onClick={() => router.push("/studio")}
-            className="mt-4 rounded-xl border border-border bg-bg-elevated px-4 py-2 font-body text-[13px] font-medium text-text-muted transition-colors hover:border-accent hover:text-accent"
-          >
-            Open Studio →
-          </button>
-        </div>
+        <EmptyState
+          title="Nothing here yet. Let&apos;s make something."
+          description="Start in Studio with a plain-English prompt, or browse templates when you want a polished starting point."
+          primaryAction={{ label: "Create your first page", onClick: () => router.push("/studio") }}
+          secondaryAction={{ label: "Browse templates", onClick: () => router.push("/app-templates") }}
+        />
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface px-6 py-10 text-center">
-          <p className="font-body text-sm text-text-muted">
-            No {filter === "live" ? "live" : "draft"} pages.
-          </p>
-        </div>
+        <EmptyState
+          title={`No ${filter === "live" ? "live" : "draft"} pages yet.`}
+          description={
+            filter === "live"
+              ? "Publish a draft when it is ready, and your live work will appear here."
+              : "Drafts show up here when you start something in Studio."
+          }
+          primaryAction={{ label: "Open Studio", onClick: () => router.push("/studio") }}
+        />
       ) : (
         <WorkspacePageGrid
           pages={filtered}

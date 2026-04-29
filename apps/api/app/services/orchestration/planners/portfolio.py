@@ -40,8 +40,10 @@ def plan_portfolio(intent: PageIntent, bundle: ContextBundle | None) -> PagePlan
             layout_family="card_grid",
             content_brief=(
                 f"Case study grid for {biz}. Show 2–4 project cards.{diff_str} "
-                "Each card: project name, client or industry, 1-sentence outcome, visual tag (e.g. 'Brand', 'Web', 'UI/UX'). "
-                "Make outcomes specific and results-oriented (not 'we designed a logo', but 'redesigned identity, increased brand recognition 40%')."
+                "Each card: project name, client or industry, 1-sentence outcome, "
+                "visual tag (e.g. 'Brand', 'Web', 'UI/UX'). "
+                "Make outcomes specific and results-oriented (not 'we designed a logo', "
+                "but 'redesigned identity, increased brand recognition 40%')."
             ),
         ),
         SectionSpec(

@@ -6,6 +6,35 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
+class RegisterBody(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=12, max_length=1024)
+    display_name: str | None = Field(default=None, max_length=200)
+    workspace_name: str = Field(default="My workspace", min_length=1, max_length=120)
+
+
+class LoginBody(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=1, max_length=1024)
+
+
+class RefreshBody(BaseModel):
+    refresh_token: str = Field(min_length=32, max_length=512)
+
+
+class LogoutBody(BaseModel):
+    refresh_token: str | None = Field(default=None, min_length=32, max_length=512)
+
+
+class AuthTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    refresh_token: str
+    user: UserOut
+    organization_id: UUID | None = None
+
+
 class SignupBody(BaseModel):
     workspace_name: str = Field(min_length=1, max_length=120)
 

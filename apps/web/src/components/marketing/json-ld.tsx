@@ -4,29 +4,28 @@ export function MarketingJsonLd() {
   const org = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Forge",
+    name: "GlideDesign",
     url: SITE_URL,
     description:
-      "The mini-app platform: describe a form, landing page, proposal, deck, or site. Forge builds it, hosts it, and tracks it — or hands off exports when you are ready.",
+      "GlideDesign is the AI design tool that turns plain English into product strategy, screens, code, exports, and next moves.",
+    sameAs: ["https://x.com/glidedesignai"],
   };
-  const app = {
+  const site = {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: "Forge",
-    applicationCategory: "WebApplication",
-    operatingSystem: "Web",
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "USD",
-    },
+    "@type": "WebSite",
+    name: "GlideDesign",
     url: SITE_URL,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_URL}/templates?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
   };
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify([org, app]),
+        __html: JSON.stringify([org, site]),
       }}
     />
   );

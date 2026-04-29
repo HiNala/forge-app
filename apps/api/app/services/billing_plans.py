@@ -22,6 +22,10 @@ def effective_plan(plan: str | None, *, trial_ends_at: datetime | None) -> str:
     p = (plan or "trial").lower()
     if p == "enterprise":
         return "enterprise"
+    if p == "max_20x":
+        return "max_20x"
+    if p == "max_5x":
+        return "max_5x"
     if _trial_active(trial_ends_at=trial_ends_at):
         return "pro"
     return p
@@ -29,7 +33,9 @@ def effective_plan(plan: str | None, *, trial_ends_at: datetime | None) -> str:
 
 def monthly_page_generation_limit(plan: str | None, *, trial_ends_at: datetime | None) -> int:
     p = effective_plan(plan, trial_ends_at=trial_ends_at)
-    if p == "enterprise":
+    if p == "enterprise" or p == "max_20x":
+        return settings.PAGE_GENERATION_QUOTA_PRO
+    if p == "max_5x":
         return settings.PAGE_GENERATION_QUOTA_PRO
     if p == "pro":
         return settings.PAGE_GENERATION_LIMIT_PRO
@@ -40,8 +46,10 @@ def monthly_page_generation_limit(plan: str | None, *, trial_ends_at: datetime |
 
 def monthly_submissions_limit(plan: str | None, *, trial_ends_at: datetime | None) -> int:
     p = effective_plan(plan, trial_ends_at=trial_ends_at)
-    if p == "enterprise":
+    if p in ("enterprise", "max_20x"):
         return settings.SUBMISSIONS_LIMIT_PRO * 10
+    if p == "max_5x":
+        return settings.SUBMISSIONS_LIMIT_PRO * 5
     if p == "pro":
         return settings.SUBMISSIONS_LIMIT_PRO
     if p == "starter":
@@ -51,8 +59,10 @@ def monthly_submissions_limit(plan: str | None, *, trial_ends_at: datetime | Non
 
 def team_seat_limit(plan: str | None, *, trial_ends_at: datetime | None) -> int:
     p = effective_plan(plan, trial_ends_at=trial_ends_at)
-    if p == "enterprise":
+    if p in ("enterprise", "max_20x"):
         return 1000
+    if p == "max_5x":
+        return 50
     if p == "pro":
         return 10
     if p == "starter":
@@ -62,7 +72,7 @@ def team_seat_limit(plan: str | None, *, trial_ends_at: datetime | None) -> int:
 
 def analytics_retention_days(plan: str | None, *, trial_ends_at: datetime | None) -> int:
     p = effective_plan(plan, trial_ends_at=trial_ends_at)
-    if p == "enterprise":
+    if p in ("enterprise", "max_20x", "max_5x"):
         return 365
     if p == "pro":
         return 180
@@ -71,4 +81,4 @@ def analytics_retention_days(plan: str | None, *, trial_ends_at: datetime | None
 
 def allows_custom_domain(plan: str | None, *, trial_ends_at: datetime | None) -> bool:
     p = effective_plan(plan, trial_ends_at=trial_ends_at)
-    return p in ("pro", "enterprise")
+    return p in ("pro", "enterprise", "max_5x", "max_20x")

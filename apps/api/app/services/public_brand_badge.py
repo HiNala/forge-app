@@ -1,10 +1,10 @@
-"""Optional “Made with Forge” link on public live pages (plan-gated)."""
+"""Optional “Made with GlideDesign” link on public live pages (plan-gated)."""
 
 from __future__ import annotations
 
 
 def forge_branding_visible_for_plan(plan: str | None) -> bool:
-    """Trial and starter orgs show Forge attribution; paid tiers can hide it."""
+    """Trial and starter orgs show GlideDesign attribution; paid tiers can hide it."""
     if plan is None:
         return True
     return plan in ("trial", "starter")
@@ -23,7 +23,7 @@ def inject_made_with_forge_badge(
     link = (
         f'<p class="forge-public-badge" data-forge-badge="1" '
         f'style="text-align:center;font-size:12px;opacity:0.75;margin:1.5rem 0;">'
-        f'<a href="{base}/?ref=public-{page_id}" rel="noopener noreferrer">Made with Forge</a>'
+        f'<a href="{base}/?ref=public-{page_id}" rel="noopener noreferrer">Made with GlideDesign</a>'
         f"</p>"
     )
     lowered = html.lower()

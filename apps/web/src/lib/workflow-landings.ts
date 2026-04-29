@@ -46,16 +46,16 @@ export type WorkflowLandingContent = {
 };
 
 const commonExport =
-  "Take it with you: export paths depend on the workflow (HTML, PDF, PPTX, or design handoff as we ship V2). Or keep it on Forge — hosted, tracked, updatable in one place.";
+  "Take it with you: export paths depend on the workflow (HTML, PDF, PPTX, or design handoff as we ship V2). Or keep it on GlideDesign — hosted, tracked, updatable in one place.";
 
 export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
   "web-page": {
     slug: "web-page",
     path: "/workflows/web-page",
     meta: {
-      title: "AI single web page — fast, on-brand | Forge",
+      title: "AI single web page — fast, on-brand | GlideDesign",
       description:
-        "One focused public page: clear promise, social proof, and a next step. Built in Studio with the same analytics as the rest of Forge.",
+        "One focused public page: clear promise, social proof, and a next step. Built in Studio with the same analytics as the rest of GlideDesign.",
     },
     label: "Web page",
     tileLabel: "Web page",
@@ -75,8 +75,8 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       title: "How it works",
       steps: [
         "Describe the audience, offer, and the one action you want.",
-        "Forge drafts the page; you refine language and details in Studio.",
-        "Publish a Forge link; connect DNS when the campaign is worth it.",
+        "GlideDesign drafts the page; you refine language and details in Studio.",
+        "Publish a GlideDesign link; connect DNS when the campaign is worth it.",
       ],
     },
     builtFor: {
@@ -92,7 +92,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "Workshop sign-up — date + time zone", tag: "Events" },
     ],
     faq: [
-      { q: "Is this a whole website builder?", a: "Forge is optimized for fast mini-apps and focused pages, not a WordPress-style CMS with unlimited templates." },
+      { q: "Is this a whole website builder?", a: "GlideDesign is optimized for fast mini-apps and focused pages, not a WordPress-style CMS with unlimited templates." },
       { q: "What about a multi-page site?", a: "Use the Website / web canvas flow for light IA; for a single CTA, start here first." },
     ],
     compare: {
@@ -100,7 +100,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       honest: [
         { forge: "One workflow with forms, decks, and more", other: "Great at a single static page" },
         { forge: "Language-first iteration", other: "Visual-first" },
-        { forge: "Shared analytics in Forge", other: "Varies" },
+        { forge: "Shared analytics in GlideDesign", other: "Varies" },
       ],
     },
     templatesQuery: "landing",
@@ -109,7 +109,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "mobile-app",
     path: "/workflows/mobile-app",
     meta: {
-      title: "AI mobile app design tool — screens from a prompt | Forge",
+      title: "AI mobile app design tool — screens from a prompt | GlideDesign",
       description:
         "Design mobile app screens by describing them. Prototype fast, refine by area, export when you are ready. An AI mini-app builder for product teams and founders.",
     },
@@ -121,11 +121,11 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     h1: "Design mobile app screens",
     h1Accent: "by describing them.",
     intro:
-      "No blank canvas standoff. Tell Forge what the screen is for, iterate in Studio, and export to your stack or design workflow when the concept is right.",
+      "No blank canvas standoff. Tell GlideDesign what the screen is for, iterate in Studio, and export to your stack or design workflow when the concept is right.",
     whatYouGet: [
       { title: "On-brand layouts fast", body: "Start from a short brief — login, list, settings, checkout — and get a credible first pass you can refine." },
       { title: "Refine the part you mean", body: "Click a region and direct changes there so you are not rewriting the whole screen every time." },
-      { title: "Export on your terms", body: "Hand off to Figma or code paths as we complete V2 exports — the hosted preview stays on Forge for reviews." },
+      { title: "Export on your terms", body: "Hand off to Figma or code paths as we complete V2 exports — the hosted preview stays on GlideDesign for reviews." },
     ],
     howItWorks: {
       title: "How it works",
@@ -149,10 +149,10 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "Studio booking — time picker", tag: "Scheduling" },
     ],
     faq: [
-      { q: "Is this a full mobile app builder?", a: "No — Forge targets screens and small flows for speed and handoff, not a native app backend." },
-      { q: "Do I need design skills?", a: "You need a point of view on what the screen should do. Forge handles structure and a sensible first layout." },
+      { q: "Is this a full mobile app builder?", a: "No — GlideDesign targets screens and small flows for speed and handoff, not a native app backend." },
+      { q: "Do I need design skills?", a: "You need a point of view on what the screen should do. GlideDesign handles structure and a sensible first layout." },
       { q: "What about Android vs iOS?", a: "You can steer the look in prompts; platform-specific export is part of the ongoing canvas roadmap (V2-P02/P03)." },
-      { q: "Can I replace Figma for production UI?", a: "Figma is still the system-of-record for deep design work. Forge wins when you would rather describe than draw the first pass." },
+      { q: "Can I replace Figma for production UI?", a: "Figma is still the system-of-record for deep design work. GlideDesign wins when you would rather describe than draw the first pass." },
     ],
     compare: {
       vs: "Figma for ideation",
@@ -167,7 +167,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "website",
     path: "/workflows/website",
     meta: {
-      title: "AI website & web page builder — multi-page, responsive | Forge",
+      title: "AI website and multi-page mini-app canvas | GlideDesign",
       description:
         "Prototype a simple website: responsive layouts, clear IA, and a live link. An AI mini-app platform alternative to one-off static builders.",
     },
@@ -179,7 +179,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     h1: "Websites and pages",
     h1Accent: "from a clear brief.",
     intro:
-      "Multi-page or focused landing: describe the audience, the offer, and the next step. Forge builds a navigable first version you refine like any other mini-app.",
+      "Multi-page or focused landing: describe the audience, the offer, and the next step. GlideDesign builds a navigable first version you refine like any other mini-app.",
     whatYouGet: [
       { title: "Sensible information architecture", body: "Home, pricing, about, contact — the boring pages, done with taste so you are not pasting lorem." },
       { title: "Responsive by default", body: "Desktop first with awareness for smaller breakpoints as the canvas work lands (V2-P03)." },
@@ -189,8 +189,8 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       title: "How it works",
       steps: [
         "Describe the site: who it is for, what they should do, and what must be on the page.",
-        "Forge drafts pages and structure; you refine copy and layout in plain language.",
-        "Publish to a Forge link or export when the project matures (export matrix on /handoff).",
+        "GlideDesign drafts pages and structure; you refine copy and layout in plain language.",
+        "Publish to a GlideDesign link or export when the project matures (export matrix on /handoff).",
       ],
     },
     builtFor: {
@@ -207,7 +207,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "Consulting — case study + CTA", tag: "Services" },
     ],
     faq: [
-      { q: "Is this WordPress?", a: "No. Forge is for fast, opinionated first versions and handoff — not a plugin ecosystem or arbitrary CMS." },
+      { q: "Is this WordPress?", a: "No. GlideDesign is for fast, opinionated first versions and handoff — not a plugin ecosystem or arbitrary CMS." },
       { q: "Can I use my own domain?", a: "Yes on paid plans where custom domains are enabled; check pricing for the tier that includes DNS." },
       { q: "What about e-commerce checkout?", a: "We focus on the story, lead capture, and handoff. Heavy carts are not the core promise in v1." },
     ],
@@ -224,9 +224,9 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "contact-form",
     path: "/workflows/contact-form",
     meta: {
-      title: "AI form builder with booking & analytics | Forge",
+      title: "AI form builder with booking & analytics | GlideDesign",
       description:
-        "A Typeform- and Calendly-class alternative: branded forms, optional scheduling, submissions in one inbox. Part of the Forge mini-app platform.",
+        "A Typeform- and Calendly-class alternative: branded forms, optional scheduling, submissions in one inbox. Part of the GlideDesign mini-app platform.",
     },
     label: "Contact & booking",
     tileLabel: "Contact form",
@@ -236,17 +236,17 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     h1: "Stop phone tag",
     h1Accent: "with customers.",
     intro:
-      "Describe the fields you need — Forge generates a hosted, on-brand page. Connect calendars in Settings so bookings land where you already work.",
+      "Describe the fields you need — GlideDesign generates a hosted, on-brand page. Connect calendars in Settings so bookings land where you already work.",
     whatYouGet: [
       { title: "Lead capture tuned to you", body: "The questions your business needs — not a generic form dump." },
       { title: "Optional pick-a-time scheduling", body: "Keep one link; fewer round trips." },
-      { title: "Inbox + analytics", body: "Responses and page metrics in the same place you run everything else in Forge." },
+      { title: "Inbox + analytics", body: "Responses and page metrics in the same place you run everything else in GlideDesign." },
     ],
     howItWorks: {
       title: "How it works",
       steps: [
         "List what you need to know and whether booking matters.",
-        "Forge builds the first version; you refine wording and field order in Studio.",
+        "GlideDesign builds the first version; you refine wording and field order in Studio.",
         "Publish, share, and let submissions notify you the way you already work.",
       ],
     },
@@ -264,8 +264,8 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "Dentist — new patient + insurance", tag: "Health" },
     ],
     faq: [
-      { q: "Do I need a separate booking tool?", a: "Forge keeps the form and hand-off together; you connect a calendar in Settings for availability." },
-      { q: "Is this a Typeform clone?", a: "If you need enterprise survey logic, Typeform can still be right. Forge wins on branded, fast pages with Forge analytics in one account." },
+      { q: "Do I need a separate booking tool?", a: "GlideDesign keeps the form and hand-off together; you connect a calendar in Settings for availability." },
+      { q: "Is this a Typeform clone?", a: "If you need enterprise survey logic, Typeform can still be right. GlideDesign wins on branded, fast pages with GlideDesign analytics in one account." },
       { q: "Can I change the form later?", a: "Yes — open the page in Studio and refine in plain language." },
     ],
     compare: {
@@ -282,7 +282,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "proposal",
     path: "/workflows/proposal",
     meta: {
-      title: "AI proposal generator — track opens & exports | Forge",
+      title: "AI proposal generator — track opens & exports | GlideDesign",
       description:
         "Send professional proposals and quotes. Read tracking, clear CTAs, PDF export. Compared to PandaDoc for speed, not for legal CLM features.",
     },
@@ -298,13 +298,13 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     whatYouGet: [
       { title: "Structured pricing and line items", body: "Show options without turning it into a spreadsheet email." },
       { title: "Client decisions in one place", body: "Questions and next steps live with the offer." },
-      { title: "Read tracking in Forge", body: "Know who opened which section from Page Detail — where enabled." },
+      { title: "Read tracking in GlideDesign", body: "Know who opened which section from Page Detail — where enabled." },
     ],
     howItWorks: {
       title: "How it works",
       steps: [
         "Summarize the job, the options, and what “yes” means.",
-        "Forge lays out a readable proposal; you refine tone and details.",
+        "GlideDesign lays out a readable proposal; you refine tone and details.",
         "Send a link; follow up with context from read activity when available.",
       ],
     },
@@ -322,14 +322,14 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "Retainer — clear scope, clear price", tag: "Agency" },
     ],
     faq: [
-      { q: "Is this legally binding?", a: "Forge helps you present terms; your counsel defines enforceability." },
-      { q: "PandaDoc already works for us", a: "PandaDoc shines at CLM and enterprise approvals. Forge aims at speed to a first client-ready page and honest read tracking in Forge." },
+      { q: "Is this legally binding?", a: "GlideDesign helps you present terms; your counsel defines enforceability." },
+      { q: "PandaDoc already works for us", a: "PandaDoc shines at CLM and enterprise approvals. GlideDesign aims at speed to a first client-ready page and honest read tracking in GlideDesign." },
     ],
     compare: {
       vs: "PandaDoc or Proposify",
       honest: [
         { forge: "Fast draft from a short brief", other: "Workflows around approvals and redlines" },
-        { forge: "Same handoff and analytics frame as the rest of Forge", other: "Contract-centric feature depth" },
+        { forge: "Same handoff and analytics frame as the rest of GlideDesign", other: "Contract-centric feature depth" },
       ],
     },
     templatesQuery: "proposal",
@@ -338,7 +338,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "pitch-deck",
     path: "/workflows/pitch-deck",
     meta: {
-      title: "AI pitch deck generator — web-native, export to PPTX | Forge",
+      title: "AI pitch deck generator — web-native, export to PPTX | GlideDesign",
       description:
         "Turn a story into a presentable deck. An AI alternative to static Canva deck templates for founders who need structure fast.",
     },
@@ -350,7 +350,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     h1: "Your narrative,",
     h1Accent: "one slide at a time.",
     intro:
-      "Describe the arc you need — Forge composes a web-native, scrollable deck with presenter-friendly structure and export paths from Page Detail when you need PPTX or PDF.",
+      "Describe the arc you need — GlideDesign composes a web-native, scrollable deck with presenter-friendly structure and export paths from Page Detail when you need PPTX or PDF.",
     whatYouGet: [
       { title: "Story, not just decoration", body: "Headline flow that matches how investors and customers actually read." },
       { title: "Per-slide polish in language", body: "Refine a slide without retyping the whole deck." },
@@ -394,9 +394,9 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "landing-page",
     path: "/workflows/landing-page",
     meta: {
-      title: "AI landing page generator — hosted, on-brand | Forge",
+      title: "AI landing page generator — hosted, on-brand | GlideDesign",
       description:
-        "One-page marketing sites: hero, social proof, and a clear CTA. A Carrd- and Lander-class option inside the Forge mini-app platform.",
+        "One-page marketing sites: hero, social proof, and a clear CTA. A Carrd- and Lander-class option inside the GlideDesign mini-app platform.",
     },
     label: "Landing page",
     tileLabel: "Landing page",
@@ -406,7 +406,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     h1: "One page,",
     h1Accent: "one job.",
     intro:
-      "Product launch, event, waitlist, or service — describe the promise and the next step. Forge gives you a fast hosted page you can track like every other mini-app. " + commonExport,
+      "Product launch, event, waitlist, or service — describe the promise and the next step. GlideDesign gives you a fast hosted page you can track like every other mini-app. " + commonExport,
     whatYouGet: [
       { title: "Hero, proof, and CTA that agree", body: "A single story instead of a kitchen-sink layout." },
       { title: "On-brand the first time", body: "Your brand kit, not a random gradient pack." },
@@ -416,7 +416,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       title: "How it works",
       steps: [
         "Say who it is for, what they get, and what to click next.",
-        "Forge composes layout and copy; you tighten claims and add specifics.",
+        "GlideDesign composes layout and copy; you tighten claims and add specifics.",
         "Ship the link; iterate after real traffic, not guessing.",
       ],
     },
@@ -434,8 +434,8 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "Webinar sign-up — date + time zone", tag: "Events" },
     ],
     faq: [
-      { q: "Carrd already does this", a: "Carrd is great for simple sites. Forge adds a shared Studio for forms, decks, and more — and one analytics story." },
-      { q: "Do I need a domain on day one?", a: "You can start on a Forge link and connect DNS when the campaign deserves it." },
+      { q: "Carrd already does this", a: "Carrd is great for simple sites. GlideDesign adds a shared Studio for forms, decks, and more — and one analytics story." },
+      { q: "Do I need a domain on day one?", a: "You can start on a GlideDesign link and connect DNS when the campaign deserves it." },
     ],
     compare: {
       vs: "Carrd or a marketing landing builder",
@@ -450,7 +450,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "link-in-bio",
     path: "/workflows/link-in-bio",
     meta: {
-      title: "Link in bio — prettier than Linktree, tracked in Forge | Forge",
+      title: "Link in bio — prettier than Linktree, tracked in GlideDesign | GlideDesign",
       description:
         "One mini-page of links, media, and email capture for your social profile. Branding, analytics, and a single hosted link.",
     },
@@ -473,7 +473,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       steps: [
         "Describe you, your offer, and the links you want above the fold.",
         "Review the first layout; add or reorder blocks in plain language.",
-        "Drop the one Forge link in your profile and iterate after real traffic.",
+        "Drop the one GlideDesign link in your profile and iterate after real traffic.",
       ],
     },
     builtFor: {
@@ -489,14 +489,14 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "Musician — tour + store", tag: "Creative" },
     ],
     faq: [
-      { q: "Is this just Linktree?", a: "Same category, different trade-offs: deeper Forge stack (forms, decks) and a consistent analytics model." },
-      { q: "Can I use my own domain?", a: "Yes on plans that include custom DNS — the link still renders from your Forge org." },
+      { q: "Is this just Linktree?", a: "Same category, different trade-offs: deeper GlideDesign stack (forms, decks) and a consistent analytics model." },
+      { q: "Can I use my own domain?", a: "Yes on plans that include custom DNS — the link still renders from your GlideDesign org." },
     ],
     compare: {
       vs: "Linktree, Beacons, Stan",
       honest: [
-        { forge: "Tied to your whole Forge account", other: "Mature, link-first category tools" },
-        { forge: "You describe; Forge composes the page", other: "You drag, duplicate, and theme" },
+        { forge: "Tied to your whole GlideDesign account", other: "Mature, link-first category tools" },
+        { forge: "You describe; GlideDesign composes the page", other: "You drag, duplicate, and theme" },
         { forge: "Deeper when you outgrow a single list", other: "Fastest to a plain list" },
       ],
     },
@@ -506,8 +506,8 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "event-rsvp",
     path: "/workflows/event-rsvp",
     meta: {
-      title: "Event RSVP page — no spreadsheets | Forge",
-      description: "A hosted invite with RSVP, guest questions, and responses in your Forge inbox. Compared to social-only invites and generic forms.",
+      title: "Event RSVP page — no spreadsheets | GlideDesign",
+      description: "A hosted invite with RSVP, guest questions, and responses in your GlideDesign inbox. Compared to social-only invites and generic forms.",
     },
     label: "Event RSVP",
     tileLabel: "Event RSVP",
@@ -521,13 +521,13 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     whatYouGet: [
       { title: "A real invite, not a bare form", body: "Date, time, and what to expect — before the questions." },
       { title: "Field mix you control", body: "Dietary, plus-ones, and custom questions when you need them." },
-      { title: "Responses in one inbox", body: "Same notifications story as the rest of Forge." },
+      { title: "Responses in one inbox", body: "Same notifications story as the rest of GlideDesign." },
     ],
     howItWorks: {
       title: "How it works",
       steps: [
         "Name the event, the vibe, and what you must know from guests.",
-        "Forge composes a hosted RSVP; you tune wording in Studio.",
+        "GlideDesign composes a hosted RSVP; you tune wording in Studio.",
         "Share a link; track activity without chasing screenshots.",
       ],
     },
@@ -544,13 +544,13 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "All-hands — lunch preference", tag: "Work" },
     ],
     faq: [
-      { q: "Partiful already exists", a: "If you need heavy social design, that can be right. Forge wins when you want one brand system and exports across forms, decks, and more." },
-      { q: "Eventbrite-style ticketing?", a: "Forge is not a full box office. For most private events, a focused RSVP is enough." },
+      { q: "Partiful already exists", a: "If you need heavy social design, that can be right. GlideDesign wins when you want one brand system and exports across forms, decks, and more." },
+      { q: "Eventbrite-style ticketing?", a: "GlideDesign is not a full box office. For most private events, a focused RSVP is enough." },
     ],
     compare: {
       vs: "Partiful, Paperless Post, Eventbrite",
       honest: [
-        { forge: "Single Forge workspace for the rest of your pages", other: "Event-specific polish and features" },
+        { forge: "Single GlideDesign workspace for the rest of your pages", other: "Event-specific polish and features" },
         { forge: "Faster to a branded hosted page from language", other: "More setup for a themed invite" },
       ],
     },
@@ -560,7 +560,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "menu",
     path: "/workflows/menu",
     meta: {
-      title: "Online menu for restaurants and services | Forge",
+      title: "Online menu for restaurants and services | GlideDesign",
       description: "A phone-friendly food or service menu you can link from Instagram and QR. Compared to PDF menus and POS microsites you did not have time to learn.",
     },
     label: "Menu / services",
@@ -575,13 +575,13 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     whatYouGet: [
       { title: "Readable on phones", body: "Short lines, big category headers, and space for the details that matter." },
       { title: "Room for dietary and upsells", body: "Callouts for specials, pairings, or add-ons when you have them." },
-      { title: "Same org as the rest of Forge", body: "Your logo and colors, not a random PDF export." },
+      { title: "Same org as the rest of GlideDesign", body: "Your logo and colors, not a random PDF export." },
     ],
     howItWorks: {
       title: "How it works",
       steps: [
         "Describe the kind of business and how many sections you need.",
-        "Forge produces a first menu layout; you refine items and copy.",
+        "GlideDesign produces a first menu layout; you refine items and copy.",
         "Share a link or QR; update prices without a file chase.",
       ],
     },
@@ -598,14 +598,14 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "Salon — cut + color packages", tag: "Services" },
     ],
     faq: [
-      { q: "We already have Toast or Square", a: "Point-of-sale systems win at orders. Forge is for a fast, shareable, branded public menu page when you do not need a full ordering stack." },
+      { q: "We already have Toast or Square", a: "Point-of-sale systems win at orders. GlideDesign is for a fast, shareable, branded public menu page when you do not need a full ordering stack." },
       { q: "Do you sync prices?", a: "In v1 you edit in Studio. Treat it as a fast front-of-house surface." },
     ],
     compare: {
       vs: "Toast, Square, or Instagram-only menus",
       honest: [
         { forge: "Speed from a text brief", other: "Deeper when already on the stack" },
-        { forge: "Same handoff and analytics with other Forge pages", other: "Often separate tools" },
+        { forge: "Same handoff and analytics with other GlideDesign pages", other: "Often separate tools" },
       ],
     },
     templatesQuery: "menu",
@@ -614,18 +614,18 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "survey",
     path: "/workflows/survey",
     meta: {
-      title: "Surveys on a branded page — NPS, CSAT, research | Forge",
-      description: "A hosted survey you can link anywhere — with Forge analytics, not a separate login.",
+      title: "Surveys on a branded page — NPS, CSAT, research | GlideDesign",
+      description: "A hosted survey you can link anywhere — with GlideDesign analytics, not a separate login.",
     },
     label: "Survey",
     tileLabel: "Survey",
-    heroHighlight: "Typeform-weight questions, Forge-weight iteration speed.",
+    heroHighlight: "Typeform-weight questions, GlideDesign-weight iteration speed.",
     workflowQuery: "survey",
     sectionLabel: "Surveys",
     h1: "Surveys that",
     h1Accent: "people actually finish.",
     intro:
-      "Long surveys fail on phones. Forge aims at tight question sets, clear steps, and copy that does not feel like HR homework. " + commonExport,
+      "Long surveys fail on phones. GlideDesign aims at tight question sets, clear steps, and copy that does not feel like HR homework. " + commonExport,
     whatYouGet: [
       { title: "A survey that is still a page", body: "Brand context matters — respondents see you, not a random URL." },
       { title: "Field mix for real research", body: "Ratings, single choice, and one honest open end." },
@@ -635,8 +635,8 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       title: "How it works",
       steps: [
         "Name the study, audience, and what decision the answers will drive.",
-        "Forge composes a first pass; you sharpen wording in Studio.",
-        "Share a link; read responses in Forge and iterate the survey like any other page.",
+        "GlideDesign composes a first pass; you sharpen wording in Studio.",
+        "Share a link; read responses in GlideDesign and iterate the survey like any other page.",
       ],
     },
     builtFor: {
@@ -652,7 +652,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "Event feedback in 4 questions", tag: "Events" },
     ],
     faq: [
-      { q: "Typeform is the default", a: "If you need deep logic trees and enterprise data residency, that can be right. Forge is for a hosted, branded, fast first version inside your existing Forge work." },
+      { q: "Typeform is the default", a: "If you need deep logic trees and enterprise data residency, that can be right. GlideDesign is for a hosted, branded, fast first version inside your existing GlideDesign work." },
       { q: "Do you support 50-question research?", a: "You can, but the composer nudges toward what mobile respondents tolerate." },
     ],
     compare: {
@@ -669,7 +669,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "quiz",
     path: "/workflows/quiz",
     meta: {
-      title: "Quizzes and product finders that convert | Forge",
+      title: "Quizzes and product finders that convert | GlideDesign",
       description: "Outcome quizzes and light knowledge checks on a single hosted page, with a Studio workflow behind them.",
     },
     label: "Quiz",
@@ -690,7 +690,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       title: "How it works",
       steps: [
         "Describe the audience, possible outcomes, and the decision you are driving.",
-        "Forge drafts the quiz flow; you tune tone and order.",
+        "GlideDesign drafts the quiz flow; you tune tone and order.",
         "Publish a link; pair with a simple ad or email to learn fast.",
       ],
     },
@@ -707,13 +707,13 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "Style quiz for a course", tag: "Education" },
     ],
     faq: [
-      { q: "Is this Interact or Outgrow?", a: "Those are strong when quizzes are your product. Forge is a fast, hosted quiz inside a broader page system." },
+      { q: "Is this Interact or Outgrow?", a: "Those are strong when quizzes are your product. GlideDesign is a fast, hosted quiz inside a broader page system." },
       { q: "What about proctoring?", a: "Not the goal. This is a marketing and recommendation surface, not an exam product." },
     ],
     compare: {
       vs: "Outgrow, Interact, Typeform quizzes",
       honest: [
-        { forge: "Faster from prompt to a live page in Forge", other: "Deeper logic + analytics for quiz-first teams" },
+        { forge: "Faster from prompt to a live page in GlideDesign", other: "Deeper logic + analytics for quiz-first teams" },
         { forge: "The rest of your site lives next door", other: "Separate login and plan" },
       ],
     },
@@ -723,8 +723,8 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "coming-soon",
     path: "/workflows/coming-soon",
     meta: {
-      title: "Waitlist and coming soon pages | Forge",
-      description: "Pre-launch capture with a single clear promise — and the same handoff as every other Forge page.",
+      title: "Waitlist and coming soon pages | GlideDesign",
+      description: "Pre-launch capture with a single clear promise — and the same handoff as every other GlideDesign page.",
     },
     label: "Coming soon",
     tileLabel: "Coming soon",
@@ -744,7 +744,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       title: "How it works",
       steps: [
         "Name the product, the audience, and what early supporters get.",
-        "Forge composes a coming-soon page; you tune tone and CTA in Studio.",
+        "GlideDesign composes a coming-soon page; you tune tone and CTA in Studio.",
         "Swap to a real landing when you launch — or iterate this page into it.",
       ],
     },
@@ -761,7 +761,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "Shop opening with date window", tag: "Retail" },
     ],
     faq: [
-      { q: "Carrd already does a coming-soon", a: "Carrd is great at a one-off page. Forge is for the moment that page becomes one of many assets in a single org." },
+      { q: "Carrd already does a coming-soon", a: "Carrd is great at a one-off page. GlideDesign is for the moment that page becomes one of many assets in a single org." },
       { q: "Countdowns and referrals?", a: "The composer nudges toward copy that can grow into those — wire-up depth depends on the roadmap." },
     ],
     compare: {
@@ -777,7 +777,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "gallery",
     path: "/workflows/gallery",
     meta: {
-      title: "Photography and design portfolio | Forge",
+      title: "Photography and design portfolio | GlideDesign",
       description: "Image-forward portfolio pages with a structured inquiry form — for photographers, designers, and makers.",
     },
     label: "Gallery / portfolio",
@@ -798,7 +798,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       title: "How it works",
       steps: [
         "Name your field, the kind of work, and the next step for a client.",
-        "Forge sets up hero + grid + form; you refine in Studio with specifics.",
+        "GlideDesign sets up hero + grid + form; you refine in Studio with specifics.",
         "Share a link to bookers, art directors, or local leads.",
       ],
     },
@@ -815,14 +815,14 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
       { caption: "UI kit — 4 case cards", tag: "Design" },
     ],
     faq: [
-      { q: "Squarespace or Format?", a: "Those are strong, site-first hosts. Forge targets a live page fast inside a broader workstream — not a full personal site product." },
+      { q: "Squarespace or Format?", a: "Those are strong, site-first hosts. GlideDesign targets a live page fast inside a broader workstream — not a full personal site product." },
       { q: "Print sales?", a: "The roadmap can extend into commerce; v1 is lead capture and proof." },
     ],
     compare: {
       vs: "Squarespace, Format, Adobe Portfolio",
       honest: [
         { forge: "Speed from a short brief in Studio", other: "Deeper long-run site features" },
-        { forge: "Same org as the rest of Forge", other: "Isolated site builder account" },
+        { forge: "Same org as the rest of GlideDesign", other: "Isolated site builder account" },
       ],
     },
     templatesQuery: "galleries",
@@ -831,7 +831,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     slug: "resume",
     path: "/workflows/resume",
     meta: {
-      title: "Resume and personal site — better than a PDF | Forge",
+      title: "Resume and personal site — better than a PDF | GlideDesign",
       description: "A scannable, mobile-friendly resume page with projects and contact — in your brand system.",
     },
     label: "Resume / site",
@@ -846,13 +846,13 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     whatYouGet: [
       { title: "Readable structure", body: "Experience, impact, and skills in an order you control." },
       { title: "Project proof", body: "A few tight cards beat ten anonymous bullets." },
-      { title: "A link you are not ashamed to send", body: "Consistent with the rest of your public Forge pages when you have them." },
+      { title: "A link you are not ashamed to send", body: "Consistent with the rest of your public GlideDesign pages when you have them." },
     ],
     howItWorks: {
       title: "How it works",
       steps: [
         "Tell us the role, the industries, and the three wins you need visible.",
-        "Forge drafts a first pass; you refine in Studio for nuance and accuracy.",
+        "GlideDesign drafts a first pass; you refine in Studio for nuance and accuracy.",
         "Send a link; export paths mature on the handoff page where enabled.",
       ],
     },
@@ -875,7 +875,7 @@ export const WORKFLOW_LANDINGS: Record<WorkflowSlug, WorkflowLandingContent> = {
     compare: {
       vs: "Notion, About.me, Squarespace",
       honest: [
-        { forge: "Fast, opinionated page in Forge", other: "Long-running personal site feature depth" },
+        { forge: "Fast, opinionated page in GlideDesign", other: "Long-running personal site feature depth" },
         { forge: "Same org as the rest of your work", other: "Separate toolchains" },
       ],
     },
@@ -892,13 +892,17 @@ export function getWorkflowLanding(slug: string): WorkflowLandingContent | null 
 
 export function workflowMetadata(slug: WorkflowSlug): Metadata {
   const w = WORKFLOW_LANDINGS[slug];
+  const title = w.meta.title.replaceAll("generation credits", "generation credits").replaceAll("GlideDesign", "GlideDesign");
+  const description = w.meta.description
+    .replaceAll("generation credits", "generation credits")
+    .replaceAll("GlideDesign", "GlideDesign");
   return {
-    title: w.meta.title,
-    description: w.meta.description,
+    title,
+    description,
     alternates: { canonical: w.path },
     openGraph: {
-      title: w.meta.title,
-      description: w.meta.description,
+      title,
+      description,
     },
   };
 }

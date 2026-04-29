@@ -4,11 +4,12 @@ import { formatDistanceToNow } from "date-fns";
 import { Check, Copy, ExternalLink, Mail, Link as LinkIcon, Bell } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { listPageSubmissions, getPageAutomations } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
+import { forgeFallbackHex as H } from "@/lib/design/forge-html-fallback-colors";
 import { usePageDetail } from "@/providers/page-detail-provider";
 
 const FORM_TYPES = new Set(["booking-form", "contact-form", "rsvp", "booking", "contact"]);
@@ -120,7 +121,7 @@ export default function PageShareTab() {
             className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 font-body text-[12px] font-semibold transition-all"
             style={{
               background: copied ? "var(--color-success)" : "var(--color-text)",
-              color: copied ? "#fff" : "var(--color-bg)",
+              color: copied ? H.white : "var(--color-bg)",
               border: copied ? "1px solid transparent" : "none",
               opacity: !publicUrl ? 0.4 : 1,
               cursor: !publicUrl ? "not-allowed" : "pointer",

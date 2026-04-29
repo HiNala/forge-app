@@ -105,7 +105,7 @@ class EmailService:
             "org_name": org_name,
             "page_title": page_title,
             "submission_summary": submission_summary,
-            "primary_color": primary_color or "#2563eb",
+            "primary_color": primary_color or "#6651ff",
             "logo_url": logo_url,
             "voice_note": voice_note or "",
         }
@@ -136,7 +136,7 @@ class EmailService:
             "subject_line": subject_line,
             "body_html": body_html,
             "body_text": body_plain,
-            "primary_color": primary_color or "#2563eb",
+            "primary_color": primary_color or "#6651ff",
             "logo_url": logo_url,
         }
         html, text = _render_pair("confirmation", ctx)
@@ -164,7 +164,7 @@ class EmailService:
         ctx = {
             "subject_line": subject_line,
             "body_text": body_text,
-            "primary_color": primary_color or "#2563eb",
+            "primary_color": primary_color or "#6651ff",
             "logo_url": logo_url,
         }
         html, text = _render_pair("reply", ctx)
@@ -195,13 +195,13 @@ class EmailService:
         ctx = {
             "org_name": org_name,
             "cta_url": cta_url or "",
-            "primary_color": primary_color or "#2563eb",
+            "primary_color": primary_color or "#6651ff",
             "logo_url": logo_url,
         }
         html, text = _render_pair("invitation", ctx)
         return await _send_raw(
             to=[to_email],
-            subject=f"You're invited to {org_name} on Forge (mini-app platform)",
+            subject=f"You're invited to {org_name} on GlideDesign",
             html=html,
             text=text,
         )

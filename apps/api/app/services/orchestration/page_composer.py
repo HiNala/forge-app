@@ -98,7 +98,7 @@ def render_section(sec: SectionPlan, *, form_action: str, section_id: str) -> st
         t = _read("footer-minimal")
         return Template(t).substitute(
             section_id=sid,
-            footer_text=_escape(str(props.get("footer_text", "Built with Forge"))),
+            footer_text=_escape(str(props.get("footer_text", "Built with GlideDesign"))),
         )
 
     if name == "proposal-accept-decline":
@@ -225,7 +225,7 @@ def default_assembly_plan(intent: PageIntent) -> AssemblyPlan:
     sections.append(
         SectionPlan(
             component="footer-minimal",
-            props={"footer_text": "Built with Forge"},
+            props={"footer_text": "Built with GlideDesign"},
         )
     )
     primary = "#2563EB"

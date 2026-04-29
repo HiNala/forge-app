@@ -2,9 +2,9 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Menu, Search } from "lucide-react";
+import { Bell, Menu, Moon, Search, Sun } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { useCommandPalette } from "@/contexts/command-palette-context";
@@ -14,12 +14,13 @@ import { SessionUsageBattery } from "@/components/usage/session-usage-battery";
 import { Sidebar } from "@/components/chrome/sidebar";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/theme/theme-provider";
 
 function breadcrumbFromPath(pathname: string): string[] | null {
   const parts = pathname.split("/").filter(Boolean);
   if (parts.length <= 1) return null;
   const labels = parts.map((p) =>
-    p.length > 24 ? `${p.slice(0, 21)}…` : p.replace(/-/g, " "),
+    p.length > 24 ? `${p.slice(0, 21)}...` : p.replace(/-/g, " "),
   );
   return labels.map((s) => s.charAt(0).toUpperCase() + s.slice(1));
 }
@@ -38,7 +39,7 @@ function MobileNavCluster({
         <SheetTrigger asChild>
           <button
             type="button"
-            className="inline-flex size-10 items-center justify-center rounded-md border border-border bg-surface text-text transition-[transform,box-shadow] duration-[80ms] ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.97] md:hidden"
+            className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-surface text-text shadow-sm transition-[transform,box-shadow] duration-[80ms] ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.97] md:hidden"
             aria-label="Open menu"
           >
             <Menu className="size-5" />
@@ -55,7 +56,7 @@ function MobileNavCluster({
       </Sheet>
       <button
         type="button"
-        className="inline-flex size-10 items-center justify-center rounded-md border border-border bg-surface text-text transition-[transform,box-shadow] duration-[80ms] ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.97] md:hidden"
+        className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-surface text-text shadow-sm transition-[transform,box-shadow] duration-[80ms] ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.97] md:hidden"
         aria-label="Open search and commands"
         onClick={() => openCommand(true)}
       >
@@ -73,6 +74,8 @@ export function TopBar({ className }: { className?: string }) {
   const { getToken } = useAuth();
   const isMobile = useMediaQuery("(max-width: 767px)");
   const { activeOrganizationId } = useForgeSession();
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "glidedesign-dark";
 
   const unread = useQuery({
     queryKey: ["notifications-unread", activeOrganizationId],
@@ -84,7 +87,7 @@ export function TopBar({ className }: { className?: string }) {
   return (
     <header
       className={cn(
-        "flex h-14 shrink-0 items-center gap-3 border-b border-border bg-bg/90 px-3 backdrop-blur-sm md:px-6",
+        "flex h-16 shrink-0 items-center gap-3 border-b border-border bg-bg/92 px-3 backdrop-blur-md md:px-6",
         className,
       )}
     >
@@ -94,7 +97,7 @@ export function TopBar({ className }: { className?: string }) {
 
       <div className="min-w-0 flex-1">
         {crumbs?.length ? (
-          <nav aria-label="Breadcrumb" className="truncate font-body text-sm text-text-muted">
+          <nav aria-label="Breadcrumb" className="truncate font-body text-sm font-semibold text-text-muted">
             {crumbs.map((c, i) => (
               <span key={`${c}-${i}`}>
                 {i > 0 ? <span className="mx-1.5 text-text-subtle">/</span> : null}
@@ -109,7 +112,7 @@ export function TopBar({ className }: { className?: string }) {
         )}
       </div>
 
-      <div className="mx-auto hidden max-w-[480px] flex-1 md:block">
+      <div className="mx-auto hidden max-w-[560px] flex-1 md:block">
         <div className="relative">
           <Search
             className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-subtle"
@@ -118,8 +121,8 @@ export function TopBar({ className }: { className?: string }) {
           <Input
             readOnly
             aria-label="Open command palette"
-            placeholder="Search pages, submissions, people (⌘K)"
-            className="h-10 cursor-pointer pl-9"
+            placeholder="Search pages, templates, settings, actions"
+            className="h-11 cursor-pointer rounded-full pl-10 pr-16"
             onFocus={() => openCommand(true)}
             onClick={() => openCommand(true)}
           />
@@ -128,16 +131,24 @@ export function TopBar({ className }: { className?: string }) {
 
       <div className="flex shrink-0 items-center gap-2 md:gap-3">
         <SessionUsageBattery />
+        <button
+          type="button"
+          className="rounded-full p-2.5 text-text-muted hover:bg-accent-tint hover:text-accent"
+          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          onClick={() => setTheme(isDark ? "glidedesign-light" : "glidedesign-dark")}
+        >
+          {isDark ? <Sun className="size-5" /> : <Moon className="size-5" />}
+        </button>
         <Sheet open={notifOpen} onOpenChange={setNotifOpen}>
           <SheetTrigger asChild>
             <button
               type="button"
-              className="relative rounded-md p-2 text-text-muted hover:bg-bg-elevated hover:text-text"
+            className="relative rounded-full p-2.5 text-text-muted hover:bg-accent-tint hover:text-accent"
               aria-label="Notifications"
             >
               <Bell className="size-5" />
               {(unread.data?.count ?? 0) > 0 ? (
-                <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-danger" />
+                <span className="absolute top-1.5 right-1.5 size-2.5 rounded-full bg-[image:var(--brand-gradient)]" />
               ) : null}
             </button>
           </SheetTrigger>
@@ -149,7 +160,7 @@ export function TopBar({ className }: { className?: string }) {
                 release.
               </SheetDescription>
             </SheetHeader>
-            <p className="mt-6 text-sm text-text-muted font-body">
+            <p className="mt-6 rounded-[20px] border border-border bg-surface p-4 text-sm text-text-muted font-body">
               You&apos;re all caught up for the last 24 hours.
             </p>
           </SheetContent>

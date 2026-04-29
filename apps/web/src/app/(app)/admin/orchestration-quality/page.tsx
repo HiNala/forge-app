@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 
 import { adminOrchestrationQuality, type OrchestrationQualityOut } from "@/lib/api";
 import { useForgeSession } from "@/providers/session-provider";
@@ -33,7 +33,7 @@ export default function OrchestrationQualityPage() {
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <h1 className="font-display text-2xl font-bold tracking-tight text-text">Orchestration quality</h1>
       <p className="text-sm text-text-muted">
-        Aggregates from persisted review runs (Mission O-04). Requires Forge operator access.
+        Aggregates from persisted review runs. Requires GlideDesign operator access.
       </p>
       {err && <p className="text-sm text-danger">{err}</p>}
       {data && (

@@ -1,6 +1,6 @@
 /**
  * Mission FE-06 — E2E placeholders.
- * Full flows need Clerk session + API + Stripe test mode. Run locally with:
+ * Full flows need a first-party auth session + API + Stripe test mode. Run locally with:
  * - PLAYWRIGHT_BASE_URL + signed-in storageState, or
  * - CI secrets for forge_test_headers equivalent in browser.
  */

@@ -16,7 +16,7 @@ import {
 import { patchPage, type PageOut } from "@/lib/api";
 import { getWorkflowSurfaceConfig } from "@/lib/workflow-config";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useForgeSession } from "@/providers/session-provider";
 
 function StatusDot({ status }: { status: string }) {
@@ -55,7 +55,7 @@ function PageThumbnail({ page }: { page: PageOut }) {
 
   return (
     <div
-      className="relative h-[156px] overflow-hidden rounded-t-2xl"
+      className="relative h-[180px] overflow-hidden rounded-t-[28px]"
       style={{ background: `linear-gradient(135deg, ${palette.from} 0%, var(--bg-elevated) 70%)` }}
     >
       {src ? (
@@ -138,16 +138,16 @@ export function DashboardPageCard({
       <Link
         href={`/pages/${page.id}`}
         className={cn(
-          "block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mid",
+          "block rounded-[28px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mid",
           keyboardFocused && "ring-2 ring-accent-mid ring-offset-2 ring-offset-bg",
         )}
       >
         <div
           className={cn(
-            "flex flex-col overflow-hidden rounded-2xl border bg-surface transition-all duration-[240ms] ease-out motion-reduce:transition-none",
+            "flex flex-col overflow-hidden rounded-[28px] border border-border bg-surface shadow-md transition-all duration-240 ease-out motion-reduce:transition-none",
             hovered
-              ? "border-border-strong shadow-lg -translate-y-0.5 motion-reduce:translate-y-0 motion-reduce:shadow-md"
-              : "border-border shadow-sm",
+              ? "-translate-y-0.5 border-border-strong shadow-md motion-reduce:translate-y-0 motion-reduce:shadow-sm"
+              : "",
           )}
         >
           <div className="relative">
@@ -156,7 +156,7 @@ export function DashboardPageCard({
               <div className="absolute right-2 top-2 flex gap-1">
                 <button
                   type="button"
-                  className="rounded-lg bg-white/95 p-1.5 text-text shadow-md backdrop-blur hover:bg-white"
+                  className="rounded-lg border border-border/60 bg-surface/95 p-1.5 text-text shadow-md backdrop-blur transition-colors hover:bg-bg-raised"
                   aria-label="Edit in Studio"
                   onClick={onEdit}
                 >
@@ -164,7 +164,7 @@ export function DashboardPageCard({
                 </button>
                 <button
                   type="button"
-                  className="rounded-lg bg-white/95 p-1.5 text-text shadow-md backdrop-blur hover:bg-white"
+                  className="rounded-lg border border-border/60 bg-surface/95 p-1.5 text-text shadow-md backdrop-blur transition-colors hover:bg-bg-raised"
                   aria-label="Open live"
                   onClick={openLive}
                 >
@@ -174,7 +174,7 @@ export function DashboardPageCard({
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="rounded-lg bg-white/95 p-1.5 text-text shadow-md backdrop-blur hover:bg-white"
+                      className="rounded-lg border border-border/60 bg-surface/95 p-1.5 text-text shadow-md backdrop-blur transition-colors hover:bg-bg-raised"
                       aria-label="More actions"
                       onClick={(e) => e.preventDefault()}
                     >
@@ -211,13 +211,13 @@ export function DashboardPageCard({
               </div>
             ) : null}
             {unread > 0 ? (
-              <span className="absolute left-2 top-2 min-w-6 rounded-full bg-accent px-2 py-0.5 text-center text-[11px] font-bold text-white shadow">
+              <span className="absolute left-2 top-2 min-w-6 rounded-full bg-accent px-2 py-0.5 text-center text-[11px] font-bold text-white shadow-sm">
                 {unread > 99 ? "99+" : unread}
               </span>
             ) : null}
           </div>
           <div className="flex flex-col gap-1 px-3.5 py-3">
-            <p className="font-display text-[15px] font-bold leading-tight tracking-tight text-text line-clamp-2">
+            <p className="text-h4 line-clamp-2 text-text">
               {page.title}
             </p>
             <div className="flex items-center gap-2 text-[11px] text-text-muted font-body">

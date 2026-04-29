@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { motion } from "framer-motion";
 import { ShieldAlert } from "lucide-react";
 import * as React from "react";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 const ADMIN_TABS = [
   { href: "/admin/overview", label: "Overview" },
   { href: "/admin/overview/pulse", label: "Pulse" },
+  { href: "/admin/patterns", label: "Patterns" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/orgs", label: "Organizations" },
   { href: "/admin/llm", label: "LLM" },
@@ -57,21 +58,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-6xl">
       {/* Admin header */}
-      <div className="mb-6 flex items-center gap-2">
-        <span className="rounded-md bg-danger/10 px-2 py-0.5 font-body text-xs font-bold uppercase tracking-wide text-danger">
+      <div className="mb-6 rounded-[32px] bg-marketing-ink p-6 text-white shadow-lg">
+        <span className="rounded-full bg-white/10 px-3 py-1 font-body text-xs font-bold uppercase tracking-wide text-white">
           Admin
         </span>
-        <p className="font-body text-xs text-text-muted">
-          Platform control panel — restricted to{" "}
+        <p className="mt-3 font-body text-sm text-white/70">
+          GlideDesign platform control panel — restricted to{" "}
           {sessionQ.data.platform_roles.join(", ") || "admins"}
         </p>
       </div>
 
       {/* Tab navigation */}
-      <nav className="-mx-1 mb-8 overflow-x-auto" aria-label="Admin sections">
-        <ul className="flex min-w-max gap-0.5 border-b border-border pb-px">
+      <nav className="mb-8 overflow-x-auto rounded-[24px] border border-border bg-surface p-2 shadow-sm" aria-label="Admin sections">
+        <ul className="flex min-w-max gap-1">
           {ADMIN_TABS.map((tab) => {
             const active =
               tab.href === "/admin/overview"
@@ -82,16 +83,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link
                   href={tab.href}
                   className={cn(
-                    "relative inline-flex min-h-10 items-center px-3.5 py-2 font-body text-sm font-medium whitespace-nowrap transition-colors duration-100",
+                    "relative inline-flex min-h-10 items-center rounded-full px-3.5 py-2 font-body text-sm font-semibold whitespace-nowrap transition-colors duration-100",
                     active
-                      ? "text-text"
-                      : "text-text-muted hover:text-text",
+                      ? "bg-[image:var(--brand-gradient)] text-white"
+                      : "text-text-muted hover:bg-accent-tint hover:text-accent",
                   )}
                 >
                   {active && (
                     <motion.span
                       layoutId="admin-tab-indicator"
-                      className="absolute inset-x-1 -bottom-px h-0.5 rounded-full bg-danger"
+                      className="absolute inset-0 rounded-full bg-[image:var(--brand-gradient)]"
                       transition={{ type: "spring", stiffness: 420, damping: 35 }}
                     />
                   )}

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { PrimitivesShowcase } from "@/app/dev/primitives/primitives-showcase";
 
 export const metadata = {
-  title: "Design system | Forge",
+  title: "Design system | GlideDesign",
   robots: { index: false, follow: false },
 };
 

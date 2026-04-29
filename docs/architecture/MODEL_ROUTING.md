@@ -10,7 +10,12 @@
 
 ## Resolution
 
-`effective_model_route(db, redis, role=..., organization_id=...)` in `routing_config_service.py` merges platform + org policy and caches by `(version, org, role)`. `structured_completion` uses the resolved `ModelRoute` for **temperature** (and future primary/fallback model selection in `ai.router` when wired end-to-end).
+`effective_model_route(db, redis, role=..., organization_id=...)` in `routing_config_service.py` merges platform + org policy and caches by `(version, org, role)`.
+
+**Precedence**
+
+1. **Session provider** — When Studio passes an explicit `provider` (user toggle), `ai.router.completion_text` uses env + provider default map + `LLM_FALLBACK_MODELS` only (same as before). Policy rows do not override the model id in that case.
+2. **Otherwise** — `structured_completion`, `completion_with_cost`, and `section_editor` pass `model_chain` built from the resolved route’s `primary_model` and `fallbacks`, then append env `LLM_FALLBACK_MODELS` entries (deduped). Route **temperature** applies in `structured_completion` and `section_editor`.
 
 ## Audit
 
@@ -22,4 +27,4 @@ Schema columns: `auto_route_cost_aware`, `cold_start_runs` on `llm_routing_polic
 
 ## Failover
 
-Provider failover remains in `app/services/ai/router.py` (LiteLLM chain); policy `fallbacks` JSONB lists `{ "provider", "model" }` for future use when primary selection moves from env to policy rows.
+`app/services/ai/router.py` tries models in order; on success after the first model, `record_fallback_metric` logs primary vs model used. Policy `fallbacks` JSONB lists `{ "provider", "model" }`; the **model** string is what LiteLLM receives (same as `primary_model`).

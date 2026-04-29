@@ -28,11 +28,11 @@ const PLANS: Plan[] = [
     monthly: 0,
     annualYearlyUsd: null,
     annualNote: "",
-    blurb: "For trying Forge.",
+    blurb: "For trying GlideDesign.",
     features: [
       "1 published mini-app · 50 submissions / mo",
-      "50 Forge Credits per 5 h session · 200 / week",
-      "Basic analytics · “Made with Forge” badge",
+      "50 generation credits per 5 h session · 200 / week",
+      "Basic analytics · “Made with GlideDesign” badge",
       "1 concurrent generation",
     ],
     highlight: false,
@@ -47,7 +47,7 @@ const PLANS: Plan[] = [
     blurb: "For most makers.",
     features: [
       "25 published mini-apps · 5,000 submissions / mo",
-      "500 Forge Credits per session · 5,000 / week",
+      "500 generation credits per session · 5,000 / week",
       "1 custom domain · 3 seats · full analytics",
       "2 concurrent generations",
     ],
@@ -64,7 +64,7 @@ const MAX_5X = {
   planSlug: "max_5x" as const,
   features: [
     "100 published mini-apps · 50,000 submissions / mo",
-    "2,500 Forge Credits per session · 25,000 / week",
+    "2,500 generation credits per session · 25,000 / week",
     "10 custom domains · 10 seats · priority generation",
     "5 concurrent generations",
   ],
@@ -78,7 +78,7 @@ const MAX_20X = {
   planSlug: "max_20x" as const,
   features: [
     "500 published mini-apps · 250,000 submissions / mo",
-    "10,000 Forge Credits per session · 100,000 / week",
+    "10,000 generation credits per session · 100,000 / week",
     "Unlimited domains · 25 seats · highest throughput",
     "15 concurrent generations",
   ],
@@ -86,7 +86,7 @@ const MAX_20X = {
 
 function UsageExplainer() {
   return (
-    <section className="border-t border-border bg-bg-elevated/30 py-14 sm:py-16">
+    <section className="border-t border-border bg-bg-elevated/25 py-14 sm:py-16">
       <Container max="lg">
         <div className="max-w-2xl">
           <span className="section-label">Usage</span>
@@ -94,14 +94,14 @@ function UsageExplainer() {
             Session budgets and a weekly cap — shown as honest percentage bars
           </h2>
           <p className="mt-3 font-body text-sm font-light leading-relaxed text-text-muted">
-            On Pro you get 500 Forge Credits per rolling 5-hour session (5,000 per week). That is about 100 single-page
+            On Pro you get 500 generation credits per rolling 5-hour session (5,000 per week). That is about 100 single-page
             generations or many more small region edits. Max 5x multiplies that to 2,500 per session; Max 20x to 10,000
             — built for daily heavy use.
           </p>
         </div>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           <div
-            className="rounded-2xl border border-border bg-surface p-5 shadow-sm"
+            className="surface-panel rounded-2xl p-5"
             role="img"
             aria-label="Illustrative Pro session usage at about 40 percent"
           >
@@ -112,7 +112,7 @@ function UsageExplainer() {
             <p className="mt-2 font-body text-xs text-text-muted">40% used — 500 credit session pool</p>
           </div>
           <div
-            className="rounded-2xl border border-border bg-surface p-5 shadow-sm"
+            className="surface-panel rounded-2xl p-5"
             role="img"
             aria-label="Illustrative Max 5x weekly usage at about 30 percent"
           >
@@ -131,10 +131,10 @@ function UsageExplainer() {
 function ComparisonTable({ maxVariant }: { maxVariant: "5x" | "20x" }) {
   const maxCol = maxVariant === "5x" ? "max5" : "max20";
   return (
-    <div className="overflow-x-auto rounded-2xl border border-border">
+    <div className="overflow-x-auto rounded-2xl border border-border/80 bg-surface shadow-sm">
       <table className="w-full min-w-[560px] border-collapse font-body text-sm">
         <thead>
-          <tr className="border-b border-border bg-bg-elevated">
+          <tr className="border-b border-border bg-bg-elevated/80">
             <th className="px-5 py-3.5 text-left font-semibold text-text">Feature</th>
             <th className="px-5 py-3.5 text-left font-semibold text-text">Free</th>
             <th className="px-5 py-3.5 text-left font-semibold text-accent">Pro</th>
@@ -148,8 +148,8 @@ function ComparisonTable({ maxVariant }: { maxVariant: "5x" | "20x" }) {
             <tr
               key={row.feature}
               className={cn(
-                "border-b border-border last:border-0",
-                i % 2 === 0 ? "bg-surface" : "bg-bg",
+                "border-b border-border/80 last:border-0",
+                i % 2 === 0 ? "bg-surface" : "bg-bg/60",
               )}
             >
               <td className="px-5 py-3 font-medium text-text">{row.feature}</td>
@@ -180,7 +180,7 @@ export function PricingPageClient() {
 
   return (
     <>
-      <section className="border-b border-border pb-16 pt-20 sm:pb-20 sm:pt-28">
+      <section className="border-b border-border bg-linear-to-b from-bg to-bg-elevated/25 pb-16 pt-20 sm:pb-20 sm:pt-28">
         <Container max="xl">
           <div className="max-w-[48ch]">
             <span className="section-label mb-4">Pricing</span>
@@ -188,12 +188,12 @@ export function PricingPageClient() {
               Free, Pro, Max.
             </h1>
             <p className="mt-5 font-body text-lg font-light leading-relaxed text-text-muted">
-              Free, Pro, and Max (5x and 20x capacity). Prices match the published billing model; Forge Credits keep
+              Free, Pro, and Max (5x and 20x capacity). Prices match the published billing model; generation credits keep
               limits understandable.
             </p>
           </div>
 
-          <div className="mt-10 inline-flex items-center gap-1 rounded-full border border-border bg-surface p-1">
+          <div className="mt-10 inline-flex items-center gap-1 rounded-full border border-border/80 bg-surface/85 p-1 shadow-sm backdrop-blur">
             <button
               type="button"
               onClick={() => setAnnual(false)}
@@ -231,13 +231,15 @@ export function PricingPageClient() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                   className={cn(
-                    "relative flex flex-col rounded-2xl border p-8",
-                    plan.highlight ? "border-accent bg-text text-bg shadow-xl" : "border-border bg-surface shadow-sm",
+                    "relative flex flex-col rounded-2xl border p-8 transition-[transform,box-shadow,border-color] duration-200",
+                    plan.highlight
+                      ? "border-accent/50 bg-text text-bg shadow-xl"
+                      : "surface-panel hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md",
                   )}
                 >
                   {plan.highlight && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="inline-block rounded-full bg-accent px-3 py-0.5 font-body text-[11px] font-semibold text-bg">
+                      <span className="inline-block rounded-full bg-accent px-3 py-0.5 font-body text-[11px] font-semibold text-white shadow-sm">
                         Most popular
                       </span>
                     </div>
@@ -341,11 +343,11 @@ export function PricingPageClient() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="relative flex flex-col rounded-2xl border border-border bg-surface p-8 shadow-sm"
+              className="surface-panel interaction-lift relative flex flex-col rounded-2xl p-8"
             >
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="font-display text-lg font-bold text-text-muted">Max</p>
-                <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-bg-elevated p-0.5 text-[11px] font-medium">
+                <div className="inline-flex items-center gap-0.5 rounded-full border border-border/80 bg-bg-elevated/80 p-0.5 text-[11px] font-medium">
                   <button
                     type="button"
                     onClick={() => setMaxVariant("5x")}
@@ -404,7 +406,7 @@ export function PricingPageClient() {
             Need SSO, custom contracts, or a larger org billing setup?{" "}
             <a
               className="font-medium text-accent underline-offset-4 hover:underline"
-              href="mailto:hello@forge.app?subject=Forge%20team%20pricing"
+              href="mailto:hello@glidedesign.ai?subject=GlideDesign%20team%20pricing"
             >
               Contact us
             </a>
@@ -433,7 +435,7 @@ export function PricingPageClient() {
         <Container max="xl">
           <div className="mb-10">
             <span className="section-label mb-3">Billing questions</span>
-            <h2 className="font-display text-[clamp(24px,3vw,38px)] font-bold leading-[1] tracking-tight text-text">
+            <h2 className="font-display text-[clamp(24px,3vw,38px)] font-bold leading-none tracking-tight text-text">
               Straight answers.
             </h2>
           </div>

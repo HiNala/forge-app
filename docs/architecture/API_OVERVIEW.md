@@ -2,7 +2,7 @@
 
 **Base paths**
 
-- **Versioned JSON API:** `/api/v1/...` — requires `Authorization: Bearer` (Clerk JWT or `forge_live_*` API token) unless marked public below.
+- **Versioned JSON API:** `/api/v1/...` — requires `Authorization: Bearer` (GlideDesign JWT or `forge_live_*` API token) unless marked public below.
 - **Tenant context:** `x-forge-active-org-id` (or `x-forge-tenant-id` / `x-active-org`) on authenticated, org-scoped routes. See [REQUEST_PIPELINE.md](./REQUEST_PIPELINE.md).
 - **Public browser pages (pretty URLs):** `/p/{org_slug}/{page_slug}/...` — submit, track, booking, proposal flows (no org header; org resolved from URL + page lookup).
 - **Health / ops:** `/health/*`, `/metrics` — unauthenticated where deployed.
@@ -19,7 +19,7 @@
 
 | Product area | Router package / prefix | Notes |
 |----------------|-------------------------|--------|
-| Auth, me, preferences, switch org, Clerk webhook | `app/api/v1/auth.py` `/auth` | Signup creates user+org via `ensure_user_org_signup`; `DELETE /auth/me` schedules `purge_deleted_user` |
+| Auth, me, preferences, switch org | `app/api/v1/auth.py` `/auth` | Register/login/refresh/logout plus Google OAuth; `DELETE /auth/me` schedules `purge_deleted_user` |
 | Organization, brand, settings, custom domains, API tokens | `app/api/v1/organization.py` `/org` | “Current org” = tenant from header |
 | Team: members, invites, accept token | `app/api/v1/team.py` `/team` | Accept uses `app.invitation_token` RLS escape hatch |
 | Pages, publish, versions, CSV export | `app/api/v1/pages.py` `/pages` | Submissions also under `/pages/{id}/submissions` |

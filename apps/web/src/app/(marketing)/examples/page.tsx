@@ -7,11 +7,11 @@ import { SITE_URL } from "@/lib/marketing-content";
 export const metadata: Metadata = {
   title: "Examples",
   description:
-    "Hand-picked template previews — booking, RSVP, menus, proposals, and more built with Forge.",
+    "Hand-picked template previews — booking, RSVP, menus, proposals, and more built with GlideDesign.",
   alternates: { canonical: "/examples" },
   openGraph: {
-    title: "Examples · Forge",
-    description: "See what Forge generates for real use cases.",
+    title: "Examples · GlideDesign",
+    description: "See what GlideDesign generates for real use cases.",
     url: `${SITE_URL}/examples`,
     type: "website",
   },
@@ -48,7 +48,7 @@ export default function ExamplesPage() {
             Ready to build yours?
           </h2>
           <p className="mx-auto mt-4 max-w-[40ch] font-body text-base font-light text-text-muted">
-            Describe what you need in plain language. Forge builds and hosts it in seconds.
+            Describe what you need in plain language. GlideDesign builds and hosts it in seconds.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
@@ -30,8 +30,9 @@ import {
   patchPage,
   publishPage,
 } from "@/lib/api";
+import { forgeFallbackHex as H } from "@/lib/design/forge-html-fallback-colors";
+import { PUBLIC_IFRAME_SANDBOX, withPublicSrcDocSecurity } from "@/lib/public-page-html";
 import { getWorkflowSurfaceConfig } from "@/lib/workflow-config";
-import { ensureBridgeInFullDocument } from "@/lib/studio-preview-html";
 import { cn } from "@/lib/utils";
 import { PageDetailProvider } from "@/providers/page-detail-provider";
 import { useForgeSession } from "@/providers/session-provider";
@@ -234,10 +235,9 @@ export default function PageDetailLayout({
       ? `${origin}/p/${activeOrg.organization_slug}/${p.slug}`
       : "";
 
-  const previewSrc = ensureBridgeInFullDocument(
-    p.current_html || "<p style='font-family:sans-serif;padding:2rem;color:#888'>No content yet.</p>",
-    origin,
-  );
+  const previewSrc =
+    p.current_html ||
+    `<p style='font-family:sans-serif;padding:2rem;color:${H.previewMuted}'>No content yet.</p>`;
 
   function openLive() {
     if (!publicUrl) return;
@@ -273,9 +273,9 @@ export default function PageDetailLayout({
           {/* Chrome bar */}
           <div className="flex h-11 shrink-0 items-center gap-2 border-b border-border bg-surface px-3.5">
             <div className="flex gap-1.5 shrink-0" aria-hidden>
-              <span className="size-2.5 rounded-full bg-[#ff5f57]" />
-              <span className="size-2.5 rounded-full bg-[#febc2e]" />
-              <span className="size-2.5 rounded-full bg-[#28c840]" />
+              <span className="size-2.5 rounded-full bg-danger/70" />
+              <span className="size-2.5 rounded-full bg-warning/80" />
+              <span className="size-2.5 rounded-full bg-success/75" />
             </div>
             <div className="flex flex-1 items-center gap-1.5 overflow-hidden rounded-md border border-border bg-bg-elevated px-2.5 py-1 min-w-0">
               <svg
@@ -294,7 +294,7 @@ export default function PageDetailLayout({
                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
               </svg>
               <span className="truncate font-body text-[11px] text-text-muted">
-                {publicUrl || "forge.page/preview"}
+                {publicUrl || "glidedesign.ai/preview"}
               </span>
             </div>
             <button
@@ -321,8 +321,8 @@ export default function PageDetailLayout({
             title="Page preview"
             aria-label="Live page preview"
             className="flex-1 w-full border-0 bg-white"
-            srcDoc={previewSrc}
-            sandbox="allow-forms allow-same-origin allow-scripts"
+            srcDoc={withPublicSrcDocSecurity(previewSrc)}
+            sandbox={PUBLIC_IFRAME_SANDBOX}
           />
         </div>
 
@@ -378,7 +378,7 @@ export default function PageDetailLayout({
                       (tabRefs.current as Record<string, HTMLElement | null>)[t.href] = el;
                     }}
                     className={cn(
-                      "relative mb-[-1px] inline-flex items-center gap-1 px-3 py-2 font-body text-[12px] transition-colors",
+                      "relative -mb-px inline-flex items-center gap-1 px-3 py-2 font-body text-[12px] transition-colors",
                       t.active
                         ? "font-semibold text-text"
                         : "font-medium text-text-muted hover:text-text",
@@ -397,7 +397,7 @@ export default function PageDetailLayout({
                         className="relative z-10 rounded-md px-1.5 py-px text-[9px] font-bold"
                         style={{
                           background: "var(--color-accent)",
-                          color: "#fff",
+                          color: H.white,
                         }}
                       >
                         {t.badge}

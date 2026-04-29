@@ -1,24 +1,25 @@
-# Orchestration debugging (V2 P-05+)
+# Orchestration debugging runbook
 
-## Symptom: region edit changed content outside the marquee
+## Reading a run
 
-1. Check `orchestration_runs` for the run id; confirm `unscoped_drift` flags when wired.
-2. Recompute fingerprints: `region_hash.hash_outside_region` before/after HTML in a REPL.
-3. If drift-fix refiner ran, logs contain `drift_repair`.
+1. **Database** — `orchestration_runs` row: `intent`, `plan`, `node_timings`, `review_findings`, optional `agent_calls`, `four_layer_output`, `status`, `total_duration_ms`.
+2. **Embeds** — When BP-01 runs, `review_findings` may include `bp01_agent_calls` and `bp01_four_layer` alongside O-04 review data.
+3. **Studio** — Toggle `USE_PRODUCT_ORCHESTRATOR=true` and watch SSE: `orchestration.phase`, `orchestration.judge`, `orchestration.four_layer`, then `html.complete` with `four_layer`.
 
-## Symptom: vision / attachment ignored
+## Quality regressions
 
-1. Verify `studio_attachments` row exists for `storage_key` and same `user_id` / `organization_id` as the request.
-2. Confirm generate body includes `vision_attachment_ids` and `gather_context` logged `vision_inputs` length > 0.
-3. For PDFs, ensure worker rasterization completed (`extracted_features` populated).
+1. Check `review_findings.quality_score` (O-04) vs BP-01 `orchestration.judge` payload in SSE.
+2. Re-run `pytest apps/api/tests/test_bp01_judge_rules.py` after changing `judge_rules.py`.
+3. Compare `node_timings` keys `bp01_*` vs wall time in `total_duration_ms`.
 
-## Symptom: wrong model or temperature after admin change
+## Tuning prompts
 
-1. `INCR forge:llm_routing:version` should bump; API pods reload policy on next `effective_model_route` call.
-2. Query `llm_routing_policies` for the org and role.
-3. If Redis unavailable, in-process cache may lag until version key appears — restart API or wait for TTL-free clear (cache bounded).
+1. Edit versioned files under `apps/api/app/services/orchestration/prompts/agents/*.v1.md`.
+2. Keep JSON schema alignment with Pydantic models in `product_brain/schemas.py`.
+3. Run API tests; add or extend fixtures under `tests/orchestration/fixtures/`.
 
-## Symptom: plan mode stuck / cancelled
+## Cost / latency
 
-1. Check background tasks for the plan id (future: plan execution id in `orchestration_runs` metadata).
-2. User cancellation should skip subsequent steps; completed steps’ artifacts remain in `pages` / `page_revisions`.
+- Bounded calls: `OrchestratorState.agent_calls` length (cap 14).
+- Wall time: `RunBudget.max_wall_time_seconds` in orchestrator.
+- Credits: Studio uses a pessimistic placeholder when the product orchestrator is on; adjust when per-run estimates exist.

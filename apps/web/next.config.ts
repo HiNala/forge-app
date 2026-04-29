@@ -18,11 +18,11 @@ const nextConfig: NextConfig = {
   async headers() {
     const csp =
       "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://clerk.forge.app; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; " +
       "style-src 'self' 'unsafe-inline'; " +
       "img-src 'self' blob: data: https:; " +
       "font-src 'self'; " +
-      "connect-src 'self' https://api.stripe.com https://clerk.forge.app; " +
+      "connect-src 'self' https://api.stripe.com; " +
       "frame-src https://js.stripe.com; " +
       "frame-ancestors 'none';";
     return [

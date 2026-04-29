@@ -1,6 +1,7 @@
 "use client";
 
-import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
+import { useAuth } from "@/providers/forge-auth-provider";
+import { Handle, Position, useStore, type Node, type NodeProps } from "@xyflow/react";
 import { MoreHorizontal, Pencil, Copy, Trash2, Home, Link2 } from "lucide-react";
 import * as React from "react";
 import { createPortal } from "react-dom";
@@ -12,11 +13,16 @@ import {
   type WebBreakpointSpec,
 } from "@/lib/web-canvas-viewports";
 import { getWebFontStacks } from "@/lib/web-canvas-fonts";
+import { hitsFromNodeIds, MIN_ELEMENT_PICK_ZOOM, pickTargetEl } from "@/lib/forge-preview-hit";
+import { duplicateForgeNodesInHtml, removeForgeNodesFromHtml } from "@/lib/mobile-screen-html-mutate";
 import { collectForgeHits, marqueeCoverageRatio, type ForgeTaggedHit } from "@/lib/web-marquee-hit";
 import { normalizeWebPath } from "@/lib/web-canvas-nav-graph";
+import { useLastOrchestrationRunId } from "@/hooks/use-last-orchestration-run";
+import { useForgeSession } from "@/providers/session-provider";
 import { useWebCanvasStore } from "./web-canvas-store";
 import type { WebBrowserNodeData, WebCanvasFocusBreakpoint } from "./types";
 import { cn } from "@/lib/utils";
+import { forgeFallbackHex as FP } from "@/lib/design/forge-html-fallback-colors";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -35,7 +41,28 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ArtifactFeedbackStrip } from "@/components/feedback/artifact-feedback-strip";
 import { toast } from "sonner";
+
+function isKeyEventFromEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+}
+
+/** True when activating this link should run internal nav (do not hijack for element pick). */
+function isCrossPageInternalLink(target: HTMLElement, pagePath: string): boolean {
+  const a = target.closest("a[href]");
+  if (!(a instanceof HTMLAnchorElement)) return false;
+  const href = a.getAttribute("href")?.trim() ?? "";
+  if (!href || href.startsWith("#")) return false;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(href)) return false;
+  const pathOnly = href.split(/[?#]/)[0] ?? href;
+  const norm = normalizeWebPath(pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`);
+  const selfPath = normalizeWebPath(pagePath);
+  return norm !== selfPath;
+}
 
 function rowEmphasis(
   focus: WebCanvasFocusBreakpoint,
@@ -46,17 +73,17 @@ function rowEmphasis(
 }
 
 function MacChrome({ url, theme }: { url: string; theme: "light" | "dark" }) {
-  const bar = theme === "dark" ? "bg-[#2d2d30]" : "bg-[#e8e8e6]";
-  const border = theme === "dark" ? "border-white/10" : "border-black/8";
+  const bar = theme === "dark" ? "bg-surface-dark" : "bg-bg-elevated";
+  const border = theme === "dark" ? "border-white/10" : "border-border";
   const text = theme === "dark" ? "text-white/50" : "text-black/45";
   return (
     <div
       className={cn("flex h-8 w-full max-w-full shrink-0 items-center gap-2 border-b px-2", bar, border)}
     >
       <div className="flex gap-1 pl-0.5" aria-hidden>
-        <span className="size-2.5 rounded-full bg-[#ff5f57]" />
-        <span className="size-2.5 rounded-full bg-[#febc2e]" />
-        <span className="size-2.5 rounded-full bg-[#28c840]" />
+        <span className="size-2.5 rounded-full bg-danger/70" />
+        <span className="size-2.5 rounded-full bg-warning/80" />
+        <span className="size-2.5 rounded-full bg-success/75" />
       </div>
       <div
         className={cn(
@@ -109,6 +136,12 @@ type WebPreviewRowProps = {
   focusBreakpoint: WebCanvasFocusBreakpoint;
   /** Called when a marquee gesture completes or is cancelled */
   onRefineOpen: (s: RefineState | null) => void;
+  interactionZoomOk: boolean;
+  selectedNodeIds: string[];
+  setSelectedNodeIds: React.Dispatch<React.SetStateAction<string[]>>;
+  commitPreviewHtml: (nextHtml: string) => void;
+  /** Only this row shows the element FAB when all breakpoints are visible */
+  isPrimarySelectionRow: boolean;
 };
 
 function WebPreviewRow({
@@ -120,14 +153,23 @@ function WebPreviewRow({
   styleVars,
   focusBreakpoint,
   onRefineOpen,
+  interactionZoomOk,
+  selectedNodeIds,
+  setSelectedNodeIds,
+  commitPreviewHtml,
+  isPrimarySelectionRow,
 }: WebPreviewRowProps) {
   const marqueeMode = useWebCanvasStore((s) => s.marqueeMode);
   const htmlHostRef = React.useRef<HTMLDivElement>(null);
+  const scrollRootRef = React.useRef<HTMLDivElement>(null);
   const layerRef = React.useRef<HTMLDivElement>(null);
   const dragRef = React.useRef<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const rafHoverRef = React.useRef<number | null>(null);
   const [dragBox, setDragBox] = React.useState<{ x0: number; y0: number; x1: number; y1: number } | null>(
     null,
   );
+  const [hoverNodeId, setHoverNodeId] = React.useState<string | null>(null);
+  const [fabPos, setFabPos] = React.useState<{ left: number; top: number } | null>(null);
 
   const onPointerDown = React.useCallback(
     (e: React.PointerEvent) => {
@@ -181,6 +223,7 @@ function WebPreviewRow({
       }
       const root = htmlHostRef.current?.querySelector<HTMLElement>(".forge-web-html");
       if (!root) return;
+      setSelectedNodeIds([]);
       const cov = marqueeCoverageRatio(root, drag);
       const fullScreen = cov >= FULL_COVERAGE_RATIO;
       const hits = collectForgeHits(root, drag);
@@ -198,7 +241,7 @@ function WebPreviewRow({
         fullScreen,
       });
     },
-    [bp.label, onRefineOpen],
+    [bp.label, onRefineOpen, setSelectedNodeIds],
   );
 
   const onPointerUp = React.useCallback(
@@ -223,7 +266,7 @@ function WebPreviewRow({
   );
 
   React.useEffect(() => {
-    const root = htmlHostRef.current?.querySelector<HTMLElement>(".forge-web-html");
+    const root = scrollRootRef.current;
     if (!root) return;
     const onClick = (e: MouseEvent) => {
       if (marqueeMode) return;
@@ -247,6 +290,146 @@ function WebPreviewRow({
     root.addEventListener("click", onClick);
     return () => root.removeEventListener("click", onClick);
   }, [html, marqueeMode, pagePath]);
+
+  React.useLayoutEffect(() => {
+    const root = scrollRootRef.current;
+    if (!root) return;
+    root.querySelectorAll<HTMLElement>("[data-forge-canvas-selected]").forEach((n) => n.removeAttribute("data-forge-canvas-selected"));
+    root.querySelectorAll<HTMLElement>("[data-forge-canvas-hover]").forEach((n) => n.removeAttribute("data-forge-canvas-hover"));
+    for (const id of selectedNodeIds) {
+      root.querySelector<HTMLElement>(`[data-forge-node-id="${CSS.escape(id)}"]`)?.setAttribute("data-forge-canvas-selected", "1");
+    }
+    if (hoverNodeId && !selectedNodeIds.includes(hoverNodeId)) {
+      root.querySelector<HTMLElement>(`[data-forge-node-id="${CSS.escape(hoverNodeId)}"]`)?.setAttribute("data-forge-canvas-hover", "1");
+    }
+  }, [html, hoverNodeId, selectedNodeIds]);
+
+  React.useLayoutEffect(() => {
+    const root = scrollRootRef.current;
+    if (!root || !interactionZoomOk || !isPrimarySelectionRow || selectedNodeIds.length === 0 || marqueeMode) {
+      setFabPos(null);
+      return;
+    }
+    const first = root.querySelector<HTMLElement>(`[data-forge-node-id="${CSS.escape(selectedNodeIds[0]!)}"]`);
+    if (!first) {
+      setFabPos(null);
+      return;
+    }
+    const r = first.getBoundingClientRect();
+    setFabPos({ left: Math.min(r.right + 6, window.innerWidth - 220), top: Math.max(8, r.top) });
+  }, [html, interactionZoomOk, isPrimarySelectionRow, marqueeMode, selectedNodeIds]);
+
+  React.useEffect(() => {
+    const root = scrollRootRef.current;
+    if (!root) return;
+
+    const onPointerDownCapture = (e: PointerEvent) => {
+      if (marqueeMode || e.metaKey || e.ctrlKey) return;
+      if (e.button !== 0) return;
+      const t = e.target;
+      if (!(t instanceof HTMLElement) || !root.contains(t)) return;
+      if (interactionZoomOk && isCrossPageInternalLink(t, pagePath)) return;
+      const el = t.closest<HTMLElement>("[data-forge-node-id]");
+      if (el && root.contains(el)) {
+        if (!interactionZoomOk) return;
+        const nid = el.getAttribute("data-forge-node-id");
+        if (!nid) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.shiftKey) {
+          setSelectedNodeIds((prev) => (prev.includes(nid) ? prev.filter((x) => x !== nid) : [...prev, nid]));
+        } else {
+          setSelectedNodeIds([nid]);
+        }
+        return;
+      }
+      if (interactionZoomOk) setSelectedNodeIds([]);
+    };
+
+    const flushHover = (e: PointerEvent) => {
+      if (!interactionZoomOk) {
+        setHoverNodeId(null);
+        return;
+      }
+      if (marqueeMode || dragRef.current) return;
+      if (rafHoverRef.current != null) cancelAnimationFrame(rafHoverRef.current);
+      rafHoverRef.current = requestAnimationFrame(() => {
+        rafHoverRef.current = null;
+        const el = pickTargetEl(root, e.clientX, e.clientY);
+        setHoverNodeId(el?.getAttribute("data-forge-node-id") ?? null);
+      });
+    };
+
+    const onLeave = () => setHoverNodeId(null);
+
+    root.addEventListener("pointerdown", onPointerDownCapture, true);
+    root.addEventListener("pointermove", flushHover, true);
+    root.addEventListener("pointerleave", onLeave);
+    return () => {
+      root.removeEventListener("pointerdown", onPointerDownCapture, true);
+      root.removeEventListener("pointermove", flushHover, true);
+      root.removeEventListener("pointerleave", onLeave);
+      if (rafHoverRef.current != null) cancelAnimationFrame(rafHoverRef.current);
+    };
+  }, [html, interactionZoomOk, marqueeMode, pagePath, setSelectedNodeIds]);
+
+  React.useEffect(() => {
+    if (!isPrimarySelectionRow) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowUp") return;
+      if (!interactionZoomOk) return;
+      if (isKeyEventFromEditableTarget(e.target)) return;
+      if (selectedNodeIds.length !== 1) return;
+      const root = scrollRootRef.current;
+      if (!root) return;
+      const id = selectedNodeIds[0];
+      if (!id) return;
+      e.preventDefault();
+      const el = root.querySelector<HTMLElement>(`[data-forge-node-id="${CSS.escape(id)}"]`);
+      const parent = el?.parentElement?.closest<HTMLElement>("[data-forge-node-id]");
+      const pid = parent?.getAttribute("data-forge-node-id");
+      if (pid) setSelectedNodeIds([pid]);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [interactionZoomOk, isPrimarySelectionRow, selectedNodeIds, setSelectedNodeIds]);
+
+  const openRefineForSelection = React.useCallback(() => {
+    if (!interactionZoomOk) return;
+    const root = scrollRootRef.current;
+    if (!root || selectedNodeIds.length === 0) return;
+    const hits = hitsFromNodeIds(root, selectedNodeIds);
+    if (hits.length === 0) return;
+    const first = root.querySelector<HTMLElement>(`[data-forge-node-id="${CSS.escape(selectedNodeIds[0]!)}"]`);
+    const r = first?.getBoundingClientRect();
+    const left = r ? r.left : 16;
+    const top = r ? r.bottom + 8 : 16;
+    onRefineOpen({
+      bpLabel: bp.label,
+      left,
+      top,
+      hits,
+      fullScreen: false,
+    });
+  }, [bp.label, interactionZoomOk, onRefineOpen, selectedNodeIds]);
+
+  const onDuplicateSelection = React.useCallback(() => {
+    if (!interactionZoomOk || selectedNodeIds.length === 0) return;
+    const next = duplicateForgeNodesInHtml(html, selectedNodeIds);
+    commitPreviewHtml(next);
+    setSelectedNodeIds([]);
+    toast.success("Duplicated in preview", {
+      description: "Run Sync links if you added internal navigation.",
+    });
+  }, [commitPreviewHtml, html, interactionZoomOk, selectedNodeIds, setSelectedNodeIds]);
+
+  const onDeleteSelection = React.useCallback(() => {
+    if (!interactionZoomOk || selectedNodeIds.length === 0) return;
+    const next = removeForgeNodesFromHtml(html, selectedNodeIds);
+    commitPreviewHtml(next);
+    setSelectedNodeIds([]);
+    toast.success("Removed from preview", { description: "Preview-only until orchestration syncs." });
+  }, [commitPreviewHtml, html, interactionZoomOk, selectedNodeIds, setSelectedNodeIds]);
 
   const scale = scaleForCanvasRow(bp.width);
   const { dim, strong } = rowEmphasis(focusBreakpoint, bp.id);
@@ -300,7 +483,11 @@ function WebPreviewRow({
             >
               <div ref={htmlHostRef} className="relative h-full w-full min-h-0">
                 <div
-                  className="forge-web-html h-full w-full min-h-0 overflow-auto"
+                  ref={scrollRootRef}
+                  className={cn(
+                    "forge-web-html h-full w-full min-h-0 overflow-auto",
+                    !interactionZoomOk && "forge-web-pick-cooldown",
+                  )}
                   style={{
                     ...styleVars,
                     width: bp.width,
@@ -324,7 +511,7 @@ function WebPreviewRow({
                 {box && box.width >= 1 && box.height >= 1
                   ? createPortal(
                       <div
-                        className="pointer-events-none fixed z-[9999] rounded-md border-2 border-accent bg-accent/10"
+                        className="pointer-events-none fixed z-9999 rounded-md border-2 border-accent bg-accent/10"
                         style={{
                           left: box.left,
                           top: box.top,
@@ -332,6 +519,55 @@ function WebPreviewRow({
                           height: box.height,
                         }}
                       />,
+                      document.body,
+                    )
+                  : null}
+                {fabPos && interactionZoomOk && isPrimarySelectionRow && selectedNodeIds.length > 0 && !marqueeMode
+                  ? createPortal(
+                      <div
+                        className="fixed z-9998 flex max-w-[min(92vw,280px)] flex-wrap items-center gap-1 rounded-lg border border-border bg-surface px-1 py-0.5 shadow-lg"
+                        style={{ left: fabPos.left, top: fabPos.top }}
+                      >
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="h-7 gap-1 px-2 text-[11px]"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openRefineForSelection();
+                          }}
+                        >
+                          <Pencil className="size-3" aria-hidden />
+                          Refine
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="h-7 gap-1 px-2 text-[11px]"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDuplicateSelection();
+                          }}
+                        >
+                          <Copy className="size-3" aria-hidden />
+                          Duplicate
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="h-7 gap-1 px-2 text-[11px] text-danger hover:text-danger"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteSelection();
+                          }}
+                        >
+                          <Trash2 className="size-3" aria-hidden />
+                          Delete
+                        </Button>
+                      </div>,
                       document.body,
                     )
                   : null}
@@ -355,6 +591,11 @@ function summarizeHits(hits: ForgeTaggedHit[]): string {
 }
 
 export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNodeData, "browserFrame">>) {
+  const { getToken } = useAuth();
+  const { activeOrganizationId } = useForgeSession();
+  const lastRunId = useLastOrchestrationRunId();
+  const canvasZoom = useStore((s) => s.transform[2]);
+  const interactionZoomOk = canvasZoom >= MIN_ELEMENT_PICK_ZOOM;
   const accentHue = useWebCanvasStore((s) => s.accentHue);
   const corner = useWebCanvasStore((s) => s.cornerRadius);
   const focusBreakpoint = useWebCanvasStore((s) => s.focusBreakpoint);
@@ -364,30 +605,47 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
   const deletePage = useWebCanvasStore((s) => s.deletePage);
   const setHomePageId = useWebCanvasStore((s) => s.setHomePageId);
   const updatePagePath = useWebCanvasStore((s) => s.updatePagePath);
+  const updatePageHtml = useWebCanvasStore((s) => s.updatePageHtml);
   const pages = useWebCanvasStore((s) => s.pages);
   const theme = data.theme;
-  const bg = theme === "dark" ? "#0f1419" : "#ffffff";
-  const fg = theme === "dark" ? "#e6edf3" : "#0f172a";
-  const elevated = theme === "dark" ? "#1a222c" : "#f4f4f5";
-  const accent = `hsl(${accentHue} 78% 48%)`;
+  const bg = theme === "dark" ? FP.deviceDarkChromeBg : FP.deviceLightChromeBg;
+  const fg = theme === "dark" ? FP.deviceDarkFg : FP.deviceLightFg;
+  const elevated = theme === "dark" ? FP.deviceDarkElevated : FP.deviceLightElevated;
+  const accent = `oklch(0.66 0.14 ${accentHue})`;
   const fonts = getWebFontStacks(fontPairId);
 
   const [refine, setRefine] = React.useState<RefineState | null>(null);
   const [refinePrompt, setRefinePrompt] = React.useState("");
+  const [elementSelection, setElementSelection] = React.useState<string[]>([]);
   const [renameOpen, setRenameOpen] = React.useState(false);
   const [renameDraft, setRenameDraft] = React.useState(data.title);
   const [pathOpen, setPathOpen] = React.useState(false);
   const [pathDraft, setPathDraft] = React.useState(data.path);
 
+  const commitPreviewHtml = React.useCallback(
+    (next: string) => {
+      updatePageHtml(data.pageId, next);
+    },
+    [data.pageId, updatePageHtml],
+  );
+
   const handleRefineOpen = React.useCallback((s: RefineState | null) => {
     setRefinePrompt("");
     setRefine(s);
+    if (s) setElementSelection([]);
   }, []);
 
   React.useEffect(() => {
-    if (!refine) return;
+    if (!interactionZoomOk) {
+      queueMicrotask(() => setElementSelection([]));
+    }
+  }, [interactionZoomOk]);
+
+  React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleRefineOpen(null);
+      if (e.key !== "Escape") return;
+      if (refine) handleRefineOpen(null);
+      else setElementSelection([]);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -407,6 +665,7 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
       "--fc-bg": bg,
       "--fc-fg": fg,
       "--fc-accent": accent,
+      "--fc-on-accent": FP.onAccent,
       "--fc-bg-elevated": elevated,
       "--fc-radius": `${corner}px`,
       "--fc-font-heading": fonts.heading,
@@ -448,7 +707,7 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex size-7 items-center justify-center rounded-lg border border-border bg-surface text-text-muted hover:bg-bg-elevated"
+                className="inline-flex size-7 items-center justify-center rounded-lg border border-border/80 bg-surface text-text-muted shadow-sm transition-colors hover:border-border-strong hover:bg-bg-elevated"
                 aria-label="Page menu"
               >
                 <MoreHorizontal className="size-4" />
@@ -511,21 +770,34 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
       <Handle
         type="target"
         position={Position.Left}
-        className="!h-2.5 !w-2.5 !border-2 !border-border !bg-accent"
+        className="h-2.5! w-2.5! border-2! border-border! bg-accent!"
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!h-2.5 !w-2.5 !border-2 !border-border !bg-accent"
+        className="h-2.5! w-2.5! border-2! border-border! bg-accent!"
       />
 
       <div
         className={cn(
-          "w-full max-w-full overflow-hidden rounded-lg shadow-xl",
-          selected ? "ring-2 ring-accent ring-offset-2 ring-offset-bg" : "ring-1 ring-border",
+          "w-full max-w-full overflow-hidden rounded-lg shadow-lg transition-[box-shadow,transform] duration-200",
+          selected ? "ring-2 ring-accent ring-offset-2 ring-offset-bg shadow-xl" : "ring-1 ring-border",
         )}
       >
         <style>{`
+          .forge-web-html [data-forge-node-id] { cursor: pointer; }
+          .forge-web-html.forge-web-pick-cooldown [data-forge-node-id] { cursor: default; }
+          .forge-web-html [data-forge-canvas-selected="1"] {
+            outline: 2px solid var(--brand-violet);
+            outline-offset: 2px;
+            border-radius: 8px;
+            background: color-mix(in oklch, var(--brand-violet) 8%, transparent);
+          }
+          .forge-web-html [data-forge-canvas-hover="1"] {
+            outline: 1.5px dashed color-mix(in oklch, var(--brand-coral) 75%, transparent);
+            outline-offset: 2px;
+            border-radius: 6px;
+          }
           .forge-web-html h1, .forge-web-html h2, .forge-web-html h3 {
             font-family: var(--fc-font-heading, inherit);
           }
@@ -542,14 +814,17 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
               -45deg,
               transparent,
               transparent 6px,
-              rgba(14, 165, 233, 0.07) 6px,
-              rgba(14, 165, 233, 0.07) 12px
+              color-mix(in oklch, var(--fc-accent) 7%, transparent) 6px,
+              color-mix(in oklch, var(--fc-accent) 7%, transparent) 12px
             );
           }
           .forge-web-html:hover .forge-shared-region::after { opacity: 1; }
         `}</style>
         {WEB_BREAKPOINTS.map((bp) => {
           const displayUrl = `https://preview.local${data.path || "/"}`;
+          const { strong } = rowEmphasis(focusBreakpoint, bp.id);
+          const isPrimarySelectionRow =
+            focusBreakpoint === "all" ? bp.id === WEB_BREAKPOINTS[0]!.id : strong;
           return (
             <WebPreviewRow
               key={bp.id}
@@ -561,15 +836,32 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
               styleVars={styleVars}
               focusBreakpoint={focusBreakpoint}
               onRefineOpen={handleRefineOpen}
+              interactionZoomOk={interactionZoomOk}
+              selectedNodeIds={elementSelection}
+              setSelectedNodeIds={setElementSelection}
+              commitPreviewHtml={commitPreviewHtml}
+              isPrimarySelectionRow={isPrimarySelectionRow}
             />
           );
         })}
       </div>
 
+      <div className="mt-1 max-w-full">
+        <ArtifactFeedbackStrip
+          artifactKind="page"
+          artifactRef={`canvas-web:${data.pageId}`}
+          runId={lastRunId ?? null}
+          workflow="ui"
+          getToken={getToken}
+          activeOrgId={activeOrganizationId}
+          className="text-[11px]"
+        />
+      </div>
+
       {refine && refinePanelPos
         ? createPortal(
             <div
-              className="fixed z-[10000] w-[min(92vw,360px)] rounded-xl border border-border bg-surface p-3 shadow-2xl"
+              className="surface-panel fixed z-10000 w-[min(92vw,360px)] rounded-xl p-3 shadow-xl"
               style={{ left: refinePanelPos.left, top: refinePanelPos.top }}
             >
               <p className="mb-1 font-body text-[11px] font-semibold text-text">Region refine</p>
@@ -603,7 +895,7 @@ export function BrowserFrameNode({ data, selected }: NodeProps<Node<WebBrowserNo
                     handleRefineOpen(null);
                   }}
                 >
-                  Send to Forge
+                  Send to GlideDesign
                 </Button>
               </div>
             </div>,

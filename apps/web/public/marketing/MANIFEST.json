@@ -1,0 +1,528 @@
+{
+  "brand": "GlideDesign",
+  "version": "gd-02",
+  "generatedAt": "2026-04-29T04:45:14.404Z",
+  "guidance": "Keep assets bold, geometric, colorful, and cohesive with the violet/coral GlideDesign system. Regenerate anything that feels generic or off-brand.",
+  "assets": [
+    {
+      "path": "/marketing/avatars/persona-1.svg",
+      "type": "svg",
+      "family": "avatars",
+      "sourcePrompt": "Friendly diverse persona avatar for GlideDesign testimonial, geometric vector style, colorful but professional.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/avatars/persona-2.svg",
+      "type": "svg",
+      "family": "avatars",
+      "sourcePrompt": "Friendly diverse persona avatar for GlideDesign testimonial, geometric vector style, colorful but professional.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/avatars/persona-3.svg",
+      "type": "svg",
+      "family": "avatars",
+      "sourcePrompt": "Friendly diverse persona avatar for GlideDesign testimonial, geometric vector style, colorful but professional.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/avatars/persona-4.svg",
+      "type": "svg",
+      "family": "avatars",
+      "sourcePrompt": "Friendly diverse persona avatar for GlideDesign testimonial, geometric vector style, colorful but professional.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/avatars/persona-5.svg",
+      "type": "svg",
+      "family": "avatars",
+      "sourcePrompt": "Friendly diverse persona avatar for GlideDesign testimonial, geometric vector style, colorful but professional.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/avatars/persona-6.svg",
+      "type": "svg",
+      "family": "avatars",
+      "sourcePrompt": "Friendly diverse persona avatar for GlideDesign testimonial, geometric vector style, colorful but professional.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/illustrations/workflow-1.svg",
+      "type": "svg",
+      "family": "illustrations",
+      "sourcePrompt": "GlideDesign workflow hero illustration, bold Figma-like shapes, futuristic cursor motion, saturated but polished palette.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/illustrations/workflow-2.svg",
+      "type": "svg",
+      "family": "illustrations",
+      "sourcePrompt": "GlideDesign workflow hero illustration, bold Figma-like shapes, futuristic cursor motion, saturated but polished palette.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/illustrations/workflow-3.svg",
+      "type": "svg",
+      "family": "illustrations",
+      "sourcePrompt": "GlideDesign workflow hero illustration, bold Figma-like shapes, futuristic cursor motion, saturated but polished palette.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/illustrations/workflow-4.svg",
+      "type": "svg",
+      "family": "illustrations",
+      "sourcePrompt": "GlideDesign workflow hero illustration, bold Figma-like shapes, futuristic cursor motion, saturated but polished palette.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/illustrations/workflow-5.svg",
+      "type": "svg",
+      "family": "illustrations",
+      "sourcePrompt": "GlideDesign workflow hero illustration, bold Figma-like shapes, futuristic cursor motion, saturated but polished palette.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/illustrations/workflow-6.svg",
+      "type": "svg",
+      "family": "illustrations",
+      "sourcePrompt": "GlideDesign workflow hero illustration, bold Figma-like shapes, futuristic cursor motion, saturated but polished palette.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/og/page-1.svg",
+      "type": "svg",
+      "family": "og",
+      "sourcePrompt": "GlideDesign social preview card, oversized typography, violet-to-coral gradient, playful geometric shapes, launch-grade AI design tool identity.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/og/page-2.svg",
+      "type": "svg",
+      "family": "og",
+      "sourcePrompt": "GlideDesign social preview card, oversized typography, violet-to-coral gradient, playful geometric shapes, launch-grade AI design tool identity.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/og/page-3.svg",
+      "type": "svg",
+      "family": "og",
+      "sourcePrompt": "GlideDesign social preview card, oversized typography, violet-to-coral gradient, playful geometric shapes, launch-grade AI design tool identity.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/og/page-4.svg",
+      "type": "svg",
+      "family": "og",
+      "sourcePrompt": "GlideDesign social preview card, oversized typography, violet-to-coral gradient, playful geometric shapes, launch-grade AI design tool identity.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/og/page-5.svg",
+      "type": "svg",
+      "family": "og",
+      "sourcePrompt": "GlideDesign social preview card, oversized typography, violet-to-coral gradient, playful geometric shapes, launch-grade AI design tool identity.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/og/page-6.svg",
+      "type": "svg",
+      "family": "og",
+      "sourcePrompt": "GlideDesign social preview card, oversized typography, violet-to-coral gradient, playful geometric shapes, launch-grade AI design tool identity.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/template-thumb.svg",
+      "type": "svg",
+      "family": "template-thumb.svg",
+      "sourcePrompt": "GlideDesign marketing asset, colorful Figma-inspired AI design tool identity.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/community-1.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/community-2.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/community-3.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/community-4.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/community-5.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/community-6.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/community-7.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/community-8.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/forms.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "High-fidelity Figma-inspired forms template card with form builder UI, logic branches, dark analytics sidecar, lavender background, and GlideDesign AI sparkle.",
+      "iterationCount": 2,
+      "status": "gd-02-first-high-fidelity-pass"
+    },
+    {
+      "path": "/marketing/templates/gallery-1.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-10.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-11.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-12.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-13.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-14.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-15.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-16.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-17.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-18.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-19.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-2.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-20.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-21.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-22.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-23.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-24.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-25.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-26.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-27.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-28.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-29.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-3.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-30.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-31.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-32.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-4.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-5.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-6.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-7.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-8.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/gallery-9.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "Figma-inspired chunky colorful product template card, bold geometric blocks, GlideDesign violet/coral accent, playful AI design tool aesthetic.",
+      "iterationCount": 1,
+      "status": "gd-01-generated; gd-02-reviewed"
+    },
+    {
+      "path": "/marketing/templates/mobile-apps.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "High-fidelity Figma-inspired mobile app template card with three phone frames, flow connectors, saturated sky background, GlideDesign violet/coral accents, and bold product typography.",
+      "iterationCount": 2,
+      "status": "gd-02-first-high-fidelity-pass"
+    },
+    {
+      "path": "/marketing/templates/pitch-decks.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "High-fidelity Figma-inspired pitch deck template card with overlapping investor slides, chart details, coral panel color, and chunky geometric confidence.",
+      "iterationCount": 2,
+      "status": "gd-02-first-high-fidelity-pass"
+    },
+    {
+      "path": "/marketing/templates/proposals.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "High-fidelity Figma-inspired proposal template card with polished document, signature panel, bold mustard background, and serious business craft.",
+      "iterationCount": 2,
+      "status": "gd-02-first-high-fidelity-pass"
+    },
+    {
+      "path": "/marketing/templates/websites.svg",
+      "type": "svg",
+      "family": "templates",
+      "sourcePrompt": "High-fidelity Figma-inspired website template card with landing page browser, product panel, cursor detail, bright lime background, and crisp GlideDesign UI marks.",
+      "iterationCount": 2,
+      "status": "gd-02-first-high-fidelity-pass"
+    },
+    {
+      "path": "/marketing/product/war-room-hero.svg",
+      "type": "svg",
+      "family": "product",
+      "sourcePrompt": "High-fidelity GlideDesign War Room product composite: strategy pane, canvas, system pane, action controls, violet-coral product energy, x.com clarity, Figma-style chunky presentation.",
+      "iterationCount": 1,
+      "status": "gd-02-first-high-fidelity-pass"
+    }
+  ]
+}

@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
-import { LayoutGrid, Sparkles } from "lucide-react";
+import { ArrowUpRight, LayoutGrid, Sparkles } from "lucide-react";
 import { DashboardTipBanner } from "@/components/chrome/dashboard-tip-banner";
 import { EmptyState } from "@/components/chrome/empty-state";
 import { Button } from "@/components/ui/button";
@@ -121,6 +121,7 @@ export function DashboardView() {
 
   const [visibleCount, setVisibleCount] = React.useState(24);
   const [cardFocus, setCardFocus] = React.useState(0);
+  const searchRef = React.useRef<HTMLInputElement>(null);
   React.useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- reset paging and keyboard focus when filters/search change */
     setVisibleCount(24);
@@ -132,18 +133,45 @@ export function DashboardView() {
   const hasMore = filtered.length > visibleCount;
 
   React.useEffect(() => {
-    if (pathname !== "/dashboard" || slice.length === 0) return;
+    if (pathname !== "/dashboard") return;
+
+    const typingSelector =
+      "input:not([readonly]), textarea, select, [contenteditable=true], [role=combobox]";
+
     const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (
-        t?.closest(
-          "input:not([readonly]), textarea, select, [contenteditable=true], [role=combobox]",
-        )
-      ) {
+      const target = e.target as HTMLElement | null;
+      const typing = target?.closest(typingSelector);
+      const focusSearch = (): boolean =>
+        !!(searchRef.current && document.activeElement === searchRef.current);
+      const inSearch = focusSearch();
+
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (typing && !inSearch) return;
+        if (!inSearch) {
+          e.preventDefault();
+          searchRef.current?.focus();
+        }
         return;
       }
+
+      if (typing && !inSearch) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+
+      if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        router.push("/studio");
+        return;
+      }
+
+      if (slice.length === 0) return;
+
+      if (e.key === "j" || e.key === "J") {
+        e.preventDefault();
+        setCardFocus((i) => Math.min(slice.length - 1, i + 1));
+      } else if (e.key === "k" || e.key === "K") {
+        e.preventDefault();
+        setCardFocus((i) => Math.max(0, i - 1));
+      } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
         e.preventDefault();
         setCardFocus((i) => Math.min(slice.length - 1, i + 1));
       } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
@@ -166,7 +194,9 @@ export function DashboardView() {
 
   if (!activeOrganizationId) {
     return (
-      <p className="text-sm text-text-muted font-body">Choose a workspace to see your pages.</p>
+      <div className="surface-panel-soft rounded-2xl px-6 py-8">
+        <p className="font-body text-sm text-text-muted">Choose a workspace to see your pages.</p>
+      </div>
     );
   }
 
@@ -174,9 +204,12 @@ export function DashboardView() {
     return (
       <div className="space-y-8">
         <DashboardTipBanner />
-        <p className="font-body text-sm text-danger" role="alert">
-          {pagesQ.error instanceof Error ? pagesQ.error.message : "Could not load pages."}
-        </p>
+        <div className="surface-panel-soft rounded-2xl border-danger/30 px-5 py-4" role="alert">
+          <p className="font-body text-sm font-medium text-danger">Could not load pages.</p>
+          <p className="mt-1 font-body text-sm text-text-muted">
+            {pagesQ.error instanceof Error ? pagesQ.error.message : "Try again in a moment."}
+          </p>
+        </div>
       </div>
     );
   }
@@ -200,27 +233,27 @@ export function DashboardView() {
     <div className="space-y-8">
       <UsageQuotaBar />
       <DashboardTipBanner />
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
-        <div>
-          <h1
-            className="font-display font-bold text-text"
-            style={{ fontSize: "clamp(24px, 3.5vw, 30px)", letterSpacing: "-0.01em", lineHeight: 1 }}
+      <div className="relative overflow-hidden rounded-[32px] bg-marketing-lime p-6 text-marketing-ink shadow-lg">
+        <div className="absolute -right-8 -top-10 size-48 rounded-full bg-white/45" aria-hidden />
+        <div className="absolute bottom-5 right-12 hidden h-20 w-44 rounded-[24px] bg-marketing-ink/12 md:block" aria-hidden />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-display-md text-marketing-ink">Recents</h1>
+            <p className="mt-2 max-w-2xl text-body-sm font-semibold text-marketing-ink/75">
+              Recently viewed, shared files, and shipped surfaces from your GlideDesign workspace.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="primary"
+            className="gap-1.5 bg-marketing-ink text-white hover:bg-marketing-ink"
+            onClick={() => router.push("/studio")}
           >
-            My pages
-          </h1>
-          <p className="mt-1.5 font-body text-[13px] font-light text-text-muted">
-            Every mini-app you have published — each with its own link, submissions, and settings.
-          </p>
+            <Sparkles className="size-4" aria-hidden />
+            Open Studio
+            <ArrowUpRight className="size-4" aria-hidden />
+          </Button>
         </div>
-        <Button
-          type="button"
-          variant="primary"
-          className="gap-1.5"
-          onClick={() => router.push("/studio")}
-        >
-          <Sparkles className="size-4" aria-hidden />
-          Open Studio ↗
-        </Button>
       </div>
 
       {pagesQ.isLoading && pagesQ.data === undefined ? (
@@ -243,11 +276,11 @@ export function DashboardView() {
           <EmptyState
             icon={LayoutGrid}
             title="Let's make your first page"
-            description="Describe what you need in Studio — a booking form, RSVP, menu, or anything your business needs online."
+            description="Describe what you need in Studio - a booking form, RSVP, menu, or anything your business needs online."
             primaryAction={{ label: "Open Studio", onClick: () => router.push("/studio") }}
             secondaryAction={{
               label: "Browse templates",
-              onClick: () => router.push("/templates"),
+              onClick: () => router.push("/app-templates"),
             }}
           />
           <div>
@@ -288,14 +321,15 @@ export function DashboardView() {
               </h1>
               <p className="mt-1.5 font-body text-[13px] font-light text-text-muted">
                 {(pagesQ.data ?? []).filter((p) => p.status === "live").length} live
-                {" · "}
+                {" / "}
                 {(pagesQ.data ?? []).filter((p) => p.status === "draft").length} drafts
               </p>
             </div>
             <div className="flex flex-col gap-1.5">
               <Input
+                ref={searchRef}
                 className="w-[200px]"
-                placeholder="Search pages…"
+                placeholder="Search pages..."
                 value={qInput}
                 onChange={(e) => setQInput(e.target.value)}
                 aria-label="Search pages"
@@ -315,7 +349,7 @@ export function DashboardView() {
                     : keywordWorkflowHint === "proposal"
                       ? "proposals"
                       : "pitch decks"}{" "}
-                  →
+                  <ArrowUpRight className="inline size-3" aria-hidden />
                 </button>
               ) : null}
             </div>
@@ -330,7 +364,7 @@ export function DashboardView() {
                   type="button"
                   onClick={() => setFilter(c.id)}
                   className={cn(
-                    "mb-[-1px] px-4 py-2 font-body text-[13px] transition-colors border-b-2",
+                    "-mb-px border-b-2 px-4 py-2 font-body text-[13px] transition-colors",
                     filter === c.id
                       ? "font-semibold text-text border-text"
                       : "font-medium text-text-muted border-transparent hover:text-text hover:border-border-strong",
@@ -340,7 +374,7 @@ export function DashboardView() {
                 </button>
               ))}
             </div>
-            {/* Type filter pills — secondary row */}
+            {/* Type filter pills - secondary row */}
             <div className="flex flex-wrap gap-1.5">
               {wfChips.map((c) => (
                 <button
@@ -370,7 +404,7 @@ export function DashboardView() {
                 className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
                 aria-label="Workspace pages"
               >
-                {/* New page dashed card — always first */}
+                {/* New page dashed card - always first */}
                 {filter === "all" && !qUrl.trim() && workflowFilter === "all" ? (
                   <li className="list-none">
                     <button

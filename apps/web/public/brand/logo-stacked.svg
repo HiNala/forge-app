@@ -1,0 +1,18 @@
+<svg width="420" height="360" viewBox="0 0 420 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
+  <title id="title">GlideDesign stacked logo</title>
+  <defs>
+    <linearGradient id="glide-gradient" x1="124" y1="50" x2="296" y2="218" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6651FF"/>
+      <stop offset="1" stop-color="#FF6E57"/>
+    </linearGradient>
+    <radialGradient id="glide-aura" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(210 136) rotate(45) scale(96)">
+      <stop stop-color="#7A5CFF" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#FF6E57" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="118" y="28" width="184" height="184" rx="44" fill="white"/>
+  <circle cx="210" cy="120" r="86" fill="url(#glide-aura)"/>
+  <path d="M166 72C162.8 69.6 158 72 158 76V179.2C158 183.7 163.3 185.9 166.6 182.9L194.3 158.3L211.7 198.3C212.8 200.8 215.8 201.9 218.3 200.8L241.9 190.5C244.4 189.4 245.5 186.5 244.4 183.9L227.1 144.3H266.1C270.5 144.3 272.6 138.9 269.1 136.2L166 72Z" fill="url(#glide-gradient)"/>
+  <circle cx="150" cy="197" r="12" fill="url(#glide-gradient)" opacity="0.82"/>
+  <text x="46" y="294" fill="#201B2E" font-family="Inter, General Sans, Arial, sans-serif" font-size="56" font-weight="800" letter-spacing="-3">GlideDesign</text>
+</svg>

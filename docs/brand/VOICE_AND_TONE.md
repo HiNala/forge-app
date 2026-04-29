@@ -1,29 +1,59 @@
-# Voice and tone
+# Forge Voice & Tone
 
-Aligned with `POSITIONING.md` (V2-P01). Forge speaks as a **capable, friendly maker** — never a corporate brochure, never a chatbot on energy drinks.
+**Philosophy:** Plain, credible, humane — Stripe/Linear seriousness + workshop warmth — **never** conversational filler.
 
-## Principles
+Canonical copy buckets will migrate to **`apps/web/src/lib/copy/`** (keys + rationale). Until full sweep: new strings obey these rules first.
 
-- **Short sentences.** If you can cut a word, cut it.
-- **Plain language.** Prefer “Track who opened your proposal” over “leverage engagement insights.”
-- **Truthful limitations.** We say what we are not (see positioning) so trust compounds.
-- **Action-led CTAs.** “Start free,” “See how it works,” “Open in Studio” — verbs first.
+---
 
-## Avoid
+## Rules
 
-- **Forbidden filler** (enforced in CI for user-facing code paths): *seamless, elevate, leverage, unlock, game-changer, revolutionary, best-in-class.*
-- **Old frame** to retire: *AI page builder* as the lead story — the product is *mini-apps*; AI is how, not what.
-- **Apologizing** for normal software behavior; instead describe what happens next.
+### Verbs over nouns
+- ✅ “Publish page” ❌ “Page actions modal”.
 
-## Microcopy patterns
+### Specific over vague
+- ✅ “Forge Credits reset Sundays 00:00 UTC” ❌ “Resets weekly sometime.”.
 
-- **Empty states:** orient the user to the *next* action (“Describe what you want above — Forge will start from there.”).
-- **Success:** state the outcome (“Your page is live”) without exclamation mark spam.
-- **Errors:** what broke in one line, what to do next in one line.
+### Plain over corporate
+- ✅ “We couldn’t reach Stripe — try again shortly.” ❌ “A fault occurred during synchronous payment orchestration.”
 
-## Inclusive and respectful
+### Honest over hype
+Inside product/marketing truthful surfaces: ✅ “Exports to Webflow are not supported yet.” ❌ vague “Soon!” placeholders.
 
-- Use **they** when gender is unknown.
-- Avoid idioms that do not travel (sports-only metaphors, US-centric holidays unless the surface is US-only).
+---
 
-Review `POSITIONING.md` when the product scope or pricing model changes; update this file only when voice rules change.
+## Forbidden patterns (avoid)
+- Promo superlatives: “Awesome”, “Amazing”, “Incredible” (unless verbatim user citation).
+- Forced chirp openers (“Hey!”) inside production chrome.
+- Unhedged vague AI claims (“powerful AI”).
+- gratuitous punctuation (`!!!`).
+- Emoji in **product chrome** chrome (routing, dialogs, dashboards). Allowed in testimonials / inbound user content contexts.
+
+Celebratory confirmations (first signup, milestone) may omit exclamation-heavy copy — prefer restrained confirmation.
+
+---
+
+## Error pattern
+
+BAD: generic error fallback.
+
+GOOD component:
+1. **What failed**
+2. **What was not persisted**
+3. **Next retry / support path**
+
+Example: “Stripe did not acknowledge the billing update — limits did not change. Try again shortly or contact billing support.”
+
+
+---
+
+### Empty-state pattern
+
+BAD: whimsical cheer.
+
+GOOD: instructive neutrality — “No submissions yet. Publish and share your page link — replies appear here.”
+
+
+---
+
+Translations later treat `apps/web/src/lib/copy/` source keys as ICU-ready string ids.

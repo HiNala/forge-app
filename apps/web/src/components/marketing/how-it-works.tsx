@@ -12,8 +12,8 @@ const STEPS = [
   },
   {
     n: "02",
-    title: "Forge builds it",
-    body: "In seconds, Forge assembles a mini-app — layout, content, and design — ready to share. Forms, proposals, and decks all run through the same Studio.",
+    title: "GlideDesign builds it",
+    body: "In seconds, GlideDesign assembles a mini-app — layout, content, and design — ready to share. Forms, proposals, and decks all run through the same Studio.",
   },
   {
     n: "03",

@@ -152,7 +152,7 @@ class PageIntent(BaseModel):
     )
     page_type: PageType = Field(
         default="custom",
-        description="Forge page_type stored on pages — must align with workflow when possible",
+        description="GlideDesign page_type stored on pages — must align with workflow when possible",
     )
     confidence: float = Field(
         default=0.85,

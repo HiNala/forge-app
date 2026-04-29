@@ -22,10 +22,27 @@ TaskName = Literal["intent", "compose", "section_edit", "review"]
 ROLE_TO_TASK: dict[str, TaskName] = {
     "intent_parser": "intent",
     "composer": "compose",
+    "mobile_composer": "compose",
+    "web_composer": "compose",
     "section_editor": "section_edit",
+    "region_refiner": "section_edit",
     "voice_inferrer": "intent",
     "reviewer": "review",
+    "vision_extractor": "compose",
+    "multimodal_intent_parser": "intent",
 }
+
+
+def model_ids_from_route(route: ModelRoute) -> list[str]:
+    """LiteLLM model ids for primary then fallbacks (deduped, non-empty order preserved)."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for m in (route.primary[1], *(fb[1] for fb in route.fallbacks)):
+        s = (m or "").strip()
+        if s and s not in seen:
+            seen.add(s)
+            out.append(s)
+    return out
 
 
 @dataclass
@@ -79,6 +96,57 @@ ROUTES: dict[str, ModelRoute] = {
         temperature=0.3,
         max_tokens=6000,
     ),
+    # Canvas + vision (subset mirrors composer/intent tiers)
+    "mobile_composer": ModelRoute(
+        role="mobile_composer",
+        primary=("openai", "gpt-4o"),
+        fallbacks=[
+            ("anthropic", "anthropic/claude-3-5-sonnet-20241022"),
+            ("gemini", "gemini/gemini-2.0-flash"),
+        ],
+        temperature=0.55,
+        max_tokens=8000,
+    ),
+    "web_composer": ModelRoute(
+        role="web_composer",
+        primary=("openai", "gpt-4o"),
+        fallbacks=[
+            ("anthropic", "anthropic/claude-3-5-sonnet-20241022"),
+            ("gemini", "gemini/gemini-2.0-flash"),
+        ],
+        temperature=0.55,
+        max_tokens=8000,
+    ),
+    "region_refiner": ModelRoute(
+        role="region_refiner",
+        primary=("openai", "gpt-4o-mini"),
+        fallbacks=[
+            ("anthropic", "anthropic/claude-3-5-haiku-20241022"),
+            ("gemini", "gemini/gemini-2.0-flash"),
+        ],
+        temperature=0.35,
+        max_tokens=2000,
+    ),
+    "vision_extractor": ModelRoute(
+        role="vision_extractor",
+        primary=("openai", "gpt-4o"),
+        fallbacks=[
+            ("anthropic", "anthropic/claude-3-5-sonnet-20241022"),
+            ("gemini", "gemini/gemini-2.0-flash"),
+        ],
+        temperature=0.25,
+        max_tokens=2000,
+    ),
+    "multimodal_intent_parser": ModelRoute(
+        role="multimodal_intent_parser",
+        primary=("openai", "gpt-4o-mini"),
+        fallbacks=[
+            ("gemini", "gemini/gemini-2.0-flash"),
+            ("anthropic", "anthropic/claude-3-5-haiku-20241022"),
+        ],
+        temperature=0.2,
+        max_tokens=2000,
+    ),
 }
 
 async def structured_completion[T: BaseModel](
@@ -94,10 +162,8 @@ async def structured_completion[T: BaseModel](
     """Parse JSON into `schema`; retry once with validation error appended."""
     from app.services.llm.routing_config_service import effective_model_route
 
-    base_route = ROUTES.get(role)
-    task = ROLE_TO_TASK.get(role, "intent")
-    if base_route is None:
-        raise ValueError(f"Unknown LLM role: {role}")
+    base_route = ROUTES.get(role) or ROUTES["composer"]
+    task = ROLE_TO_TASK.get(role, "compose")
     if db is not None:
         route = await effective_model_route(db, None, role=role, organization_id=organization_id)
     else:
@@ -120,6 +186,7 @@ async def structured_completion[T: BaseModel](
             temperature=route.temperature,
             db=db,
             organization_id=organization_id,
+            model_chain=model_ids_from_route(route) if provider is None else None,
         )
         raw = text.strip()
         if raw.startswith("```"):
@@ -191,14 +258,22 @@ async def completion_with_cost(
     organization_id: UUID | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Delegates to ai.router and adds cost_cents to metadata."""
-    task = ROLE_TO_TASK.get(role, "intent")
+    from app.services.llm.routing_config_service import effective_model_route
+
+    task = ROLE_TO_TASK.get(role, "compose")
     dict_msgs = [m.model_dump(exclude_none=True) for m in messages]
+    if db is not None:
+        route = await effective_model_route(db, None, role=role, organization_id=organization_id)
+    else:
+        route = ROUTES.get(role) or ROUTES["composer"]
     text, meta = await ai_router.completion_text(
         dict_msgs,
         task=task,
         provider=provider,
+        temperature=route.temperature,
         db=db,
         organization_id=organization_id,
+        model_chain=model_ids_from_route(route) if provider is None else None,
     )
     model = str(meta.get("model", ""))
     pt = meta.get("prompt_tokens")

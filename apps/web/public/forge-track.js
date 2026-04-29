@@ -1,4 +1,4 @@
-/* Forge public-page analytics ~5KB raw — queue + beacon (GL-01). */
+/* GlideDesign public-page analytics ~5KB raw; legacy config names remain supported. */
 (function () {
   var C = window.__FORGE_TRACK_CONFIG__;
   if (!C || !C.apiBase) return;

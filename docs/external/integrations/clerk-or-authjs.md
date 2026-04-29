@@ -1,4 +1,6 @@
-# Clerk vs Auth.js — Reference for Forge
+# Superseded: Clerk vs Auth.js — Reference for Forge
+
+This ADR is superseded as of 2026-04-28. GlideDesign now uses first-party database-backed auth with password login, Google OAuth, internal JWTs, and Postgres refresh-session state. See [`docs/guides/CUSTOM_AUTH_SETUP.md`](../../guides/CUSTOM_AUTH_SETUP.md).
 
 **Version:** `@clerk/nextjs` 7.2.3 (npm latest stable at research; pin in `apps/web/package.json` when Clerk is added)
 **Last researched:** 2026-04-18

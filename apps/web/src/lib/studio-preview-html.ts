@@ -3,6 +3,8 @@
  * Optionally injects the Studio section bridge for postMessage editing.
  */
 
+import { forgeFallbackHex as H } from "@/lib/design/forge-html-fallback-colors";
+
 export function wrapStudioPreviewHtml(
   bodyFragments: string,
   opts?: {
@@ -16,7 +18,7 @@ export function wrapStudioPreviewHtml(
     opts?.withBridge && opts.origin
       ? `<script src="${opts.origin}/p/-internal/studio-bridge.js" defer data-forge-studio="1"><\/script>`
       : "";
-  return `<!DOCTYPE html><html lang="en" data-forge-preview="studio"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><style>body{margin:0;font-family:system-ui,sans-serif;background:#fafafa;color:#111;} [data-forge-section]{transition:opacity 0.3s ease;}</style></head><body>${bodyFragments}${bridge}</body></html>`;
+  return `<!DOCTYPE html><html lang="en" data-forge-preview="studio"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><style>body{margin:0;font-family:system-ui,sans-serif;background:${H.bone};color:${H.graphiteInk};} [data-forge-section]{transition:opacity 0.3s ease;}</style></head><body>${bodyFragments}${bridge}</body></html>`;
 }
 
 const BRIDGE_MARKER = "studio-bridge.js";

@@ -118,7 +118,7 @@ DEFAULT_LEGAL_TERMS = (
     "This document is a proposal, not a binding contract, until you accept it using the mechanism "
     "below. By accepting, you agree to the scope, pricing, and terms stated here. Change orders "
     "require written approval from both parties. Cancellation and refund terms apply as described. "
-    "Forge is not a law firm and does not provide legal advice — consult a licensed attorney "
+    "GlideDesign is not a law firm and does not provide legal advice — consult a licensed attorney "
     "for legal questions."
 )
 

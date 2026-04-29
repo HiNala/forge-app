@@ -1,14 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@/providers/forge-auth-provider";
 import { motion } from "framer-motion";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { CommandPalette } from "@/components/chrome/command-palette";
 import { OfflineBanner } from "@/components/chrome/offline-banner";
 import { OnboardingGate } from "@/components/chrome/onboarding-gate";
 import { ShortcutsDialog } from "@/components/chrome/shortcuts-dialog";
 import { SkipToContentLink } from "@/components/chrome/skip-link";
+import { AppRouteAnalytics } from "@/components/chrome/app-route-analytics";
 import { Sidebar } from "@/components/chrome/sidebar";
 import { TopBar } from "@/components/chrome/top-bar";
 import { AppErrorBoundary } from "@/components/error-boundary/app-error-boundary";
@@ -47,6 +48,7 @@ function AppChromeSkeleton() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
   const { isLoading } = useForgeSession();
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -62,6 +64,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener(SIDEBAR_AUTO_COLLAPSE_EVENT, onAutoCollapse);
   }, [setSidebarCollapsed]);
 
+  React.useEffect(() => {
+    if (!isLoaded || isSignedIn) return;
+    router.replace(`/signin?next=${encodeURIComponent(pathname)}`);
+  }, [isLoaded, isSignedIn, pathname, router]);
+
   const showAppSkeleton =
     !isLoaded || (isSignedIn && isLoading);
 
@@ -69,8 +76,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <AppChromeSkeleton />;
   }
 
+  if (!isSignedIn) {
+    return <AppChromeSkeleton />;
+  }
+
   return (
     <BrandThemeProvider>
+      <AppRouteAnalytics />
       <SkipToContentLink />
       <CommandPalette />
       <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />

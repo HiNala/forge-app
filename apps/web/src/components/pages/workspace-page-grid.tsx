@@ -128,10 +128,7 @@ function PageCard({ page }: { page: PageOut }) {
           className="flex flex-col overflow-hidden rounded-2xl border bg-surface transition-all duration-200"
           style={{
             borderColor: hovered ? "var(--border-strong)" : "var(--border)",
-            boxShadow: hovered
-              ? "0 10px 28px rgba(0,0,0,0.09)"
-              : "0 1px 5px rgba(0,0,0,0.04)",
-            transform: hovered ? "translateY(-2px)" : "none",
+            boxShadow: hovered ? "var(--shadow-md)" : "var(--shadow-sm)",
           }}
         >
           <PageThumbnail page={page} hovered={hovered} />

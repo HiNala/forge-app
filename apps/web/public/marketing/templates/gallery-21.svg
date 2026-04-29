@@ -1,0 +1,10 @@
+﻿<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="900" rx="44" fill="#92e6c7"/>
+<circle cx="936" cy="198" r="162" fill="#dfff57" opacity="0.7"/>
+<rect x="96" y="108" width="648" height="108" rx="28" fill="#151120" opacity="0.88"/>
+<rect x="96" y="306" width="936" height="414" rx="40" fill="white" opacity="0.86"/>
+<rect x="156" y="378" width="288" height="216" rx="28" fill="#151120" opacity="0.12"/>
+<rect x="504" y="378" width="408" height="54" rx="18" fill="#6651ff" opacity="0.26"/>
+<rect x="504" y="477" width="312" height="54" rx="18" fill="#ff6e57" opacity="0.26"/>
+<text x="96" y="819" fill="#151120" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="800" letter-spacing="-2">Template 21</text>
+</svg>

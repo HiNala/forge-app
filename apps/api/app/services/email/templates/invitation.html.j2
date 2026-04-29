@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"/><title>Invitation</title></head>
-<body style="margin:0;padding:24px;font-family:system-ui,sans-serif;background:#f6f6f6;">
-  <table role="presentation" style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;">
+<body style="margin:0;padding:32px;font-family:Inter,Arial,sans-serif;background:#f7f5ff;">
+  <table role="presentation" style="max-width:560px;margin:0 auto;background:#fff;border-radius:24px;padding:28px;border:1px solid #eee9ff;">
     <tr><td>
-      {% if logo_url %}<img src="{{ logo_url }}" alt="" height="40" style="margin-bottom:16px;"/>{% endif %}
-      <h1 style="color:{{ primary_color|default('#111') }};">You're invited to {{ org_name }}</h1>
-      <p style="color:#374151;">Forge is the mini-app platform — open the link to join this workspace.</p>
-      {% if cta_url %}<p><a href="{{ cta_url }}" style="color:{{ primary_color|default('#2563eb') }};">Continue</a></p>{% endif %}
+      {% if logo_url %}<img src="{{ logo_url }}" alt="GlideDesign" height="40" style="margin-bottom:16px;"/>{% else %}<p style="margin:0 0 16px;color:#6651ff;font-weight:800;">GlideDesign</p>{% endif %}
+      <h1 style="margin:0 0 12px;color:#151120;font-size:28px;letter-spacing:-0.04em;">You're invited to {{ org_name }}</h1>
+      <p style="color:#4f4b5f;line-height:1.6;">GlideDesign turns plain English into product strategy, screens, code, and next moves. Open the link to join this workspace.</p>
+      {% if cta_url %}<p><a href="{{ cta_url }}" style="display:inline-block;background:linear-gradient(95deg,#6651ff,#ff6e57);color:#fff;text-decoration:none;border-radius:14px;padding:12px 18px;font-weight:800;">Continue</a></p>{% endif %}
+      <p style="margin-top:28px;color:#8a8498;font-size:12px;">GlideDesign · glidedesign.ai</p>
     </td></tr>
   </table>
 </body>

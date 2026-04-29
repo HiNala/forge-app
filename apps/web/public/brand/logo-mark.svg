@@ -1,0 +1,18 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">GlideDesign mark</title>
+  <desc id="desc">A violet to coral cursor mark in motion with a trailing dot.</desc>
+  <defs>
+    <linearGradient id="glide-gradient" x1="44" y1="36" x2="212" y2="220" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6651FF"/>
+      <stop offset="1" stop-color="#FF6E57"/>
+    </linearGradient>
+    <radialGradient id="glide-aura" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(122 126) rotate(45) scale(110)">
+      <stop stop-color="#7A5CFF" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#FF6E57" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="white"/>
+  <circle cx="128" cy="128" r="104" fill="url(#glide-aura)"/>
+  <path d="M73.5 55.5C69.6 52.6 64 55.5 64 60.4V184.8C64 190.2 70.4 192.9 74.4 189.3L107.8 159.6L128.8 207.8C130.1 210.8 133.7 212.1 136.7 210.8L165.1 198.4C168.1 197.1 169.5 193.6 168.2 190.5L147.4 142.7H194.4C199.7 142.7 202.2 136.2 198 132.9L73.5 55.5Z" fill="url(#glide-gradient)"/>
+  <circle cx="54" cy="205" r="15" fill="url(#glide-gradient)" opacity="0.82"/>
+</svg>

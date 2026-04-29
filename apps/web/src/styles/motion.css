@@ -1,0 +1,16 @@
+/**
+ * BP-05 motion vocabulary — deliberate workshop tempo.
+ * Durations consumed by globals + components; aligns with MOTION_SYSTEM.md.
+ */
+
+:root {
+  --motion-snap: 120ms;
+  --motion-standard: 220ms;
+  --motion-deliberate: 320ms;
+  --motion-considered: 480ms;
+
+  --motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --motion-ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --motion-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}

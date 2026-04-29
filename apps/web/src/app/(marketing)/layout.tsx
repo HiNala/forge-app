@@ -8,16 +8,23 @@ import { SITE_URL } from "@/lib/marketing-content";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Forge — Pages from a sentence",
-    template: "%s · Forge",
+    default: "GlideDesign — Glide from idea to product",
+    template: "%s · GlideDesign",
   },
   description:
-    "Describe what you need in plain English. Forge builds a branded, hosted page — forms, RSVPs, menus, and more.",
+    "GlideDesign is the AI design tool that turns plain English into strategy, screens, code, and next moves.",
   openGraph: {
-    title: "Forge — Pages from a sentence",
+    title: "GlideDesign — Glide from idea to product",
     description:
-      "AI-powered mini-app builder for teams. Describe a page, publish a link, collect responses.",
+      "AI-powered product design: describe once, get strategy, screens, code, and next moves.",
     type: "website",
+    siteName: "GlideDesign",
+    images: ["/marketing/og/page-1.svg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    creator: "@glidedesignai",
+    images: ["/marketing/og/page-1.svg"],
   },
 };
 

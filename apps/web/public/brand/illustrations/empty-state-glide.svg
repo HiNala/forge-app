@@ -1,0 +1,22 @@
+<svg width="640" height="420" viewBox="0 0 640 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">GlideDesign empty state illustration</title>
+  <desc id="desc">Layered product cards with a cursor mark and colorful GlideDesign shapes.</desc>
+  <rect width="640" height="420" rx="40" fill="#F7F5FF"/>
+  <circle cx="98" cy="84" r="46" fill="#B6F45F"/>
+  <circle cx="548" cy="92" r="58" fill="#93E6FF"/>
+  <path d="M492 338C536 292 572 283 602 306C633 330 612 380 558 391C508 401 448 384 492 338Z" fill="#FF8A71"/>
+  <rect x="126" y="104" width="388" height="230" rx="32" fill="white" stroke="#1A1238" stroke-width="4"/>
+  <rect x="154" y="132" width="332" height="48" rx="18" fill="#1A1238"/>
+  <rect x="176" y="208" width="124" height="74" rx="22" fill="#6651FF"/>
+  <rect x="320" y="208" width="144" height="18" rx="9" fill="#D9D3FF"/>
+  <rect x="320" y="240" width="116" height="18" rx="9" fill="#FFE0DA"/>
+  <rect x="320" y="272" width="138" height="18" rx="9" fill="#D9F7FF"/>
+  <path d="M235 173L285 300L317 250L371 239L235 173Z" fill="url(#cursorGradient)" stroke="#1A1238" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="382" cy="304" r="12" fill="#FF6D4D"/>
+  <defs>
+    <linearGradient id="cursorGradient" x1="235" y1="173" x2="365" y2="306" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6651FF"/>
+      <stop offset="1" stop-color="#FF6D4D"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -6,13 +6,13 @@ import { handoff } from "@/lib/copy";
 import { SITE_URL } from "@/lib/marketing-content";
 
 export const metadata: Metadata = {
-  title: "Export & handoff — take your mini-app with you | Forge",
+  title: "Export & handoff — take your mini-app with you | GlideDesign",
   description:
-    "What ships today and what is on the canvas roadmap: HTML, PDF, PPTX, Figma, Next.js, Expo. Or keep it hosted on Forge with full analytics.",
+    "What ships today and what is on the canvas roadmap: HTML, PDF, PPTX, Figma, Next.js, Expo. Or keep it hosted on GlideDesign with full analytics.",
   alternates: { canonical: "/handoff" },
   openGraph: {
-    title: "Export & handoff | Forge",
-    description: "Every workflow has a path off Forge when you are ready. Until then, one hosted link and honest analytics.",
+    title: "Export & handoff | GlideDesign",
+    description: "Every workflow has a path off GlideDesign when you are ready. Until then, one hosted link and honest analytics.",
     url: `${SITE_URL}/handoff`,
     type: "website",
   },
@@ -42,7 +42,7 @@ export default function HandoffPage() {
           <thead>
             <tr className="border-b border-border bg-bg-elevated">
               <th className="px-4 py-3 font-semibold">Surface</th>
-              <th className="px-4 py-3 font-semibold">In Forge now</th>
+              <th className="px-4 py-3 font-semibold">In GlideDesign now</th>
               <th className="px-4 py-3 font-semibold">On the roadmap</th>
             </tr>
           </thead>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@/providers/forge-auth-provider";
 import * as React from "react";
 import { toast } from "sonner";
 import { Check, User } from "lucide-react";
@@ -193,7 +193,7 @@ export default function SettingsProfilePage() {
                       if (!confirm("Unlink this account? You must keep another sign-in method active.")) return;
                       const destroy = (a as { destroy?: () => Promise<unknown> })?.destroy;
                       if (typeof destroy !== "function") {
-                        toast.message("Unlink this connection from your Clerk account page.");
+                        toast.message("Account unlinking is not available for this connection yet.");
                         return;
                       }
                       void destroy
@@ -259,7 +259,7 @@ export default function SettingsProfilePage() {
               variant="danger"
               disabled={deletePhrase.trim().toLowerCase() !== "delete my account"}
               onClick={() => {
-                toast.message("Complete account deletion from Clerk's user management UI.");
+                toast.message("Account deletion will be completed by GlideDesign support while purge automation is finalized.");
                 setDeleteOpen(false);
               }}
             >

@@ -138,10 +138,11 @@ async def add_custom_domain_alias(
 @router.delete("/custom-domains/{domain_id}")
 async def delete_custom_domain_alias(
     domain_id: UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     ctx: TenantContext = Depends(require_role("owner")),
 ) -> dict[str, bool]:
-    return await settings_routes.delete_custom_domain(domain_id, db, ctx)
+    return await settings_routes.delete_custom_domain(domain_id, request, db, ctx)
 
 
 @router.post("/custom-domains/{domain_id}/verify")

@@ -1,4 +1,4 @@
-"""Forge Credits — charges, balance checks, ledger (P-04)."""
+"""generation credits — charges, balance checks, ledger (P-04)."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import CreditLedger, Organization
 from app.services.billing.credit_windows import SESSION, WEEK, apply_rolling_resets_in_memory
+from app.services.billing.plans import plan_for_credit_tier
 from app.services.billing_plans import trial_is_active
 from app.services.orchestration.models import PageIntent
 
@@ -29,13 +30,11 @@ ACTION_CREDITS: dict[str, int] = {
     "export_pptx": 0,
 }
 
-# (session_cap, week_cap) by credit tier
-TIER_BUDGETS: dict[str, tuple[int, int]] = {
-    "free": (50, 200),
-    "pro": (500, 5000),
-    "max_5x": (2500, 25_000),
-    "max_20x": (10_000, 100_000),
-}
+
+def _tier_budgets(tier: str) -> tuple[int, int]:
+    plan = plan_for_credit_tier(tier)
+    return plan.session_credits_cap, plan.week_credits_cap
+
 
 OVERAGE_RATES_CENTS_PER_CREDIT: dict[str, int] = {
     "pro": 10,
@@ -94,7 +93,7 @@ def compute_charge(action: str, context: dict[str, Any] | None = None) -> int:
     return base
 
 
-@dataclass(frozen=True)
+@dataclass
 class BalanceCheck:
     can_proceed: bool
     session_remaining: int
@@ -104,23 +103,48 @@ class BalanceCheck:
     tier: str
     would_use_extra_usage: bool
     projected_overage_cents: int
+    deny_metric: str | None = None
+    denial_extra: dict[str, Any] | None = None
 
 
 def forge_credits_402_payload(bc: BalanceCheck) -> dict[str, Any]:
-    """Structured body for HTTP 402 when Forge Credits block an action."""
-    return {
-        "code": "forge_credits_exhausted",
-        "message": (
-            "Session or weekly Forge Credits are used up. Upgrade, enable extra usage, "
-            "or wait for the next reset."
-        ),
+    """Unified 402 quota body (AL-02). Older clients keyed off ``code`` + ``metric``."""
+    if bc.can_proceed:
+        raise ValueError("forge_credits_402_payload used when can_proceed is True")
+    metric = bc.deny_metric or "weekly_credits"
+    out: dict[str, Any] = {
+        "code": "quota_exceeded",
+        "metric": metric,
+        "tier": bc.tier,
+        "upgrade_url": "/settings/billing",
+        "increase_cap_url": "/settings/usage",
         "session_remaining": bc.session_remaining,
         "week_remaining": bc.week_remaining,
         "session_cap": bc.session_cap,
         "week_cap": bc.week_cap,
-        "would_use_extra_usage": bc.would_use_extra_usage,
-        "projected_overage_cents": bc.projected_overage_cents,
     }
+    s_used = bc.session_cap - bc.session_remaining
+    w_used = bc.week_cap - bc.week_remaining
+    if metric == "session_credits":
+        out["current"] = s_used
+        out["limit"] = bc.session_cap
+    elif metric == "weekly_credits":
+        out["current"] = w_used
+        out["limit"] = bc.week_cap
+    elif metric == "extra_usage_cap":
+        out["metric"] = "extra_usage_cap"
+        extras = bc.denial_extra or {}
+        out["current"] = extras.get("spent_cents", 0)
+        out["limit"] = extras.get("cap_cents", 0)
+        out["extra"] = extras
+    return out
+
+
+def _deny_credit_pool(s_rem: int, w_rem: int) -> str:
+    """Which pooled limit blocks first when neither pool alone covers a charge."""
+    if s_rem <= w_rem:
+        return "session_credits"
+    return "weekly_credits"
 
 
 def _project_overage_cents(tier: str, credits: int) -> int:
@@ -147,7 +171,7 @@ async def check_balance(
         raise ValueError("organization not found")
     apply_rolling_resets_in_memory(org)
     tier = credit_tier_for_plan(org.plan, trial_ends_at=org.trial_ends_at)
-    s_cap, w_cap = TIER_BUDGETS.get(tier, TIER_BUDGETS["free"])
+    s_cap, w_cap = _tier_budgets(tier)
     s_used = int(org.credits_consumed_session or 0)
     w_used = int(org.credits_consumed_week or 0)
     s_rem = max(0, s_cap - s_used)
@@ -163,6 +187,8 @@ async def check_balance(
             tier,
             False,
             0,
+            None,
+            None,
         )
     if need <= s_rem and need <= w_rem:
         return BalanceCheck(True, s_rem, w_rem, s_cap, w_cap, tier, False, 0)
@@ -175,7 +201,22 @@ async def check_balance(
         cap = org.extra_usage_monthly_cap_cents
         spent = int(org.extra_usage_spent_period_cents or 0)
         if cap is not None and spent + add_cents > cap:
-            return BalanceCheck(False, s_rem, w_rem, s_cap, w_cap, tier, False, 0)
+            return BalanceCheck(
+                False,
+                s_rem,
+                w_rem,
+                s_cap,
+                w_cap,
+                tier,
+                False,
+                add_cents,
+                deny_metric="extra_usage_cap",
+                denial_extra={
+                    "spent_cents": spent,
+                    "cap_cents": cap,
+                    "requested_delta_cents": add_cents,
+                },
+            )
         return BalanceCheck(
             True,
             s_rem,
@@ -186,7 +227,18 @@ async def check_balance(
             True,
             add_cents,
         )
-    return BalanceCheck(False, s_rem, w_rem, s_cap, w_cap, tier, False, 0)
+    return BalanceCheck(
+        False,
+        s_rem,
+        w_rem,
+        s_cap,
+        w_cap,
+        tier,
+        False,
+        0,
+        deny_metric=_deny_credit_pool(s_rem, w_rem),
+        denial_extra=None,
+    )
 
 
 async def apply_charge(
@@ -211,7 +263,7 @@ async def apply_charge(
     org = (await db.execute(stmt)).scalar_one()
     apply_rolling_resets_in_memory(org)
     tier = credit_tier_for_plan(org.plan, trial_ends_at=org.trial_ends_at)
-    s_cap, w_cap = TIER_BUDGETS.get(tier, TIER_BUDGETS["free"])
+    s_cap, w_cap = _tier_budgets(tier)
     s_used = int(org.credits_consumed_session or 0)
     w_used = int(org.credits_consumed_week or 0)
     s_rem = max(0, s_cap - s_used)
@@ -225,28 +277,29 @@ async def apply_charge(
             raise RuntimeError("forge credits overage without extra_usage_enabled")
         rate = OVERAGE_RATES_CENTS_PER_CREDIT.get(tier, 10)
         org.extra_usage_spent_period_cents = int(org.extra_usage_spent_period_cents or 0) + overage_credits * rate
-    db.add(
-        CreditLedger(
-            organization_id=organization_id,
-            user_id=user_id,
-            page_id=page_id,
-            orchestration_run_id=orchestration_run_id,
-            action=action,
-            credits_charged=credits,
-            tokens_input=tokens_input,
-            tokens_output=tokens_output,
-            provider=provider,
-            model=model,
-            cost_cents_actual=cost_cents_actual,
-        )
+    row = CreditLedger(
+        organization_id=organization_id,
+        user_id=user_id,
+        page_id=page_id,
+        orchestration_run_id=orchestration_run_id,
+        action=action,
+        credits_charged=credits,
+        tokens_input=tokens_input,
+        tokens_output=tokens_output,
+        provider=provider,
+        model=model,
+        cost_cents_actual=cost_cents_actual,
+        meter_overage_units=int(overage_credits),
+        stripe_meter_sent_at=None,
     )
+    db.add(row)
     await db.flush()
 
 
 def credits_usage_dict(org: Organization) -> dict[str, Any]:
     """Snapshot for API; caller should run apply_rolling_resets_in_memory on org first."""
     tier = credit_tier_for_plan(org.plan, trial_ends_at=org.trial_ends_at)
-    s_cap, w_cap = TIER_BUDGETS.get(tier, TIER_BUDGETS["free"])
+    s_cap, w_cap = _tier_budgets(tier)
     s_used = int(org.credits_consumed_session or 0)
     w_used = int(org.credits_consumed_week or 0)
     s_reset, w_reset = _reset_timestamps(org)

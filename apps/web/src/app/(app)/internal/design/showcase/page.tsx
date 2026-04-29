@@ -63,7 +63,7 @@ export default function DesignShowcasePage() {
           <p className="mb-4 text-[11px] font-medium uppercase tracking-wide text-text-muted">Dark panel</p>
           <UsageBar
             variant="inverse"
-            label="Forge Credits"
+            label="generation credits"
             percent={38}
             used={380}
             cap={1000}

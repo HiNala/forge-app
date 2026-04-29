@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -39,6 +40,12 @@ class OrchestrationRun(Base, UUIDPrimaryKeyMixin):
     plan: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     review_findings: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     node_timings: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    graph_state: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    clarify_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    agent_calls: Mapped[list[Any] | None] = mapped_column(JSONB, nullable=True)
+    four_layer_output: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    quality_score: Mapped[Decimal | None] = mapped_column(Numeric, nullable=True)
+    dimension_scores: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     total_tokens_input: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     total_tokens_output: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     total_cost_cents: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")

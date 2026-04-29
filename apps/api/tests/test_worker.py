@@ -33,6 +33,7 @@ def test_worker_settings_match_runbook() -> None:
     cron_names = {c.coroutine.__name__ for c in ws.cron_jobs}
     assert "partman_maintenance" in cron_names
     assert "refresh_retention_views" in cron_names
+    assert "flush_stripe_credit_meters" in cron_names
 
 
 @pytest.mark.asyncio

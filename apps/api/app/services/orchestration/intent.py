@@ -81,7 +81,7 @@ Rules:
 - Never ask the user a question — always choose the most likely workflow.
 - If unclear, lower `confidence` and populate `alternatives` with 1–2 other workflows.
 - When you infer pricing, client names, or rates not in the prompt, add an `assumptions` entry.
-- Map `workflow` to Forge `page_type` consistently (contact_form → contact-form, event_rsvp → rsvp, etc.).
+- Map `workflow` to GlideDesign `page_type` consistently (contact_form → contact-form, event_rsvp → rsvp, etc.).
 """
 
 
@@ -95,7 +95,7 @@ async def parse_intent(
     context_block: str | None = None,
 ) -> PageIntent:
     """Structured intent via fast tier model; heuristic fallback if LLM unavailable."""
-    system = (load_prompt("intent_system") or "You are Forge's intent parser.").strip()
+    system = (load_prompt("intent_system") or "You are GlideDesign's intent parser.").strip()
     system = f"{system}\n\n{INTENT_TAXONOMY}"
     user_parts = [f"User request:\n{prompt}"]
     if brand_hint:

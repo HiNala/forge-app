@@ -33,7 +33,7 @@ def build_booking_invite_ics(
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Forge//EN",
+        "PRODID:-//GlideDesign//EN",
         "CALSCALE:GREGORIAN",
         "METHOD:REQUEST",
         "BEGIN:VEVENT",

@@ -1,5 +1,8 @@
-import { redirect } from "next/navigation";
+import { CompareDetail } from "@/components/marketing/compare-detail";
+import { compareMetadata } from "@/lib/compare-pages";
 
-export default function CompareCarrdAlias() {
-  redirect("/compare/forge-vs-carrd");
+export const metadata = compareMetadata("carrd");
+
+export default function CompareCarrdPage() {
+  return <CompareDetail slug="carrd" />;
 }

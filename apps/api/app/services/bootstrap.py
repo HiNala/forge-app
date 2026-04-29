@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import select, text
@@ -25,6 +24,8 @@ async def ensure_user_org_signup(
     user = (
         await session.execute(select(User).where(User.auth_provider_id == auth_provider_id))
     ).scalar_one_or_none()
+    if user is None:
+        user = (await session.execute(select(User).where(User.email == email))).scalar_one_or_none()
 
     if user is None:
         user = User(
@@ -93,14 +94,3 @@ async def create_additional_workspace(
     await session.refresh(org)
     return org
 
-
-def clerk_email_from_payload(payload: dict[str, Any]) -> str:
-    em = payload.get("email")
-    if isinstance(em, str) and em:
-        return em
-    nested = payload.get("email_addresses")
-    if isinstance(nested, list) and nested:
-        first = nested[0]
-        if isinstance(first, dict) and first.get("email_address"):
-            return str(first["email_address"])
-    return f"{payload.get('sub', 'unknown')}@users.clerk.invalid"

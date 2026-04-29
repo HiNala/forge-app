@@ -1,0 +1,15 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    rect { fill: white; }
+    @media (prefers-color-scheme: dark) { rect { fill: #151120; } }
+  </style>
+  <defs>
+    <linearGradient id="g" x1="13" y1="10" x2="51" y2="54" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6651FF"/>
+      <stop offset="1" stop-color="#FF6E57"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16"/>
+  <path d="M19.5 14.5C17.9 13.3 16 14.5 16 16.5V47.3C16 49.5 18.6 50.6 20.2 49.2L28.4 41.9L33.5 53.6C34.1 54.8 35.5 55.4 36.7 54.8L43.7 51.8C44.9 51.2 45.5 49.8 44.9 48.6L39.8 37H51.3C53.5 37 54.5 34.3 52.8 33L19.5 14.5Z" fill="url(#g)"/>
+  <circle cx="14" cy="51" r="4" fill="url(#g)" opacity="0.85"/>
+</svg>

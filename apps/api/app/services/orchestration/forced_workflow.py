@@ -31,6 +31,9 @@ _NORM: dict[str, str] = {
     "portfolio": "portfolio",
     "faq": "faq",
     "linktree": "link_in_bio",
+    "mobile_app": "mobile_app",
+    "website": "website",
+    "web_page": "landing",
 }
 
 

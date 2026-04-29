@@ -1,10 +1,11 @@
 "use client";
 
-import { useAuth, useClerk } from "@clerk/nextjs";
+import { useAuth, useForgeAuth } from "@/providers/forge-auth-provider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   BarChart3,
   Check,
@@ -19,7 +20,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ForgeMark } from "@/components/chrome/forge-logo";
+import { GlideDesignMark } from "@/components/chrome/forge-logo";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -72,7 +73,7 @@ const NAV = [
   { href: "/settings/profile", label: "Settings", icon: Settings },
 ] as const;
 
-/** Session Forge Credits (P-04) + monthly plan meter; links to usage settings. */
+/** Session generation credits (P-04) + monthly plan meter; links to usage settings. */
 function OrgQuotaBar({
   collapsed,
   getToken,
@@ -112,14 +113,14 @@ function OrgQuotaBar({
     <Link
       href="/settings/usage"
       className={cn(
-        "block w-full rounded-md px-1 py-2 text-left transition-colors hover:bg-bg-elevated/60",
+        "block w-full rounded-[14px] px-1 py-2 text-left transition-colors hover:bg-accent-tint/70",
         collapsed && "px-0 py-1.5",
       )}
       aria-label={`${label}. Open usage and limits.`}
     >
       {!collapsed ? (
-        <p className="mb-1 text-[10px] font-medium tracking-wide text-text-subtle uppercase">
-          Session (Forge Credits)
+        <p className="mb-1 text-caption tracking-wide text-text-subtle uppercase">
+          Session credits
         </p>
       ) : null}
       {sCap > 0 ? (
@@ -131,10 +132,10 @@ function OrgQuotaBar({
         </div>
       ) : null}
       {!collapsed ? (
-        <p className="mt-1 truncate text-[11px] text-text-muted">{label}</p>
+        <p className="mt-1 truncate text-caption text-text-muted">{label}</p>
       ) : null}
       {!collapsed && monthlyLine ? (
-        <p className="mt-0.5 truncate text-[10px] text-text-subtle">{monthlyLine}</p>
+        <p className="mt-0.5 truncate text-caption text-text-subtle">{monthlyLine}</p>
       ) : null}
     </Link>
   );
@@ -145,7 +146,7 @@ function OrgQuotaBar({
         <TooltipTrigger asChild>{inner}</TooltipTrigger>
         <TooltipContent side="right" className="max-w-[220px]">
           {label}
-          {monthlyLine ? ` · ${monthlyLine}` : ""} — Usage
+          {monthlyLine ? ` / ${monthlyLine}` : ""} - Usage
         </TooltipContent>
       </Tooltip>
     );
@@ -181,26 +182,39 @@ function NavItem({
 }) {
   const pathname = usePathname();
   const active = navLinkActive(pathname, href);
+  const reduced = useReducedMotion();
   const link = (
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
       aria-label={collapsed ? label : undefined}
       className={cn(
-        "relative flex items-center gap-3 rounded-md py-2 pr-2 pl-3 text-sm font-medium font-body",
-        "transition-[background-color,color,opacity] duration-[120ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+        "relative isolate flex items-center gap-3 rounded-full py-2.5 pr-2 pl-3 text-base font-semibold font-body",
+        "transition-[background-color,color,opacity] duration-160 ease-[cubic-bezier(0.22,1,0.36,1)]",
         primary &&
-          "shadow-sm ring-1 ring-accent/20 bg-accent-light/40 font-semibold",
+          "bg-(image:--brand-gradient) text-white shadow-md font-bold",
         active && !primary
-          ? "bg-accent-tint/80 text-text"
-          : !active && "text-text-muted hover:bg-bg-elevated/80 hover:text-text",
+          ? "text-accent"
+          : !active && "text-text-muted hover:bg-accent-tint/70 hover:text-text",
         collapsed && "justify-center px-0",
       )}
     >
-      <Icon className="size-[18px] shrink-0 text-accent" aria-hidden />
+      {active && !primary ? (
+        reduced ? (
+          <span className="absolute inset-0 -z-10 rounded-full bg-accent-tint" aria-hidden />
+        ) : (
+          <motion.span
+            layoutId="sidebar-active-pill"
+            className="absolute inset-0 -z-10 rounded-full bg-accent-tint"
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            aria-hidden
+          />
+        )
+      ) : null}
+      <Icon className={cn("size-6 shrink-0", primary ? "text-white" : "text-accent")} aria-hidden />
       <span
         className={cn(
-          "truncate transition-opacity duration-[120ms]",
+          "truncate transition-opacity duration-120",
           collapsed ? "sr-only" : "inline",
         )}
       >
@@ -247,7 +261,7 @@ function RecentPagesList({
         <Link
           key={p.id}
           href={`/pages/${p.id}`}
-          className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 font-body text-[12px] text-text-muted transition-colors hover:bg-bg-elevated/80 hover:text-text"
+          className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-caption text-text-muted transition-colors hover:bg-bg-elevated/80 hover:text-text"
         >
           <span
             className="size-1.5 shrink-0 rounded-full"
@@ -272,7 +286,7 @@ export function Sidebar({
   const collapsed = useUIStore((s) => s.sidebarCollapsed);
   const setSidebarCollapsed = useUIStore((s) => s.setSidebarCollapsed);
   const { getToken } = useAuth();
-  const { signOut } = useClerk();
+  const { signOut } = useForgeAuth();
   const {
     memberships,
     activeOrg,
@@ -338,13 +352,13 @@ export function Sidebar({
     } catch {
       /* best-effort */
     }
-    await signOut({ redirectUrl: "/signin" });
+    await signOut();
   }
 
   return (
     <aside
       className={cn(
-        "relative flex h-full shrink-0 flex-col border-r border-border bg-surface",
+        "relative flex h-full shrink-0 flex-col border-r border-border bg-bg",
         className,
       )}
       style={{
@@ -354,11 +368,11 @@ export function Sidebar({
     >
       <div
         className={cn(
-          "flex min-h-0 flex-1 flex-col overflow-hidden transition-opacity duration-[120ms]",
+          "flex min-h-0 flex-1 flex-col overflow-hidden transition-opacity duration-120",
           collapsed ? "opacity-95" : "opacity-100",
         )}
       >
-        {/* Workspace switcher — top */}
+        {/* Workspace switcher - top */}
         <div
           className={cn(
             "flex h-14 shrink-0 items-center gap-2 border-b border-border px-3",
@@ -370,15 +384,15 @@ export function Sidebar({
               <button
                 type="button"
                 className={cn(
-                  "flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 pr-2 pl-1 text-left outline-none ring-offset-bg focus-visible:ring-2 focus-visible:ring-accent-mid",
+                  "flex min-w-0 flex-1 items-center gap-2 rounded-full py-1.5 pr-2 pl-1 text-left outline-none ring-offset-bg focus-visible:ring-2 focus-visible:ring-accent-mid",
                   collapsed && "flex-none justify-center p-1.5",
                 )}
                 aria-label="Workspace switcher"
               >
-                <ForgeMark className="size-8 shrink-0" />
+                <GlideDesignMark className="size-8 shrink-0" />
                 {!collapsed ? (
                   <>
-                    <span className="min-w-0 flex-1 truncate font-display text-base font-bold tracking-tight text-text">
+                    <span className="min-w-0 flex-1 truncate font-display text-base font-extrabold tracking-tight text-text">
                       {activeOrg?.organization_name ?? "Workspace"}
                     </span>
                     <ChevronsUpDown className="size-4 shrink-0 text-text-subtle" aria-hidden />
@@ -464,8 +478,8 @@ export function Sidebar({
               <button
                 type="button"
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm",
-                  "hover:bg-bg-elevated/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mid",
+                  "flex w-full items-center gap-2 rounded-full p-2 text-left text-sm",
+                  "hover:bg-accent-tint/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mid",
                   collapsed && "justify-center",
                 )}
                 aria-label="Account menu"
@@ -530,7 +544,7 @@ export function Sidebar({
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         className={cn(
           "absolute top-16 -right-3 z-20 flex size-7 items-center justify-center rounded-full border border-border bg-surface shadow-md",
-          "transition-[transform,box-shadow] duration-[80ms] hover:shadow-lg active:scale-[0.97]",
+          "transition-[transform,box-shadow] duration-80 hover:shadow-lg active:scale-[0.97]",
           "text-text-muted hover:text-text",
         )}
         style={{ transitionTimingFunction: SIDEBAR_EASE }}

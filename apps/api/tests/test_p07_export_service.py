@@ -17,6 +17,22 @@ def test_workflow_registry_has_export_formats_for_all_workflows() -> None:
             assert isinstance(fmt, str) and len(fmt) >= 2, f"{key} bad format id: {fmt!r}"
 
 
+def test_launch_export_list_hides_planned_formats() -> None:
+    org = MagicMock()
+    org.plan = "pro"
+    page = MagicMock(spec=Page)
+    page.id = uuid4()
+    page.page_type = "landing"
+    page.slug = "landing"
+    out = export_service.list_formats(page, org)
+    assert out
+    assert all(fmt.implemented for fmt in out)
+    ids = {fmt.id for fmt in out}
+    assert "html_static" in ids
+    assert "html_zip" not in ids
+    assert "nextjs_project" not in ids
+
+
 def test_proposal_workflow_includes_pdf_and_html_static() -> None:
     d = get_workflow_definition("proposal")
     assert d is not None
@@ -61,3 +77,30 @@ async def test_export_run_html_static_returns_bytes() -> None:
     )
     assert kind == "html"
     assert b"hi" in payload
+
+
+@pytest.mark.asyncio
+async def test_export_run_deck_pdf_reports_queue_unavailable() -> None:
+    org = MagicMock()
+    org.id = uuid4()
+    org.slug = "acme"
+    org.plan = "pro"
+    page = MagicMock(spec=Page)
+    page.id = uuid4()
+    page.page_type = "pitch_deck"
+    page.slug = "deck"
+    page.current_html = "<html><body>deck</body></html>"
+    user = MagicMock()
+    request = MagicMock()
+    request.app.state.arq_pool = None
+
+    kind, payload = await export_service.run(
+        db=AsyncMock(),
+        page=page,
+        org=org,
+        user=user,
+        request=request,
+        format_id="pdf",
+    )
+    assert kind == "error"
+    assert payload["code"] == "queue_unavailable"

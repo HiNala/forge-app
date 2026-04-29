@@ -1,0 +1,5 @@
+{
+  "id": "landing_smoke_01",
+  "prompt": "A simple landing page for my bookkeeping service with a contact form",
+  "expected_workflow_contains": "contact"
+}

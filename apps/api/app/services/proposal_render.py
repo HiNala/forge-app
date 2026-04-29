@@ -185,7 +185,7 @@ def render_proposal_html(
       <h3>From</h3>
       <p>{_esc(org_name)}</p>
       <p class="forge-meta" id="forge-legal-disclaimer">
-        Forge is not a law firm and does not provide legal advice. Consult a licensed attorney
+        GlideDesign is not a law firm and does not provide legal advice. Consult a licensed attorney
         for legal questions.
       </p>
     </div>

@@ -12,7 +12,7 @@ import httpx
 from app.services.context.models import ProductItem, SiteBrand, VoiceProfile
 
 _UA = (
-    "Mozilla/5.0 (compatible; ForgeBot/1.0; +https://forge.app; context-gather)"
+    "Mozilla/5.0 (compatible; GlideDesignBot/1.0; +https://glidedesign.ai; context-gather)"
 )
 
 

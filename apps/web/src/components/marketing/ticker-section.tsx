@@ -13,21 +13,17 @@ const PROMPTS = [
   "a consultation booking for a therapist",
 ];
 
+/** BP-05 — static wrap strip (no infinite marquee ticker). */
 export function TickerSection() {
-  const doubled = [...PROMPTS, ...PROMPTS];
-
   return (
-    <div className="overflow-hidden border-y border-border bg-surface py-3">
-      <div className="ticker-track">
-        {doubled.map((p, i) => (
+    <div className="border-y border-border bg-surface py-4">
+      <div className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-8 gap-y-3 px-4">
+        {PROMPTS.map((p) => (
           <span
-            key={i}
-            className="inline-flex shrink-0 items-center gap-2.5 px-5 font-body text-[13px] font-normal text-text-muted"
+            key={p}
+            className="inline-flex shrink-0 items-center gap-2.5 px-3 font-body text-[13px] font-normal text-text-muted"
           >
-            <span
-              className="inline-block size-1 shrink-0 rounded-full bg-accent"
-              aria-hidden
-            />
+            <span className="inline-block size-1 shrink-0 rounded-full bg-accent" aria-hidden />
             {p}
           </span>
         ))}

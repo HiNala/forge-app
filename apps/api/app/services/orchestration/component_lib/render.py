@@ -159,7 +159,7 @@ def render_full_document(
     form_action: str,
     visual_dir: str = "warm",
 ) -> str:
-    """Full HTML document using the Forge shell template."""
+    """Full HTML document using the GlideDesign shell template."""
     body = render_component_tree_body(tree, brand, form_action=form_action)
     title = tree.page_title or "Page"
     primary = brand.primary if re.match(r"^#[0-9A-Fa-f]{3,8}$", brand.primary or "") else "#2563EB"

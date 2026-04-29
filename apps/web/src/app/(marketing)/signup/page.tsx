@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { ForgeMark } from "@/components/chrome/forge-logo";
+import { GlideDesignMark } from "@/components/chrome/forge-logo";
 import { brand } from "@/lib/copy";
 import { SignupClient } from "./signup-client";
 
 export const metadata: Metadata = {
-  title: "Sign up | Forge",
+  title: "Sign up | GlideDesign",
   robots: { index: false, follow: false },
 };
 
@@ -14,10 +14,10 @@ export default function SignUpPage() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-bg px-4 py-12 sm:py-16">
       <div className="mb-8 flex flex-col items-center gap-3">
-        <ForgeMark className="size-10 text-text" />
+        <GlideDesignMark className="size-10 text-text" />
         <div className="text-center">
           <p className="font-display text-[28px] font-bold tracking-tight text-text leading-none">
-            Forge
+            GlideDesign
           </p>
           <p className="mt-2 font-body text-sm font-light text-text-muted">
             {brand.tagline} — describe it, ship it, track it.

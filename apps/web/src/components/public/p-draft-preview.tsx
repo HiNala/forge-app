@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import Link from "next/link";
 import * as React from "react";
 import { getPage, listPages } from "@/lib/api";
@@ -83,7 +83,7 @@ export function PDraftPreview({ orgSlug, pageSlug }: Props) {
       aria-label="Live page preview"
       className="h-screen w-full border-0 bg-white"
       srcDoc={html}
-      sandbox="allow-forms allow-same-origin allow-scripts"
+      sandbox="allow-forms allow-scripts"
     />
   );
 }

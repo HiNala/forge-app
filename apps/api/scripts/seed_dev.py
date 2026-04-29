@@ -11,8 +11,7 @@ Or locally::
 
     cd apps/api && uv run python scripts/seed_dev.py
 
-Dev password convention (Clerk bypass / local only): ``DevSeedLucy!reds`` — not stored
-in ``users`` (no password column); document for E2E fixtures only.
+Dev password convention (local only): ``GlideDesignDev!2026``.
 """
 
 from __future__ import annotations
@@ -38,6 +37,7 @@ from app.db.models import (
     User,
 )
 from app.db.session import AsyncSessionLocal
+from app.security.passwords import hash_password
 
 _NS = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 
@@ -48,6 +48,7 @@ def _id(name: str) -> uuid.UUID:
 
 LUCY_EMAIL = "lucy@reds.example"
 BOB_EMAIL = "dev-bob@forge.local"
+DEV_PASSWORD = "GlideDesignDev!2026"
 
 
 async def main() -> None:
@@ -70,13 +71,15 @@ async def main() -> None:
                     id=lucy_id,
                     email=LUCY_EMAIL,
                     display_name="Lucy (dev seed)",
-                    auth_provider_id="clerk_seed_lucy",
+                    auth_provider_id=f"forge:{lucy_id}",
+                    password_hash=hash_password(DEV_PASSWORD),
                 ),
                 User(
                     id=bob_id,
                     email=BOB_EMAIL,
                     display_name="Bob (dev)",
-                    auth_provider_id="clerk_seed_dev_bob",
+                    auth_provider_id=f"forge:{bob_id}",
+                    password_hash=hash_password(DEV_PASSWORD),
                 ),
                 Organization(
                     id=org_reds_id,

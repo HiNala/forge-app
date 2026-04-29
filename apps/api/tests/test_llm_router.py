@@ -130,3 +130,49 @@ async def test_primary_model_respects_provider_defaults(
     )
 
     assert "claude" in captured["model"].lower() or "anthropic" in captured["model"].lower()
+
+
+@pytest.mark.asyncio
+async def test_completion_text_prefers_model_chain_without_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", "sk-test")
+    monkeypatch.setattr(settings, "LLM_FALLBACK_MODELS", "")
+
+    mock = AsyncMock(return_value=_response("ok"))
+    monkeypatch.setattr(router_mod, "acompletion", mock)
+
+    await router_mod.completion_text(
+        [{"role": "user", "content": "x"}],
+        task="intent",
+        model_chain=["custom-primary", "custom-fallback"],
+    )
+
+    assert mock.await_args.kwargs["model"] == "custom-primary"
+
+
+@pytest.mark.asyncio
+async def test_completion_text_model_chain_skipped_when_provider_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", "")
+    monkeypatch.setattr(settings, "ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr(settings, "LLM_MODEL_INTENT", "")
+    monkeypatch.setattr(settings, "LLM_DEFAULT_PROVIDER", "anthropic")
+    monkeypatch.setattr(settings, "LLM_FALLBACK_MODELS", "")
+
+    captured: dict[str, str] = {}
+
+    async def capture_model(**kwargs: object) -> SimpleNamespace:
+        captured["model"] = kwargs["model"]  # type: ignore[assignment]
+        return _response("x")
+
+    monkeypatch.setattr(router_mod, "acompletion", capture_model)
+    await router_mod.completion_text(
+        [{"role": "user", "content": "x"}],
+        task="intent",
+        provider="anthropic",
+        model_chain=["should-not-use-this"],
+    )
+
+    assert "should-not-use-this" not in captured["model"]

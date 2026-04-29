@@ -1,0 +1,58 @@
+﻿/* GD-01 GlideDesign War Room - light product brain interior */
+.war-room-root {
+  --wr-bg: var(--bg-canvas);
+  --wr-surface: var(--bg-overlay);
+  --wr-fg: var(--fg-strong);
+  --wr-muted: var(--fg-muted);
+  --wr-copper: var(--brand-violet);
+  --wr-emerald: var(--marketing-mint);
+  --wr-border: var(--border-subtle);
+  color: var(--wr-fg);
+  background: var(--wr-bg);
+}
+
+.dark .war-room-root {
+  --wr-bg: var(--bg-canvas);
+  --wr-surface: var(--bg-raised);
+  --wr-fg: var(--fg-strong);
+  --wr-muted: var(--fg-muted);
+  --wr-copper: var(--accent-primary);
+  --wr-emerald: var(--marketing-mint);
+  --wr-border: var(--border-subtle);
+}
+
+.war-room-pane {
+  background: var(--wr-surface);
+  border: 1px solid var(--wr-border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.war-room-main-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(260px, 320px);
+  align-items: stretch;
+}
+
+.war-room-main-grid[data-stage="idea"] {
+  grid-template-columns: minmax(260px, 400px) minmax(0, 1fr) 0fr;
+}
+
+.war-room-main-grid[data-stage="idea"] .wr-system-col {
+  display: none;
+}
+
+.war-room-main-grid[data-stage="system"] {
+  grid-template-columns: minmax(220px, 280px) minmax(240px, 1fr) minmax(300px, 1.1fr);
+}
+
+@media (max-width: 1100px) {
+  .war-room-main-grid {
+    grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr);
+    grid-template-rows: auto auto;
+  }
+  .war-room-main-grid .wr-system-col {
+    grid-column: 1 / -1;
+  }
+}

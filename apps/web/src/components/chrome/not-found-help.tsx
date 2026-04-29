@@ -1,7 +1,8 @@
 "use client";
 
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@/providers/forge-auth-provider";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
@@ -134,6 +135,14 @@ export function NotFoundHelp() {
 
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-12 text-center font-body">
+      <Image
+        src="/brand/illustrations/not-found-glide.svg"
+        alt=""
+        aria-hidden
+        width={640}
+        height={420}
+        className="mb-6 h-auto w-full max-w-[320px] drop-shadow-sm"
+      />
       <p className="section-label">404</p>
       <h1 className="mt-2 font-display text-2xl font-bold tracking-tight text-text sm:text-3xl">
         We couldn&apos;t find that page.
@@ -174,7 +183,7 @@ export function NotFoundHelp() {
               {filteredTemplates.map((t) => (
                 <li key={t.id}>
                   <Link
-                    href={`/templates?open=${encodeURIComponent(t.id)}`}
+                    href={`/app-templates?open=${encodeURIComponent(t.id)}`}
                     className="block rounded-md px-2 py-1.5 text-text hover:bg-accent-light"
                   >
                     <span className="font-medium">{t.name}</span>
@@ -205,7 +214,7 @@ export function NotFoundHelp() {
                   ) : (
                     <li key={`t-${s.template.id}`}>
                       <Link
-                        href={`/templates?open=${encodeURIComponent(s.template.id)}`}
+                        href={`/app-templates?open=${encodeURIComponent(s.template.id)}`}
                         className="text-sm text-accent hover:underline"
                       >
                         {s.template.name}

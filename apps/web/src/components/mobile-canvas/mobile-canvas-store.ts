@@ -27,7 +27,7 @@ const demoHtml = (title: string) => {
   <p data-forge-node-id="t1" data-forge-tappable="1" style="font-size:12px;opacity:.6;margin:0 0 8px;">9:41</p>
   <h1 data-forge-node-id="h1" data-forge-tappable="1" style="font-size:24px;font-weight:700;margin:0 0 12px;letter-spacing:-.02em;">${t}</h1>
   <p data-forge-node-id="p1" data-forge-tappable="1" style="font-size:15px;opacity:.85;margin:0 0 20px;">Describe changes with a region box or tap an element. This is a live HTML preview.</p>
-  <button data-forge-node-id="b1" data-forge-tappable="1" type="button" style="display:block;width:100%;padding:14px 16px;border-radius:12px;border:none;background:var(--fc-accent);color:#fff;font-weight:600;font-size:16px;cursor:default;">Primary action</button>
+  <button data-forge-node-id="b1" data-forge-tappable="1" type="button" style="display:block;width:100%;padding:14px 16px;border-radius:12px;border:none;background:var(--fc-accent);color:var(--fc-on-accent, oklch(0.99 0.003 80));font-weight:600;font-size:16px;cursor:default;">Primary action</button>
 </div>
 `;
 };
@@ -85,10 +85,47 @@ type Store = {
   onConnect: (c: Connection) => void;
   resyncNodes: () => void;
   addScreen: () => void;
+  /** Replace one screen's preview HTML and rebuild flow nodes (positions preserved). */
+  updateScreenHtml: (screenId: string, html: string) => void;
+  /** AL-03 — GlideDesign canvas project persistence */
+  canvasProjectId: string | null;
+  setCanvasProjectId: (id: string | null) => void;
+  hydrateScreensFromServer: (
+    projectId: string,
+    screens: ReadonlyArray<{
+      id: string;
+      name: string;
+      html: string;
+      position_x: string | number;
+      position_y: string | number;
+    }>,
+  ) => void;
 };
 
 export const useMobileCanvasStore = create<Store>((set, get) => ({
   deviceId: INITIAL_DEVICE,
+  setCanvasProjectId: (canvasProjectId) => set({ canvasProjectId }),
+  hydrateScreensFromServer: (canvasProjectId, rows) => {
+    const screens: MobileScreen[] = rows.map((r) => ({
+      id: r.id,
+      title: r.name,
+      html: r.html,
+    }));
+    const pos = new Map<string, { x: number; y: number }>();
+    for (const r of rows) {
+      pos.set(r.id, {
+        x: Number(r.position_x),
+        y: Number(r.position_y),
+      });
+    }
+    const { deviceId, theme } = get();
+    set({
+      canvasProjectId,
+      screens,
+      nodes: buildNodes(screens, deviceId, theme, pos),
+    });
+  },
+  canvasProjectId: null as string | null,
   setDeviceId: (deviceId) => {
     const { screens, theme, nodes } = get();
     set({ deviceId, nodes: buildNodes(screens, deviceId, theme, positionsByScreenId(nodes)) });
@@ -134,5 +171,10 @@ export const useMobileCanvasStore = create<Store>((set, get) => ({
       html: demoHtml("New screen"),
     };
     get().setScreens((prev) => [...prev, s]);
+  },
+  updateScreenHtml: (screenId, html) => {
+    const { screens, deviceId, theme, nodes } = get();
+    const next = screens.map((s) => (s.id === screenId ? { ...s, html } : s));
+    set({ screens: next, nodes: buildNodes(next, deviceId, theme, positionsByScreenId(nodes)) });
   },
 }));

@@ -1,5 +1,5 @@
 /**
- * Route prefixes that require a signed-in Clerk session (see `src/middleware.ts`).
+ * Route prefixes that require a signed-in GlideDesign session (see `src/middleware.ts`).
  * Kept in one place for tests and docs.
  */
 export const PROTECTED_PREFIXES = [

@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     admin,
+    admin_patterns,
     admin_platform,
     analytics,
     auth,
@@ -9,7 +10,10 @@ from app.api.v1 import (
     availability_calendars,
     billing,
     calendar,
+    canvas,
+    design_memory_routes,
     e2e_bootstrap,
+    feedback,
     notifications_center,
     organization,
     orgs_current_alias,
@@ -31,6 +35,9 @@ from app.api.v1 import (
 
 api_router = APIRouter()
 
+api_router.include_router(feedback.router)
+api_router.include_router(design_memory_routes.router)
+api_router.include_router(admin_patterns.router)
 api_router.include_router(auth.router)
 api_router.include_router(public_demo.router)
 api_router.include_router(public_runtime.router)
@@ -41,6 +48,7 @@ api_router.include_router(settings_surfaces.router)
 api_router.include_router(notifications_center.router)
 api_router.include_router(team.router)
 api_router.include_router(pages.router)
+api_router.include_router(canvas.router)
 api_router.include_router(page_export.router)
 api_router.include_router(page_proposal.router, prefix="/pages")
 api_router.include_router(page_deck.router, prefix="/pages")

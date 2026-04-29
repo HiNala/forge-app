@@ -11,7 +11,31 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from app.config import settings
 
-_SENSITIVE_KEY = re.compile(r"(password|secret|token|authorization|cookie|api[_-]?key)", re.I)
+_SENSITIVE_KEY = re.compile(r"(password|secret|token|authorization|cookie|jwt|api[_-]?key|bearer)", re.I)
+
+
+def scrub_sentry_event(event: Any, _hint: dict[str, Any] | None = None) -> Any:
+    """Redact structured fields before outbound Sentry; safe to unit-test."""
+
+    def key_sensitive(key: str) -> bool:
+        return bool(_SENSITIVE_KEY.search(key))
+
+    def walk(obj: Any) -> Any:
+        if isinstance(obj, dict):
+            out: dict[str, Any] = {}
+            for k, v in obj.items():
+                if key_sensitive(str(k)):
+                    out[k] = "[Filtered]"
+                else:
+                    out[k] = walk(v)
+            return out
+        if isinstance(obj, list):
+            return [walk(i) for i in obj]
+        return obj
+
+    if not isinstance(event, dict):
+        return event
+    return walk(event)
 
 
 def init_sentry() -> None:
@@ -19,14 +43,8 @@ def init_sentry() -> None:
     if not dsn:
         return
 
-    def before_send(event: Any, hint: dict[str, Any]) -> Any:  # noqa: ARG001
-        if isinstance(event, dict) and "request" in event and isinstance(event["request"], dict):
-            headers = event["request"].get("headers")
-            if isinstance(headers, dict):
-                for k in list(headers.keys()):
-                    if _SENSITIVE_KEY.search(k):
-                        headers[k] = "[Filtered]"
-        return event
+    def before_send(event: Any, hint: dict[str, Any]) -> Any:
+        return scrub_sentry_event(event, hint)
 
     sentry_sdk.init(
         dsn=dsn,

@@ -1,23 +1,26 @@
 import * as React from "react";
+import { forgeFallbackHex as H } from "@/lib/design/forge-html-fallback-colors";
 
 const SWATCHES = [
-  { name: "--bg-base", note: "Semantic alias → cream base (same as --color-bg)" },
-  { name: "--fg-strong", note: "Semantic alias → strongest text" },
-  { name: "--color-bg", note: "Page background (cream)" },
-  { name: "--color-bg-raised", note: "Cards / panels" },
-  { name: "--color-bg-overlay", note: "Dialogs" },
+  { name: "--bg-base", note: "Semantic alias → bone base (same as --color-bg)" },
+  { name: "--fg-strong", note: "Semantic alias → strongest workshop graphite" },
+  { name: "--color-bg", note: "Page background (bone)" },
+  { name: "--color-bg-raised", note: "Sand — cards / panels" },
+  { name: "--color-bg-canvas", note: "Linen — studio / canvas chrome" },
+  { name: "--color-bg-overlay", note: "Cloud — dialogs" },
   { name: "--color-fg-strong", note: "Hero / titles" },
   { name: "--color-fg-default", note: "Body" },
   { name: "--color-fg-muted", note: "Secondary" },
   { name: "--color-fg-faint", note: "Hints / disabled" },
-  { name: "--color-accent", note: "Primary actions" },
-  { name: "--color-accent-tint", note: "Hover / active nav" },
+  { name: "--color-accent", note: "Copper — primary commerce actions" },
+  { name: "--color-data-accent", note: "Emerald-warm — SYSTEM / data lane" },
+  { name: "--color-accent-tint", note: "Copper wash / focus halo" },
   { name: "--color-border", note: "Hairlines" },
   { name: "--color-border-strong", note: "Emphasis" },
   { name: "--color-success", note: "Positive" },
   { name: "--color-warning", note: "Approaching limit" },
   { name: "--color-danger", note: "Destructive" },
-  { name: "--color-info", note: "Neutral info" },
+  { name: "--color-info-internal", note: "Neutral info (routes to --color-info)" },
   { name: "--color-usage-track", note: "Meter track" },
   { name: "--color-usage-fill", note: "Meter fill" },
   { name: "--color-usage-fill-approach", note: "Approaching cap" },
@@ -41,7 +44,7 @@ export default function DesignTokensPage() {
             >
               <div
                 className="size-14 shrink-0 rounded-md border border-border"
-                style={{ background: `var(${name}, #ccc)` }}
+                style={{ background: `var(${name}, ${H.swatchFallback})` }}
               />
               <div className="min-w-0">
                 <p className="font-mono text-[12px] font-medium text-text">{name}</p>

@@ -32,6 +32,7 @@ from app.core.exception_handlers import (
     request_validation_handler,
     unhandled_exception_handler,
 )
+from app.core.health_checks import authorize_deep_health_request, run_deep_health
 from app.core.logging import configure_logging
 from app.core.sentry import init_sentry
 from app.db.session import AsyncSessionLocal, engine
@@ -100,11 +101,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Forge backend — AI page builder (see docs/plan/02_PRD.md).",
+    description="GlideDesign backend for AI product design, publishing, exports, billing, and orchestration.",
     version="0.1.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
-    contact={"name": "Forge", "url": settings.APP_PUBLIC_URL},
+    contact={"name": "GlideDesign", "url": settings.APP_PUBLIC_URL},
     license_info={"name": "Proprietary"},
     servers=[
         {"url": settings.API_BASE_URL, "description": settings.ENVIRONMENT},
@@ -224,30 +225,6 @@ def health_legacy() -> dict[str, str]:
 
 @app.get("/health/deep")
 async def health_deep(request: Request) -> dict[str, Any]:
-    """Postgres + Redis probe (Mission 07). Optional integrations listed, non-blocking."""
-    checks: dict[str, str] = {}
-    try:
-        async with AsyncSessionLocal() as session:
-            await session.execute(text("SELECT 1"))
-        checks["postgres"] = "ok"
-    except Exception as e:
-        logger.warning("health_deep postgres: %s", e)
-        checks["postgres"] = "error"
-
-    rc = getattr(request.app.state, "redis", None)
-    if rc is None:
-        checks["redis"] = "unavailable"
-    else:
-        try:
-            await rc.ping()
-            checks["redis"] = "ok"
-        except Exception as e:
-            logger.warning("health_deep redis: %s", e)
-            checks["redis"] = "error"
-
-    checks["stripe_configured"] = "yes" if (settings.STRIPE_SECRET_KEY or "").strip() else "no"
-    checks["resend_configured"] = "yes" if (settings.RESEND_API_KEY or "").strip() else "no"
-    checks["openai_configured"] = "yes" if (settings.OPENAI_API_KEY or "").strip() else "no"
-
-    critical_ok = checks.get("postgres") == "ok" and checks.get("redis") in ("ok", "unavailable")
-    return {"status": "ok" if critical_ok else "degraded", "checks": checks}
+    """Structured dependency checks — gated like ``/metrics`` when ``METRICS_TOKEN`` is set (AL-01)."""
+    authorize_deep_health_request(request)
+    return await run_deep_health(request)

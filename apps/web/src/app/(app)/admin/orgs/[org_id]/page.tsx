@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import * as React from "react";
 import { getAdminOrganization, type AdminOrganizationDetail } from "@/lib/api";
 

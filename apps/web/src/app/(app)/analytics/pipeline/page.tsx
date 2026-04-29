@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { PageHeader } from "@/components/chrome/page-header";
 import { listPages } from "@/lib/api";
 import { getWorkflowFamily } from "@/lib/workflow-config";

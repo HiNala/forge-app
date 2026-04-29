@@ -1,8 +1,7 @@
 import { ImageResponse } from "next/og";
-
 export const runtime = "edge";
 
-export const alt = "Forge — Describe what you need. Get a page.";
+export const alt = "GlideDesign — Describe what you need. Get a page.";
 
 export const size = {
   width: 1200,
@@ -22,42 +21,65 @@ export default function OgImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(165deg, #f9f7f3 0%, #eeebe4 100%)",
+          background: "linear-gradient(135deg, #6651ff 0%, #ff6d4d 55%, #b6f45f 100%)",
           padding: 64,
+          position: "relative",
         }}
       >
         <div
           style={{
-            fontSize: 72,
-            fontWeight: 600,
-            fontFamily: "Georgia, serif",
-            color: "#1a1714",
-            textAlign: "center",
-            lineHeight: 1.15,
+            position: "absolute",
+            top: 54,
+            left: 62,
+            fontSize: 30,
+            fontWeight: 800,
+            letterSpacing: "-0.04em",
+            color: "white",
+            fontFamily: "Inter, ui-sans-serif, system-ui",
           }}
         >
-          Describe what you need.
+          GlideDesign
         </div>
         <div
           style={{
-            marginTop: 16,
-            fontSize: 72,
-            fontWeight: 600,
-            fontFamily: "Georgia, serif",
-            color: "#0d9488",
+            fontSize: 88,
+            fontWeight: 800,
+            fontFamily: "Inter, ui-sans-serif, system-ui",
+            color: "white",
+            textAlign: "center",
+            lineHeight: 0.96,
+            letterSpacing: "-0.07em",
+            textShadow: "0 24px 80px rgba(20,16,38,0.28)",
           }}
         >
-          Get a page.
+          Glide from idea
+        </div>
+        <div
+          style={{
+            marginTop: 10,
+            fontSize: 88,
+            fontWeight: 800,
+            fontFamily: "Inter, ui-sans-serif, system-ui",
+            color: "#141026",
+            lineHeight: 0.96,
+            letterSpacing: "-0.07em",
+          }}
+        >
+          to product.
         </div>
         <div
           style={{
             marginTop: 40,
-            fontSize: 28,
-            color: "#5c5650",
-            fontFamily: "ui-sans-serif, system-ui",
+            borderRadius: 999,
+            background: "#141026",
+            padding: "16px 28px",
+            fontSize: 26,
+            fontWeight: 700,
+            color: "white",
+            fontFamily: "Inter, ui-sans-serif, system-ui",
           }}
         >
-          forge.app
+          AI product design, screens, code, and next moves
         </div>
       </div>
     ),

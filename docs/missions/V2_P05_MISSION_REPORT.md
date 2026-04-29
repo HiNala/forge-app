@@ -7,13 +7,13 @@
 - **Region drift** — `region_hash.py` (fingerprints, drift list, feature merge).
 - **Project-wide** — consent DTO stub (`project_wide.py`).
 - **Clarify / plan** — `clarify_payloads.py`, `plan_mode.py` DTOs for incremental UI + orchestration wiring.
-- **Model routing (DB + cache)** — `llm_routing_policies`, `llm_routing_history` tables, `effective_model_route`, `bump_routing_version`, `structured_completion` uses DB/org overrides for **temperature** (and route object for future model selection).
+- **Model routing (DB + cache)** — `llm_routing_policies`, `llm_routing_history` tables, `effective_model_route`, `bump_routing_version`, `structured_completion` uses DB/org overrides for **temperature** and **primary + fallback model chain** in `ai.router.completion_text` when the Studio session does not pass an explicit `provider` override. `completion_with_cost` and `section_editor` use the same chain + route temperature.
 - **Brand drift (generalized heuristics)** — `brand_drift.py` color palette check.
 - **Docs** — `CANVAS_ORCHESTRATION.md`, `MODEL_ROUTING.md`, `ORCHESTRATION_DEBUGGING.md` runbook.
 
 ## Not yet complete (explicit follow-up)
 
-- Wire **primary model + fallbacks** from `llm_routing_policies` into `ai.router` completion (today: temperature from policy; model chain still env/router defaults).
+- **Redis 1s pub/sub** invalidation across workers (version bump exists; optional `redis` still often `None` in call sites).
 - **Arq job** `extract_vision_features` for real OCR/vision; PDF rasterization.
 - **Region-edit graph** full integration: drift-fix refiner, `unscoped_drift` chip, p95 performance work.
 - **Clarify SSE** payloads for scope/breakpoint/reference in `pipeline.py` + Studio chips + 12s dismiss.

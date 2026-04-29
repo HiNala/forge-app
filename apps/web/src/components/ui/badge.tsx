@@ -5,23 +5,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center justify-center gap-1 rounded-md border px-2.5 py-0.5 text-xs font-medium font-body whitespace-nowrap transition-colors",
+  "inline-flex items-center justify-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold font-body whitespace-nowrap transition-colors",
   {
     variants: {
       variant: {
-        live: "border-emerald-500/35 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
-        draft: "border-amber-500/35 bg-amber-500/10 text-amber-900 dark:text-amber-100",
+        live: "border-success/35 bg-success/10 text-success",
+        draft: "border-warning/35 bg-warning/10 text-warning",
         archived: "border-border bg-bg-elevated text-text-muted",
         count:
           "min-w-[1.25rem] border-border bg-surface px-1.5 text-text shadow-sm",
         booking:
-          "border-accent/35 bg-accent-light text-text",
+          "border-accent/35 bg-accent-light text-accent",
         waitlist:
-          "border-violet-500/35 bg-violet-500/10 text-violet-900 dark:text-violet-100",
+          "border-brand-violet/35 bg-accent-tint text-brand-violet",
         contact:
-          "border-sky-500/35 bg-sky-500/10 text-sky-900 dark:text-sky-100",
+          "border-marketing-sky/60 bg-marketing-sky/25 text-text",
         landing:
-          "border-rose-500/35 bg-rose-500/10 text-rose-900 dark:text-rose-100",
+          "border-brand-coral/40 bg-brand-coral/10 text-brand-coral",
       },
     },
     defaultVariants: {

@@ -1,7 +1,7 @@
 /** Central marketing copy and route lists (Mission FE-02). */
 
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://forge.app";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://glidedesign.ai";
 
 export const EXAMPLES_SLUGS = [
   "contractor-small-jobs",
@@ -61,15 +61,15 @@ export const TEMPLATE_CARDS: {
 export const LANDING_FAQ: { q: string; a: string }[] = [
   {
     q: "What is a mini-app?",
-    a: "A single-purpose, hosted surface you ship with Forge: a form, a landing page, a proposal, a deck, a simple site. One link, analytics in Forge, no database to configure.",
+    a: "A single-purpose, hosted surface you ship with GlideDesign: a form, a landing page, a proposal, a deck, a simple site. One link, analytics in GlideDesign, no database to configure.",
   },
   {
     q: "Can I use my own domain?",
-    a: "Yes on Pro and above — point DNS at Forge and we provision TLS. The Free tier uses Forge-hosted links until you upgrade.",
+    a: "Yes on Pro and above: point DNS at GlideDesign and we provision TLS. The Free tier uses GlideDesign-hosted links until you upgrade.",
   },
   {
-    q: "Is Forge like Lovable, Bolt, or Cursor?",
-    a: "No — those are for shipping full applications and code. Forge is for fast, on-brand pages and content mini-apps: forms, proposals, decks, and landing pages you can share and track without running infrastructure.",
+    q: "Is GlideDesign like Lovable, Bolt, or Cursor?",
+    a: "No. Those are for coding full applications. GlideDesign is for turning intent into product strategy, screens, code, decks, and shareable mini-apps without running infrastructure.",
   },
   {
     q: "What AI powers Studio?",
@@ -81,7 +81,7 @@ export const LANDING_FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Can I take my work elsewhere?",
-    a: "Yes — that is the point. Export formats depend on the workflow; everything can stay live on Forge in the meantime.",
+    a: "Yes. Export formats depend on the workflow; everything can stay live on GlideDesign in the meantime.",
   },
   {
     q: "GDPR and data residency?",
@@ -104,7 +104,7 @@ export const PRICING_FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Is the Free tier really free?",
-    a: "Yes — a real tier for trying Forge. Paid tiers add usage headroom, domains, and team features. Exact entitlements follow Stripe when wired.",
+    a: "Yes. Free is real, but strict: 100 weekly credits, 3 published mini-apps, GlideDesign badge, and community support. Paid tiers add serious usage headroom, domains, exports, and support.",
   },
   {
     q: "Do you charge for AI separately?",
@@ -112,7 +112,7 @@ export const PRICING_FAQ: { q: string; a: string }[] = [
   },
   {
     q: "What is the difference between Pro and Max?",
-    a: "Max is for people who live in Forge: higher limits, priority support, and headroom for daily shipping. Pro is the best fit for most growing teams. Details track V2-P04.",
+    a: "Max is for teams that live in GlideDesign: 10,000 weekly credits, priority generation, seats, SSO, and dedicated support. Pro is the best fit for most growing teams.",
   },
   {
     q: "How does annual billing work?",
@@ -137,14 +137,14 @@ export const PRICING_COMPARISON: {
 }[] = [
   { feature: "Published mini-apps", free: "1", pro: "25", max5: "100", max20: "500" },
   { feature: "Form submissions / month", free: "50", pro: "5,000", max5: "50,000", max20: "250,000" },
-  { feature: "Forge Credits / session (5 h)", free: "50", pro: "500", max5: "2,500", max20: "10,000" },
-  { feature: "Weekly Forge Credits cap", free: "200", pro: "5,000", max5: "25,000", max20: "100,000" },
+  { feature: "Generation credits / week", free: "100", pro: "2,500", max5: "10,000", max20: "10,000" },
+  { feature: "Weekly credit cap", free: "100", pro: "2,500", max5: "10,000", max20: "10,000" },
   { feature: "Concurrent generations", free: "1", pro: "2", max5: "5", max20: "15" },
   { feature: "Custom domains", free: "—", pro: "1", max5: "10", max20: "Unlimited" },
   { feature: "Team seats (included)", free: "1", pro: "3", max5: "10", max20: "25" },
   { feature: "Analytics", free: "Basic", pro: "Full", max5: "Full", max20: "Full" },
-  { feature: '"Made with Forge" badge', free: "On", pro: "Off", max5: "Off", max20: "Off" },
+  { feature: '"Made with GlideDesign" badge', free: "On", pro: "Off", max5: "Off", max20: "Off" },
   { feature: "Support", free: "Email (best effort)", pro: "Priority", max5: "Priority + fast lane", max20: "Priority + highest" },
   { feature: "Exports (PDF, PPTX, …)", free: "Core", pro: "Full", max5: "Advanced", max20: "All" },
-  { feature: "AI provider (backend)", free: "Forge-managed", pro: "Forge-managed", max5: "Forge-managed", max20: "Optional org override" },
+  { feature: "AI provider (backend)", free: "GlideDesign-managed", pro: "GlideDesign-managed", max5: "GlideDesign-managed", max20: "Optional org override" },
 ];

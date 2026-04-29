@@ -1,6 +1,6 @@
-# Forge — mini-app platform
+# GlideDesign — mini-app platform
 
-Forge is the fastest way to ship a **mini-app**: a form, landing page, proposal, pitch deck, website idea, or (on the roadmap) mobile and web canvas outputs. Describe it in the Studio, share a link, see analytics, export when the work moves elsewhere — you never run a database for it.
+GlideDesign is the fastest way to ship a **mini-app**: a form, landing page, proposal, pitch deck, website idea, or (on the roadmap) mobile and web canvas outputs. Describe it in the Studio, share a link, see analytics, export when the work moves elsewhere — you never run a database for it.
 
 ## What’s in this repo
 
@@ -34,7 +34,7 @@ cp .env.example .env
 
 Edit `.env` before starting anything that reads it:
 
-1. **Clerk** — `CLERK_JWKS_URL`, `CLERK_JWT_ISSUER`, `CLERK_AUDIENCE` (and webhook secret if you use webhooks). Required for browser sign-in and API JWT validation.
+1. **Auth** — `AUTH_JWT_SECRET` (32+ random bytes) plus optional `GOOGLE_AUTH_CLIENT_ID` / `GOOGLE_AUTH_CLIENT_SECRET` for Google login.
 2. **LLM** — At least `OPENAI_API_KEY` (or other provider keys) for live Studio generation and orchestration.
 3. **Secrets** — Set `SECRET_KEY` to a long random string (e.g. `openssl rand -hex 32`).
 
@@ -144,14 +144,14 @@ Run the API on the host from `apps/api` (see `apps/api/pyproject.toml`): typical
 ## Smoke checks after boot
 
 1. **Marketing:** http://localhost:3001 (Docker) or http://localhost:3000 (local `pnpm dev`) — landing page loads.
-2. **App shell:** http://localhost:3001/dashboard — redirects to Clerk **sign-in** when unauthenticated (authenticated UI lives under the Next.js `(app)` **route group**; URLs are `/dashboard`, `/settings`, … — not a literal `/app` prefix).
+2. **App shell:** http://localhost:3001/dashboard — redirects to **sign-in** when unauthenticated (authenticated UI lives under the Next.js `(app)` **route group**; URLs are `/dashboard`, `/settings`, … — not a literal `/app` prefix).
 3. **API:** `curl -s http://localhost:8000/health` → JSON with healthy status.
 4. **Deep health:** `curl -s http://localhost:8000/health/deep` → DB + Redis OK when configured.
 5. **Quick script (optional):** `pwsh -File scripts/verify_local_stack.ps1` — hits `/health` and the marketing URL on `:3001`.
 
 ### Going live on the internet
 
-Set `ENVIRONMENT=production` only on real deploys: the API **refuses to boot** with weak `SECRET_KEY`, wildcard `TRUSTED_HOSTS`, missing Clerk config, non-HTTPS public URLs/CORS, or `AUTH_TEST_BYPASS` / `FORGE_E2E_TOKEN` enabled. Use **`METRICS_TOKEN`** for Prometheus, **`TRUST_PROXY_HEADERS=true`** behind your load balancer, and rotate secrets per environment. Full checklist: **`docs/runbooks/GO_LIVE_PLAYBOOK.md`** and **`docs/runbooks/LAUNCH_READINESS.md`**.
+Set `ENVIRONMENT=production` only on real deploys: the API **refuses to boot** with weak `SECRET_KEY` / `AUTH_JWT_SECRET`, wildcard `TRUSTED_HOSTS`, missing auth/Google login config, non-HTTPS public URLs/CORS, or `AUTH_TEST_BYPASS` / `FORGE_E2E_TOKEN` enabled. Use **`METRICS_TOKEN`** for Prometheus, **`TRUST_PROXY_HEADERS=true`** behind your load balancer, and rotate secrets per environment. Full checklist: **`docs/runbooks/GO_LIVE_PLAYBOOK.md`** and **`docs/runbooks/LAUNCH_READINESS.md`**.
 
 ---
 
@@ -159,11 +159,11 @@ Set `ENVIRONMENT=production` only on real deploys: the API **refuses to boot** w
 
 ### Signup → onboarding → brand
 
-1. **Sign up** with Clerk (`/signup`); the app calls `POST /api/v1/auth/signup` to create the Forge **User**, default **Organization**, and **Owner** membership.
+1. **Sign up** with email/password or Google (`/signup`); the API creates the GlideDesign **User**, default **Organization**, and **Owner** membership.
 2. **Onboarding** at **`/onboarding`** — workspace name, primary color, optional logo (skippable); see `OnboardingGate` + `sessionStorage` per org.
 3. **Brand** under **Settings → Brand** (`/settings/brand`); API persists **BrandKit** and optional logo to S3-compatible storage.
 
-The browser sends **`Authorization: Bearer`** (Clerk JWT) and **`x-forge-active-org-id`** on API calls; Postgres **RLS** enforces tenant isolation. See **`docs/runbooks/TENANT_ISOLATION.md`**.
+The browser sends **`Authorization: Bearer`** (GlideDesign JWT) and **`x-forge-active-org-id`** on API calls; Postgres **RLS** enforces tenant isolation. See **`docs/runbooks/TENANT_ISOLATION.md`**.
 
 ### Studio (AI generation)
 
@@ -213,10 +213,10 @@ The full list and comments live in **`.env.example`**. Highlights:
 
 | Area | Variables (examples) |
 |------|----------------------|
-| Web (public) | `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL`, Clerk public keys as needed |
-| Core | `ENVIRONMENT`, `SECRET_KEY`, `DATABASE_URL`, `REDIS_URL` |
+| Web (public) | `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL` |
+| Core | `ENVIRONMENT`, `SECRET_KEY`, `AUTH_JWT_SECRET`, `DATABASE_URL`, `REDIS_URL` |
 | HTTP | `BACKEND_CORS_ORIGINS`, `TRUSTED_HOSTS`, `TRUST_PROXY_HEADERS` |
-| Clerk | `CLERK_JWKS_URL`, `CLERK_JWT_ISSUER`, `CLERK_AUDIENCE`, `CLERK_WEBHOOK_SECRET` |
+| Auth | `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE`, `GOOGLE_AUTH_CLIENT_ID`, `GOOGLE_AUTH_CLIENT_SECRET` |
 | Storage | `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `PUBLIC_ASSET_BASE_URL` |
 | LLM | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `LLM_DEFAULT_PROVIDER`, model overrides |
 | Email / Stripe / OAuth | `RESEND_*`, `STRIPE_*`, `GOOGLE_OAUTH_*` |
@@ -232,7 +232,7 @@ Compose **overrides** `DATABASE_URL`, `REDIS_URL`, and CORS-related URLs for `ap
 |---------|----------------|
 | **Web container fails or empty `node_modules`** | Named volumes `web_root_node_modules` / `web_app_node_modules` hold Linux deps; run `docker compose down -v` and `docker compose up --build` to reset. On Windows, avoid bind-mounting host `node_modules` into Linux — the compose file uses volumes intentionally. |
 | **Port already in use (3001, 8000, 5432, …)** | Stop other Postgres/Redis/Next processes or change host ports in `docker-compose.yml`. |
-| **API 401 / Clerk errors** | JWKS URL, issuer, audience must match the Clerk dashboard and your frontend URL. |
+| **API 401 / auth errors** | `AUTH_JWT_SECRET`, issuer, audience, access-token expiry, and active org header. |
 | **Studio / LLM errors** | `OPENAI_API_KEY` (or chosen provider) set in `.env` and visible to the **api** container (`env_file: .env`). |
 | **MinIO uploads** | **`docker-compose.yml`** sets `S3_ENDPOINT=http://minio:9000` for **api** and **worker** so the SDK hits MinIO on the Compose network. Browsers still use `PUBLIC_ASSET_BASE_URL` (typically `http://localhost:9000/...` on the host). |
 | **Migrations failed** | Read `docker compose logs api`; fix DB state; re-run `docker compose exec api uv run alembic upgrade head`. |

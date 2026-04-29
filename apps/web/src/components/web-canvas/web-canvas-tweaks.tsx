@@ -44,7 +44,7 @@ export function WebCanvasTweaks() {
           value={accentHue}
           onChange={(e) => setAccentHue(Number(e.target.value))}
           className="h-2 w-full cursor-pointer"
-          style={{ accentColor: `hsl(${accentHue} 78% 48%)` }}
+          style={{ accentColor: `oklch(0.66 0.14 ${accentHue})` }}
         />
         <p className="text-[10px] tabular-nums text-text-muted">{Math.round(accentHue)}°</p>
       </div>

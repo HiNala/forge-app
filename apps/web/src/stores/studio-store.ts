@@ -1,3 +1,4 @@
+import type { ForgeFourLayerPayload } from "@/lib/forge-four-layer";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -16,6 +17,8 @@ export type StudioChatMsg = {
     status: string;
     qualityScore?: number;
     degradedQuality?: boolean;
+    fourLayer?: ForgeFourLayerPayload | null;
+    runId?: string | null;
   };
   reviewMeta?: {
     expert?: string;

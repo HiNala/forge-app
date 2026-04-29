@@ -19,7 +19,7 @@ export function OfflineBanner() {
     >
       <WifiOff className="size-4 shrink-0 text-warning" aria-hidden />
       <span>
-        We can&apos;t reach Forge right now — check your connection. Your edits stay on this device until you&apos;re
+        We can&apos;t reach GlideDesign right now — check your connection. Your edits stay on this device until you&apos;re
         back online.
       </span>
       <Button

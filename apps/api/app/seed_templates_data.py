@@ -159,7 +159,7 @@ def _form_block(
     <button class="forge-submit" type="submit">{submit}</button>
   </form>
 </section>
-<section class="forge-footer">Built with Forge</section>
+<section class="forge-footer">Built with GlideDesign</section>
 """
 
 
@@ -176,7 +176,7 @@ def _landing(headline: str, sub: str, cta: str) -> str:
     <button class="forge-submit" type="submit">{cta}</button>
   </form>
 </section>
-<section class="forge-footer">Built with Forge</section>
+<section class="forge-footer">Built with GlideDesign</section>
 """
 
 
@@ -195,7 +195,7 @@ def _menu(headline: str, items: list[str]) -> str:
     <button class="forge-submit" type="submit">Request a table</button>
   </form>
 </section>
-<section class="forge-footer">Built with Forge</section>
+<section class="forge-footer">Built with GlideDesign</section>
 """
 
 
@@ -214,7 +214,7 @@ def _gallery(headline: str, caption: str) -> str:
     <button class="forge-submit" type="submit">Inquire</button>
   </form>
 </section>
-<section class="forge-footer">Built with Forge</section>
+<section class="forge-footer">Built with GlideDesign</section>
 """
 
 
@@ -234,7 +234,7 @@ def _proposal(headline: str, scope: str) -> str:
     <button class="forge-submit" type="submit">Record response</button>
   </form>
 </section>
-<section class="forge-footer">Built with Forge</section>
+<section class="forge-footer">Built with GlideDesign</section>
 """
 
 
@@ -271,7 +271,7 @@ def _p08_beta_waitlist() -> str:
     <button class="forge-submit" type="submit">Request access</button>
   </form>
 </section>
-<section class="forge-footer">Built with Forge</section>
+<section class="forge-footer">Built with GlideDesign</section>
 """.strip()
 
 
@@ -343,7 +343,7 @@ def _p08_job_apply() -> str:
     <button class="forge-submit" type="submit">Apply</button>
   </form>
 </section>
-<section class="forge-footer">Built with Forge</section>
+<section class="forge-footer">Built with GlideDesign</section>
 """.strip()
 
 
@@ -363,7 +363,7 @@ def _p08_link_hub() -> str:
   </form>
   <p style="text-align:center;font-size:0.9rem;opacity:0.8">Twitter · GitHub · YouTube</p>
 </section>
-<section class="forge-footer">Built with Forge</section>
+<section class="forge-footer">Built with GlideDesign</section>
 """.strip()
 
 
@@ -634,7 +634,7 @@ _RAW: list[tuple[str, str, str, str, str, Any]] = [
         "landing",
         "landing",
         _landing(
-            "The Forge Field Notes",
+            "The GlideDesign Field Notes",
             "Templates, launches, and ops tips.",
             "Subscribe",
         ),
@@ -1082,7 +1082,7 @@ def curated_templates() -> list[dict[str, Any]]:
     for i, (slug, name, desc, cat, ptype, fragment) in enumerate(_RAW):
         html = _pack(name, fragment)
         source = "seed_p08" if slug in P08_TEMPLATE_SLUGS else "seed_mission09"
-        intent = {
+        intent: dict[str, Any] = {
             "page_type": ptype,
             "source": source,
             "competitor_cohort": cat,

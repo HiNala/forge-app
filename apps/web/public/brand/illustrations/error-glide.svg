@@ -1,0 +1,20 @@
+<svg width="640" height="420" viewBox="0 0 640 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">GlideDesign error illustration</title>
+  <desc id="desc">A colorful panel with a friendly broken path and GlideDesign cursor mark.</desc>
+  <rect width="640" height="420" rx="40" fill="#141026"/>
+  <circle cx="106" cy="96" r="58" fill="#6651FF"/>
+  <circle cx="538" cy="326" r="70" fill="#FF6D4D"/>
+  <path d="M118 320C166 253 224 253 270 310C316 367 369 352 421 292C472 234 520 234 558 286" stroke="#B6F45F" stroke-width="16" stroke-linecap="round"/>
+  <rect x="148" y="92" width="344" height="220" rx="34" fill="#FFF9F1" stroke="#FFFFFF" stroke-width="4"/>
+  <rect x="180" y="124" width="120" height="24" rx="12" fill="#1A1238"/>
+  <rect x="180" y="170" width="280" height="18" rx="9" fill="#D9D3FF"/>
+  <rect x="180" y="204" width="214" height="18" rx="9" fill="#FFE0DA"/>
+  <path d="M316 242L356 284M356 242L316 284" stroke="#FF4F64" stroke-width="16" stroke-linecap="round"/>
+  <path d="M430 122L470 226L496 184L540 175L430 122Z" fill="url(#cursorGradient)" stroke="#1A1238" stroke-width="4" stroke-linejoin="round"/>
+  <defs>
+    <linearGradient id="cursorGradient" x1="430" y1="122" x2="528" y2="229" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6651FF"/>
+      <stop offset="1" stop-color="#FF6D4D"/>
+    </linearGradient>
+  </defs>
+</svg>

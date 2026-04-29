@@ -13,7 +13,7 @@ function Checkbox({
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       className={cn(
-        "peer size-4 shrink-0 rounded-[4px] border border-border-strong bg-surface shadow-sm",
+        "peer size-5 shrink-0 rounded-[6px] border border-border-strong bg-surface shadow-sm",
         "transition-[background-color,border-color,box-shadow] duration-[180ms] ease-[cubic-bezier(0.4,0,0.2,1)]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mid focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
         "data-[state=checked]:border-accent data-[state=checked]:bg-accent data-[state=checked]:text-white",
@@ -25,7 +25,7 @@ function Checkbox({
       <CheckboxPrimitive.Indicator
         className={cn("flex items-center justify-center text-current")}
       >
-        <Check className="size-3.5 stroke-[2.5]" />
+        <Check className="size-4 stroke-[2.5]" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );

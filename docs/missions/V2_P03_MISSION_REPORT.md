@@ -12,7 +12,7 @@ P-03 delivers a **client-first** web canvas aligned with the mobile workflow: xy
 | Multi-page site generation 5–10 pages, shared nav/footer | **Partial** — nav/footer sync client-side; generator = `WebsiteComposer` / API |
 | Site-wide style sync without LLM | **Done** (tokens: accent, radius, fonts, theme on all nodes) |
 | Shared regions + per-page override | **Partial** — shared header/footer + hover affordance; override UI **not** built |
-| Routing edges from nav + manual; orphan detection | **Partial** — sync from links + orphans + xyflow edges; preview `<a href="/path">` focuses + fits the target page node (still no minimap click-to-pan) |
+| Routing edges from nav + manual; orphan detection | **Partial** — sync from links + orphans + xyflow edges; preview `<a href="/path">` focuses + fits the target page node; **element pick** (zoom ≥75%, cross-page links still navigate) + Refine/Duplicate/Delete FAB + `updatePageHtml` (still no minimap click-to-pan) |
 | Forms embed + Forge submissions | **Not done** (requires page type + API) |
 | Responsive linter + auto-fix | **Not done** |
 | Five exports (HTML zip, Next, Framer, Webflow, Figma) | **Partial** — single-file HTML + **client ZIP** of per-page HTML (not Next/Framer/Webflow/Figma) |
@@ -28,6 +28,7 @@ P-03 delivers a **client-first** web canvas aligned with the mobile workflow: xy
 - `buildSingleFileStaticSite`, `buildMultiPageStaticZip` (per-page HTML + `fflate`), nav-graph helpers, unit cases extended.
 - `components/canvas/WebCanvas.tsx` re-export for mission naming.
 - W-04 doc addendum clarifying `/studio` vs `/studio/web`.
+- Shared `forge-preview-hit` + mobile HTML mutators on web canvas; `updatePageHtml` in `web-canvas-store`.
 
 ## Recommended next slices
 

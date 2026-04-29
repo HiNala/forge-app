@@ -1,0 +1,8 @@
+# Paths or glob fragments where stub markers are tolerated (fixtures, stubs module).
+**/tests/**
+**/scripts/**
+apps/api/.venv-ci/**
+**/conftest.py
+apps/api/app/services/vision/extract.py
+apps/api/app/services/vision/
+apps/api/app/services/ai/anthropic_provider.py

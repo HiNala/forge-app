@@ -1,11 +1,12 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/providers/forge-auth-provider";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
+import { EmptyState } from "@/components/chrome/empty-state";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -286,15 +287,12 @@ export function OrgAnalyticsView() {
       ) : null}
 
       {livePages === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-bg-elevated/40 p-6 text-center">
-          <p className="text-sm text-text-muted font-body">No pages yet.</p>
-          <p className="mt-2 text-sm text-text-muted font-body">
-            Create a page in Studio to start collecting analytics and submissions.
-          </p>
-          <Button type="button" className="mt-4" variant="secondary" asChild>
-            <Link href="/pages">Open Studio</Link>
-          </Button>
-        </div>
+        <EmptyState
+          title="Get your first visitor and watch this fill in."
+          description="Publish and share a page. Views, submissions, and workflow signals will appear here as people interact."
+          primaryAction={{ label: "Share your page", onClick: () => router.push("/pages") }}
+          secondaryAction={{ label: "Open Studio", onClick: () => router.push("/studio") }}
+        />
       ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

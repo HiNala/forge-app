@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { WORKFLOW_SLUGS, getWorkflowLanding } from "./workflow-landings";
 
 describe("workflow-landings", () => {
-  it("exposes six workflow slugs for V2-P01", () => {
-    expect(WORKFLOW_SLUGS).toHaveLength(6);
+  it("exposes canonical workflow slug list (marketing /compare)", () => {
+    expect(WORKFLOW_SLUGS).toHaveLength(15);
   });
 
   it("resolves each slug", () => {

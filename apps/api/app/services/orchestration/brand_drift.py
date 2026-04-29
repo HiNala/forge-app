@@ -21,8 +21,13 @@ def colors_outside_palette(html: str, allowed: set[str]) -> list[str]:
 
 def drift_report(html: str, brand_tokens: dict[str, Any]) -> dict[str, Any]:
     """Lightweight heuristics — pair with review LLM for voice (O-04)."""
-    allow = {brand_tokens.get("primary"), brand_tokens.get("secondary")}
-    allow = {x for x in allow if isinstance(x, str) and x.startswith("#")}
+    prim = brand_tokens.get("primary")
+    sec = brand_tokens.get("secondary")
+    allow: set[str] = {
+        x
+        for x in (prim, sec)
+        if isinstance(x, str) and x.startswith("#")
+    }
     bad_colors = colors_outside_palette(html, allow) if allow else []
     return {
         "color_drift": bad_colors[:20],

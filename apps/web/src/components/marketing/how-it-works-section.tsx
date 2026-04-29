@@ -11,7 +11,7 @@ const steps = [
   },
   {
     title: "See it built.",
-    body: "Forge generates a branded page in seconds. Refine by clicking any section in Studio.",
+    body: "GlideDesign generates a branded page in seconds. Refine by clicking any section in Studio.",
   },
   {
     title: "Share the link.",

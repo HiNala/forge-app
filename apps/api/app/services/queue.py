@@ -31,15 +31,18 @@ async def enqueue_run_automations(app_state: Any, submission_id: str) -> None:
         logger.warning("enqueue_run_automations failed: %s", e)
 
 
-async def enqueue_deck_export(app_state: Any, page_id: str, export_format: str) -> None:
-    """PPTX/PDF export for pitch decks (W-03) — worker stub."""
+async def enqueue_deck_export(app_state: Any, page_id: str, export_format: str) -> bool:
+    """PPTX/PDF export for pitch decks (W-03). Returns false when queueing did not happen."""
     pool = getattr(app_state, "arq_pool", None)
     if pool is None:
-        return
+        logger.warning("enqueue_deck_export: arq pool missing, job not scheduled")
+        return False
     try:
         await pool.enqueue_job("deck_export", page_id, export_format)
+        return True
     except Exception as e:
         logger.warning("enqueue_deck_export failed: %s", e)
+        return False
 
 
 async def enqueue_proposal_pdf(app_state: Any, page_id: str) -> None:

@@ -1,32 +1,32 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
-import { ForgeLogo } from "@/components/icons/logo";
+import { GlideDesignLogo } from "@/components/icons/logo";
 import { SITE_URL } from "@/lib/marketing-content";
 
 export const metadata: Metadata = {
-  title: "Press kit | Forge",
-  description: "Logos, boilerplate, product overview, and press contact for Forge — the mini-app platform.",
+  title: "Press kit | GlideDesign",
+  description: "Logos, boilerplate, product overview, and press contact for GlideDesign — the mini-app platform.",
   alternates: { canonical: "/press" },
   openGraph: {
-    title: "Press kit · Forge",
+    title: "Press kit · GlideDesign",
     description: "Download brand assets, boilerplate, and contact the team.",
     url: `${SITE_URL}/press`,
   },
 };
 
 const BOILER = {
-  one: "Forge is a mini-app platform: describe a form, landing page, proposal, deck, or site, and Forge hosts it with analytics and export paths so teams can move fast without running a database.",
+  one: "GlideDesign is a mini-app platform: describe a form, landing page, proposal, deck, or site, and GlideDesign hosts it with analytics and export paths so teams can move fast without running a database.",
   three:
-    "Forge is a mini-app platform for real businesses. Teams describe what they need in plain language and receive hosted pages and flows — contact forms, proposals, pitch decks, landings, and (on the roadmap) mobile and web canvas exports. " +
+    "GlideDesign is a mini-app platform for real businesses. Teams describe what they need in plain language and receive hosted pages and flows — contact forms, proposals, pitch decks, landings, and (on the roadmap) mobile and web canvas exports. " +
     "Work stays on-brand, analytics show what happened after the link went out, and handoff formats meet teams where they build next. " +
-    "Forge is built to feel calm and direct — fewer tools, one Studio, honest usage limits.",
+    "GlideDesign is built to feel calm and direct — fewer tools, one Studio, honest usage limits.",
   five:
     "Lucy and similar operators were tired of gluing together forms, document tools, and one-off pages. " +
-    "Forge answers with one Studio: describe the outcome, get a link, see analytics, export when the work graduates. " +
+    "GlideDesign answers with one Studio: describe the outcome, get a link, see analytics, export when the work graduates. " +
     "The product is intentionally narrower than a full app builder — that focus is the point. " +
     "Positioning, pricing, and canvas depth continue to follow public missions (V2). " +
-    "Press: press@forge.app — we respond to journalists and podcast producers within two U.S. business days when we can help.",
+    "Press: press@glidedesign.ai — we respond to journalists and podcast producers within two U.S. business days when we can help.",
 } as const;
 
 export default function PressPage() {
@@ -43,10 +43,10 @@ export default function PressPage() {
           SVG and PNG (light, dark, monochrome) — use the in-app mark as a stand-in until the public asset pack is published to this URL.
         </p>
         <div className="mt-4 flex items-center gap-4 rounded-2xl border border-border bg-surface p-6">
-          <ForgeLogo className="text-accent" size="lg" />
+          <GlideDesignLogo className="text-accent" size="lg" />
           <p className="font-body text-sm text-text-muted">
             Vector: see <code className="rounded bg-bg-elevated px-1.5 py-0.5 text-xs">apps/web/src/components/icons/logo</code> in the repo, or
-            contact <a className="text-accent underline" href="mailto:press@forge.app">press@forge.app</a> for a zip.
+            contact <a className="text-accent underline" href="mailto:press@glidedesign.ai">press@glidedesign.ai</a> for a zip.
           </p>
         </div>
       </section>
@@ -94,13 +94,13 @@ export default function PressPage() {
       <section className="mt-10 border-t border-border pt-10">
         <h2 className="font-display text-2xl font-bold text-text">Press contact</h2>
         <p className="mt-2 font-body text-sm text-text-muted">
-          <a className="text-accent underline" href="mailto:press@forge.app">
-            press@forge.app
+          <a className="text-accent underline" href="mailto:press@glidedesign.ai">
+            press@glidedesign.ai
           </a>
         </p>
         <p className="mt-4 font-body text-sm">
           <Link className="text-accent underline" href="/">
-            forge.app
+            glidedesign.ai
           </Link>{" "}
           — {SITE_URL}
         </p>

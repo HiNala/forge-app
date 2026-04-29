@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 _RETRY_AFTER_SECONDS = 60
 
 _RL_AUTH_USER_PER_MIN = 120
+_RL_AUTH_PASSWORD_IP_PER_MIN = 10
 _RL_STUDIO_PER_MIN = 10
 _RL_PUBLIC_IP_PER_MIN = 60
 _RL_SUBMIT_IP_PER_MIN = 5
@@ -97,6 +98,12 @@ def _limit_key_and_max(request: Request) -> tuple[str | None, int]:
         return f"rl:user:tok:{h}", _RL_AUTH_USER_PER_MIN
 
     if path.startswith(settings.API_V1_STR):
+        if path in {
+            f"{settings.API_V1_STR}/auth/login",
+            f"{settings.API_V1_STR}/auth/register",
+            f"{settings.API_V1_STR}/auth/refresh",
+        }:
+            return f"rl:authpwd:{get_client_ip(request)}", _RL_AUTH_PASSWORD_IP_PER_MIN
         return f"rl:api:{get_client_ip(request)}", _RL_PUBLIC_IP_PER_MIN
 
     return None, 0

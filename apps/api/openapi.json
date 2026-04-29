@@ -1,10 +1,10 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Forge API",
-    "description": "Forge backend — AI page builder (see docs/plan/02_PRD.md).",
+    "title": "GlideDesign API",
+    "description": "GlideDesign backend for AI product design, publishing, exports, billing, and orchestration.",
     "contact": {
-      "name": "Forge",
+      "name": "GlideDesign",
       "url": "http://localhost:3000/"
     },
     "license": {
@@ -22,6 +22,7 @@
     "/metrics": {
       "get": {
         "summary": "Metrics",
+        "description": "Prometheus scrape endpoint. Open in dev; gated by ``METRICS_TOKEN`` when set.\n\nRationale: when the ``/metrics`` endpoint is publicly routable (production),\nwe require ``Authorization: Bearer <METRICS_TOKEN>``. Compared with\n``hmac.compare_digest`` to avoid timing leaks. In dev/CI, ``METRICS_TOKEN`` is\nempty and the endpoint stays open so local Prometheus / scrape probes work\nwithout extra config.",
         "operationId": "metrics_metrics_get",
         "responses": {
           "200": {
@@ -35,13 +36,682 @@
         }
       }
     },
+    "/api/v1/feedback": {
+      "post": {
+        "tags": [
+          "feedback"
+        ],
+        "summary": "Submit Artifact Feedback",
+        "operationId": "submit_artifact_feedback_api_v1_feedback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackSubmitIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackSubmitOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design-memory": {
+      "get": {
+        "tags": [
+          "design-memory"
+        ],
+        "summary": "List Memory Entries",
+        "operationId": "list_memory_entries_api_v1_design_memory_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DesignMemoryRowOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Memory Entries Api V1 Design Memory Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design-memory/{memory_id}": {
+      "patch": {
+        "tags": [
+          "design-memory"
+        ],
+        "summary": "Patch Memory Entry",
+        "operationId": "patch_memory_entry_api_v1_design_memory__memory_id__patch",
+        "parameters": [
+          {
+            "name": "memory_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Memory Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignMemoryPatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignMemoryRowOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "design-memory"
+        ],
+        "summary": "Delete Memory Entry",
+        "operationId": "delete_memory_entry_api_v1_design_memory__memory_id__delete",
+        "parameters": [
+          {
+            "name": "memory_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Memory Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Delete Memory Entry Api V1 Design Memory  Memory Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design-memory/reset": {
+      "post": {
+        "tags": [
+          "design-memory"
+        ],
+        "summary": "Reset Memory Entries",
+        "operationId": "reset_memory_entries_api_v1_design_memory_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignMemoryResetOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/patterns/feed": {
+      "get": {
+        "tags": [
+          "admin-patterns"
+        ],
+        "summary": "Patterns Feed",
+        "description": "Rolling feedback list (privacy: optional filter when users opt out of platform analytics).",
+        "operationId": "patterns_feed_api_v1_admin_patterns_feed_get",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "default": 7,
+              "title": "Days"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 400,
+              "minimum": 1,
+              "default": 120,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "respect_opt_out",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Respect Opt Out"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Patterns Feed Api V1 Admin Patterns Feed Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/patterns/recurring": {
+      "get": {
+        "tags": [
+          "admin-patterns"
+        ],
+        "summary": "Patterns Recurring",
+        "description": "Groups (artifact_kind, top reason fingerprint) → counts.",
+        "operationId": "patterns_recurring_api_v1_admin_patterns_recurring_get",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 120,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 400,
+              "minimum": 1,
+              "default": 60,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Patterns Recurring Api V1 Admin Patterns Recurring Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/patterns/stale-memory": {
+      "get": {
+        "tags": [
+          "admin-patterns"
+        ],
+        "summary": "Patterns Stale Memory",
+        "operationId": "patterns_stale_memory_api_v1_admin_patterns_stale_memory_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Patterns Stale Memory Api V1 Admin Patterns Stale Memory Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/patterns/learning-loop/run-once": {
+      "post": {
+        "tags": [
+          "admin-patterns"
+        ],
+        "summary": "Patterns Run Learning Once",
+        "description": "Operator trigger for the nightly aggregator (runs synchronously when called).",
+        "operationId": "patterns_run_learning_once_api_v1_admin_patterns_learning_loop_run_once_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Patterns Run Learning Once Api V1 Admin Patterns Learning Loop Run Once Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Refresh",
+        "operationId": "refresh_api_v1_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/LogoutBody"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "type": "object",
+                  "title": "Response Logout Api V1 Auth Logout Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/oauth/google": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Google Oauth Start",
+        "operationId": "google_oauth_start_api_v1_auth_oauth_google_get",
+        "parameters": [
+          {
+            "name": "next",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Next"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Google Oauth Start Api V1 Auth Oauth Google Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/oauth/google/callback": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Google Oauth Callback",
+        "operationId": "google_oauth_callback_api_v1_auth_oauth_google_callback_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Error"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/signup": {
       "post": {
         "tags": [
           "auth"
         ],
         "summary": "Signup",
-        "description": "Create User + default Organization + Owner membership (requires Clerk JWT).",
+        "description": "Create the user's default Organization + Owner membership if missing.",
         "operationId": "signup_api_v1_auth_signup_post",
         "requestBody": {
           "content": {
@@ -270,6 +940,52 @@
         }
       }
     },
+    "/api/v1/auth/me/activity": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "List My Security Activity",
+        "description": "Recent audit events where this user was the actor (Settings → Security).",
+        "operationId": "list_my_security_activity_api_v1_auth_me_activity_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List My Security Activity Api V1 Auth Me Activity Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/switch-org": {
       "post": {
         "tags": [
@@ -317,8 +1033,25 @@
           "auth"
         ],
         "summary": "Signout",
-        "description": "Client clears Clerk session; this exists for explicit sign-out telemetry hooks.",
+        "description": "Compatibility alias for first-party logout.",
         "operationId": "signout_api_v1_auth_signout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/LogoutBody"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -330,6 +1063,16 @@
                   },
                   "type": "object",
                   "title": "Response Signout Api V1 Auth Signout Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -757,6 +1500,767 @@
                   },
                   "type": "object",
                   "title": "Response Notifications Unread Count Api V1 Org Notifications Unread Count Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/workspaces": {
+      "post": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Create Workspace Alias",
+        "operationId": "create_workspace_alias_api_v1_orgs_current_workspaces_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkspaceBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Get Org Alias",
+        "operationId": "get_org_alias_api_v1_orgs_current_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Delete Org Alias",
+        "operationId": "delete_org_alias_api_v1_orgs_current_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Patch Org Alias",
+        "operationId": "patch_org_alias_api_v1_orgs_current_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/brand": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Get Brand Alias",
+        "operationId": "get_brand_alias_api_v1_orgs_current_brand_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandKitOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Put Brand Alias",
+        "operationId": "put_brand_alias_api_v1_orgs_current_brand_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandKitPut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandKitOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/brand/logo": {
+      "post": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Post Brand Logo Alias",
+        "operationId": "post_brand_logo_alias_api_v1_orgs_current_brand_logo_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_post_brand_logo_alias_api_v1_orgs_current_brand_logo_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoUploadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/notifications/unread-count": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Notifications Unread Count Alias",
+        "operationId": "notifications_unread_count_alias_api_v1_orgs_current_notifications_unread_count_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "type": "object",
+                  "title": "Response Notifications Unread Count Alias Api V1 Orgs Current Notifications Unread Count Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/settings": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Get Org Settings Alias",
+        "operationId": "get_org_settings_alias_api_v1_orgs_current_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Patch Org Settings Alias",
+        "operationId": "patch_org_settings_alias_api_v1_orgs_current_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgSettingsPartial"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgSettings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/custom-domains": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "List Custom Domains Alias",
+        "operationId": "list_custom_domains_alias_api_v1_orgs_current_custom_domains_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CustomDomainOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Custom Domains Alias Api V1 Orgs Current Custom Domains Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Add Custom Domain Alias",
+        "operationId": "add_custom_domain_alias_api_v1_orgs_current_custom_domains_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomDomainCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomDomainOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/custom-domains/{domain_id}": {
+      "delete": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Delete Custom Domain Alias",
+        "operationId": "delete_custom_domain_alias_api_v1_orgs_current_custom_domains__domain_id__delete",
+        "parameters": [
+          {
+            "name": "domain_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Domain Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Delete Custom Domain Alias Api V1 Orgs Current Custom Domains  Domain Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/custom-domains/{domain_id}/verify": {
+      "post": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Verify Custom Domain Alias",
+        "operationId": "verify_custom_domain_alias_api_v1_orgs_current_custom_domains__domain_id__verify_post",
+        "parameters": [
+          {
+            "name": "domain_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Domain Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Verify Custom Domain Alias Api V1 Orgs Current Custom Domains  Domain Id  Verify Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/api-tokens": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "List Api Tokens Alias",
+        "operationId": "list_api_tokens_alias_api_v1_orgs_current_api_tokens_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApiTokenListOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Api Tokens Alias Api V1 Orgs Current Api Tokens Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Create Api Token Alias",
+        "operationId": "create_api_token_alias_api_v1_orgs_current_api_tokens_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiTokenCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTokenCreateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/api-tokens/{token_id}": {
+      "delete": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Revoke Api Token Alias",
+        "operationId": "revoke_api_token_alias_api_v1_orgs_current_api_tokens__token_id__delete",
+        "parameters": [
+          {
+            "name": "token_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Token Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Revoke Api Token Alias Api V1 Orgs Current Api Tokens  Token Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/webhooks/outbound": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "List Outbound Webhooks Alias",
+        "operationId": "list_outbound_webhooks_alias_api_v1_orgs_current_webhooks_outbound_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Outbound Webhooks Alias Api V1 Orgs Current Webhooks Outbound Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Create Outbound Webhook Alias",
+        "operationId": "create_outbound_webhook_alias_api_v1_orgs_current_webhooks_outbound_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Create Outbound Webhook Alias Api V1 Orgs Current Webhooks Outbound Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/email-templates": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Get Email Templates Alias",
+        "operationId": "get_email_templates_alias_api_v1_orgs_current_email_templates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailTemplateOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Put Email Templates Alias",
+        "operationId": "put_email_templates_alias_api_v1_orgs_current_email_templates_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailTemplateOut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailTemplateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/current/audit": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "List Org Audit Alias",
+        "operationId": "list_org_audit_alias_api_v1_orgs_current_audit_get",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Org Audit Alias Api V1 Orgs Current Audit Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -1835,6 +3339,53 @@
         }
       }
     },
+    "/api/v1/pages/{page_id}/revisions": {
+      "get": {
+        "tags": [
+          "pages"
+        ],
+        "summary": "List Page Revisions",
+        "operationId": "list_page_revisions_api_v1_pages__page_id__revisions_get",
+        "parameters": [
+          {
+            "name": "page_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Page Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PageRevisionOut"
+                  },
+                  "title": "Response List Page Revisions Api V1 Pages  Page Id  Revisions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/pages/{page_id}": {
       "get": {
         "tags": [
@@ -2153,7 +3704,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StubResponse"
+                  "$ref": "#/components/schemas/PageOut"
                 }
               }
             }
@@ -2196,7 +3747,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StubResponse"
+                  "$ref": "#/components/schemas/PageOut"
                 }
               }
             }
@@ -2381,6 +3932,921 @@
             "description": "Case-insensitive search across payload JSON text"
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pages/{page_id}/export/html": {
+      "get": {
+        "tags": [
+          "pages"
+        ],
+        "summary": "Export Page Html",
+        "description": "Download the page's current HTML as a self-contained file.",
+        "operationId": "export_page_html_api_v1_pages__page_id__export_html_get",
+        "parameters": [
+          {
+            "name": "page_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Page Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/projects": {
+      "post": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Create Canvas Project",
+        "operationId": "create_canvas_project_api_v1_canvas_projects_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanvasProjectCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasProjectDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "List Canvas Projects",
+        "operationId": "list_canvas_projects_api_v1_canvas_projects_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CanvasProjectOut"
+                  },
+                  "title": "Response List Canvas Projects Api V1 Canvas Projects Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/projects/{project_id}": {
+      "get": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Get Canvas Project",
+        "operationId": "get_canvas_project_api_v1_canvas_projects__project_id__get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasProjectDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Patch Canvas Project",
+        "operationId": "patch_canvas_project_api_v1_canvas_projects__project_id__patch",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanvasProjectPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasProjectOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Delete Canvas Project",
+        "operationId": "delete_canvas_project_api_v1_canvas_projects__project_id__delete",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/projects/{project_id}/screens": {
+      "post": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Add Canvas Screen",
+        "operationId": "add_canvas_screen_api_v1_canvas_projects__project_id__screens_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanvasScreenCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasScreenOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/projects/{project_id}/screens/{screen_id}": {
+      "get": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Get Canvas Screen By Id",
+        "operationId": "get_canvas_screen_by_id_api_v1_canvas_projects__project_id__screens__screen_id__get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "screen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Screen Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasScreenOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Patch Canvas Screen",
+        "operationId": "patch_canvas_screen_api_v1_canvas_projects__project_id__screens__screen_id__patch",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "screen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Screen Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanvasScreenPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasScreenOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Delete Canvas Screen",
+        "operationId": "delete_canvas_screen_api_v1_canvas_projects__project_id__screens__screen_id__delete",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "screen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Screen Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/projects/{project_id}/flows": {
+      "post": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Add Canvas Flow",
+        "operationId": "add_canvas_flow_api_v1_canvas_projects__project_id__flows_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanvasFlowCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasFlowOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/projects/{project_id}/flows/{flow_id}": {
+      "delete": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Delete Canvas Flow",
+        "operationId": "delete_canvas_flow_api_v1_canvas_projects__project_id__flows__flow_id__delete",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "flow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Flow Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/projects/{project_id}/publish": {
+      "post": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Publish Canvas Project",
+        "operationId": "publish_canvas_project_api_v1_canvas_projects__project_id__publish_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasProjectOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/projects/{project_id}/export": {
+      "post": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Export Canvas Project",
+        "operationId": "export_canvas_project_api_v1_canvas_projects__project_id__export_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanvasExportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Export Canvas Project Api V1 Canvas Projects  Project Id  Export Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/projects/{project_id}/screens/{screen_id}/refine": {
+      "post": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Refine Canvas Screen",
+        "description": "Non-streaming refine — applies small HTML append + revision (full SSE in roadmap).",
+        "operationId": "refine_canvas_screen_api_v1_canvas_projects__project_id__screens__screen_id__refine_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "screen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Screen Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanvasRefineRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Refine Canvas Screen Api V1 Canvas Projects  Project Id  Screens  Screen Id  Refine Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/projects/{project_id}/screens/{screen_id}/revert": {
+      "post": {
+        "tags": [
+          "canvas"
+        ],
+        "summary": "Revert Canvas Screen Revision",
+        "operationId": "revert_canvas_screen_revision_api_v1_canvas_projects__project_id__screens__screen_id__revert_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "screen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Screen Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanvasRevertRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasScreenOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pages/{page_id}/export/formats": {
+      "get": {
+        "tags": [
+          "page-exports"
+        ],
+        "summary": "Get Page Export Formats",
+        "operationId": "get_page_export_formats_api_v1_pages__page_id__export_formats_get",
+        "parameters": [
+          {
+            "name": "page_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Page Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportFormatsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pages/{page_id}/export": {
+      "post": {
+        "tags": [
+          "page-exports"
+        ],
+        "summary": "Run Page Export",
+        "operationId": "run_page_export_api_v1_pages__page_id__export_post",
+        "parameters": [
+          {
+            "name": "page_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Page Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRunIn"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2865,6 +5331,130 @@
         }
       }
     },
+    "/api/v1/studio/estimate": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Studio Estimate",
+        "description": "Informative generation credit preview before running ``/studio/generate`` (AL-02).",
+        "operationId": "studio_estimate_api_v1_studio_estimate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioEstimateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/studio/attachments/presign": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Studio Presign Attachment",
+        "operationId": "studio_presign_attachment_api_v1_studio_attachments_presign_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioPresignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioPresignOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/studio/attachments/register": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Studio Register Attachment",
+        "operationId": "studio_register_attachment_api_v1_studio_attachments_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioRegisterAttachmentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioRegisterAttachmentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/studio/generate": {
       "post": {
         "tags": [
@@ -2877,6 +5467,46 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/StudioGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/studio/generate/continue": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Studio Generate Continue",
+        "description": "Clarify follow-up: optional ``run_id`` enforces clarify TTL (AL-03).",
+        "operationId": "studio_generate_continue_api_v1_studio_generate_continue_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioGenerateContinueRequest"
               }
             }
           },
@@ -3721,7 +6351,10 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "null",
+                  "title": "Response Connect Apple Api V1 Calendar Connect Apple Post"
+                }
               }
             }
           }
@@ -4333,6 +6966,279 @@
         }
       }
     },
+    "/api/v1/analytics/track": {
+      "post": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Analytics Track Ingest",
+        "description": "Authenticated event batch (Studio / Dashboard).",
+        "operationId": "analytics_track_ingest_api_v1_analytics_track_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrackBatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Analytics Track Ingest Api V1 Analytics Track Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/realtime": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Analytics Realtime",
+        "description": "Last 5 minutes of activity grouped by page.",
+        "operationId": "analytics_realtime_api_v1_analytics_realtime_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Analytics Realtime Api V1 Analytics Realtime Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/retention": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Analytics Retention Grid",
+        "operationId": "analytics_retention_grid_api_v1_analytics_retention_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Analytics Retention Grid Api V1 Analytics Retention Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/funnels/default/contact-form/compute": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Analytics Default Funnel Compute",
+        "operationId": "analytics_default_funnel_compute_api_v1_analytics_funnels_default_contact_form_compute_get",
+        "parameters": [
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Analytics Default Funnel Compute Api V1 Analytics Funnels Default Contact Form Compute Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/users/{user_id}/timeline": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Analytics User Timeline",
+        "operationId": "analytics_user_timeline_api_v1_analytics_users__user_id__timeline_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Analytics User Timeline Api V1 Analytics Users  User Id  Timeline Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/visitors/{visitor_id}/timeline": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Analytics Visitor Timeline",
+        "operationId": "analytics_visitor_timeline_api_v1_analytics_visitors__visitor_id__timeline_get",
+        "parameters": [
+          {
+            "name": "visitor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Visitor Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Analytics Visitor Timeline Api V1 Analytics Visitors  Visitor Id  Timeline Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/billing/plan": {
       "get": {
         "tags": [
@@ -4347,6 +7253,111 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BillingPlanOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/plan-recommendation": {
+      "get": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Billing Plan Recommendation",
+        "description": "Latest persisted recommendation when the nightly worker inserts a row.",
+        "operationId": "billing_plan_recommendation_api_v1_billing_plan_recommendation_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanRecommendationOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/plan-recommendation/dismiss": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Billing Plan Recommendation Dismiss",
+        "operationId": "billing_plan_recommendation_dismiss_api_v1_billing_plan_recommendation_dismiss_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecommendationDismissBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationDismissOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/extra-usage/cap": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Billing Set Extra Usage Cap",
+        "description": "Set generation credit overage cap (Stripe meter period alignment via invoice webhook).",
+        "operationId": "billing_set_extra_usage_cap_api_v1_billing_extra_usage_cap_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtraUsageCapBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtraUsageCapOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -4482,19 +7493,40 @@
         }
       }
     },
+    "/api/v1/billing/subscription": {
+      "get": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Billing Subscription State",
+        "operationId": "billing_subscription_state_api_v1_billing_subscription_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionStateOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/billing/plan/upgrade": {
       "post": {
         "tags": [
           "billing"
         ],
-        "summary": "Billing Plan Upgrade Stub",
-        "description": "BI-04 — upgrade stub; use checkout or Stripe update when wired.",
-        "operationId": "billing_plan_upgrade_stub_api_v1_billing_plan_upgrade_post",
+        "summary": "Billing Plan Upgrade",
+        "description": "Stripe Checkout for first purchase from Free / trial, or in-place prorated upgrade.",
+        "operationId": "billing_plan_upgrade_api_v1_billing_plan_upgrade_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlanChangeBody"
+                "$ref": "#/components/schemas/PlanUpgradeBody"
               }
             }
           },
@@ -4506,9 +7538,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Billing Plan Upgrade Stub Api V1 Billing Plan Upgrade Post"
+                  "$ref": "#/components/schemas/PlanUpgradeOut"
                 }
               }
             }
@@ -4531,13 +7561,14 @@
         "tags": [
           "billing"
         ],
-        "summary": "Billing Plan Downgrade Stub",
-        "operationId": "billing_plan_downgrade_stub_api_v1_billing_plan_downgrade_post",
+        "summary": "Billing Plan Downgrade",
+        "description": "Schedule downgrade at Stripe period end — no Stripe API call yet (cron applies).",
+        "operationId": "billing_plan_downgrade_api_v1_billing_plan_downgrade_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlanChangeBody"
+                "$ref": "#/components/schemas/DowngradeBody"
               }
             }
           },
@@ -4549,9 +7580,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Billing Plan Downgrade Stub Api V1 Billing Plan Downgrade Post"
+                  "$ref": "#/components/schemas/DowngradeScheduleOut"
                 }
               }
             }
@@ -4574,19 +7603,60 @@
         "tags": [
           "billing"
         ],
-        "summary": "Billing Plan Downgrade Cancel Stub",
-        "operationId": "billing_plan_downgrade_cancel_stub_api_v1_billing_plan_downgrade_cancel_post",
+        "summary": "Billing Plan Downgrade Cancel",
+        "description": "Cancel pending scheduled downgrade (GlideDesign-side row).",
+        "operationId": "billing_plan_downgrade_cancel_api_v1_billing_plan_downgrade_cancel_post",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "boolean"
-                  },
-                  "type": "object",
-                  "title": "Response Billing Plan Downgrade Cancel Stub Api V1 Billing Plan Downgrade Cancel Post"
+                  "$ref": "#/components/schemas/DowngradeCancelOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/cancel": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Billing Cancel At Period End",
+        "description": "Cancel Stripe subscription at period end (retain access until then).",
+        "operationId": "billing_cancel_at_period_end_api_v1_billing_cancel_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionStateOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/reactivate": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Billing Reactivate",
+        "description": "Undo cancel-at-period-end before the period ends.",
+        "operationId": "billing_reactivate_api_v1_billing_reactivate_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionStateOut"
                 }
               }
             }
@@ -4635,6 +7705,24 @@
               "title": "Q"
             },
             "description": "Search name/description"
+          },
+          {
+            "name": "from_tool",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only templates listing this slug in intent_json.migrate_from (P-08).",
+              "title": "From Tool"
+            },
+            "description": "Only templates listing this slug in intent_json.migrate_from (P-08)."
           }
         ],
         "responses": {
@@ -4777,20 +7865,23 @@
         }
       }
     },
-    "/api/v1/admin/organizations": {
+    "/api/v1/admin/platform/session": {
       "get": {
         "tags": [
-          "admin"
+          "admin-platform"
         ],
-        "summary": "Admin Orgs",
-        "operationId": "admin_orgs_api_v1_admin_organizations_get",
+        "summary": "Platform Session",
+        "description": "Permissions and roles for building the admin shell (nav visibility).",
+        "operationId": "platform_session_api_v1_admin_platform_session_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StubResponse"
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Platform Session Api V1 Admin Platform Session Get"
                 }
               }
             }
@@ -4798,20 +7889,487 @@
         }
       }
     },
-    "/api/v1/admin/usage": {
-      "get": {
+    "/api/v1/admin/platform/visit": {
+      "post": {
         "tags": [
-          "admin"
+          "admin-platform"
         ],
-        "summary": "Admin Usage",
-        "operationId": "admin_usage_api_v1_admin_usage_get",
+        "summary": "Platform Record Visit",
+        "description": "Update last admin visit for Pulse \"since you last visited\".",
+        "operationId": "platform_record_visit_api_v1_admin_platform_visit_post",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StubResponse"
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Platform Record Visit Api V1 Admin Platform Visit Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/overview/summary": {
+      "get": {
+        "tags": [
+          "admin-platform"
+        ],
+        "summary": "Admin Overview Summary",
+        "operationId": "admin_overview_summary_api_v1_admin_overview_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Admin Overview Summary Api V1 Admin Overview Summary Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "tags": [
+          "admin-platform"
+        ],
+        "summary": "Admin List Users",
+        "operationId": "admin_list_users_api_v1_admin_users_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search by email or display_name",
+              "title": "Q"
+            },
+            "description": "Search by email or display_name"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin List Users Api V1 Admin Users Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/organizations": {
+      "get": {
+        "tags": [
+          "admin-platform"
+        ],
+        "summary": "Admin List Organizations",
+        "operationId": "admin_list_organizations_api_v1_admin_organizations_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search name, slug, stripe id",
+              "title": "Q"
+            },
+            "description": "Search name, slug, stripe id"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin List Organizations Api V1 Admin Organizations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/organizations/{org_id}": {
+      "get": {
+        "tags": [
+          "admin-platform"
+        ],
+        "summary": "Admin Get Organization",
+        "operationId": "admin_get_organization_api_v1_admin_organizations__org_id__get",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin Get Organization Api V1 Admin Organizations  Org Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/llm/summary": {
+      "get": {
+        "tags": [
+          "admin-platform"
+        ],
+        "summary": "Admin Llm Summary",
+        "operationId": "admin_llm_summary_api_v1_admin_llm_summary_get",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin Llm Summary Api V1 Admin Llm Summary Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/orchestration-runs": {
+      "get": {
+        "tags": [
+          "admin-platform"
+        ],
+        "summary": "Admin Orchestration Runs List",
+        "description": "Recent runs — optional coarse filter when ``quality_score`` is populated on rows.",
+        "operationId": "admin_orchestration_runs_list_api_v1_admin_orchestration_runs_get",
+        "parameters": [
+          {
+            "name": "min_quality",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 100,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Quality"
+            }
+          },
+          {
+            "name": "max_quality",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 100,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Quality"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 400,
+              "minimum": 1,
+              "default": 80,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin Orchestration Runs List Api V1 Admin Orchestration Runs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/orchestration-runs/{run_id}": {
+      "get": {
+        "tags": [
+          "admin-platform"
+        ],
+        "summary": "Admin Orchestration Run Detail",
+        "operationId": "admin_orchestration_run_detail_api_v1_admin_orchestration_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin Orchestration Run Detail Api V1 Admin Orchestration Runs  Run Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/analytics/platform": {
+      "get": {
+        "tags": [
+          "admin-platform"
+        ],
+        "summary": "Admin Platform Analytics",
+        "description": "Platform-wide analytics rollup for admin dashboard.",
+        "operationId": "admin_platform_analytics_api_v1_admin_analytics_platform_get",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin Platform Analytics Api V1 Admin Analytics Platform Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/orchestration-quality": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Admin Orchestration Quality",
+        "description": "Aggregate review scores from recent orchestration runs (O-04).",
+        "operationId": "admin_orchestration_quality_api_v1_admin_orchestration_quality_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Admin Orchestration Quality Api V1 Admin Orchestration Quality Get"
                 }
               }
             }
@@ -5103,6 +8661,151 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TemplateStatsOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/platform/health": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Platform Admin Health",
+        "description": "Confirms the caller has at least one platform permission (including legacy ``is_admin``).",
+        "operationId": "platform_admin_health_api_v1_admin_platform_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "type": "object",
+                  "title": "Response Platform Admin Health Api V1 Admin Platform Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/__e2e__/seed-org": {
+      "post": {
+        "tags": [
+          "e2e-bootstrap"
+        ],
+        "summary": "Seed Org",
+        "description": "Create a fresh user + workspace (owner) for isolated Playwright runs.",
+        "operationId": "seed_org_api_v1___e2e___seed_org_post",
+        "parameters": [
+          {
+            "name": "x-forge-e2e-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forge-E2E-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Seed Org Api V1   E2E   Seed Org Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mcp/v1/": {
+      "get": {
+        "tags": [
+          "mcp"
+        ],
+        "summary": "Mcp Info",
+        "operationId": "mcp_info_api_v1_mcp_v1__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Mcp Info Api V1 Mcp V1  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mcp/v1/call": {
+      "post": {
+        "tags": [
+          "mcp"
+        ],
+        "summary": "Mcp Call",
+        "description": "One-shot tool call (simplified MCP over HTTP; clients poll or use this synchronously).",
+        "operationId": "mcp_call_api_v1_mcp_v1_call_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpCallIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Mcp Call Api V1 Mcp V1 Call Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -5407,6 +9110,134 @@
         }
       }
     },
+    "/p/{org_slug}/{page_slug}/bookings/{booking_token}": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Public Booking Detail",
+        "description": "Resolve booking details for a magic-link token (W-01).",
+        "operationId": "public_booking_detail_p__org_slug___page_slug__bookings__booking_token__get",
+        "parameters": [
+          {
+            "name": "org_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Slug"
+            }
+          },
+          {
+            "name": "page_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Page Slug"
+            }
+          },
+          {
+            "name": "booking_token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Booking Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Public Booking Detail P  Org Slug   Page Slug  Bookings  Booking Token  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/p/{org_slug}/{page_slug}/bookings/{booking_token}/cancel": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Public Booking Cancel",
+        "description": "Cancel a confirmed booking (magic link).",
+        "operationId": "public_booking_cancel_p__org_slug___page_slug__bookings__booking_token__cancel_post",
+        "parameters": [
+          {
+            "name": "org_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Slug"
+            }
+          },
+          {
+            "name": "page_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Page Slug"
+            }
+          },
+          {
+            "name": "booking_token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Booking Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Public Booking Cancel P  Org Slug   Page Slug  Bookings  Booking Token  Cancel Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/p/{org_slug}/{page_slug}/upload": {
       "post": {
         "tags": [
@@ -5464,7 +9295,7 @@
           "public"
         ],
         "summary": "Public Track",
-        "description": "Batch analytics beacon (up to 10 events) for a live published page.",
+        "description": "Batch analytics beacon (up to 20 events) for a live published page.",
         "operationId": "public_track_p__org_slug___page_slug__track_post",
         "parameters": [
           {
@@ -5871,7 +9702,7 @@
     "/health/deep": {
       "get": {
         "summary": "Health Deep",
-        "description": "Postgres + Redis probe (Mission 07). Optional integrations listed, non-blocking.",
+        "description": "Structured dependency checks — gated like ``/metrics`` when ``METRICS_TOKEN`` is set (AL-01).",
         "operationId": "health_deep_health_deep_get",
         "responses": {
           "200": {
@@ -6302,6 +10133,50 @@
           "expires_at"
         ],
         "title": "ApiTokenListOut"
+      },
+      "AuthTokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "expires_in",
+          "refresh_token",
+          "user"
+        ],
+        "title": "AuthTokenResponse"
       },
       "AutomationRuleOut": {
         "properties": {
@@ -6887,6 +10762,11 @@
             "type": "string",
             "title": "Plan"
           },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "usd"
+          },
           "status": {
             "anyOf": [
               {
@@ -6988,31 +10868,38 @@
           },
           "credits_tier": {
             "type": "string",
-            "title": "Credits Tier"
+            "title": "Credits Tier",
+            "default": "free"
           },
           "credits_session_used": {
             "type": "integer",
-            "title": "Credits Session Used"
+            "title": "Credits Session Used",
+            "default": 0
           },
           "credits_session_cap": {
             "type": "integer",
-            "title": "Credits Session Cap"
+            "title": "Credits Session Cap",
+            "default": 0
           },
           "credits_session_percent": {
             "type": "number",
-            "title": "Credits Session Percent"
+            "title": "Credits Session Percent",
+            "default": 0.0
           },
           "credits_week_used": {
             "type": "integer",
-            "title": "Credits Week Used"
+            "title": "Credits Week Used",
+            "default": 0
           },
           "credits_week_cap": {
             "type": "integer",
-            "title": "Credits Week Cap"
+            "title": "Credits Week Cap",
+            "default": 0
           },
           "credits_week_percent": {
             "type": "number",
-            "title": "Credits Week Percent"
+            "title": "Credits Week Percent",
+            "default": 0.0
           },
           "credits_session_resets_at": {
             "anyOf": [
@@ -7038,7 +10925,8 @@
           },
           "extra_usage_enabled": {
             "type": "boolean",
-            "title": "Extra Usage Enabled"
+            "title": "Extra Usage Enabled",
+            "default": false
           },
           "extra_usage_monthly_cap_cents": {
             "anyOf": [
@@ -7053,7 +10941,8 @@
           },
           "extra_usage_spent_period_cents": {
             "type": "integer",
-            "title": "Extra Usage Spent Period Cents"
+            "title": "Extra Usage Spent Period Cents",
+            "default": 0
           },
           "raw": {
             "additionalProperties": true,
@@ -7070,27 +10959,29 @@
           "tokens_prompt",
           "tokens_completion",
           "period_start",
-          "period_end",
-          "credits_tier",
-          "credits_session_used",
-          "credits_session_cap",
-          "credits_session_percent",
-          "credits_week_used",
-          "credits_week_cap",
-          "credits_week_percent",
-          "credits_session_resets_at",
-          "credits_week_resets_at",
-          "extra_usage_enabled",
-          "extra_usage_monthly_cap_cents",
-          "extra_usage_spent_period_cents"
+          "period_end"
         ],
         "title": "BillingUsageOut"
+      },
+      "Body_post_brand_logo_alias_api_v1_orgs_current_brand_logo_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_post_brand_logo_alias_api_v1_orgs_current_brand_logo_post"
       },
       "Body_post_brand_logo_api_v1_org_brand_logo_post": {
         "properties": {
           "file": {
             "type": "string",
-            "contentMediaType": "application/octet-stream",
+            "format": "binary",
             "title": "File"
           }
         },
@@ -7104,7 +10995,7 @@
         "properties": {
           "file": {
             "type": "string",
-            "contentMediaType": "application/octet-stream",
+            "format": "binary",
             "title": "File"
           }
         },
@@ -7118,7 +11009,7 @@
         "properties": {
           "file": {
             "type": "string",
-            "contentMediaType": "application/octet-stream",
+            "format": "binary",
             "title": "File"
           }
         },
@@ -7329,23 +11220,652 @@
         ],
         "title": "CalendarConnectionOut"
       },
+      "CanvasExportRequest": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Format",
+            "description": "Export format id (see EXPORT_CATALOG)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "format"
+        ],
+        "title": "CanvasExportRequest"
+      },
+      "CanvasFlowCreate": {
+        "properties": {
+          "from_screen_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "From Screen Id"
+          },
+          "to_screen_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "To Screen Id"
+          },
+          "trigger_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_screen_id",
+          "to_screen_id"
+        ],
+        "title": "CanvasFlowCreate"
+      },
+      "CanvasFlowOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "from_screen_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "From Screen Id"
+          },
+          "to_screen_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "To Screen Id"
+          },
+          "trigger_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "from_screen_id",
+          "to_screen_id",
+          "trigger_label"
+        ],
+        "title": "CanvasFlowOut"
+      },
+      "CanvasProjectCreate": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "mobile_app",
+              "website"
+            ],
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Prompt",
+            "description": "Kickoff brief — drives initial scaffold."
+          },
+          "intent": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "title",
+          "prompt"
+        ],
+        "title": "CanvasProjectCreate"
+      },
+      "CanvasProjectDetail": {
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/CanvasProjectOut"
+          },
+          "screens": {
+            "items": {
+              "$ref": "#/components/schemas/CanvasScreenOut"
+            },
+            "type": "array",
+            "title": "Screens"
+          },
+          "flows": {
+            "items": {
+              "$ref": "#/components/schemas/CanvasFlowOut"
+            },
+            "type": "array",
+            "title": "Flows"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project",
+          "screens",
+          "flows"
+        ],
+        "title": "CanvasProjectDetail"
+      },
+      "CanvasProjectOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Organization Id"
+          },
+          "page_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "mobile_app",
+              "website"
+            ],
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "intent_json": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Intent Json"
+          },
+          "brand_snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Snapshot"
+          },
+          "design_tokens": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Design Tokens"
+          },
+          "navigation_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Navigation Config"
+          },
+          "viewport_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Viewport Config"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "organization_id",
+          "page_id",
+          "kind",
+          "title",
+          "intent_json",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CanvasProjectOut"
+      },
+      "CanvasProjectPatch": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "brand_snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Snapshot"
+          },
+          "design_tokens": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Design Tokens"
+          },
+          "navigation_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Navigation Config"
+          },
+          "viewport_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Viewport Config"
+          }
+        },
+        "type": "object",
+        "title": "CanvasProjectPatch"
+      },
+      "CanvasRefineRequest": {
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Prompt"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "element",
+              "region",
+              "screen"
+            ],
+            "title": "Scope",
+            "default": "screen"
+          },
+          "element_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Element Ref"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "title": "CanvasRefineRequest"
+      },
+      "CanvasRevertRequest": {
+        "properties": {
+          "revision_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Revision Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "revision_id"
+        ],
+        "title": "CanvasRevertRequest"
+      },
+      "CanvasScreenCreate": {
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Prompt"
+          },
+          "position_x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position X"
+          },
+          "position_y": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Y"
+          },
+          "screen_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Screen Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "title": "CanvasScreenCreate"
+      },
+      "CanvasScreenOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "screen_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Screen Type"
+          },
+          "position_x": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Position X"
+          },
+          "position_y": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Position Y"
+          },
+          "html": {
+            "type": "string",
+            "title": "Html"
+          },
+          "component_tree": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Component Tree"
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url"
+          },
+          "sort_order": {
+            "type": "integer",
+            "title": "Sort Order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "project_id",
+          "name",
+          "slug",
+          "screen_type",
+          "position_x",
+          "position_y",
+          "html",
+          "component_tree",
+          "thumbnail_url",
+          "sort_order"
+        ],
+        "title": "CanvasScreenOut"
+      },
+      "CanvasScreenPatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "html": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Html"
+          },
+          "component_tree": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Component Tree"
+          },
+          "position_x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position X"
+          },
+          "position_y": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Y"
+          },
+          "sort_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Order"
+          }
+        },
+        "type": "object",
+        "title": "CanvasScreenPatch"
+      },
       "CheckoutBody": {
         "properties": {
           "plan": {
             "type": "string",
             "enum": [
               "starter",
-              "pro"
+              "pro",
+              "max_5x",
+              "max_20x"
             ],
             "title": "Plan",
-            "description": "Self-serve plan to purchase"
+            "description": "Target plan — `starter` is legacy; prefer `pro` or Max tiers."
+          },
+          "billing_interval": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "annual"
+            ],
+            "title": "Billing Interval",
+            "default": "monthly"
           }
         },
         "type": "object",
         "required": [
           "plan"
         ],
-        "title": "CheckoutBody"
+        "title": "CheckoutBody",
+        "description": "Self-serve Stripe Checkout for a paying tier (maps legacy `starter` → free tier checkout is not used)."
       },
       "CheckoutOut": {
         "properties": {
@@ -7746,6 +12266,161 @@
         "type": "object",
         "title": "DeleteMeResponse"
       },
+      "DesignMemoryPatchIn": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "strength": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strength"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "organization"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          }
+        },
+        "type": "object",
+        "title": "DesignMemoryPatchIn"
+      },
+      "DesignMemoryResetOut": {
+        "properties": {
+          "deleted": {
+            "type": "integer",
+            "title": "Deleted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deleted"
+        ],
+        "title": "DesignMemoryResetOut"
+      },
+      "DesignMemoryRowOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "value": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Value"
+          },
+          "strength": {
+            "type": "number",
+            "title": "Strength"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "key",
+          "value",
+          "strength",
+          "updated_at"
+        ],
+        "title": "DesignMemoryRowOut"
+      },
+      "DowngradeBody": {
+        "properties": {
+          "target_plan_slug": {
+            "type": "string",
+            "title": "Target Plan Slug",
+            "description": "Lower tier to schedule at period end — e.g. free, pro"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_plan_slug"
+        ],
+        "title": "DowngradeBody"
+      },
+      "DowngradeCancelOut": {
+        "properties": {
+          "cancelled": {
+            "type": "boolean",
+            "title": "Cancelled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "DowngradeCancelOut"
+      },
+      "DowngradeScheduleOut": {
+        "properties": {
+          "scheduled": {
+            "type": "boolean",
+            "title": "Scheduled",
+            "default": true
+          },
+          "target_plan": {
+            "type": "string",
+            "title": "Target Plan"
+          },
+          "effective_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Effective At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_plan",
+          "effective_at"
+        ],
+        "title": "DowngradeScheduleOut"
+      },
       "DraftReplyOut": {
         "properties": {
           "subject": {
@@ -7846,6 +12521,256 @@
         },
         "type": "object",
         "title": "EmailTemplateOut"
+      },
+      "ExportFormatItemOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "plan_minimum": {
+            "type": "string",
+            "title": "Plan Minimum"
+          },
+          "implemented": {
+            "type": "boolean",
+            "title": "Implemented"
+          },
+          "async_worker": {
+            "type": "boolean",
+            "title": "Async Worker"
+          },
+          "locked": {
+            "type": "boolean",
+            "title": "Locked"
+          },
+          "whats_inside": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Whats Inside"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "description",
+          "plan_minimum",
+          "implemented",
+          "async_worker",
+          "locked",
+          "status"
+        ],
+        "title": "ExportFormatItemOut"
+      },
+      "ExportFormatsOut": {
+        "properties": {
+          "formats": {
+            "items": {
+              "$ref": "#/components/schemas/ExportFormatItemOut"
+            },
+            "type": "array",
+            "title": "Formats"
+          }
+        },
+        "type": "object",
+        "required": [
+          "formats"
+        ],
+        "title": "ExportFormatsOut"
+      },
+      "ExportRunIn": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 2,
+            "title": "Format"
+          },
+          "options": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "format"
+        ],
+        "title": "ExportRunIn"
+      },
+      "ExtraUsageCapBody": {
+        "properties": {
+          "max_extra_usage_cents_per_month": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 500000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Extra Usage Cents Per Month",
+            "description": "Cap in cents for billable generation credit overage per Stripe invoice period."
+          }
+        },
+        "type": "object",
+        "title": "ExtraUsageCapBody"
+      },
+      "ExtraUsageCapOut": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "extra_usage_monthly_cap_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Usage Monthly Cap Cents"
+          },
+          "extra_usage_enabled": {
+            "type": "boolean",
+            "title": "Extra Usage Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "extra_usage_monthly_cap_cents",
+          "extra_usage_enabled"
+        ],
+        "title": "ExtraUsageCapOut"
+      },
+      "FeedbackSubmitIn": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id"
+          },
+          "artifact_kind": {
+            "type": "string",
+            "enum": [
+              "screen",
+              "slide",
+              "page",
+              "code_file",
+              "reasoning",
+              "suggestion"
+            ],
+            "title": "Artifact Kind"
+          },
+          "artifact_ref": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Artifact Ref"
+          },
+          "sentiment": {
+            "type": "string",
+            "enum": [
+              "positive",
+              "negative",
+              "improvement_request"
+            ],
+            "title": "Sentiment"
+          },
+          "structured_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Structured Reasons"
+          },
+          "free_text": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Text"
+          },
+          "action_taken": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Taken"
+          },
+          "preceded_refine_run_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preceded Refine Run Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "artifact_kind",
+          "artifact_ref",
+          "sentiment"
+        ],
+        "title": "FeedbackSubmitIn"
+      },
+      "FeedbackSubmitOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "memory_writes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Memory Writes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "FeedbackSubmitOut"
       },
       "GoogleConnectBody": {
         "properties": {
@@ -8103,6 +13028,28 @@
         ],
         "title": "InvoiceRow"
       },
+      "LoginBody": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginBody"
+      },
       "LogoUploadResponse": {
         "properties": {
           "logo_url": {
@@ -8115,6 +13062,25 @@
           "logo_url"
         ],
         "title": "LogoUploadResponse"
+      },
+      "LogoutBody": {
+        "properties": {
+          "refresh_token": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512,
+                "minLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Token"
+          }
+        },
+        "type": "object",
+        "title": "LogoutBody"
       },
       "MarkReadBody": {
         "properties": {
@@ -8141,6 +13107,26 @@
         },
         "type": "object",
         "title": "MarkReadBody"
+      },
+      "McpCallIn": {
+        "properties": {
+          "tool": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 3,
+            "title": "Tool"
+          },
+          "arguments": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Arguments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tool"
+        ],
+        "title": "McpCallIn"
       },
       "MeResponse": {
         "properties": {
@@ -8612,6 +13598,42 @@
           "current_html": {
             "type": "string",
             "title": "Current Html"
+          },
+          "form_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form Schema"
+          },
+          "intent_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent Json"
+          },
+          "brand_kit_snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Kit Snapshot"
           }
         },
         "type": "object",
@@ -8715,10 +13737,104 @@
               }
             ],
             "title": "Status"
+          },
+          "form_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form Schema"
+          },
+          "intent_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent Json"
           }
         },
         "type": "object",
         "title": "PagePatch"
+      },
+      "PageRevisionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "edit_type": {
+            "type": "string",
+            "title": "Edit Type"
+          },
+          "user_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Prompt"
+          },
+          "change_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Reason"
+          },
+          "change_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Kind"
+          },
+          "quality_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "edit_type"
+        ],
+        "title": "PageRevisionOut",
+        "description": "In-session orchestration edits (timeline)."
       },
       "PageVersionOut": {
         "properties": {
@@ -8759,18 +13875,129 @@
         ],
         "title": "PatchMemberBody"
       },
-      "PlanChangeBody": {
+      "PlanRecommendationOut": {
         "properties": {
-          "plan": {
+          "recommendation": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation"
+          }
+        },
+        "type": "object",
+        "title": "PlanRecommendationOut",
+        "description": "Latest non-dismissed plan recommendation row; ``null`` if none."
+      },
+      "PlanUpgradeBody": {
+        "properties": {
+          "plan_slug": {
             "type": "string",
-            "title": "Plan"
+            "title": "Plan Slug",
+            "description": "One of pro, max_5x, max_20x (canonical slugs)",
+            "examples": [
+              "pro"
+            ]
+          },
+          "billing_interval": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "annual"
+            ],
+            "title": "Billing Interval",
+            "default": "monthly"
           }
         },
         "type": "object",
         "required": [
-          "plan"
+          "plan_slug"
         ],
-        "title": "PlanChangeBody"
+        "title": "PlanUpgradeBody"
+      },
+      "PlanUpgradeOut": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "checkout",
+              "subscription_updated"
+            ],
+            "title": "Mode"
+          },
+          "redirect_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redirect Url"
+          },
+          "updated": {
+            "type": "boolean",
+            "title": "Updated",
+            "default": false
+          },
+          "current_plan": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Plan"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan",
+            "description": "Backward-compatible alias for current_plan after upgrade"
+          },
+          "effective_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective At"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "title": "PlanUpgradeOut"
       },
       "PortalOut": {
         "properties": {
@@ -9844,6 +15071,11 @@
             "type": "string",
             "title": "Page Type",
             "default": "landing"
+          },
+          "show_forge_branding": {
+            "type": "boolean",
+            "title": "Show GlideDesign Branding",
+            "default": true
           }
         },
         "type": "object",
@@ -9963,6 +15195,87 @@
         ],
         "title": "PublishOut"
       },
+      "RecommendationDismissBody": {
+        "properties": {
+          "recommendation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Recommendation Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recommendation_id"
+        ],
+        "title": "RecommendationDismissBody"
+      },
+      "RecommendationDismissOut": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "RecommendationDismissOut"
+      },
+      "RefreshBody": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 32,
+            "title": "Refresh Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshBody"
+      },
+      "RegisterBody": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 12,
+            "title": "Password"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "workspace_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Workspace Name",
+            "default": "My workspace"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "RegisterBody"
+      },
       "SignupBody": {
         "properties": {
           "workspace_name": {
@@ -10058,6 +15371,145 @@
         ],
         "title": "StudioConversationResponse"
       },
+      "StudioEstimateOut": {
+        "properties": {
+          "estimated_credits": {
+            "type": "integer",
+            "title": "Estimated Credits"
+          },
+          "estimated_cost_cents_hint": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Cost Cents Hint",
+            "description": "Rough retail equivalent in USD cents (generation credits × configured overage rate tier)."
+          },
+          "estimated_seconds": {
+            "type": "integer",
+            "title": "Estimated Seconds"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Confidence",
+            "default": "medium"
+          }
+        },
+        "type": "object",
+        "required": [
+          "estimated_credits",
+          "estimated_seconds"
+        ],
+        "title": "StudioEstimateOut"
+      },
+      "StudioGenerateContinueRequest": {
+        "properties": {
+          "workflow": {
+            "type": "string",
+            "title": "Workflow",
+            "description": "Workflow key chosen from clarify chips (maps to `forced_workflow` on generate).",
+            "examples": [
+              "contact_form"
+            ]
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Prompt",
+            "description": "Next user message after workflow selection (required — no empty continue)."
+          },
+          "page_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Id",
+            "description": "Existing draft page when refining after clarify (optional)."
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic",
+              "gemini"
+            ],
+            "title": "Provider",
+            "default": "openai"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "Studio session key for grouped attachments (matches `/generate`).",
+            "default": "default"
+          },
+          "vision_attachment_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Vision Attachment Ids",
+            "description": "Vision attachment ids to pass through (matches `/generate`)."
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id",
+            "description": "Orchestration run with a pending clarify — checked against clarify_expires_at (AL-03)."
+          },
+          "clarification_choice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clarification Choice",
+            "description": "Chosen chip label / key."
+          },
+          "additional_context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Additional Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workflow",
+          "prompt"
+        ],
+        "title": "StudioGenerateContinueRequest",
+        "description": "Follow-up generation after clarify chip — same pipeline as `/generate` with locked workflow."
+      },
       "StudioGenerateRequest": {
         "properties": {
           "prompt": {
@@ -10091,6 +15543,33 @@
             ],
             "title": "Provider",
             "default": "openai"
+          },
+          "forced_workflow": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forced Workflow",
+            "description": "Optional — user disambiguation overrides auto intent for this generation. Use page-backed types (e.g. contact-form, survey, quiz, coming_soon, resume, link_in_bio, gallery) or marketing keys from /workflows."
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "Client-side Studio session key for grouped attachments (P-05).",
+            "default": "default"
+          },
+          "vision_attachment_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Vision Attachment Ids",
+            "description": "Registered studio_attachments to include as vision context (max 5)."
           }
         },
         "type": "object",
@@ -10153,6 +15632,50 @@
         ],
         "title": "StudioMessageOut"
       },
+      "StudioPresignOut": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "storage_key": {
+            "type": "string",
+            "title": "Storage Key"
+          },
+          "max_size_bytes": {
+            "type": "integer",
+            "title": "Max Size Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "storage_key",
+          "max_size_bytes"
+        ],
+        "title": "StudioPresignOut"
+      },
+      "StudioPresignRequest": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "default": "default"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename",
+            "default": "upload.png"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type",
+            "default": "image/png"
+          }
+        },
+        "type": "object",
+        "title": "StudioPresignRequest"
+      },
       "StudioRefineRequest": {
         "properties": {
           "message": {
@@ -10185,6 +15708,19 @@
               }
             ],
             "title": "Provider"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "default": "default"
+          },
+          "vision_attachment_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Vision Attachment Ids"
           }
         },
         "type": "object",
@@ -10193,6 +15729,86 @@
           "page_id"
         ],
         "title": "StudioRefineRequest"
+      },
+      "StudioRegisterAttachmentIn": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "default": "default"
+          },
+          "storage_key": {
+            "type": "string",
+            "title": "Storage Key"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": "screenshot"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "storage_key",
+          "mime_type"
+        ],
+        "title": "StudioRegisterAttachmentIn"
+      },
+      "StudioRegisterAttachmentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "storage_key": {
+            "type": "string",
+            "title": "Storage Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "storage_key"
+        ],
+        "title": "StudioRegisterAttachmentOut"
       },
       "StudioSectionEditRequest": {
         "properties": {
@@ -10417,6 +16033,35 @@
         ],
         "title": "SubmissionReplyBody"
       },
+      "SubscriptionStateOut": {
+        "properties": {
+          "cancel_at_period_end": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel At Period End"
+          },
+          "current_period_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Period End"
+          }
+        },
+        "type": "object",
+        "title": "SubscriptionStateOut"
+      },
       "SwitchOrgBody": {
         "properties": {
           "organization_id": {
@@ -10603,6 +16248,26 @@
           "sort_order": {
             "type": "integer",
             "title": "Sort Order"
+          },
+          "page_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Type",
+            "description": "Hint from intent_json.page_type for workflow browsing (P-06)."
+          },
+          "migrate_from": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Migrate From",
+            "description": "Competitor tools this template replaces (gallery cohort filter, P-08)."
           }
         },
         "type": "object",
@@ -10673,6 +16338,24 @@
         ],
         "title": "TemplateStatsRow"
       },
+      "TrackBatchIn": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/TrackEventIn"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "title": "TrackBatchIn"
+      },
       "TrackBatchOut": {
         "properties": {
           "ok": {
@@ -10690,6 +16373,59 @@
           "accepted"
         ],
         "title": "TrackBatchOut"
+      },
+      "TrackEventIn": {
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Event Type"
+          },
+          "visitor_id": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Visitor Id"
+          },
+          "session_id": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Session Id"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          },
+          "client_event_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Event Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_type",
+          "visitor_id",
+          "session_id"
+        ],
+        "title": "TrackEventIn"
       },
       "TransferOwnershipBody": {
         "properties": {
@@ -10949,6 +16685,11 @@
               }
             ],
             "title": "Avatar Url"
+          },
+          "is_platform_admin": {
+            "type": "boolean",
+            "title": "Is Platform Admin",
+            "default": false
           }
         },
         "type": "object",
@@ -10962,6 +16703,20 @@
       },
       "UserPreferences": {
         "properties": {
+          "onboarded_for_workflow": {
+            "type": "string",
+            "enum": [
+              "contact-form",
+              "proposal",
+              "pitch_deck",
+              "mobile_app",
+              "website",
+              "landing_page",
+              "undecided"
+            ],
+            "title": "Onboarded For Workflow",
+            "default": "undecided"
+          },
           "sidebar_collapsed": {
             "type": "boolean",
             "title": "Sidebar Collapsed",
@@ -11092,6 +16847,81 @@
               }
             ],
             "title": "Locale"
+          },
+          "forge_apply_memory": {
+            "type": "boolean",
+            "title": "GlideDesign Apply Memory",
+            "default": true
+          },
+          "forge_memory_share_across_orgs": {
+            "type": "boolean",
+            "title": "GlideDesign Memory Share Across Orgs",
+            "default": false
+          },
+          "forge_contribute_feedback_to_platform": {
+            "type": "boolean",
+            "title": "GlideDesign Contribute Feedback To Platform",
+            "default": true
+          },
+          "forge_weekly_learning_digest": {
+            "type": "boolean",
+            "title": "GlideDesign Weekly Learning Digest",
+            "default": false
+          },
+          "studio_war_room_layout": {
+            "type": "boolean",
+            "title": "Studio War Room Layout",
+            "default": false
+          },
+          "forge_auto_improve": {
+            "type": "boolean",
+            "title": "GlideDesign Auto Improve",
+            "default": true
+          },
+          "credit_confirm_threshold_cents": {
+            "type": "integer",
+            "maximum": 500.0,
+            "minimum": 10.0,
+            "title": "Credit Confirm Threshold Cents",
+            "description": "Pre-action modal when estimate exceeds threshold (cents USD equivalent for comparison).",
+            "default": 50
+          },
+          "credit_confirm_skip_under_credits": {
+            "type": "integer",
+            "maximum": 500.0,
+            "minimum": 0.0,
+            "title": "Credit Confirm Skip Under Credits",
+            "description": "Never show confirm modal when estimate is under this credit count (unless session cap breach).",
+            "default": 75
+          },
+          "credit_estimate_display": {
+            "type": "string",
+            "enum": [
+              "always",
+              "big_only",
+              "never"
+            ],
+            "title": "Credit Estimate Display",
+            "default": "always"
+          },
+          "credit_post_action_toast": {
+            "type": "string",
+            "enum": [
+              "always",
+              "big_only",
+              "never"
+            ],
+            "title": "Credit Post Action Toast",
+            "default": "big_only"
+          },
+          "studio_concurrency_behavior": {
+            "type": "string",
+            "enum": [
+              "queue",
+              "reject"
+            ],
+            "title": "Studio Concurrency Behavior",
+            "default": "queue"
           }
         },
         "type": "object",
@@ -11099,6 +16929,26 @@
       },
       "UserPreferencesPartial": {
         "properties": {
+          "onboarded_for_workflow": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "contact-form",
+                  "proposal",
+                  "pitch_deck",
+                  "mobile_app",
+                  "website",
+                  "landing_page",
+                  "undecided"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarded For Workflow"
+          },
           "sidebar_collapsed": {
             "anyOf": [
               {
@@ -11281,6 +17131,141 @@
               }
             ],
             "title": "Locale"
+          },
+          "forge_apply_memory": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "GlideDesign Apply Memory"
+          },
+          "forge_memory_share_across_orgs": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "GlideDesign Memory Share Across Orgs"
+          },
+          "forge_contribute_feedback_to_platform": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "GlideDesign Contribute Feedback To Platform"
+          },
+          "forge_weekly_learning_digest": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "GlideDesign Weekly Learning Digest"
+          },
+          "studio_war_room_layout": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Studio War Room Layout"
+          },
+          "forge_auto_improve": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "GlideDesign Auto Improve"
+          },
+          "credit_confirm_threshold_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Confirm Threshold Cents"
+          },
+          "credit_confirm_skip_under_credits": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Confirm Skip Under Credits"
+          },
+          "credit_estimate_display": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "always",
+                  "big_only",
+                  "never"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Estimate Display"
+          },
+          "credit_post_action_toast": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "always",
+                  "big_only",
+                  "never"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Post Action Toast"
+          },
+          "studio_concurrency_behavior": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "queue",
+                  "reject"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Studio Concurrency Behavior"
           }
         },
         "type": "object",
@@ -11310,13 +17295,6 @@
           "type": {
             "type": "string",
             "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
           }
         },
         "type": "object",

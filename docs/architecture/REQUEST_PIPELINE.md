@@ -12,7 +12,7 @@ Middleware is registered in `apps/api/app/main.py`. In Starlette, `app.user_midd
 6. **`TenantMiddleware`** — primes `request.state.tenant_id` when the org header is already a bare UUID (full resolution, membership, and single-org default run in `optional_tenant`).
 7. **`CORSMiddleware`** — origins from `settings.effective_cors_origins()` (`BACKEND_CORS_ORIGINS` + optional `CORS_ORIGINS_EXTRA`), exposes `X-Request-ID`.
 
-Authentication and tenant membership run in **FastAPI dependencies** (`require_user`, `optional_tenant`, `require_tenant`), not in a separate JWT middleware, so verification stays aligned with Clerk JWKS in `app.security.clerk_jwt` and test bypass headers.
+Authentication and tenant membership run in **FastAPI dependencies** (`require_user`, `optional_tenant`, `require_tenant`), not in a separate JWT middleware, so verification stays aligned with first-party JWT validation in `app.security.session_jwt` and test bypass headers.
 
 ## Database session
 

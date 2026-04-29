@@ -1,31 +1,37 @@
-# Launch announcement drafts (V2-P01)
+# Launch Announcement Drafts
 
-Edits by Brian before posting. Replace `https://forge.app` if the live host differs.
+Edits by Brian before posting. Current live host target: `https://glidedesign.ai`.
 
-## X (Twitter) — 6-tweet thread
+## X Thread
 
-1. We built Forge because “one more tool” was not the problem — **too many links** was. Today we are calling it what it is: a **mini-app platform**. Describe a form, page, proposal, or deck. Ship a link. Track it. `https://forge.app`
+1. We built GlideDesign because one more tool was not the problem. Too many disconnected links was. Describe a form, page, proposal, deck, or mini-app. Ship a link. Track what happens. `https://glidedesign.ai`
 
-2. A mini-app is not a vague “AI thing.” It is a single-purpose surface you can stand behind: contact + booking, landing, signed proposal, pitch deck in the browser — with exports when you graduate the work.
+2. A mini-app is a single-purpose surface you can stand behind: contact plus booking, landing page, signed proposal, pitch deck in the browser, or a small product flow with exports when the work graduates.
 
-3. We are not trying to be your code IDE. If you need a full product repo, use the right tool. If you need a credible page **this week**, that is Forge.
+3. GlideDesign is not trying to be your code IDE. If you need a full repo, use the right tool. If you need a credible product surface this week, GlideDesign is for that.
 
-4. Pricing is three tiers — **Free, Pro, Max** — with usage shown the way we would want to see it: one honest percentage bar and a weekly cap. (Details land with billing — the pattern is what you are going to feel.)
+4. Pricing is three tiers: Free, Pro, Max. Usage is shown the way we would want to see it: clear credits, clear caps, and no surprise spend.
 
-5. Compare pages for the tools you already know (Typeform, Calendly, Carrd, PandaDoc, Canva decks) — we say where they are stronger. No fake “we replace everything.” `https://forge.app/compare/forge-vs-typeform`
+5. Compare pages for Typeform, Calendly, Carrd, PandaDoc, and Canva decks say where they are stronger. No fake "we replace everything." `https://glidedesign.ai/compare/typeform`
 
-6. If you have been waiting for one calm place to ship: `https://forge.app/signup` — your first mini-app is free.
+6. If you have been waiting for one fast place to ship: `https://glidedesign.ai/signup`. Your first mini-app is free.
 
-## LinkedIn (single post)
+## LinkedIn
 
-Small businesses do not need another login — they need **one link that matches the business** and analytics that do not require a spreadsheet PhD. We are introducing **Forge as a mini-app platform**: forms, landing pages, proposals, and pitch decks from plain language, hosted with tracking, with real export paths as the canvas missions land. Free, Pro, and Max — usage shown as a simple bar, not token theatre. If you have five minutes, start at `https://forge.app` and tell us what you shipped.
+Small teams do not need another scattered login. They need one product surface that matches the business and analytics that do not require a spreadsheet PhD.
 
-## Hacker News (submit as Show HN)
+GlideDesign turns plain English into complete product surfaces: forms, landing pages, proposals, pitch decks, and mini-apps with strategy, screens, code, and next moves in one Studio.
 
-**Title:** Show HN: Forge — mini-apps in minutes (forms, landings, proposals, decks)
+Free, Pro, and Max. Usage is clear. Exports are part of the product. If you have five minutes, start at `https://glidedesign.ai` and tell us what you shipped.
+
+## Hacker News
+
+**Title:** Show HN: GlideDesign - mini-apps in minutes
 
 **Text:**
 
-We built Forge for people who were about to duct-tape a form, a PDF, and a landing page from three vendors. You describe what you need; Forge gives a hosted mini-app and analytics — no database to run. Not a full app builder; intentionally narrow. Open to feedback on positioning and what “export” must mean for your workflow.
+We built GlideDesign for people who were about to stitch together a form, a PDF, and a landing page from three vendors. You describe what you need; GlideDesign gives a hosted mini-app and analytics, with exports when you outgrow the hosted version.
 
-`https://forge.app`
+It is not a full app builder. It is intentionally narrow: get a credible product surface live quickly.
+
+`https://glidedesign.ai`
