@@ -17,6 +17,7 @@ Dev password convention (local only): ``GlideDesignDev!2026``.
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 import uuid
 from datetime import UTC, datetime
@@ -25,6 +26,9 @@ from pathlib import Path
 _api_root = Path(__file__).resolve().parent.parent
 if str(_api_root) not in sys.path:
     sys.path.insert(0, str(_api_root))
+
+if "PYTEST_CURRENT_TEST" in os.environ:
+    os.environ["ENVIRONMENT"] = "test"
 
 from sqlalchemy import select
 
@@ -73,6 +77,7 @@ async def main() -> None:
                     display_name="Lucy (dev seed)",
                     auth_provider_id=f"forge:{lucy_id}",
                     password_hash=hash_password(DEV_PASSWORD),
+                    email_verified_at=datetime.now(UTC),
                 ),
                 User(
                     id=bob_id,
@@ -80,6 +85,7 @@ async def main() -> None:
                     display_name="Bob (dev)",
                     auth_provider_id=f"forge:{bob_id}",
                     password_hash=hash_password(DEV_PASSWORD),
+                    email_verified_at=datetime.now(UTC),
                 ),
                 Organization(
                     id=org_reds_id,

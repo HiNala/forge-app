@@ -20,7 +20,11 @@ export function SigninClient() {
     e.preventDefault();
     setBusy(true);
     try {
-      await auth.signInWithPassword(email, password);
+      const tokens = await auth.signInWithPassword(email, password);
+      if (!tokens.user.email_verified) {
+        router.replace(`/verify-email?next=${encodeURIComponent(next)}`);
+        return;
+      }
       router.replace(next);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign in failed");

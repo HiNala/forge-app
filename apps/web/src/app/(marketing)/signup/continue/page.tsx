@@ -26,6 +26,10 @@ export default function SignupContinuePage() {
 
     (async () => {
       try {
+        if (!user.emailVerified) {
+          router.replace("/verify-email?next=/signup/continue");
+          return;
+        }
         const name = workspaceNameFromEmail(user.primaryEmailAddress?.emailAddress);
         const r = await postSignup(() => getToken(), name);
         let pending: string | null = null;

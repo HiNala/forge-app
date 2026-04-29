@@ -266,7 +266,7 @@ async def billing_set_extra_usage_cap(
 async def billing_checkout(
     body: CheckoutBody,
     db: AsyncSession = Depends(get_db),
-    ctx: TenantContext = Depends(require_tenant),
+    ctx: TenantContext = Depends(require_role("owner")),
 ) -> CheckoutOut:
     del db
     return CheckoutOut(
@@ -281,7 +281,7 @@ async def billing_checkout(
 @router.post("/portal", response_model=PortalOut)
 async def billing_portal(
     db: AsyncSession = Depends(get_db),
-    ctx: TenantContext = Depends(require_tenant),
+    ctx: TenantContext = Depends(require_role("owner")),
 ) -> PortalOut:
     org = await db.get(Organization, ctx.organization_id)
     if org is None:

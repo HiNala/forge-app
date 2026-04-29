@@ -55,7 +55,23 @@ class UserOut(BaseModel):
     email: str
     display_name: str | None
     avatar_url: str | None
+    email_verified: bool = False
     is_platform_admin: bool = False
+
+
+class VerifyEmailBody(BaseModel):
+    token: str = Field(min_length=32, max_length=512)
+
+
+class VerifyEmailResponse(BaseModel):
+    ok: bool = True
+    user_id: UUID
+
+
+class ResendVerificationResponse(BaseModel):
+    ok: bool = True
+    sent: bool
+    already_verified: bool = False
 
 
 class UserMePatch(BaseModel):

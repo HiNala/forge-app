@@ -4,8 +4,9 @@ import base64
 import hashlib
 import hmac
 import json
+import logging
 import secrets
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 from urllib.parse import urlencode
 from uuid import UUID
@@ -30,18 +31,22 @@ from app.schemas.auth import (
     MeResponse,
     RefreshBody,
     RegisterBody,
+    ResendVerificationResponse,
     SignupBody,
     SignupResponse,
     SwitchOrgBody,
     SwitchOrgResponse,
     UserMePatch,
     UserOut,
+    VerifyEmailBody,
+    VerifyEmailResponse,
 )
 from app.schemas.user_preferences_full import UserPreferences, UserPreferencesPartial
 from app.security.passwords import hash_password, verify_password
 from app.services.audit_log import write_audit
 from app.services.auth.sessions import issue_token_pair, revoke_refresh_token, rotate_refresh_token
 from app.services.bootstrap import ensure_user_org_signup
+from app.services.email import email_service
 from app.services.profile_validate import validate_display_name, validate_timezone_iana
 from app.services.queue import enqueue_purge_deleted_user
 from app.services.settings_cache import cache_delete, cache_get_json, cache_set_json, prefs_key
@@ -52,6 +57,7 @@ from app.services.user_prefs_merge import (
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = logging.getLogger(__name__)
 
 _GOOGLE_AUTH_SCOPE = "openid email profile"
 _GOOGLE_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -65,6 +71,7 @@ def _user_out(u: User) -> UserOut:
         email=str(u.email),
         display_name=u.display_name,
         avatar_url=u.avatar_url,
+        email_verified=u.email_verified_at is not None,
         is_platform_admin=bool(getattr(u, "is_admin", False)),
     )
 
@@ -114,6 +121,33 @@ def _google_redirect_uri() -> str:
     return f"{settings.API_BASE_URL.rstrip('/')}/api/v1/auth/oauth/google/callback"
 
 
+def _hash_email_verification_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _new_email_verification_token(user: User) -> str:
+    token = secrets.token_urlsafe(48)
+    now = datetime.now(UTC)
+    user.email_verification_token_hash = _hash_email_verification_token(token)
+    user.email_verification_sent_at = now
+    user.email_verification_expires_at = now + timedelta(hours=24)
+    return token
+
+
+async def _send_email_verification(user: User, token: str) -> bool:
+    verify_url = f"{settings.APP_PUBLIC_URL.rstrip('/')}/verify-email?token={token}"
+    try:
+        await email_service.send_email_verification(
+            to_email=str(user.email),
+            display_name=user.display_name,
+            verify_url=verify_url,
+        )
+    except Exception as e:
+        logger.warning("email_verification_send_failed user_id=%s error=%s", user.id, e)
+        return False
+    return True
+
+
 @router.post("/register", response_model=AuthTokenResponse)
 async def register(
     body: RegisterBody,
@@ -146,8 +180,53 @@ async def register(
         workspace_name=body.workspace_name,
     )
     pair = await issue_token_pair(db, request, user)
+    token = _new_email_verification_token(user)
+    await _send_email_verification(user, token)
     await db.commit()
     return _auth_response(user, pair, org.id)
+
+
+@router.post("/email/verify", response_model=VerifyEmailResponse)
+async def verify_email(
+    body: VerifyEmailBody,
+    db: AsyncSession = Depends(get_db_no_auth),
+) -> VerifyEmailResponse:
+    token_hash = _hash_email_verification_token(body.token)
+    user = (
+        await db.execute(select(User).where(User.email_verification_token_hash == token_hash))
+    ).scalar_one_or_none()
+    if user is None or user.deleted_at is not None:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+    exp = user.email_verification_expires_at
+    if exp is None:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+    exp = exp.replace(tzinfo=UTC) if exp.tzinfo is None else exp.astimezone(UTC)
+    if datetime.now(UTC) > exp:
+        raise HTTPException(status_code=410, detail="Verification token expired")
+    user.email_verified_at = datetime.now(UTC)
+    user.email_verification_token_hash = None
+    user.email_verification_expires_at = None
+    await db.commit()
+    return VerifyEmailResponse(user_id=user.id)
+
+
+@router.post("/email/verification/resend", response_model=ResendVerificationResponse)
+async def resend_email_verification(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> ResendVerificationResponse:
+    user: User = request.state.user
+    if user.email_verified_at is not None:
+        return ResendVerificationResponse(sent=False, already_verified=True)
+    sent_at = user.email_verification_sent_at
+    if sent_at is not None:
+        sent_at = sent_at.replace(tzinfo=UTC) if sent_at.tzinfo is None else sent_at.astimezone(UTC)
+        if datetime.now(UTC) - sent_at < timedelta(seconds=60):
+            raise HTTPException(status_code=429, detail="Verification email was just sent")
+    token = _new_email_verification_token(user)
+    sent = await _send_email_verification(user, token)
+    await db.commit()
+    return ResendVerificationResponse(sent=sent)
 
 
 @router.post("/login", response_model=AuthTokenResponse)
@@ -245,6 +324,7 @@ async def google_oauth_callback(
     if not isinstance(sub, str) or not isinstance(email, str):
         raise HTTPException(status_code=401, detail="Google profile missing identity")
     email = _normalize_email(email)
+    google_email_verified = bool(profile.get("email_verified"))
     identity = (
         await db.execute(
             select(OAuthIdentity).where(
@@ -264,6 +344,7 @@ async def google_oauth_callback(
                 email=email,
                 display_name=profile.get("name") if isinstance(profile.get("name"), str) else None,
                 avatar_url=profile.get("picture") if isinstance(profile.get("picture"), str) else None,
+                email_verified_at=datetime.now(UTC) if google_email_verified else None,
             )
             db.add(user)
             await db.flush()
@@ -285,6 +366,10 @@ async def google_oauth_callback(
                 profile=profile,
             )
         )
+    if google_email_verified and user.email_verified_at is None:
+        user.email_verified_at = datetime.now(UTC)
+        user.email_verification_token_hash = None
+        user.email_verification_expires_at = None
     pair = await issue_token_pair(db, request, user)
     await db.commit()
     next_path = str(state_data.get("next") or "/dashboard")

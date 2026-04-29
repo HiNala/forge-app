@@ -160,6 +160,17 @@ _SSE_HEADERS = {
 }
 
 
+def _require_verified_generation_user(user: User) -> None:
+    if user.password_hash and user.email_verified_at is None:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "email_verification_required",
+                "message": "Verify your email before generating or refining designs.",
+            },
+        )
+
+
 async def _get_or_create_conversation(
     db: AsyncSession,
     *,
@@ -189,6 +200,7 @@ async def studio_generate(
     org = await db.get(Organization, ctx.organization_id)
     if org is None:
         raise HTTPException(status_code=404, detail="Organization not found")
+    _require_verified_generation_user(user)
     await rate_limit_studio_generate(request, user_id=user.id, plan=org.plan or "trial")
     r = getattr(request.app.state, "redis", None)
     slot_tok = await acquire_studio_slot(r, organization_id=ctx.organization_id, raw_plan=org.plan)
@@ -327,6 +339,7 @@ async def studio_refine(
     org = await db.get(Organization, ctx.organization_id)
     if org is None:
         raise HTTPException(status_code=404, detail="Organization not found")
+    _require_verified_generation_user(user)
     await rate_limit_studio_generate(request, user_id=user.id, plan=org.plan or "trial")
     r = getattr(request.app.state, "redis", None)
     slot_tok = await acquire_studio_slot(r, organization_id=ctx.organization_id, raw_plan=org.plan)

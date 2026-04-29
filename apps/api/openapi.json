@@ -439,6 +439,68 @@
         }
       }
     },
+    "/api/v1/auth/email/verify": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Verify Email",
+        "operationId": "verify_email_api_v1_auth_email_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyEmailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/email/verification/resend": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Resend Email Verification",
+        "operationId": "resend_email_verification_api_v1_auth_email_verification_resend_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendVerificationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "tags": [
@@ -15276,6 +15338,29 @@
         ],
         "title": "RegisterBody"
       },
+      "ResendVerificationResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "sent": {
+            "type": "boolean",
+            "title": "Sent"
+          },
+          "already_verified": {
+            "type": "boolean",
+            "title": "Already Verified",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "sent"
+        ],
+        "title": "ResendVerificationResponse"
+      },
       "SignupBody": {
         "properties": {
           "workspace_name": {
@@ -16686,6 +16771,11 @@
             ],
             "title": "Avatar Url"
           },
+          "email_verified": {
+            "type": "boolean",
+            "title": "Email Verified",
+            "default": false
+          },
           "is_platform_admin": {
             "type": "boolean",
             "title": "Is Platform Admin",
@@ -17304,6 +17394,40 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VerifyEmailBody": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 32,
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "VerifyEmailBody"
+      },
+      "VerifyEmailResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "VerifyEmailResponse"
       },
       "WebhookIn": {
         "properties": {

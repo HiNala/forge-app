@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <body style="margin:0;background:#f6f4ef;font-family:Inter,Arial,sans-serif;color:#1f2328">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 16px">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#fff;border:1px solid #e7e1d6;border-radius:18px;padding:28px">
+            <tr>
+              <td>
+                <p style="margin:0 0 12px;font-size:14px;color:#6b6258">GlideDesign</p>
+                <h1 style="margin:0 0 12px;font-size:24px;line-height:1.2;color:#1f2328">Verify your email</h1>
+                <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#4b5563">
+                  Hi {{ display_name }}, confirm this email address so your workspace can generate and publish with your account.
+                </p>
+                <p style="margin:0 0 24px">
+                  <a href="{{ verify_url }}" style="display:inline-block;border-radius:12px;background:{{ primary_color }};color:#fff;text-decoration:none;font-weight:700;padding:12px 18px">
+                    Verify email
+                  </a>
+                </p>
+                <p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280">
+                  If the button does not work, paste this link into your browser:<br />
+                  <a href="{{ verify_url }}" style="color:{{ primary_color }}">{{ verify_url }}</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

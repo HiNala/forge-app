@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import sys
 import uuid
+from datetime import UTC, datetime
 from pathlib import Path
 
 _api_root = Path(__file__).resolve().parent.parent
@@ -50,6 +51,7 @@ async def _upsert_user(
                 display_name=display_name,
                 password_hash=hash_password(DEV_PASSWORD),
                 auth_provider_id=f"forge:{user_id}",
+                email_verified_at=datetime.now(UTC),
                 is_admin=is_admin,
             )
             session.add(user)
@@ -57,6 +59,7 @@ async def _upsert_user(
             user.display_name = display_name
             user.password_hash = hash_password(DEV_PASSWORD)
             user.auth_provider_id = user.auth_provider_id or f"forge:{user.id}"
+            user.email_verified_at = user.email_verified_at or datetime.now(UTC)
             user.is_admin = is_admin
         org = await session.get(Organization, org_id)
         if org is None:

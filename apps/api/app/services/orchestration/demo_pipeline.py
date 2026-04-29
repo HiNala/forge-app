@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -24,10 +25,17 @@ _DEMO_PRIMARY = "#0d9488"
 _DEMO_SECONDARY = "#0f172a"
 _DEMO_ORG = "demo"
 _DEMO_SLUG = "demo-preview"
+_EVENT_HANDLER_ATTR = re.compile(r"\s+on[a-zA-Z]+\s*=\s*(\"[^\"]*\"|'[^']*'|[^\s>]+)")
+_SCRIPT_BLOCK = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.IGNORECASE | re.DOTALL)
 
 
 def _sse(event: str, payload: dict[str, Any]) -> bytes:
     return f"event: {event}\ndata: {json.dumps(payload, default=str)}\n\n".encode()
+
+
+def _strip_event_handlers(html: str) -> str:
+    """Public demo output is anonymous and should never ship inline JS handlers."""
+    return _EVENT_HANDLER_ATTR.sub("", _SCRIPT_BLOCK.sub("", html))
 
 
 async def stream_demo_page(
@@ -65,6 +73,7 @@ async def stream_demo_page(
         primary=_DEMO_PRIMARY,
         secondary=_DEMO_SECONDARY,
     )
+    html = _strip_event_handlers(html)
 
     ok, reason = validate_generated_html(html)
     if not ok:
@@ -83,6 +92,7 @@ async def stream_demo_page(
             primary=_DEMO_PRIMARY,
             secondary=_DEMO_SECONDARY,
         )
+        html = _strip_event_handlers(html)
         ok2, _ = validate_generated_html(html)
         if not ok2:
             yield _sse("error", {"code": "validation_failed", "message": reason})

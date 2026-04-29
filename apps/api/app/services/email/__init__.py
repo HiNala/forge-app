@@ -206,6 +206,29 @@ class EmailService:
             text=text,
         )
 
+    async def send_email_verification(
+        self,
+        *,
+        to_email: str,
+        display_name: str | None,
+        verify_url: str,
+    ) -> str | None:
+        if not _validate_email(to_email):
+            logger.warning("Invalid email format: %s", to_email)
+            return None
+        ctx = {
+            "display_name": display_name or to_email.split("@")[0],
+            "verify_url": verify_url,
+            "primary_color": "#6651ff",
+        }
+        html, text = _render_pair("email_verification", ctx)
+        return await _send_raw(
+            to=[to_email],
+            subject="Verify your GlideDesign email",
+            html=html,
+            text=text,
+        )
+
     async def send_billing_alert(
         self,
         *,

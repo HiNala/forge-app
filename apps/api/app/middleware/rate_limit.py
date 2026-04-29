@@ -161,8 +161,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        # Integration tests: disable unless ``FORCE_RATE_LIMIT_IN_TESTS`` (see ``test_rate_limit.py``).
-        if settings.ENVIRONMENT == "test" and not settings.FORCE_RATE_LIMIT_IN_TESTS:
+        # Integration tests: disable unless explicitly enabled (see ``test_rate_limit.py``).
+        if (
+            settings.ENVIRONMENT == "test"
+            and not settings.FORCE_RATE_LIMIT_IN_TESTS
+            and not settings.RATE_LIMIT_IN_TESTS
+        ):
             return await call_next(request)
 
         submit_keys = _public_submit_keys(request)

@@ -148,6 +148,29 @@ export async function postSignup(
   });
 }
 
+export async function postVerifyEmail(token: string): Promise<{ ok: boolean; user_id: string }> {
+  const res = await fetchWithTimeout(`${getApiUrl()}/auth/email/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  const json = await res.json().catch(() => null);
+  if (!res.ok) {
+    const message = typeof json?.detail === "string" ? json.detail : "Email verification failed";
+    throw new ApiError(message, res.status, json);
+  }
+  return json as { ok: boolean; user_id: string };
+}
+
+export async function postResendEmailVerification(
+  getToken: () => Promise<string | null>,
+): Promise<{ ok: boolean; sent: boolean; already_verified: boolean }> {
+  return apiRequest("/auth/email/verification/resend", {
+    method: "POST",
+    getToken,
+  });
+}
+
 export async function postSwitchOrg(
   getToken: () => Promise<string | null>,
   activeOrgId: string | null,

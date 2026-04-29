@@ -13,6 +13,7 @@ type AuthUserOut = {
   email: string;
   display_name: string | null;
   avatar_url: string | null;
+  email_verified?: boolean;
   is_platform_admin?: boolean;
 };
 
@@ -34,6 +35,7 @@ export type ForgeUser = {
   imageUrl: string | null;
   primaryEmailAddress: { emailAddress: string } | null;
   externalAccounts: Array<{ id: string; provider: string; emailAddress: string }>;
+  emailVerified: boolean;
   update: (body: { firstName?: string | null; lastName?: string | null }) => Promise<void>;
 };
 
@@ -85,6 +87,7 @@ function userFromOut(raw: AuthUserOut | null): ForgeUser | null {
     imageUrl: raw.avatar_url,
     primaryEmailAddress: { emailAddress: raw.email },
     externalAccounts: [],
+    emailVerified: !!raw.email_verified,
     update: async ({ firstName, lastName }) => {
       const displayName = [firstName, lastName].filter(Boolean).join(" ").trim();
       let token: string | null = null;
